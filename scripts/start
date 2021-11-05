@@ -1,0 +1,3574 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+import gi
+
+gi.require_version('Gtk', '3.0')
+gi.require_version('Gdk', '3.0')
+gi.require_version('Vte', '2.91')
+from gi.repository import Gdk, GdkPixbuf, Gio, GLib, GObject, Gtk, Vte, Pango
+from pathlib import Path
+import subprocess
+from subprocess import *
+import threading
+import traceback
+import logging
+import argparse
+
+sw_path = f"{Path.home()}/StartWine/"
+sw_scripts = f"{Path.home()}/StartWine/data/scripts/"
+sw_shortcuts = f"{Path.home()}/StartWine/Shortcuts"
+sw_icon = f"{Path.home()}/StartWine/data/img/"
+sw_games_config = f"{Path.home()}/StartWine/data/games_config/"
+sw_wine_custom = f"{Path.home()}/StartWine/data/wine/wine_custom/"
+
+path = str(sys.argv[1:])
+path_game = str(path).strip('[').strip(']')
+
+cmd_start_tray = f"{sw_scripts}runlib START_TRAY"
+subprocess.call(cmd_start_tray, shell=True)
+
+print(cmd_start_tray)
+
+cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\"'`pgrep -a python3 | grep 'start ' | cut -d ' ' -f4-100`'\"' >> {sw_scripts}run.sh"
+subprocess.call(cmd, shell=True)
+
+#########################   STARTWINE FULL WINDOW   ############################
+
+def on_btn_resize(self):
+
+    window.close()
+    sw_full_window = builder.get_object("sw_full_window")
+    sw_full_window.fullscreen()
+    def on_btn_resize1(self):
+
+        sw_full_window.close()
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+        cmd = f"{sw_scripts}start {path_game}"
+        subprocess.Popen(cmd, shell=True)
+
+    def on_btn_hide1(self):
+
+        sw_full_window.close()
+
+    def on_btn_about1(self):
+
+        sw_stack1.set_visible_child_name("about_window1")
+
+    def on_btn_app_icon1(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd = f"echo ADD_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+        subprocess.call(cmd, shell=True)
+
+        cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+        subprocess.call(cmd_clear, shell=True)
+
+    def on_btn_protondb1(self):
+
+        cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\..*//g' | tail -n1"
+        proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        out_name = str(out).replace('b\'', '').replace('n\'', '').strip('\ ').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
+
+        btn_protondb1.set_uri("https://www.protondb.com/search?q=" + str(out_name))
+
+    def on_btn_winehq1(self):
+
+        cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\..*//g' | tail -n1"
+        proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        out_name = str(out).replace('b\'', '').replace('n\'', '').strip('\ ').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
+
+        btn_winehq1.set_uri("https://www.winehq.org/search?q=" + str(out_name))
+
+    def on_btn_back11(self):
+
+        sw_stack1.set_visible_child_name("page0")
+
+    def on_btn_lp_entry1(self):
+
+        cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\..*//g' | tail -n1"
+        proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        out_name = str(out).replace('b\'', '').replace('n\'', '').strip('\ ').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
+
+        games_config_name = f"{sw_games_config}" + str(out_name)
+
+        try:
+            with open(games_config_name, 'r') as gc_name:
+                lp_text = lp_entry1.get_text()
+                text = str(lp_text)
+                print(lp_text)
+                lp_cmd = f"sed -i 's/LAUNCH_PARAMETERS=\".*\"/LAUNCH_PARAMETERS=\"{text}\"/g' {games_config_name}"
+                subprocess.call(lp_cmd, shell=True)
+        except IOError as e:
+            print("game games_config not found, set default value")
+
+    def on_btn_do_entry1(self):
+
+        cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\..*//g' | tail -n1"
+        proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        out_name = str(out).replace('b\'', '').replace('n\'', '').strip('\ ').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
+
+        games_config_name = f"{sw_games_config}" + str(out_name)
+
+        try:
+            with open(games_config_name, 'r') as gc_name:
+                do_text = do_entry1.get_text()
+                text = str(do_text)
+                print(do_text)
+                do_cmd = f"sed -i 's/WINEDLLOVERRIDES=\".*\"/WINEDLLOVERRIDES=\"{text}\"/g' {games_config_name}"
+                subprocess.call(do_cmd, shell=True)
+        except IOError as e:
+            print("game games_config not found, set default value")
+
+    def on_btn_games_config1(self):
+
+        cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\..*//g' | tail -n1"
+        proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        out_name = str(out).replace('b\'', '').replace('n\'', '').strip('\ ').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
+
+        games_config_name = f"{sw_games_config}" + str(out_name)
+
+        try:
+            with open(games_config_name, 'r') as gc_name:
+                xdg_open_cmd = f"xdg-open {games_config_name}"
+                subprocess.call(xdg_open_cmd, shell=True)
+        except IOError as e:
+            print("game games_config not found, set default value")
+
+###########################   VTE RUNNERS   ####################################
+
+    def on_btn_dxvk_1(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd = f"echo RUN_DXVK '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal.feed_child(cmd.encode("utf-8"))
+
+        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
+        terminal.feed_child(cmd1.encode("utf-8"))
+
+    def on_btn_vkd3d_1(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd = f"echo RUN_VKD3D '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal.feed_child(cmd.encode("utf-8"))
+
+        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
+        terminal.feed_child(cmd1.encode("utf-8"))
+
+    def on_btn_opengl_1(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd = f"echo RUN_OPENGL '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal.feed_child(cmd.encode("utf-8"))
+
+        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
+        terminal.feed_child(cmd1.encode("utf-8"))
+
+#############################   VTE_TITLE   ####################################
+
+    def get_resolution():
+
+        width = f"xrandr | grep '*' | cut -d 'x' -f1"
+        height = f"xrandr | grep '*' | cut -d 'x' -f2 | cut -d ' ' -f1"
+
+        proc_1 = subprocess.run(width, shell=True, stdout=subprocess.PIPE)
+        proc_2 = subprocess.run(height, shell=True, stdout=subprocess.PIPE)
+
+        out_1 = str(proc_1.stdout[0:])
+        out_name_1 = str(out_1).replace('b\'', '').replace('n\'', '').strip('\ ')
+        out_2 = str(proc_2.stdout[0:])
+        out_name_2 = str(out_2).replace('b\'', '').replace('n\'', '').strip('\ ')
+
+        print(out_name_1)
+        print(out_name_2)
+
+        img_path = f"{sw_icon}gui_icons/sw_top_header"
+        image = builder.get_object("sw_top_header")
+        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1)*0.75, 32, preserve_aspect_ratio=True)
+        image.set_from_pixbuf(pixbuf)
+
+        img_path1 = f"{sw_icon}gui_icons/sw_left_header"
+        image1 = builder.get_object("sw_left_header")
+        pixbuf1 = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path1, 32, int(out_name_2)-32, preserve_aspect_ratio=True)
+        image1.set_from_pixbuf(pixbuf1)
+
+    get_resolution()
+
+    menu = builder.get_object("menu_grid")
+    terminal = Vte.Terminal()
+    terminal.spawn_async(
+        Vte.PtyFlags.DEFAULT,
+        os.environ['HOME'],
+        ['/bin/bash'],
+        None,
+        GLib.SpawnFlags.DEFAULT,
+        None, None,
+        -1,
+        None,
+        None,
+        None,
+    )
+    spacer = Gtk.Label.new("               ")
+
+    terminal.set_scrollback_lines(2048)
+    term_font = Pango.FontDescription("Normal 10")
+    terminal.set_font(term_font)
+    terminal.set_clear_background(False)
+    terminal.set_hexpand(True)
+    terminal.set_vexpand(True)
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    btn_dxvk_1 = builder.get_object("btn_dxvk1")
+    btn_vkd3d_1 = builder.get_object("btn_vkd3d1")
+    btn_opengl_1 = builder.get_object("btn_opengl1")
+
+    btn_dxvk_1.connect("clicked", on_btn_dxvk_1)
+    btn_vkd3d_1.connect("clicked", on_btn_vkd3d_1)
+    btn_opengl_1.connect("clicked", on_btn_opengl_1)
+
+    vte_main_box = builder.get_object("vte_main_box")
+    vte_main_box.attach(terminal, 1, 1, 1, 1)
+
+#    menu.attach(terminal, 1, 1, 1, 1)
+
+#############################   SHORTCUTS   ####################################
+
+    def on_btn_shortcuts1(self):
+
+        sw_stack1.set_visible_child_name("shortcuts_window1")
+
+        run_mc = f"clear && mc\n"
+        terminal_sc.feed_child(run_mc.encode('UTF-8'))
+
+    def on_btn_back4(self):
+
+        cmd = f"exit\n"
+        terminal_sc.feed_child(cmd.encode('UTF-8'))
+
+        sw_stack1.set_visible_child_name("page0")
+
+############################   VTE_SHORTCUTS   #################################
+
+    terminal_sc = Vte.Terminal()
+    terminal_sc.spawn_async(
+        Vte.PtyFlags.DEFAULT,
+        f"{Path.home()}/StartWine/Shortcuts",
+        ['/bin/bash'],
+        None,
+        GLib.SpawnFlags.DEFAULT,
+        None, None,
+        -1,
+        None,
+        None,
+        None,
+    )
+    spacer = Gtk.Label.new("               ")
+
+    terminal_sc.set_scrollback_lines(2048)
+    term_font = Pango.FontDescription("Normal 10")
+    terminal_sc.set_font(term_font)
+    terminal_sc.set_clear_background(False)
+    terminal_sc.set_hexpand(True)
+    terminal_sc.set_vexpand(True)
+
+    shortcuts_window1 = builder.get_object("shortcuts_window1")
+
+    btn_shortcuts1 = builder.get_object("btn_shortcuts1")
+
+    btn_shortcuts1.connect("clicked", on_btn_shortcuts1)
+
+    btn_back4 = builder.get_object("btn_back4")
+    btn_back4.connect("clicked", on_btn_back4)
+
+    vte_shortcuts_box = builder.get_object("vte_shortcuts_box")
+    vte_shortcuts_box.attach(terminal_sc, 1, 1, 1, 1)
+
+############################   CREATE_SHORTCUT   ###############################
+
+    def on_btn_create_shortcut1(self):
+
+        sw_stack1.set_visible_child_name("create_shortcut_window1")
+
+        cmd_ascii = f"clear && cat {sw_path}data/img/gui_icons/ASCII_CREATE_SHORTCUT\n"
+        terminal_cs.feed_child(cmd_ascii.encode("utf-8"))
+
+    def on_btn_cs_staging1(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd_set = f"echo export SET='\"''wine_staging''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_cs.feed_child(cmd_set.encode('UTF-8'))
+
+        cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_cs.feed_child(cmd.encode('UTF-8'))
+
+        cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
+        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
+
+    def on_btn_cs_steam1(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd_set = f"echo export SET='\"''wine_steam_proton''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_cs.feed_child(cmd_set.encode('UTF-8'))
+
+        cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_cs.feed_child(cmd.encode('UTF-8'))
+
+        cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
+        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
+
+    def on_btn_cs_ge1(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd_set = f"echo export SET='\"''wine_proton_ge''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_cs.feed_child(cmd_set.encode('UTF-8'))
+
+        cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_cs.feed_child(cmd.encode('UTF-8'))
+
+        cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
+        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
+
+    def on_btn_cs_lutris1(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd_set = f"echo export SET='\"''wine_lutris''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_cs.feed_child(cmd_set.encode('UTF-8'))
+
+        cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_cs.feed_child(cmd.encode('UTF-8'))
+
+        cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
+        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
+
+    def on_btn_cs_lutris_ge1(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd_set = f"echo export SET='\"''wine_lutris_ge''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_cs.feed_child(cmd_set.encode('UTF-8'))
+
+        cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_cs.feed_child(cmd.encode('UTF-8'))
+
+        cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
+        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
+
+    def on_btn_cs_custom1(self):
+
+        def name_cs_custom1_1():
+
+            cmd = f"cd {sw_wine_custom} && echo `ls -1 | tail -n1 | head -n1`"
+            proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            out_name = str(out).strip('b\'').strip('\\n')
+            print(out_name)
+            btn_cs_custom1_1.set_label(label = str(out_name))
+        name_cs_custom1_1()
+
+        def name_cs_custom1_2():
+
+            cmd = f"cd {sw_wine_custom} && echo `ls -1 | tail -n2 | head -n1`"
+            proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            out_name = str(out).strip('b\'').strip('\\n')
+            print(out_name)
+            btn_cs_custom1_2.set_label(label = str(out_name))
+        name_cs_custom1_2()
+
+        def name_cs_custom1_3():
+
+            cmd = f"cd {sw_wine_custom} && echo `ls -1 | tail -n3 | head -n1`"
+            proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            out_name = str(out).strip('b\'').strip('\\n')
+            print(out_name)
+            btn_cs_custom1_3.set_label(label = str(out_name))
+        name_cs_custom1_3()
+
+        def name_cs_custom1_4():
+
+            cmd = f"cd {sw_wine_custom} && echo `ls -1 | tail -n4 | head -n1`"
+            proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            out_name = str(out).strip('b\'').strip('\\n')
+            print(out_name)
+            btn_cs_custom1_4.set_label(label = str(out_name))
+        name_cs_custom1_4()
+
+        def name_cs_custom1_5():
+
+            cmd = f"cd {sw_wine_custom} && echo `ls -1 | tail -n5 | head -n1`"
+            proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            out_name = str(out).strip('b\'').strip('\\n')
+            print(out_name)
+            btn_cs_custom1_5.set_label(label = str(out_name))
+        name_cs_custom1_5()
+
+    def on_btn_cs_custom1_1(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd_ls = f"cd {sw_wine_custom} && echo `ls -1 | tail -n1 | head -n1`"
+        proc = subprocess.run(cmd_ls, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        out_name = str(out).strip('b\'').strip('\\n')
+
+        cmd_set = f"echo export SET='\"''{out_name}''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_cs.feed_child(cmd_set.encode('UTF-8'))
+
+        cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_cs.feed_child(cmd.encode('UTF-8'))
+
+        cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
+        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
+
+    def on_btn_cs_custom1_2(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd_ls = f"cd {sw_wine_custom} && echo `ls -1 | tail -n2 | head -n1`"
+        proc = subprocess.run(cmd_ls, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        out_name = str(out).strip('b\'').strip('\\n')
+
+        cmd_set = f"echo export SET='\"''{out_name}''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_cs.feed_child(cmd_set.encode('UTF-8'))
+
+        cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_cs.feed_child(cmd.encode('UTF-8'))
+
+        cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
+        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
+
+    def on_btn_cs_custom1_3(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd_ls = f"cd {sw_wine_custom} && echo `ls -1 | tail -n3 | head -n1`"
+        proc = subprocess.run(cmd_ls, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        out_name = str(out).strip('b\'').strip('\\n')
+
+        cmd_set = f"echo export SET='\"''{out_name}''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_cs.feed_child(cmd_set.encode('UTF-8'))
+
+        cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_cs.feed_child(cmd.encode('UTF-8'))
+
+        cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
+        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
+
+    def on_btn_cs_custom1_4(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd_ls = f"cd {sw_wine_custom} && echo `ls -1 | tail -n4 | head -n1`"
+        proc = subprocess.run(cmd_ls, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        out_name = str(out).strip('b\'').strip('\\n')
+
+        cmd_set = f"echo export SET='\"''{out_name}''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_cs.feed_child(cmd_set.encode('UTF-8'))
+
+        cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_cs.feed_child(cmd.encode('UTF-8'))
+
+        cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
+        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
+
+    def on_btn_cs_custom1_5(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd_ls = f"cd {sw_wine_custom} && echo `ls -1 | tail -n5 | head -n1`"
+        proc = subprocess.run(cmd_ls, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        out_name = str(out).strip('b\'').strip('\\n')
+
+        cmd_set = f"echo export SET='\"''{out_name}''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_cs.feed_child(cmd_set.encode('UTF-8'))
+
+        cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_cs.feed_child(cmd.encode('UTF-8'))
+
+        cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
+        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
+
+    def on_btn_back13(self):
+
+        sw_stack1.set_visible_child_name("page0")
+
+############################   VTE_CREATE_SHORTCUT   ###########################
+
+    create_shortcut_window1 = builder.get_object("create_shortcut_window1")
+    terminal_cs = Vte.Terminal()
+    terminal_cs.spawn_async(
+        Vte.PtyFlags.DEFAULT,
+        os.environ['HOME'],
+        ['/bin/bash'],
+        None,
+        GLib.SpawnFlags.DEFAULT,
+        None, None,
+        -1,
+        None,
+        None,
+        None,
+    )
+    spacer = Gtk.Label.new("               ")
+
+    terminal_cs.set_scrollback_lines(2048)
+    term_font = Pango.FontDescription("Normal 10")
+    terminal_cs.set_font(term_font)
+    terminal_cs.set_clear_background(False)
+    terminal_cs.set_hexpand(True)
+    terminal_cs.set_vexpand(True)
+
+    btn_create_shortcut1 = builder.get_object("btn_create_shortcut1")
+    btn_create_shortcut1.connect("clicked", on_btn_create_shortcut1)
+
+    btn_cs_staging1 = builder.get_object("btn_cs_staging1")
+    btn_cs_steam1 = builder.get_object("btn_cs_steam1")
+    btn_cs_ge1 = builder.get_object("btn_cs_ge1")
+    btn_cs_lutris1 = builder.get_object("btn_cs_lutris1")
+    btn_cs_lutris_ge1 = builder.get_object("btn_cs_lutris_ge1")
+    btn_cs_custom1 = builder.get_object("btn_cs_custom1")
+
+    btn_cs_staging1.connect("clicked", on_btn_cs_staging1)
+    btn_cs_steam1.connect("clicked", on_btn_cs_steam1)
+    btn_cs_ge1.connect("clicked", on_btn_cs_ge1)
+    btn_cs_lutris1.connect("clicked", on_btn_cs_lutris1)
+    btn_cs_lutris_ge1.connect("clicked", on_btn_cs_lutris_ge1)
+    btn_cs_custom1.connect("clicked", on_btn_cs_custom1)
+
+    btn_cs_custom1_1 = builder.get_object("btn_cs_custom1_1")
+    btn_cs_custom1_1.connect("clicked", on_btn_cs_custom1_1)
+
+    btn_cs_custom1_2 = builder.get_object("btn_cs_custom1_2")
+    btn_cs_custom1_2.connect("clicked", on_btn_cs_custom1_2)
+
+    btn_cs_custom1_3 = builder.get_object("btn_cs_custom1_3")
+    btn_cs_custom1_3.connect("clicked", on_btn_cs_custom1_3)
+
+    btn_cs_custom1_4 = builder.get_object("btn_cs_custom1_4")
+    btn_cs_custom1_4.connect("clicked", on_btn_cs_custom1_4)
+
+    btn_cs_custom1_5 = builder.get_object("btn_cs_custom1_5")
+    btn_cs_custom1_5.connect("clicked", on_btn_cs_custom1_5)
+
+    btn_back13 = builder.get_object("btn_back13")
+    btn_back13.connect("clicked", on_btn_back13)
+
+    vte_cs_box = builder.get_object("vte_cs_box")
+    vte_cs_box.attach(terminal_cs, 1, 1, 1, 1)
+
+##############################   PREFIX_TOOLS   ################################
+
+    def on_btn_prefix_tools1(self):
+
+        sw_stack1.set_visible_child_name("prefix_tools_window1")
+
+        mc_pfx = f"clear && mc {sw_path}data/pfx\n"
+        terminal_rp.feed_child(mc_pfx.encode("utf-8"))
+
+    def on_btn_remove_prefix1(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd_exit = f"exit\n"
+        terminal_rp.feed_child(cmd_exit.encode('UTF-8'))
+
+        cmd = f"echo REMOVE_PFX '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_rp.feed_child(cmd.encode("utf-8"))
+
+        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh && mc {sw_path}data/pfx\n"
+        terminal_rp.feed_child(cmd1.encode("utf-8"))
+
+    def on_btn_reinstall_prefix1(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd_exit = f"exit\n"
+        terminal_rp.feed_child(cmd_exit.encode('UTF-8'))
+
+        cmd = f"echo REINSTALL_PFX '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_rp.feed_child(cmd.encode("utf-8"))
+
+        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh && mc {sw_path}data/pfx\n"
+        terminal_rp.feed_child(cmd1.encode("utf-8"))
+
+    def on_btn_pfx_backup1(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd_exit = f"exit\n"
+        terminal_rp.feed_child(cmd_exit.encode('UTF-8'))
+
+        cmd = f"echo SW_PFX_BACKUP '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_rp.feed_child(cmd.encode("utf-8"))
+
+        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh && mc {sw_path}data/pfx_backup\n"
+        terminal_rp.feed_child(cmd1.encode("utf-8"))
+
+    def on_btn_pfx_restore1(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd_exit = f"exit\n"
+        terminal_rp.feed_child(cmd_exit.encode('UTF-8'))
+
+        cmd = f"echo SW_PFX_RESTORE '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_rp.feed_child(cmd.encode("utf-8"))
+
+        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh && mc {sw_path}data/pfx\n"
+        terminal_rp.feed_child(cmd1.encode("utf-8"))
+
+    def on_btn_pfx_full_backup1(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd_exit = f"exit\n"
+        terminal_rp.feed_child(cmd_exit.encode('UTF-8'))
+
+        cmd = f"echo SW_PFX_FULL_BACKUP '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_rp.feed_child(cmd.encode("utf-8"))
+
+        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh && mc {sw_path}data/pfx_backup\n"
+        terminal_rp.feed_child(cmd1.encode("utf-8"))
+
+    def on_btn_pfx_full_restore1(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd_exit = f"exit\n"
+        terminal_rp.feed_child(cmd_exit.encode('UTF-8'))
+
+        cmd = f"echo SW_PFX_FULL_RESTORE '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_rp.feed_child(cmd.encode("utf-8"))
+
+        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh && mc {sw_path}data/pfx\n"
+        terminal_rp.feed_child(cmd1.encode("utf-8"))
+
+    def on_btn_back3(self):
+
+        cmd = f"exit\n"
+        terminal_rp.feed_child(cmd.encode('UTF-8'))
+
+        sw_stack1.set_visible_child_name("page0")
+
+############################   VTE_PREFIX_TOOLS   ##############################
+
+    prefix_tools_window1 = builder.get_object("prefix_tools_window1")
+    terminal_rp = Vte.Terminal()
+    terminal_rp.spawn_async(
+        Vte.PtyFlags.DEFAULT,
+        os.environ['HOME'],
+        ['/bin/bash'],
+        None,
+        GLib.SpawnFlags.DEFAULT,
+        None, None,
+        -1,
+        None,
+        None,
+        None,
+    )
+    spacer = Gtk.Label.new("               ")
+
+    terminal_rp.set_scrollback_lines(2048)
+    term_font = Pango.FontDescription("Normal 10")
+    terminal_rp.set_font(term_font)
+    terminal_rp.set_clear_background(False)
+    terminal_rp.set_hexpand(True)
+    terminal_rp.set_vexpand(True)
+
+    btn_remove_prefix1 = builder.get_object("btn_remove_prefix1")
+    btn_reinstall_prefix1 = builder.get_object("btn_reinstall_prefix1")
+    btn_prefix_tools1 = builder.get_object("btn_prefix_tools1")
+    btn_pfx_backup1 = builder.get_object("btn_pfx_backup1")
+    btn_pfx_restore1 = builder.get_object("btn_pfx_restore1")
+    btn_pfx_full_backup1 = builder.get_object("btn_pfx_full_backup1")
+    btn_pfx_full_restore1 = builder.get_object("btn_pfx_full_restore1")
+
+    btn_prefix_tools1.connect("clicked", on_btn_prefix_tools1)
+    btn_remove_prefix1.connect("clicked", on_btn_remove_prefix1)
+    btn_reinstall_prefix1.connect("clicked", on_btn_reinstall_prefix1)
+    btn_pfx_backup1.connect("clicked", on_btn_pfx_backup1)
+    btn_pfx_restore1.connect("clicked", on_btn_pfx_restore1)
+    btn_pfx_full_backup1.connect("clicked", on_btn_pfx_full_backup1)
+    btn_pfx_full_restore1.connect("clicked", on_btn_pfx_full_restore1)
+
+    btn_back3 = builder.get_object("btn_back3")
+    btn_back3.connect("clicked", on_btn_back3)
+
+    vte_prefix_box = builder.get_object("vte_prefix_box")
+    vte_prefix_box.attach(terminal_rp, 1, 1, 1, 1)
+
+############################   WINE_TOOLS   ####################################
+
+    def on_btn_winetools1(self):
+
+        sw_stack1.set_visible_child_name("winetools_window1")
+
+        cmd_ascii = f"clear && cat {sw_path}data/img/gui_icons/ASCII_WINE_TOOLS\n"
+        terminal_wt.feed_child(cmd_ascii.encode("utf-8"))
+
+    def on_btn_winecfg1(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd = f"echo WINECFG '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_wt.feed_child(cmd.encode("utf-8"))
+
+        cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+        subprocess.call(cmd_clear, shell=True)
+
+    def on_btn_wineconsole1(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd = f"echo WINECONSOLE '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_wt.feed_child(cmd.encode("utf-8"))
+
+        cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+        subprocess.call(cmd_clear, shell=True)
+
+    def on_btn_regedit1(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd = f"echo REGEDIT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_wt.feed_child(cmd.encode("utf-8"))
+
+        cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+        subprocess.call(cmd_clear, shell=True)
+
+    def on_btn_file_explorer1(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd = f"echo WINEFILE '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_wt.feed_child(cmd.encode("utf-8"))
+
+        cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+        subprocess.call(cmd_clear, shell=True)
+
+    def on_btn_uninstaller1(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd = f"echo UNINSTALLER '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_wt.feed_child(cmd.encode("utf-8"))
+
+        cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+        subprocess.call(cmd_clear, shell=True)
+
+    def on_btn_winetricks1(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd = f"echo SW_WINETRICKS '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_wt.feed_child(cmd.encode("utf-8"))
+
+        cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+        subprocess.call(cmd_clear, shell=True)
+
+    def on_btn_install_libraries1(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd = f"echo INSTALL_RL '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_wt.feed_child(cmd.encode("utf-8"))
+
+        cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+        subprocess.call(cmd_clear, shell=True)
+
+    def on_btn_back9(self):
+
+        sw_stack1.set_visible_child_name("page0")
+
+###########################   VTE_WINE_TOOLS   #################################
+
+    winetools_window1 = builder.get_object("winetools_window1")
+    terminal_wt = Vte.Terminal()
+    terminal_wt.spawn_async(
+        Vte.PtyFlags.DEFAULT,
+        os.environ['HOME'],
+        ['/bin/bash'],
+        None,
+        GLib.SpawnFlags.DEFAULT,
+        None, None,
+        -1,
+        None,
+        None,
+        None,
+    )
+    spacer = Gtk.Label.new("               ")
+
+    terminal_wt.set_scrollback_lines(2048)
+    term_font = Pango.FontDescription("Normal 10")
+    terminal_wt.set_font(term_font)
+    terminal_wt.set_clear_background(False)
+    terminal_wt.set_hexpand(True)
+    terminal_wt.set_vexpand(True)
+
+    btn_winecfg1 = builder.get_object("btn_winecfg1")
+    btn_wineconsole1 = builder.get_object("btn_wineconsole1")
+    btn_regedit1 = builder.get_object("btn_regedit1")
+    btn_file_explorer1 = builder.get_object("btn_file_explorer1")
+    btn_uninstaller1 = builder.get_object("btn_uninstaller1")
+    btn_winetricks1 = builder.get_object("btn_winetricks1")
+    btn_install_libraries1 = builder.get_object("btn_install_libraries1")
+
+    btn_winecfg1.connect("clicked", on_btn_winecfg1)
+    btn_wineconsole1.connect("clicked", on_btn_wineconsole1)
+    btn_regedit1.connect("clicked", on_btn_regedit1)
+    btn_file_explorer1.connect("clicked", on_btn_file_explorer1)
+    btn_uninstaller1.connect("clicked", on_btn_uninstaller1)
+    btn_winetricks1.connect("clicked", on_btn_winetricks1)
+    btn_install_libraries1.connect("clicked", on_btn_install_libraries1)
+
+    btn_back9 = builder.get_object("btn_back9")
+    btn_back9.connect("clicked", on_btn_back9)
+
+    vte_wt_box = builder.get_object("vte_wt_box")
+    vte_wt_box.attach(terminal_wt, 1, 1, 1, 1)
+
+###########################   DOWNLOAD_WINE   ##################################
+
+    def on_btn_dw1(self, widget=False, configuration=dict):
+
+        sw_stack1.set_visible_child_name("download_wine_window1")
+
+        cmd_ascii = f"clear && cat {sw_path}data/img/gui_icons/ASCII_DOWNLOAD\n"
+        terminal_sw.feed_child(cmd_ascii.encode("utf-8"))
+
+    def on_btn_wine_f1(self):
+
+        cmd = f"echo WINE_1 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh\n"
+        terminal_sw.feed_child(cmd.encode("utf-8"))
+
+        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
+        terminal_sw.feed_child(cmd1.encode("utf-8"))
+
+    def on_btn_wine_f2(self):
+
+        cmd = f"echo WINE_2 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh\n"
+        terminal_sw.feed_child(cmd.encode("utf-8"))
+
+        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
+        terminal_sw.feed_child(cmd1.encode("utf-8"))
+
+    def on_btn_wine_f3(self):
+
+        cmd = f"echo WINE_3 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh\n"
+        terminal_sw.feed_child(cmd.encode("utf-8"))
+
+        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
+        terminal_sw.feed_child(cmd1.encode("utf-8"))
+
+    def on_btn_wine_f4(self):
+
+        cmd = f"echo WINE_4 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh\n"
+        terminal_sw.feed_child(cmd.encode("utf-8"))
+
+        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
+        terminal_sw.feed_child(cmd1.encode("utf-8"))
+
+    def on_btn_wine_f5(self):
+
+        cmd = f"echo WINE_5 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh\n"
+        terminal_sw.feed_child(cmd.encode("utf-8"))
+
+        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
+        terminal_sw.feed_child(cmd1.encode("utf-8"))
+
+    def on_btn_wine_f6(self):
+
+        cmd = f"xdg-open {sw_path}data/wine/wine_custom\n"
+        terminal_sw.feed_child(cmd.encode("utf-8"))
+
+###########################   VTE_DOWNLOAD_WINE   ##############################
+
+    download_wine_window1 = builder.get_object("download_wine_window1")
+
+    terminal_sw = Vte.Terminal()
+    terminal_sw.spawn_async(
+        Vte.PtyFlags.DEFAULT,
+        os.environ['HOME'],
+        ['/bin/bash'],
+        None,
+        GLib.SpawnFlags.DEFAULT,
+        None, None,
+        -1,
+        None,
+        None,
+        None,
+    )
+    spacer = Gtk.Label.new("               ")
+
+    terminal_sw.set_scrollback_lines(2048)
+    term_font = Pango.FontDescription("Normal 10")
+    terminal_sw.set_font(term_font)
+    terminal_sw.set_clear_background(False)
+    terminal_sw.set_hexpand(True)
+    terminal_sw.set_vexpand(True)
+
+    btn_wine_f1 = builder.get_object("btn_staging1")
+    btn_wine_f2 = builder.get_object("btn_steam1")
+    btn_wine_f3 = builder.get_object("btn_ge1")
+    btn_wine_f4 = builder.get_object("btn_lutris1")
+    btn_wine_f5 = builder.get_object("btn_lutris_ge1")
+    btn_wine_f6 = builder.get_object("btn_custom1")
+
+    btn_wine_f1.connect("clicked", on_btn_wine_f1)
+    btn_wine_f2.connect("clicked", on_btn_wine_f2)
+    btn_wine_f3.connect("clicked", on_btn_wine_f3)
+    btn_wine_f4.connect("clicked", on_btn_wine_f4)
+    btn_wine_f5.connect("clicked", on_btn_wine_f5)
+    btn_wine_f6.connect("clicked", on_btn_wine_f6)
+
+    btn_back2 = builder.get_object("btn_back2")
+    btn_back2.connect("clicked", on_btn_back2)
+
+    vte_dw_box = builder.get_object("vte_dw_box")
+    vte_dw_box.add(terminal_sw)
+
+##############################   DEBUG_FULL   ##################################
+
+    def on_btn_debug1(self):
+
+        sw_stack1.set_visible_child_name("debug_window")
+
+        cmd_ascii = f"clear && cat {sw_path}data/img/gui_icons/ASCII_DEBUG\n"
+        terminal_dbg.feed_child(cmd_ascii.encode("utf-8"))
+
+    def on_btn_dbg_dxvk(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd = f"echo DEBUG_DXVK '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_dbg.feed_child(cmd.encode("utf-8"))
+
+        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
+        terminal_dbg.feed_child(cmd1.encode("utf-8"))
+
+    def on_btn_dbg_vkd3d(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd = f"echo DEBUG_VKD3D '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_dbg.feed_child(cmd.encode("utf-8"))
+
+        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
+        terminal_dbg.feed_child(cmd1.encode("utf-8"))
+
+    def on_btn_dbg_opengl(self):
+
+        path = str(sys.argv[1:])
+        path_game = str(path).strip('[').strip(']')
+
+        cmd = f"echo DEBUG_OPENGL '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+        terminal_dbg.feed_child(cmd.encode("utf-8"))
+
+        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
+        terminal_dbg.feed_child(cmd1.encode("utf-8"))
+
+    def on_btn_back6(self):
+
+        clear = f"clear\n"
+        terminal_dbg.feed_child(clear.encode("utf-8"))
+
+        sw_stack1.set_visible_child_name("page0")
+
+############################   VTE_DEBUG   #####################################
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    debug_window = builder.get_object("debug_window")
+    terminal_dbg = Vte.Terminal()
+    terminal_dbg.spawn_async(
+        Vte.PtyFlags.DEFAULT,
+        os.environ['HOME'],
+        ['/bin/bash'],
+        None,
+        GLib.SpawnFlags.DEFAULT,
+        None, None,
+        -1,
+        None,
+        None,
+        None,
+    )
+    spacer = Gtk.Label.new("               ")
+
+    terminal_dbg.set_scrollback_lines(2048)
+    term_font = Pango.FontDescription("Normal 10")
+    terminal_dbg.set_font(term_font)
+    terminal_dbg.set_clear_background(False)
+    terminal_dbg.set_hexpand(True)
+    terminal_dbg.set_vexpand(True)
+
+    btn_dbg_dxvk = builder.get_object("btn_dbg_dxvk")
+    btn_dbg_vkd3d = builder.get_object("btn_dbg_vkd3d")
+    btn_dbg_opengl = builder.get_object("btn_dbg_opengl")
+
+    btn_dbg_dxvk.connect("clicked", on_btn_dbg_dxvk)
+    btn_dbg_vkd3d.connect("clicked", on_btn_dbg_vkd3d)
+    btn_dbg_opengl.connect("clicked", on_btn_dbg_opengl)
+
+    btn_back6 = builder.get_object("btn_back6")
+    btn_back6.connect("clicked", on_btn_back6)
+
+    vte_dbg_box = builder.get_object("vte_dbg_box")
+    vte_dbg_box.attach(terminal_dbg, 1, 1, 1, 1)
+
+###############################   SETTINGS   ###################################
+
+    def on_btn_settings1(self):
+
+        sw_stack1.set_visible_child_name("settings_window1")
+
+############################   BUTTON_STATE_ON_OFF   ###########################
+
+        def on_dxvk_ge1_activated(dxvk_ge1):
+
+            if dxvk_ge1.get_active():
+                state = "on"
+                command = f"sed -i '20 s/.*/020_DXVK_GE/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+            else:
+                state = "off"
+                command = f"sed -i '/020/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+        def on_vkd3d_ge1_activated(vkd3d_ge1):
+
+            if vkd3d_ge1.get_active():
+                state = "on"
+                command = f"sed -i '21 s/.*/021_VKD3D_GE/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+            else:
+                state = "off"
+                command = f"sed -i '/021/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+        def on_dxvk_native1_activated(dxvk_native1):
+
+            if dxvk_native1.get_active():
+                state = "on"
+                command = f"sed -i '20 s/.*/020_DXVK_NATIVE/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+            else:
+                state = "off"
+                command = f"sed -i '/020/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+        def on_vkd3d_native1_activated(vkd3d_native1):
+
+            if vkd3d_native1.get_active():
+                state = "on"
+                command = f"sed -i '21 s/.*/021_VKD3D_NATIVE/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+            else:
+                state = "off"
+                command = f"sed -i '/021/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+        def on_DLSYM1_activated(DLSYM1, gparam):
+
+            if DLSYM1.get_active():
+                state = "on"
+                command = f"sed -i '1 s/.*/001_MANGOHUD_DLSYM/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+            else:
+                state = "off"
+                command = f"sed -i '/001/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+        def on_MHUD1_activated(MHUD1, gparam):
+
+            if MHUD1.get_active():
+                state = "on"
+                command = f"sed -i '2 s/.*/002_MANGOHUD/' {sw_scripts}settings"
+                subprocess.run(command, shell=True)
+                CompletedProcess(command, returncode=0)
+            else:
+                state = "off"
+                command = f"sed -i '/002/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+                CompletedProcess(command, returncode=0)
+
+        def on_GAMEMODE1_activated(GAMEMODE1, gparam):
+
+            if GAMEMODE1.get_active():
+                state = "on"
+                command = f"sed -i '3 s/.*/003_GAMEMODE/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+            else:
+                state = "off"
+                command = f"sed -i '/003/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+        def on_RUNTIME1_activated(RUNTIME1, gparam):
+
+            if RUNTIME1.get_active():
+                state = "on"
+                command = f"sed -i '4 s/.*/004_RUNTIME/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+            else:
+                state = "off"
+                command = f"sed -i '/004/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+        def on_RESTORE_RESOLUTION1_activated(RESTORE_RESOLUTION1, gparam):
+
+            if RESTORE_RESOLUTION1.get_active():
+                state = "on"
+                command = f"sed -i '5 s/.*/005_RESTORE_RESOLUTION/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+            else:
+                state = "off"
+                command = f"sed -i '/005/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+        def on_VIRTUAL_DESKTOP1_activated(VIRTUAL_DESKTOP1, gparam):
+
+            if VIRTUAL_DESKTOP1.get_active():
+                state = "on"
+                command = f"sed -i '6 s/.*/006_VIRTUAL_DESKTOP/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+            else:
+                state = "off"
+                command = f"sed -i '/006/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+        def on_FSYNC1_activated(FSYNC1, gparam):
+
+            if FSYNC1.get_active():
+                state = "on"
+                command = f"sed -i '7 s/.*/007_FSYNC/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+            else:
+                state = "off"
+                command = f"sed -i '/007/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+        def on_ESYNC1_activated(ESYNC1, gparam):
+
+            if ESYNC1.get_active():
+                state = "on"
+                command = f"sed -i '8 s/.*/008_ESYNC/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+            else:
+                state = "off"
+                command = f"sed -i '/008/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+        def on_OLD_GL_STRING1_activated(OLD_GL_STRING1, gparam):
+
+            if OLD_GL_STRING1.get_active():
+                state = "on"
+                command = f"sed -i '9 s/.*/009_OLD_GL_STRING/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+            else:
+                state = "off"
+                command = f"sed -i '/009/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+        def on_NVAPI_DISABLE1_activated(NVAPI_DISABLE1, gparam):
+
+            if NVAPI_DISABLE1.get_active():
+                state = "on"
+                command = f"sed -i '10 s/.*/010_NVAPI_DISABLE/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+            else:
+                state = "off"
+                command = f"sed -i '/010/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+        def on_WINEDBG_DISABLE1_activated(WINEDBG_DISABLE1, gparam):
+
+            if WINEDBG_DISABLE1.get_active():
+                state = "on"
+                command = f"sed -i '11 s/.*/011_WINEDBG_DISABLE/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+            else:
+                state = "off"
+                command = f"sed -i '/011/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+        def on_LARGE_ADDRESS_AWARE1_activated(LARGE_ADDRESS_AWARE1, gparam):
+
+            if LARGE_ADDRESS_AWARE1.get_active():
+                state = "on"
+                command = f"sed -i '12 s/.*/012_LARGE_ADDRESS_AWARE/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+            else:
+                state = "off"
+                command = f"sed -i '/012/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+        def on_STAGING_WRITECOPY1_activated(STAGING_WRITECOPY1, gparam):
+
+            if STAGING_WRITECOPY1.get_active():
+                state = "on"
+                command = f"sed -i '13 s/.*/013_STAGING_WRITECOPY/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+            else:
+                state = "off"
+                command = f"sed -i '/013/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+        def on_STAGING_SHARED_MEMORY1_activated(STAGING_SHARED_MEMORY1, gparam):
+
+            if STAGING_SHARED_MEMORY1.get_active():
+                state = "on"
+                command = f"sed -i '14 s/.*/014_STAGING_SHARED_MEMORY/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+            else:
+                state = "off"
+                command = f"sed -i '/014/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+        def on_DXVK_HUD1_activated(DXVK_HUD1, gparam):
+
+            if DXVK_HUD1.get_active():
+                state = "on"
+                command = f"sed -i '15 s/.*/015_DXVK_HUD/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+            else:
+                state = "off"
+                command = f"sed -i '/015/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+        def on_DXVK_ASYNC1_activated(DXVK_ASYNC1, gparam):
+
+            if DXVK_ASYNC1.get_active():
+                state = "on"
+                command = f"sed -i '16 s/.*/016_DXVK_ASYNC/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+            else:
+                state = "off"
+                command = f"sed -i '/016/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+        def on_VKBASALT1_activated(VKBASALT1, gparam):
+
+            if VKBASALT1.get_active():
+                state = "on"
+                command = f"sed -i '17 s/.*/017_VKBASALT/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+            else:
+                state = "off"
+                command = f"sed -i '/017/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+        def on_FSR1_activated(FSR1, gparam):
+
+            if FSR1.get_active():
+                state = "on"
+                command = f"sed -i '18 s/.*/018_FSR/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+            else:
+                state = "off"
+                command = f"sed -i '/018/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+        def on_GSTREAMER1_activated(GSTREAMER1, gparam):
+
+            if GSTREAMER1.get_active():
+                state = "on"
+                command = f"sed -i '19 s/.*/019_GSTREAMER/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+            else:
+                state = "off"
+                command = f"sed -i '/019/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+        def on_DRI_PRIME1_activated(DRI_PRIME1, gparam):
+
+            if DRI_PRIME1.get_active():
+                state = "on"
+                command = f"sed -i '22 s/.*/022_DRI_PRIME/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+            else:
+                state = "off"
+                command = f"sed -i '/022/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+        def on_btn_back7(self):
+
+            sw_stack1.set_visible_child_name("page0")
+
+        settings_window1 = builder.get_object("settings_window1")
+
+        btn_back7 = builder.get_object("btn_back7")
+        btn_back7.connect("clicked", on_btn_back7)
+
+#############################   SWITCH BUTTON   ################################
+
+        dxvk_ge1 = builder.get_object("dxvk_ge1")
+        dxvk_ge1.connect("toggled", on_dxvk_ge1_activated)
+
+        def dxvk_ge1_active():
+            dxvk_cmd = f"sed -n '/020/p' {sw_scripts}/settings"
+            proc = subprocess.run(dxvk_cmd, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            dxvk_cmd_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(dxvk_cmd_name) == str('020_DXVK_GE'):
+                dxvk_ge1.set_active(True)
+            else:
+                dxvk_ge1.set_active(False)
+        dxvk_ge1_active()
+
+        vkd3d_ge1 = builder.get_object("vkd3d_ge1")
+        vkd3d_ge1.connect("toggled", on_vkd3d_ge1_activated)
+
+        def vkd3d_ge1_active():
+            vkd3d_cmd = f"sed -n '/021/p' {sw_scripts}/settings"
+            proc = subprocess.run(vkd3d_cmd, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            vkd3d_cmd_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(vkd3d_cmd_name) == str('021_VKD3D_GE'):
+                vkd3d_ge1.set_active(True)
+            else:
+                vkd3d_ge1.set_active(False)
+        vkd3d_ge1_active()
+
+        dxvk_native1 = builder.get_object("dxvk_native1")
+        dxvk_native1.connect("toggled", on_dxvk_native1_activated)
+
+        def dxvk_native1_active():
+            dxvk_cmd = f"sed -n '/001/p' {sw_scripts}/settings"
+            proc = subprocess.run(dxvk_cmd, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            dxvk_cmd_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(dxvk_cmd_name) == str('020_DXVK_NATIVE'):
+                dxvk_native1.set_active(True)
+            else:
+                dxvk_native1.set_active(False)
+        dxvk_native1_active()
+
+        vkd3d_native1 = builder.get_object("vkd3d_native1")
+        vkd3d_native1.connect("toggled", on_vkd3d_native1_activated)
+
+        def vkd3d_native1_active():
+            vkd3d_cmd = f"sed -n '/001/p' {sw_scripts}/settings"
+            proc = subprocess.run(vkd3d_cmd, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            vkd3d_cmd_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(vkd3d_cmd_name) == str('021_VKD3D_NATIVE'):
+                vkd3d_native1.set_active(True)
+            else:
+                vkd3d_native1.set_active(False)
+        vkd3d_native1_active()
+
+        DLSYM1 = builder.get_object("DLSYM1")
+        DLSYM1.connect("notify::active", on_DLSYM1_activated)
+
+        def dlsym1():
+            dlsym1 = f"sed -n '/001/p' {sw_scripts}/settings"
+            proc = subprocess.run(dlsym1, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            dlsym_name1 = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(dlsym_name1) == str('001_MANGOHUD_DLSYM'):
+                DLSYM1.set_active(True)
+            else:
+                DLSYM1.set_active(False)
+        dlsym1()
+
+        MHUD1 = builder.get_object("MHUD1")
+        MHUD1.connect("notify::active", on_MHUD1_activated)
+
+        def mhud1():
+            mhud1 = f"sed -n '/002/p' {sw_scripts}/settings"
+            proc = subprocess.run(mhud1, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            mhud_name1 = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(mhud_name1) == str('002_MANGOHUD'):
+                MHUD1.set_active(True)
+            else:
+                MHUD1.set_active(False)
+        mhud1()
+
+        GAMEMODE1 = builder.get_object("GAMEMODE1")
+        GAMEMODE1.connect("notify::active", on_GAMEMODE1_activated)
+
+        def gamemode1():
+            gamemode1 = f"sed -n '/003/p' {sw_scripts}/settings"
+            proc = subprocess.run(gamemode1, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            gamemode_name1 = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(gamemode_name1) == str('003_GAMEMODE'):
+                GAMEMODE1.set_active(True)
+            else:
+                GAMEMODE1.set_active(False)
+        gamemode1()
+
+        RUNTIME1 = builder.get_object("RUNTIME1")
+        RUNTIME1.connect("notify::active", on_RUNTIME1_activated)
+
+        def runtime1():
+            runtime1 = f"sed -n '/004/p' {sw_scripts}/settings"
+            proc = subprocess.run(runtime1, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            runtime_name1 = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(runtime_name1) == str('004_RUNTIME'):
+                RUNTIME1.set_active(True)
+            else:
+                RUNTIME1.set_active(False)
+        runtime1()
+
+        RESTORE_RESOLUTION1 = builder.get_object("RESTORE_RESOLUTION1")
+        RESTORE_RESOLUTION1.connect("notify::active", on_RESTORE_RESOLUTION1_activated)
+
+        def resres1():
+            resres1 = f"sed -n '/005/p' {sw_scripts}/settings"
+            proc = subprocess.run(resres1, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            resres_name1 = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(resres_name1) == str('005_RESTORE_RESOLUTION'):
+                RESTORE_RESOLUTION1.set_active(True)
+            else:
+                RESTORE_RESOLUTION1.set_active(False)
+        resres1()
+
+        VIRTUAL_DESKTOP1 = builder.get_object("VIRTUAL_DESKTOP1")
+        VIRTUAL_DESKTOP1.connect("notify::active", on_VIRTUAL_DESKTOP1_activated)
+
+        def virdesk1():
+            virdesk1 = f"sed -n '/006/p' {sw_scripts}/settings"
+            proc = subprocess.run(virdesk1, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            virdesk_name1 = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(virdesk_name1) == str('006_VIRTUAL_DESKTOP'):
+                VIRTUAL_DESKTOP1.set_active(True)
+            else:
+                VIRTUAL_DESKTOP1.set_active(False)
+        virdesk1()
+
+        FSYNC1 = builder.get_object("FSYNC1")
+        FSYNC1.connect("notify::active", on_FSYNC1_activated)
+
+        def fsync1():
+            fsync1 = f"sed -n '/007/p' {sw_scripts}/settings"
+            proc = subprocess.run(fsync1, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            fsync_name1 = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(fsync_name1) == str('007_FSYNC'):
+                FSYNC1.set_active(True)
+            else:
+                FSYNC1.set_active(False)
+        fsync1()
+
+        ESYNC1 = builder.get_object("ESYNC1")
+        ESYNC1.connect("notify::active", on_ESYNC1_activated)
+
+        def esync1():
+            esync1 = f"sed -n '/008/p' {sw_scripts}/settings"
+            proc = subprocess.run(esync1, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            esync_name1 = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(esync_name1) == str('008_ESYNC'):
+                ESYNC1.set_active(True)
+            else:
+                ESYNC1.set_active(False)
+        esync1()
+
+        OLD_GL_STRING1 = builder.get_object("OLD_GL_STRING1")
+        OLD_GL_STRING1.connect("notify::active", on_OLD_GL_STRING1_activated)
+
+        def glstring1():
+            glstring1 = f"sed -n '/009/p' {sw_scripts}/settings"
+            proc = subprocess.run(glstring1, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            glstring_name1 = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(glstring_name1) == str('009_OLD_GL_STRING'):
+                OLD_GL_STRING1.set_active(True)
+            else:
+                OLD_GL_STRING1.set_active(False)
+        glstring1()
+
+        NVAPI_DISABLE1 = builder.get_object("NVAPI_DISABLE1")
+        NVAPI_DISABLE1.connect("notify::active", on_NVAPI_DISABLE1_activated)
+
+        def nvapi1():
+            nvapi1 = f"sed -n '/010/p' {sw_scripts}/settings"
+            proc = subprocess.run(nvapi1, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            nvapi_name1 = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(nvapi_name1) == str('010_NVAPI_DISABLE'):
+                NVAPI_DISABLE1.set_active(True)
+            else:
+                NVAPI_DISABLE1.set_active(False)
+        nvapi1()
+
+        WINEDBG_DISABLE1 = builder.get_object("WINEDBG_DISABLE1")
+        WINEDBG_DISABLE1.connect("notify::active", on_WINEDBG_DISABLE1_activated)
+
+        def winedbg1():
+            winedbg1 = f"sed -n '/011/p' {sw_scripts}/settings"
+            proc = subprocess.run(winedbg1, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            winedbg_name1 = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(winedbg_name1) == str('011_WINEDBG_DISABLE'):
+                WINEDBG_DISABLE1.set_active(True)
+            else:
+                WINEDBG_DISABLE1.set_active(False)
+        winedbg1()
+
+        LARGE_ADDRESS_AWARE1 = builder.get_object("LARGE_ADDRESS_AWARE1")
+        LARGE_ADDRESS_AWARE1.connect("notify::active", on_LARGE_ADDRESS_AWARE1_activated)
+
+        def large_aa1():
+            large_aa1 = f"sed -n '/012/p' {sw_scripts}/settings"
+            proc = subprocess.run(large_aa1, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            large_aa_name1 = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(large_aa_name1) == str('012_LARGE_ADDRESS_AWARE'):
+                LARGE_ADDRESS_AWARE1.set_active(True)
+            else:
+                LARGE_ADDRESS_AWARE1.set_active(False)
+        large_aa1()
+
+        STAGING_WRITECOPY1 = builder.get_object("STAGING_WRITECOPY1")
+        STAGING_WRITECOPY1.connect("notify::active", on_STAGING_WRITECOPY1_activated)
+
+        def staging_w1():
+            staging_w1 = f"sed -n '/013/p' {sw_scripts}/settings"
+            proc = subprocess.run(staging_w1, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            staging_w_name1 = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(staging_w_name1) == str('013_STAGING_WRITECOPY'):
+                STAGING_WRITECOPY1.set_active(True)
+            else:
+                STAGING_WRITECOPY1.set_active(False)
+        staging_w1()
+
+        STAGING_SHARED_MEMORY1 = builder.get_object("STAGING_SHARED_MEMORY1")
+        STAGING_SHARED_MEMORY1.connect("notify::active", on_STAGING_SHARED_MEMORY1_activated)
+
+        def staging_s1():
+            staging_s1 = f"sed -n '/014/p' {sw_scripts}/settings"
+            proc = subprocess.run(staging_s1, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            staging_s_name1 = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(staging_s_name1) == str('014_STAGING_SHARED_MEMORY'):
+                STAGING_SHARED_MEMORY1.set_active(True)
+            else:
+                STAGING_SHARED_MEMORY1.set_active(False)
+        staging_s1()
+
+        DXVK_HUD1 = builder.get_object("DXVK_HUD1")
+        DXVK_HUD1.connect("notify::active", on_DXVK_HUD1_activated)
+
+        def dxvk_hud1():
+            dxvk_hud1 = f"sed -n '/015/p' {sw_scripts}/settings"
+            proc = subprocess.run(dxvk_hud1, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            dxvk_hud_name1 = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(dxvk_hud_name1) == str('015_DXVK_HUD'):
+                DXVK_HUD1.set_active(True)
+            else:
+                DXVK_HUD1.set_active(False)
+        dxvk_hud1()
+
+        DXVK_ASYNC1 = builder.get_object("DXVK_ASYNC1")
+        DXVK_ASYNC1.connect("notify::active", on_DXVK_ASYNC1_activated)
+
+        def dxvk_async1():
+            dxvk_async1 = f"sed -n '/016/p' {sw_scripts}/settings"
+            proc = subprocess.run(dxvk_async1, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            dxvk_async_name1 = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(dxvk_async_name1) == str('016_DXVK_ASYNC'):
+                DXVK_ASYNC1.set_active(True)
+            else:
+                DXVK_ASYNC1.set_active(False)
+        dxvk_async1()
+
+        VKBASALT1 = builder.get_object("VKBASALT1")
+        VKBASALT1.connect("notify::active", on_VKBASALT1_activated)
+
+        def vkbasalt1():
+            vkbasalt1 = f"sed -n '/017/p' {sw_scripts}/settings"
+            proc = subprocess.run(vkbasalt1, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            vkbasalt_name1 = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(vkbasalt_name1) == str('017_VKBASALT'):
+                VKBASALT1.set_active(True)
+            else:
+                VKBASALT1.set_active(False)
+        vkbasalt1()
+
+        FSR1 = builder.get_object("FSR1")
+        FSR1.connect("notify::active", on_FSR1_activated)
+
+        def fsr1():
+            fsr1 = f"sed -n '/018/p' {sw_scripts}/settings"
+            proc = subprocess.run(fsr1, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            fsr_name1 = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(fsr_name1) == str('018_FSR'):
+                FSR1.set_active(True)
+            else:
+                FSR1.set_active(False)
+        fsr1()
+
+        GSTREAMER1 = builder.get_object("GSTREAMER1")
+        GSTREAMER1.connect("notify::active", on_GSTREAMER1_activated)
+
+        def gstreamer1():
+            gstreamer1 = f"sed -n '/019/p' {sw_scripts}/settings"
+            proc = subprocess.run(gstreamer1, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            gstreamer_name1 = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(gstreamer_name1) == str('019_GSTREAMER'):
+                GSTREAMER1.set_active(True)
+            else:
+                GSTREAMER1.set_active(False)
+        gstreamer1()
+
+        DRI_PRIME1 = builder.get_object("DRI_PRIME1")
+        DRI_PRIME1.connect("notify::active", on_DRI_PRIME1_activated)
+
+        def dri_prime1():
+            dri_prime1 = f"sed -n '/022/p' {sw_scripts}/settings"
+            proc = subprocess.run(dri_prime1, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            dri_prime_name1 = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(dri_prime_name1) == str('022_DRI_PRIME'):
+                DRI_PRIME1.set_active(True)
+            else:
+                DRI_PRIME1.set_active(False)
+        dri_prime1()
+
+######################   BUILDER_GET_SW_FULL_WINDOW   ##########################
+
+    sw_full_window = builder.get_object("sw_full_window")
+
+    sw_stack1 = builder.get_object("sw_stack1")
+    sw_stack1.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
+
+    btn_about = builder.get_object("btn_about1")
+    btn_about.connect("clicked", on_btn_about1)
+
+    about1 = builder.get_object("about_window1")
+
+    btn_hide1 = builder.get_object("btn_hide1")
+    btn_hide1.connect("clicked", on_btn_hide1)
+
+    btn_app_icon1 = builder.get_object("btn_app_icon1")
+    btn_app_icon1.connect("clicked", on_btn_app_icon1)
+
+    btn_protondb1 = builder.get_object("btn_protondb1")
+    btn_protondb1.connect("activate-link", on_btn_protondb1)
+
+    btn_winehq1 = builder.get_object("btn_winehq1")
+    btn_winehq1.connect("activate-link", on_btn_winehq1)
+
+    lp_entry1 = builder.get_object("lp_entry1")
+    lp_entry1.set_activates_default(True)
+
+    btn_lp_entry1 = builder.get_object("btn_lp_entry1")
+    btn_lp_entry1.connect("clicked", on_btn_lp_entry1)
+
+    do_entry1 = builder.get_object("do_entry1")
+    do_entry1.set_activates_default(True)
+
+    btn_do_entry1 = builder.get_object("btn_do_entry1")
+    btn_do_entry1.connect("clicked", on_btn_do_entry1)
+
+    btn_games_config1 = builder.get_object("btn_games_config1")
+    btn_games_config1.connect("clicked", on_btn_games_config1)
+
+    btn_back11 = builder.get_object("btn_back11")
+    btn_back11.connect("clicked", on_btn_back11)
+
+##############################   START_MODE_PARSE   ############################
+
+    def game_name():
+
+        cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\..*//g' | tail -n1"
+        proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        out_name = str(out).replace('b\'', '').replace('n\'', '').strip('\ ').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
+
+        print(out_name)
+
+        def desktop_wine():
+
+            desktop_name = f"{sw_shortcuts}/" + str(out_name) + '.desktop'
+            desktop_sw = f"{sw_path}" + 'StartWine.desktop'
+
+            try:
+                with open(desktop_name, 'r') as desktop:
+                    data = desktop.read().replace('=', '\n')
+                    data_split = data.split()
+                    lst = list()
+                    lst.append(data_split[-1])
+                    ls_wine = str(lst).strip('\'[').strip(']\'').replace('wine_', 'WINE:\n')
+                    print(ls_wine)
+            except IOError as e:
+                print("game desktop not found, set default value")
+                with open(desktop_sw, 'r') as desktop:
+                    data = desktop.read().replace('=', '\n')
+                    data_split = data.split()
+                    lst = list()
+                    lst.append(data_split[-1])
+                    ls_wine = str(lst).strip('\'[').strip(']\'').replace('wine_', 'WINE:\n')
+                    print(ls_wine)
+
+            def desktop_icon():
+
+                try:
+                    icon_path = open(f"{sw_icon}" + str(out_name) + '_x256.png')
+                except IOError as e:
+                    print("icon not found, set default icon")
+                    icon_path = f"{sw_icon}gui_icons/" + 'SW_Launcher_x256.png'
+                else:
+                    icon_path = f"{sw_icon}" + str(out_name) + '_x256.png'
+
+                def desktop_pfx():
+
+                    file_name = f"{sw_shortcuts}/" + str(out_name) + '.desktop'
+
+                    try:
+                        with open(file_name, 'r') as desktop:
+                            data = desktop.read().replace('=', '\n')
+                            data_split = data.split()
+                            lst = list()
+                            lst.append(data_split[5])
+                            ls_pfx = str(lst).strip('\'[').strip(']\'').replace('pfx_', 'pfx_:\n').replace('default_', 'pfx_\ndefault\n')
+                            n_pfx = ls_pfx.split()
+                            n_lst = list()
+                            n_lst.append(n_pfx[1])
+                            pfx = str(n_lst).strip('\'[').strip(']\'')
+                        print(pfx)
+                    except IOError as e:
+                        print("game desktop not found, set default value")
+                        game_icon = builder.get_object("game_icon1")
+                        game_icon.set_from_file(icon_path)
+                        game_label1 = builder.get_object("game_label4")
+                        game_label1.set_label('START MODE')
+                        game_label2 = builder.get_object("game_label5")
+                        game_label2.set_label("PREFIX:\ndefault")
+                        game_label3 = builder.get_object("game_label6")
+                        game_label3.set_label(str(ls_wine))
+                    else:
+                        game_icon = builder.get_object("game_icon1")
+                        game_icon.set_from_file(icon_path)
+                        game_label1 = builder.get_object("game_label4")
+                        game_label1.set_label('START MODE')
+                        game_label2 = builder.get_object("game_label5")
+                        game_label2.set_label('PREFIX:\n' + str(pfx))
+                        game_label3 = builder.get_object("game_label6")
+                        game_label3.set_label(str(ls_wine))
+                desktop_pfx()
+            desktop_icon()
+        desktop_wine()
+    game_name()
+
+################################################################################
+
+    btn_resize1 = builder.get_object("btn_resize1")
+    btn_resize1.connect("clicked", on_btn_resize1)
+
+    btn_hide1 = builder.get_object("btn_hide1")
+    btn_hide1.connect("clicked", on_btn_hide1)
+
+    btn_create_shortcut1 = builder.get_object("btn_create_shortcut1")
+    btn_create_shortcut1.connect("clicked", on_btn_create_shortcut1)
+
+    btn_winetools1 = builder.get_object("btn_winetools1")
+    btn_winetools1.connect("clicked", on_btn_winetools1)
+
+    btn_debug1 = builder.get_object("btn_debug1")
+    btn_debug1.connect("clicked", on_btn_debug1)
+
+    btn_dw1 = builder.get_object("btn_dw1")
+    btn_dw1.connect("clicked", on_btn_dw1)
+
+    btn_settings1 = builder.get_object("btn_settings1")
+    btn_settings1.connect("clicked", on_btn_settings1)
+
+    btn_stop = builder.get_object("btn_stop1")
+    btn_stop.connect("clicked", on_btn_stop)
+
+    sw_full_window.connect("destroy", Gtk.main_quit)
+    sw_full_window.show_all()
+    Gtk.main()
+
+###############################   ASCII   ######################################
+
+    def ASCII():
+
+        try:
+            with open(f"/usr/bin/jp2a"):
+                name_jpg = f"cd {sw_icon}gui_icons && ls -1 | grep *.jpg"
+                proc = subprocess.run(name_jpg, shell=True, stdout=subprocess.PIPE)
+                out = str(proc.stdout[0:])
+                out_name = str(out).strip('b\'').strip('\\n')
+                open(f"{sw_icon}gui_icons/{out_name}")
+        except (IOError, OSError) as e:
+            cmd_ascii = f"clear && cat {sw_path}data/img/gui_icons/ASCII\n"
+            terminal.feed_child(cmd_ascii.encode("utf-8"))
+            print("image not found, set default ASCII")
+        else:
+            name_jpg = f"cd {sw_icon}gui_icons && ls -1 | grep *.jpg"
+            proc = subprocess.run(name_jpg, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            out_name = str(out).strip('b\'').strip('\\n')
+            print(out_name)
+            cmd_ascii = f"clear && jp2a --colors {sw_icon}gui_icons/{out_name} && cat {sw_icon}gui_icons/ASCII_SW\n"
+            terminal.feed_child(cmd_ascii.encode("utf-8"))
+    ASCII()
+
+##########################   SW_COMPACT_MENU   #################################
+
+def on_btn_about(self):
+
+    sw_stack.set_visible_child_name("about_window")
+
+def on_btn_hide(self):
+
+    window.close()
+
+def on_btn_app_icon(self):
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    cmd = f"echo ADD_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd, shell=True)
+
+    cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
+def on_btn_protondb(self):
+
+    cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\..*//g' | tail -n1"
+    proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+    out = str(proc.stdout[0:])
+    out_name = str(out).replace('b\'', '').replace('n\'', '').strip('\ ').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
+
+    btn_protondb.set_uri("https://www.protondb.com/search?q=" + str(out_name))
+
+def on_btn_winehq(self):
+
+    cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\..*//g' | tail -n1"
+    proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+    out = str(proc.stdout[0:])
+    out_name = str(out).replace('b\'', '').replace('n\'', '').strip('\ ').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
+
+    btn_winehq.set_uri("https://www.winehq.org/search?q=" + str(out_name))
+
+def on_btn_back10(self):
+
+    sw_stack.set_visible_child_name("page0")
+
+def on_btn_lp_entry(self):
+
+    cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\..*//g' | tail -n1"
+    proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+    out = str(proc.stdout[0:])
+    out_name = str(out).replace('b\'', '').replace('n\'', '').strip('\ ').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
+
+    games_config_name = f"{sw_games_config}" + str(out_name)
+
+    try:
+        with open(games_config_name, 'r') as gc_name:
+            lp_text = lp_entry.get_text()
+            text = str(lp_text)
+            print(lp_text)
+            lp_cmd = f"sed -i 's/LAUNCH_PARAMETERS=\".*\"/LAUNCH_PARAMETERS=\"{text}\"/g' {games_config_name}"
+            subprocess.call(lp_cmd, shell=True)
+    except IOError as e:
+        print("game games_config not found, set default value")
+
+def on_btn_do_entry(self):
+
+    cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\..*//g' | tail -n1"
+    proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+    out = str(proc.stdout[0:])
+    out_name = str(out).replace('b\'', '').replace('n\'', '').strip('\ ').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
+
+    games_config_name = f"{sw_games_config}" + str(out_name)
+
+    try:
+        with open(games_config_name, 'r') as gc_name:
+            do_text = do_entry.get_text()
+            text = str(do_text)
+            print(do_text)
+            do_cmd = f"sed -i 's/WINEDLLOVERRIDES=\".*\"/WINEDLLOVERRIDES=\"{text}\"/g' {games_config_name}"
+            subprocess.call(do_cmd, shell=True)
+    except IOError as e:
+        print("game games_config not found, set default value")
+
+def on_btn_games_config(self):
+
+    cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\..*//g' | tail -n1"
+    proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+    out = str(proc.stdout[0:])
+    out_name = str(out).replace('b\'', '').replace('n\'', '').strip('\ ').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
+
+    games_config_name = f"{sw_games_config}" + str(out_name)
+
+    try:
+        with open(games_config_name, 'r') as gc_name:
+            xdg_open_cmd = f"xdg-open {games_config_name}"
+            subprocess.call(xdg_open_cmd, shell=True)
+    except IOError as e:
+        print("game games_config not found, set default value")
+
+###############################   START_MODES   ################################
+
+def on_btn_dxvk(self):
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    cmd = f"echo RUN_DXVK '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd, shell=True)
+
+    cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
+    Gtk.main_quit()
+
+def on_btn_vkd3d(self):
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    cmd = f"echo RUN_VKD3D '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd, shell=True)
+
+    cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
+    Gtk.main_quit()
+
+def on_btn_opengl(self):
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    cmd = f"echo RUN_OPENGL '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd, shell=True)
+
+    cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
+    Gtk.main_quit()
+
+#############################   SHORTCUTS   ####################################
+
+def on_btn_shortcuts(self):
+
+    window.close()
+    cmd = f"xdg-open {sw_shortcuts}"
+    subprocess.call(cmd, shell=True)
+
+############################   CREATE_SHORTCUT   ###############################
+
+def on_btn_create_shortcut(self):
+
+    sw_stack.set_visible_child_name("create_shortcut_window")
+
+def on_btn_cs_staging(self):
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    cmd_set = f"echo export SET='\"''wine_staging''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd_set, shell=True)
+
+    cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd, shell=True)
+
+    cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
+    window.close()
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+    cmd = f"{sw_scripts}start {path_game}"
+    subprocess.Popen(cmd, shell=True)
+
+def on_btn_cs_steam(self):
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    cmd_set = f"echo export SET='\"''wine_steam_proton''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd_set, shell=True)
+
+    cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd, shell=True)
+
+    cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
+    window.close()
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+    cmd = f"{sw_scripts}start {path_game}"
+    subprocess.Popen(cmd, shell=True)
+
+def on_btn_cs_ge(self):
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    cmd_set = f"echo export SET='\"''wine_proton_ge''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd_set, shell=True)
+
+    cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd, shell=True)
+
+    cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
+    window.close()
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+    cmd = f"{sw_scripts}start {path_game}"
+    subprocess.Popen(cmd, shell=True)
+
+def on_btn_cs_lutris(self):
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    cmd_set = f"echo export SET='\"''wine_lutris''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd_set, shell=True)
+
+    cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd, shell=True)
+
+    cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
+    window.close()
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+    cmd = f"{sw_scripts}start {path_game}"
+    subprocess.Popen(cmd, shell=True)
+
+def on_btn_cs_lutris_ge(self):
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    cmd_set = f"echo export SET='\"''wine_lutris_ge''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd_set, shell=True)
+
+    cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd, shell=True)
+
+    cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
+    window.close()
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+    cmd = f"{sw_scripts}start {path_game}"
+    subprocess.Popen(cmd, shell=True)
+
+def on_btn_cs_custom(self):
+
+    def name_cs_custom_1():
+
+        cmd = f"cd {sw_wine_custom} && echo `ls -1 | tail -n1 | head -n1`"
+        proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        out_name = str(out).strip('b\'').strip('\\n')
+        print(out_name)
+        btn_cs_custom_1.set_label(label = str(out_name))
+    name_cs_custom_1()
+
+    def name_cs_custom_2():
+
+        cmd = f"cd {sw_wine_custom} && echo `ls -1 | tail -n2 | head -n1`"
+        proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        out_name = str(out).strip('b\'').strip('\\n')
+        print(out_name)
+        btn_cs_custom_2.set_label(label = str(out_name))
+    name_cs_custom_2()
+
+    def name_cs_custom_3():
+
+        cmd = f"cd {sw_wine_custom} && echo `ls -1 | tail -n3 | head -n1`"
+        proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        out_name = str(out).strip('b\'').strip('\\n')
+        print(out_name)
+        btn_cs_custom_3.set_label(label = str(out_name))
+    name_cs_custom_3()
+
+    def name_cs_custom_4():
+
+        cmd = f"cd {sw_wine_custom} && echo `ls -1 | tail -n4 | head -n1`"
+        proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        out_name = str(out).strip('b\'').strip('\\n')
+        print(out_name)
+        btn_cs_custom_4.set_label(label = str(out_name))
+    name_cs_custom_4()
+
+    def name_cs_custom_5():
+
+        cmd = f"cd {sw_wine_custom} && echo `ls -1 | tail -n5 | head -n1`"
+        proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        out_name = str(out).strip('b\'').strip('\\n')
+        print(out_name)
+        btn_cs_custom_5.set_label(label = str(out_name))
+    name_cs_custom_5()
+
+def on_btn_cs_custom_1(self):
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    cmd_ls = f"cd {sw_wine_custom} && echo `ls -1 | tail -n1 | head -n1`"
+    proc = subprocess.run(cmd_ls, shell=True, stdout=subprocess.PIPE)
+    out = str(proc.stdout[0:])
+    out_name = str(out).strip('b\'').strip('\\n')
+
+    cmd_set = f"echo export SET='\"''{out_name}''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd_set, shell=True)
+
+    cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd, shell=True)
+
+    cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
+    window.close()
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+    cmd = f"{sw_scripts}start {path_game}"
+    subprocess.Popen(cmd, shell=True)
+
+def on_btn_cs_custom_2(self):
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    cmd_ls = f"cd {sw_wine_custom} && echo `ls -1 | tail -n2 | head -n1`"
+    proc = subprocess.run(cmd_ls, shell=True, stdout=subprocess.PIPE)
+    out = str(proc.stdout[0:])
+    out_name = str(out).strip('b\'').strip('\\n')
+
+    cmd_set = f"echo export SET='\"''{out_name}''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd_set, shell=True)
+
+    cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd, shell=True)
+
+    cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
+    window.close()
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+    cmd = f"{sw_scripts}start {path_game}"
+    subprocess.Popen(cmd, shell=True)
+
+def on_btn_cs_custom_3(self):
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    cmd_ls = f"cd {sw_wine_custom} && echo `ls -1 | tail -n3 | head -n1`"
+    proc = subprocess.run(cmd_ls, shell=True, stdout=subprocess.PIPE)
+    out = str(proc.stdout[0:])
+    out_name = str(out).strip('b\'').strip('\\n')
+
+    cmd_set = f"echo export SET='\"''{out_name}''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd_set, shell=True)
+
+    cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd, shell=True)
+
+    cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
+    window.close()
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+    cmd = f"{sw_scripts}start {path_game}"
+    subprocess.Popen(cmd, shell=True)
+
+def on_btn_cs_custom_4(self):
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    cmd_ls = f"cd {sw_wine_custom} && echo `ls -1 | tail -n4 | head -n1`"
+    proc = subprocess.run(cmd_ls, shell=True, stdout=subprocess.PIPE)
+    out = str(proc.stdout[0:])
+    out_name = str(out).strip('b\'').strip('\\n')
+
+    cmd_set = f"echo export SET='\"''{out_name}''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd_set, shell=True)
+
+    cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd, shell=True)
+
+    cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
+    window.close()
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+    cmd = f"{sw_scripts}start {path_game}"
+    subprocess.Popen(cmd, shell=True)
+
+def on_btn_cs_custom_5(self):
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    cmd_ls = f"cd {sw_wine_custom} && echo `ls -1 | tail -n5 | head -n1`"
+    proc = subprocess.run(cmd_ls, shell=True, stdout=subprocess.PIPE)
+    out = str(proc.stdout[0:])
+    out_name = str(out).strip('b\'').strip('\\n')
+
+    cmd_set = f"echo export SET='\"''{out_name}''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd_set, shell=True)
+
+    cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd, shell=True)
+
+    cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
+    window.close()
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+    cmd = f"{sw_scripts}start {path_game}"
+    subprocess.Popen(cmd, shell=True)
+
+############################   WINE_TOOLS   ####################################
+
+def on_btn_winetools(self):
+
+    sw_stack.set_visible_child_name("winetools_window")
+
+def on_btn_winecfg(self):
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    cmd = f"echo WINECFG '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd, shell=True)
+
+    cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
+def on_btn_wineconsole(self):
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    cmd = f"echo WINECONSOLE '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd, shell=True)
+
+    cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
+def on_btn_regedit(self):
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    cmd = f"echo REGEDIT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd, shell=True)
+
+    cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
+def on_btn_file_explorer(self):
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    cmd = f"echo WINEFILE '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd, shell=True)
+
+    cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
+def on_btn_uninstaller(self):
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    cmd = f"echo UNINSTALLER '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd, shell=True)
+
+    cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
+def on_btn_winetricks(self):
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    cmd = f"echo SW_WINETRICKS '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd, shell=True)
+
+    cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
+def on_btn_install_libraries(self):
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    cmd = f"echo INSTALL_RL '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd, shell=True)
+
+    cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
+###############################  PREFIX_TOOLS  #################################
+
+def on_btn_prefix_tools(self):
+
+    sw_stack.set_visible_child_name("prefix_tools_window")
+
+def on_btn_remove_prefix(self):
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    cmd = f"echo REMOVE_PFX '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd, shell=True)
+
+    cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd1, shell=True)
+
+def on_btn_reinstall_prefix(self):
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    cmd = f"echo REINSTALL_PFX '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd, shell=True)
+
+    cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd1, shell=True)
+
+def on_btn_pfx_backup(self):
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    cmd = f"echo SW_PFX_BACKUP '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd, shell=True)
+
+    cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd1, shell=True)
+
+def on_btn_pfx_restore(self):
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    cmd = f"echo SW_PFX_RESTORE '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd, shell=True)
+
+    cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd1, shell=True)
+
+def on_btn_pfx_full_backup(self):
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    cmd = f"echo SW_PFX_FULL_BACKUP '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd, shell=True)
+
+    cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd1, shell=True)
+
+def on_btn_pfx_full_restore(self):
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    cmd = f"echo SW_PFX_FULL_RESTORE '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd, shell=True)
+
+    cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd1, shell=True)
+
+###############################   DEBUG_VTE   ##################################
+
+def on_btn_debug(self):
+
+    path = str(sys.argv[1:])
+    path_game = str(path).strip('[').strip(']')
+
+    class TheWindow(Gtk.Window):
+        def __init__(self):
+            Gtk.Window.__init__(self, title="StartWine")
+            self.set_default_size(800, 450)
+            self.terminal = Vte.Terminal()
+            self.terminal.spawn_async(
+                Vte.PtyFlags.DEFAULT,
+                os.environ['HOME'],
+                ['/bin/bash'],
+                None,
+                GLib.SpawnFlags.DEFAULT,
+                None, None,
+                -1,
+                None,
+                None,
+                None,
+            )
+            spacer = Gtk.Label.new("               ")
+
+            self.button = Gtk.Button(label="DEBUG IN DXVK")
+            self.button.props.valign = Gtk.Align.CENTER
+
+            self.button2 = Gtk.Button(label="DEBUG IN VKD3D")
+            self.button2.props.valign = Gtk.Align.CENTER
+
+            self.button3 = Gtk.Button(label="DEBUG IN OPENGL")
+            self.button3.props.valign = Gtk.Align.CENTER
+
+            self.button.connect("clicked", self.InputToTerm)
+
+            self.button2.connect("clicked", self.InputToTerm2)
+
+            self.button3.connect("clicked", self.InputToTerm3)
+
+            box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+            box1 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+            box2 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
+            box2.props.halign = Gtk.Align.CENTER
+            box2.pack_start(self.button, False, True, 0)
+            box2.pack_start(self.button2, False, True, 0)
+            box2.pack_start(self.button3, False, True, 0)
+            box.pack_start(box1, False, True, 0)
+            box.pack_start(box2, False, True, 0)
+            scroller = Gtk.ScrolledWindow()
+            scroller.set_hexpand(True)
+            scroller.set_vexpand(True)
+            scroller.add(self.terminal)
+            box1.pack_start(scroller, False, True, 2)
+            self.add(box)
+
+        def InputToTerm(self, clicker):
+
+            path = str(sys.argv[1:])
+            path_game = str(path).strip('[').strip(']')
+
+            cmd = f"echo DEBUG_DXVK '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+            self.terminal.feed_child(cmd.encode("utf-8"))
+
+            cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
+            self.terminal.feed_child(cmd1.encode("utf-8"))
+
+        def InputToTerm2(self, clicker):
+
+            path = str(sys.argv[1:])
+            path_game = str(path).strip('[').strip(']')
+
+            cmd = f"echo DEBUG_VKD3D '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+            self.terminal.feed_child(cmd.encode("utf-8"))
+
+            cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
+            self.terminal.feed_child(cmd1.encode("utf-8"))
+
+        def InputToTerm3(self, clicker):
+
+            path = str(sys.argv[1:])
+            path_game = str(path).strip('[').strip(']')
+
+            cmd = f"echo DEBUG_OPENGL '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+            self.terminal.feed_child(cmd.encode("utf-8"))
+
+            cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
+            self.terminal.feed_child(cmd1.encode("utf-8"))
+
+    win = TheWindow()
+    win.connect("delete-event", Gtk.main_quit)
+    win.show_all()
+    Gtk.main()
+
+###########################   DOWNLOAD_WINE   ##################################
+
+def on_btn_dw(self, widget=False, configuration=dict):
+
+    sw_stack.set_visible_child_name("download_wine_window")
+
+def on_btn_wine_1(self):
+
+    cmd = f"echo WINE_1 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh"
+    subprocess.call(cmd, shell=True)
+
+    cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd1, shell=True)
+
+def on_btn_wine_2(self):
+
+    cmd = f"echo WINE_2 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh"
+    subprocess.call(cmd, shell=True)
+
+    cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd1, shell=True)
+
+def on_btn_wine_3(self):
+
+    cmd = f"echo WINE_3 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh"
+    subprocess.call(cmd, shell=True)
+
+    cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd1, shell=True)
+
+def on_btn_wine_4(self):
+
+    cmd = f"echo WINE_4 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh"
+    subprocess.call(cmd, shell=True)
+
+    cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd1, shell=True)
+
+def on_btn_wine_5(self):
+
+    cmd = f"echo WINE_5 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh"
+    subprocess.call(cmd, shell=True)
+
+    cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    subprocess.call(cmd1, shell=True)
+
+def on_btn_wine_6(self):
+
+    cmd = f"xdg-open {sw_path}data/wine/wine_custom"
+    subprocess.Popen(cmd, shell=True)
+
+###############################   SETTINGS   ###################################
+
+def on_btn_settings(self):
+
+    sw_stack.set_visible_child_name("settings_window")
+
+############################   BUTTON_STATE_ON_OFF   ###########################
+
+    def on_dxvk_ge_activated(dxvk_ge):
+
+        if dxvk_ge.get_active():
+            state = "on"
+            command = f"sed -i '20 s/.*/020_DXVK_GE/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/020/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_vkd3d_ge_activated(vkd3d_ge):
+
+        if vkd3d_ge.get_active():
+            state = "on"
+            command = f"sed -i '21 s/.*/021_VKD3D_GE/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/021/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_dxvk_native_activated(dxvk_native):
+
+        if dxvk_native.get_active():
+            state = "on"
+            command = f"sed -i '20 s/.*/020_DXVK_NATIVE/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/020/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_vkd3d_native_activated(vkd3d_native):
+
+        if vkd3d_native.get_active():
+            state = "on"
+            command = f"sed -i '21 s/.*/021_VKD3D_NATIVE/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/021/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_DLSYM_activated(DLSYM, gparam):
+
+        if DLSYM.get_active():
+            state = "on"
+            command = f"sed -i '1 s/.*/001_MANGOHUD_DLSYM/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/001/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_MHUD_activated(MHUD, gparam):
+
+        if MHUD.get_active():
+            state = "on"
+            command = f"sed -i '2 s/.*/002_MANGOHUD/' {sw_scripts}settings"
+            subprocess.run(command, shell=True)
+            CompletedProcess(command, returncode=0)
+        else:
+            state = "off"
+            command = f"sed -i '/002/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+            CompletedProcess(command, returncode=0)
+
+    def on_GAMEMODE_activated(GAMEMODE, gparam):
+
+        if GAMEMODE.get_active():
+            state = "on"
+            command = f"sed -i '3 s/.*/003_GAMEMODE/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/003/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_RUNTIME_activated(RUNTIME, gparam):
+
+        if RUNTIME.get_active():
+            state = "on"
+            command = f"sed -i '4 s/.*/004_RUNTIME/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/004/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_RESTORE_RESOLUTION_activated(RESTORE_RESOLUTION, gparam):
+
+        if RESTORE_RESOLUTION.get_active():
+            state = "on"
+            command = f"sed -i '5 s/.*/005_RESTORE_RESOLUTION/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/005/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_VIRTUAL_DESKTOP_activated(VIRTUAL_DESKTOP, gparam):
+
+        if VIRTUAL_DESKTOP.get_active():
+            state = "on"
+            command = f"sed -i '6 s/.*/006_VIRTUAL_DESKTOP/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/006/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_FSYNC_activated(FSYNC, gparam):
+
+        if FSYNC.get_active():
+            state = "on"
+            command = f"sed -i '7 s/.*/007_FSYNC/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/007/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_ESYNC_activated(ESYNC, gparam):
+
+        if ESYNC.get_active():
+            state = "on"
+            command = f"sed -i '8 s/.*/008_ESYNC/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/008/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_OLD_GL_STRING_activated(OLD_GL_STRING, gparam):
+
+        if OLD_GL_STRING.get_active():
+            state = "on"
+            command = f"sed -i '9 s/.*/009_OLD_GL_STRING/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/009/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_NVAPI_DISABLE_activated(NVAPI_DISABLE, gparam):
+
+        if NVAPI_DISABLE.get_active():
+            state = "on"
+            command = f"sed -i '10 s/.*/010_NVAPI_DISABLE/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/010/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_WINEDBG_DISABLE_activated(WINEDBG_DISABLE, gparam):
+
+        if WINEDBG_DISABLE.get_active():
+            state = "on"
+            command = f"sed -i '11 s/.*/011_WINEDBG_DISABLE/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/011/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_LARGE_ADDRESS_AWARE_activated(LARGE_ADDRESS_AWARE, gparam):
+
+        if LARGE_ADDRESS_AWARE.get_active():
+            state = "on"
+            command = f"sed -i '12 s/.*/012_LARGE_ADDRESS_AWARE/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/012/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_STAGING_WRITECOPY_activated(STAGING_WRITECOPY, gparam):
+
+        if STAGING_WRITECOPY.get_active():
+            state = "on"
+            command = f"sed -i '13 s/.*/013_STAGING_WRITECOPY/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/013/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_STAGING_SHARED_MEMORY_activated(STAGING_SHARED_MEMORY, gparam):
+
+        if STAGING_SHARED_MEMORY.get_active():
+            state = "on"
+            command = f"sed -i '14 s/.*/014_STAGING_SHARED_MEMORY/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/014/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_DXVK_HUD_activated(DXVK_HUD, gparam):
+
+        if DXVK_HUD.get_active():
+            state = "on"
+            command = f"sed -i '15 s/.*/015_DXVK_HUD/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/015/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_DXVK_ASYNC_activated(DXVK_ASYNC, gparam):
+
+        if DXVK_ASYNC.get_active():
+            state = "on"
+            command = f"sed -i '16 s/.*/016_DXVK_ASYNC/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/016/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_VKBASALT_activated(VKBASALT, gparam):
+
+        if VKBASALT.get_active():
+            state = "on"
+            command = f"sed -i '17 s/.*/017_VKBASALT/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/017/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_FSR_activated(FSR, gparam):
+
+        if FSR.get_active():
+            state = "on"
+            command = f"sed -i '18 s/.*/018_FSR/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/018/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_GSTREAMER_activated(GSTREAMER, gparam):
+
+        if GSTREAMER.get_active():
+            state = "on"
+            command = f"sed -i '19 s/.*/019_GSTREAMER/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/019/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_DRI_PRIME_activated(DRI_PRIME, gparam):
+
+        if DRI_PRIME.get_active():
+            state = "on"
+            command = f"sed -i '22 s/.*/022_DRI_PRIME/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/022/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+#############################   SWITCH BUTTON   ################################
+
+    dxvk_ge = builder.get_object("dxvk_ge")
+    dxvk_ge.connect("toggled", on_dxvk_ge_activated)
+
+    def dxvk_ge_active():
+        dxvk_cmd = f"sed -n '/020/p' {sw_scripts}/settings"
+        proc = subprocess.run(dxvk_cmd, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        dxvk_cmd_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(dxvk_cmd_name) == str('020_DXVK_GE'):
+            dxvk_ge.set_active(True)
+        else:
+            dxvk_ge.set_active(False)
+    dxvk_ge_active()
+
+    vkd3d_ge = builder.get_object("vkd3d_ge")
+    vkd3d_ge.connect("toggled", on_vkd3d_ge_activated)
+
+    def vkd3d_ge_active():
+        vkd3d_cmd = f"sed -n '/021/p' {sw_scripts}/settings"
+        proc = subprocess.run(vkd3d_cmd, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        vkd3d_cmd_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(vkd3d_cmd_name) == str('021_VKD3D_GE'):
+            vkd3d_ge.set_active(True)
+        else:
+            vkd3d_ge.set_active(False)
+    vkd3d_ge_active()
+
+    dxvk_native = builder.get_object("dxvk_native")
+    dxvk_native.connect("toggled", on_dxvk_native_activated)
+
+    def dxvk_native_active():
+        dxvk_cmd = f"sed -n '/001/p' {sw_scripts}/settings"
+        proc = subprocess.run(dxvk_cmd, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        dxvk_cmd_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(dxvk_cmd_name) == str('020_DXVK_NATIVE'):
+            dxvk_native.set_active(True)
+        else:
+            dxvk_native.set_active(False)
+    dxvk_native_active()
+
+    vkd3d_native = builder.get_object("vkd3d_native")
+    vkd3d_native.connect("toggled", on_vkd3d_native_activated)
+
+    def vkd3d_native_active():
+        vkd3d_cmd = f"sed -n '/001/p' {sw_scripts}/settings"
+        proc = subprocess.run(vkd3d_cmd, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        vkd3d_cmd_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(vkd3d_cmd_name) == str('021_VKD3D_NATIVE'):
+            vkd3d_native.set_active(True)
+        else:
+            vkd3d_native.set_active(False)
+    vkd3d_native_active()
+
+    DLSYM = builder.get_object("DLSYM")
+    DLSYM.connect("notify::active", on_DLSYM_activated)
+
+    def dlsym():
+        dlsym = f"sed -n '/001/p' {sw_scripts}/settings"
+        proc = subprocess.run(dlsym, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        dlsym_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(dlsym_name) == str('001_MANGOHUD_DLSYM'):
+            DLSYM.set_active(True)
+        else:
+            DLSYM.set_active(False)
+    dlsym()
+
+    MHUD = builder.get_object("MHUD")
+    MHUD.connect("notify::active", on_MHUD_activated)
+
+    def mhud():
+        mhud = f"sed -n '/002/p' {sw_scripts}/settings"
+        proc = subprocess.run(mhud, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        mhud_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(mhud_name) == str('002_MANGOHUD'):
+            MHUD.set_active(True)
+        else:
+            MHUD.set_active(False)
+    mhud()
+
+    GAMEMODE = builder.get_object("GAMEMODE")
+    GAMEMODE.connect("notify::active", on_GAMEMODE_activated)
+
+    def gamemode():
+        gamemode = f"sed -n '/003/p' {sw_scripts}/settings"
+        proc = subprocess.run(gamemode, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        gamemode_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(gamemode_name) == str('003_GAMEMODE'):
+            GAMEMODE.set_active(True)
+        else:
+            GAMEMODE.set_active(False)
+    gamemode()
+
+    RUNTIME = builder.get_object("RUNTIME")
+    RUNTIME.connect("notify::active", on_RUNTIME_activated)
+
+    def runtime():
+        runtime = f"sed -n '/004/p' {sw_scripts}/settings"
+        proc = subprocess.run(runtime, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        runtime_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(runtime_name) == str('004_RUNTIME'):
+            RUNTIME.set_active(True)
+        else:
+            RUNTIME.set_active(False)
+    runtime()
+
+    RESTORE_RESOLUTION = builder.get_object("RESTORE_RESOLUTION")
+    RESTORE_RESOLUTION.connect("notify::active", on_RESTORE_RESOLUTION_activated)
+
+    def resres():
+        resres = f"sed -n '/005/p' {sw_scripts}/settings"
+        proc = subprocess.run(resres, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        resres_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(resres_name) == str('005_RESTORE_RESOLUTION'):
+            RESTORE_RESOLUTION.set_active(True)
+        else:
+            RESTORE_RESOLUTION.set_active(False)
+    resres()
+
+    VIRTUAL_DESKTOP = builder.get_object("VIRTUAL_DESKTOP")
+    VIRTUAL_DESKTOP.connect("notify::active", on_VIRTUAL_DESKTOP_activated)
+
+    def virdesk():
+        virdesk = f"sed -n '/006/p' {sw_scripts}/settings"
+        proc = subprocess.run(virdesk, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        virdesk_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(virdesk_name) == str('006_VIRTUAL_DESKTOP'):
+            VIRTUAL_DESKTOP.set_active(True)
+        else:
+            VIRTUAL_DESKTOP.set_active(False)
+    virdesk()
+
+    FSYNC = builder.get_object("FSYNC")
+    FSYNC.connect("notify::active", on_FSYNC_activated)
+
+    def fsync():
+        fsync = f"sed -n '/007/p' {sw_scripts}/settings"
+        proc = subprocess.run(fsync, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        fsync_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(fsync_name) == str('007_FSYNC'):
+            FSYNC.set_active(True)
+        else:
+            FSYNC.set_active(False)
+    fsync()
+
+    ESYNC = builder.get_object("ESYNC")
+    ESYNC.connect("notify::active", on_ESYNC_activated)
+
+    def esync():
+        esync = f"sed -n '/008/p' {sw_scripts}/settings"
+        proc = subprocess.run(esync, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        esync_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(esync_name) == str('008_ESYNC'):
+            ESYNC.set_active(True)
+        else:
+            ESYNC.set_active(False)
+    esync()
+
+    OLD_GL_STRING = builder.get_object("OLD_GL_STRING")
+    OLD_GL_STRING.connect("notify::active", on_OLD_GL_STRING_activated)
+
+    def glstring():
+        glstring = f"sed -n '/009/p' {sw_scripts}/settings"
+        proc = subprocess.run(glstring, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        glstring_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(glstring_name) == str('009_OLD_GL_STRING'):
+            OLD_GL_STRING.set_active(True)
+        else:
+            OLD_GL_STRING.set_active(False)
+    glstring()
+
+    NVAPI_DISABLE = builder.get_object("NVAPI_DISABLE")
+    NVAPI_DISABLE.connect("notify::active", on_NVAPI_DISABLE_activated)
+
+    def nvapi():
+        nvapi = f"sed -n '/010/p' {sw_scripts}/settings"
+        proc = subprocess.run(nvapi, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        nvapi_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(nvapi_name) == str('010_NVAPI_DISABLE'):
+            NVAPI_DISABLE.set_active(True)
+        else:
+            NVAPI_DISABLE.set_active(False)
+    nvapi()
+
+    WINEDBG_DISABLE = builder.get_object("WINEDBG_DISABLE")
+    WINEDBG_DISABLE.connect("notify::active", on_WINEDBG_DISABLE_activated)
+
+    def winedbg():
+        winedbg = f"sed -n '/011/p' {sw_scripts}/settings"
+        proc = subprocess.run(winedbg, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        winedbg_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(winedbg_name) == str('011_WINEDBG_DISABLE'):
+            WINEDBG_DISABLE.set_active(True)
+        else:
+            WINEDBG_DISABLE.set_active(False)
+    winedbg()
+
+    LARGE_ADDRESS_AWARE = builder.get_object("LARGE_ADDRESS_AWARE")
+    LARGE_ADDRESS_AWARE.connect("notify::active", on_LARGE_ADDRESS_AWARE_activated)
+
+    def large_aa():
+        large_aa = f"sed -n '/012/p' {sw_scripts}/settings"
+        proc = subprocess.run(large_aa, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        large_aa_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(large_aa_name) == str('012_LARGE_ADDRESS_AWARE'):
+            LARGE_ADDRESS_AWARE.set_active(True)
+        else:
+            LARGE_ADDRESS_AWARE.set_active(False)
+    large_aa()
+
+    STAGING_WRITECOPY = builder.get_object("STAGING_WRITECOPY")
+    STAGING_WRITECOPY.connect("notify::active", on_STAGING_WRITECOPY_activated)
+
+    def staging_w():
+        staging_w = f"sed -n '/013/p' {sw_scripts}/settings"
+        proc = subprocess.run(staging_w, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        staging_w_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(staging_w_name) == str('013_STAGING_WRITECOPY'):
+            STAGING_WRITECOPY.set_active(True)
+        else:
+            STAGING_WRITECOPY.set_active(False)
+    staging_w()
+
+    STAGING_SHARED_MEMORY = builder.get_object("STAGING_SHARED_MEMORY")
+    STAGING_SHARED_MEMORY.connect("notify::active", on_STAGING_SHARED_MEMORY_activated)
+
+    def staging_s():
+        staging_s = f"sed -n '/014/p' {sw_scripts}/settings"
+        proc = subprocess.run(staging_s, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        staging_s_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(staging_s_name) == str('014_STAGING_SHARED_MEMORY'):
+            STAGING_SHARED_MEMORY.set_active(True)
+        else:
+            STAGING_SHARED_MEMORY.set_active(False)
+    staging_s()
+
+    DXVK_HUD = builder.get_object("DXVK_HUD")
+    DXVK_HUD.connect("notify::active", on_DXVK_HUD_activated)
+
+    def dxvk_hud():
+        dxvk_hud = f"sed -n '/015/p' {sw_scripts}/settings"
+        proc = subprocess.run(dxvk_hud, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        dxvk_hud_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(dxvk_hud_name) == str('015_DXVK_HUD'):
+            DXVK_HUD.set_active(True)
+        else:
+            DXVK_HUD.set_active(False)
+    dxvk_hud()
+
+    DXVK_ASYNC = builder.get_object("DXVK_ASYNC")
+    DXVK_ASYNC.connect("notify::active", on_DXVK_ASYNC_activated)
+
+    def dxvk_async():
+        dxvk_async = f"sed -n '/016/p' {sw_scripts}/settings"
+        proc = subprocess.run(dxvk_async, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        dxvk_async_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(dxvk_async_name) == str('016_DXVK_ASYNC'):
+            DXVK_ASYNC.set_active(True)
+        else:
+            DXVK_ASYNC.set_active(False)
+    dxvk_async()
+
+    VKBASALT = builder.get_object("VKBASALT")
+    VKBASALT.connect("notify::active", on_VKBASALT_activated)
+
+    def vkbasalt():
+        vkbasalt = f"sed -n '/017/p' {sw_scripts}/settings"
+        proc = subprocess.run(vkbasalt, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        vkbasalt_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(vkbasalt_name) == str('017_VKBASALT'):
+            VKBASALT.set_active(True)
+        else:
+            VKBASALT.set_active(False)
+    vkbasalt()
+
+    FSR = builder.get_object("FSR")
+    FSR.connect("notify::active", on_FSR_activated)
+
+    def fsr():
+        fsr = f"sed -n '/018/p' {sw_scripts}/settings"
+        proc = subprocess.run(fsr, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        fsr_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(fsr_name) == str('018_FSR'):
+            FSR.set_active(True)
+        else:
+            FSR.set_active(False)
+    fsr()
+
+    GSTREAMER = builder.get_object("GSTREAMER")
+    GSTREAMER.connect("notify::active", on_GSTREAMER_activated)
+
+    def gstreamer():
+        gstreamer = f"sed -n '/019/p' {sw_scripts}/settings"
+        proc = subprocess.run(gstreamer, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        gstreamer_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(gstreamer_name) == str('019_GSTREAMER'):
+            GSTREAMER.set_active(True)
+        else:
+            GSTREAMER.set_active(False)
+    gstreamer()
+
+    DRI_PRIME = builder.get_object("DRI_PRIME")
+    DRI_PRIME.connect("notify::active", on_DRI_PRIME_activated)
+
+    def dri_prime():
+        dri_prime = f"sed -n '/022/p' {sw_scripts}/settings"
+        proc = subprocess.run(dri_prime, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        dri_prime_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(dri_prime_name) == str('022_DRI_PRIME'):
+            DRI_PRIME.set_active(True)
+        else:
+            DRI_PRIME.set_active(False)
+    dri_prime()
+
+def on_btn_back8(self):
+
+    sw_stack.set_visible_child_name("page0")
+
+###########################   KILL PROCESS   ###################################
+
+def on_btn_stop(self):
+
+    cmd = f"{sw_scripts}stop"
+    subprocess.call(cmd, shell=True)
+
+###########################   GO BACK   ########################################
+
+def on_btn_back(self):
+
+    sw_stack.set_visible_child_name("page0")
+
+def on_btn_back1(self):
+
+    sw_stack.set_visible_child_name("page0")
+
+def on_btn_back2(self):
+
+    sw_stack1.set_visible_child_name("page0")
+
+def on_btn_back5(self):
+
+    sw_stack.set_visible_child_name("page0")
+
+def on_btn_back12(self):
+
+    sw_stack.set_visible_child_name("page0")
+
+#######################   BUILDER GET SW COMPACT WINDOW   ######################
+
+builder = Gtk.Builder()
+builder.add_from_file(f"{sw_scripts}sw_menu.glade")
+
+window = builder.get_object("StartWine")
+
+sw_stack = builder.get_object("sw_stack")
+sw_stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
+
+sw_stack1 = builder.get_object("sw_stack1")
+sw_stack1.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
+
+btn_resize = builder.get_object("btn_resize")
+btn_resize.connect("clicked", on_btn_resize)
+
+btn_about = builder.get_object("btn_about")
+btn_about.connect("clicked", on_btn_about)
+
+about = builder.get_object("about_window")
+
+btn_hide = builder.get_object("btn_hide")
+btn_hide.connect("clicked", on_btn_hide)
+
+btn_app_icon = builder.get_object("btn_app_icon")
+btn_app_icon.connect("clicked", on_btn_app_icon)
+
+btn_protondb = builder.get_object("btn_protondb")
+btn_protondb.connect("activate-link", on_btn_protondb)
+
+btn_winehq = builder.get_object("btn_winehq")
+btn_winehq.connect("activate-link", on_btn_winehq)
+
+lp_entry = builder.get_object("lp_entry")
+lp_entry.set_activates_default(True)
+
+btn_lp_entry = builder.get_object("btn_lp_entry")
+btn_lp_entry.connect("clicked", on_btn_lp_entry)
+
+do_entry = builder.get_object("do_entry")
+do_entry.set_activates_default(True)
+
+btn_do_entry = builder.get_object("btn_do_entry")
+btn_do_entry.connect("clicked", on_btn_do_entry)
+
+btn_games_config = builder.get_object("btn_games_config")
+btn_games_config.connect("clicked", on_btn_games_config)
+
+##############################   START_MODE_PARSE   ############################
+
+def game_name():
+
+    cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\..*//g' | tail -n1"
+    proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+    out = str(proc.stdout[0:])
+    out_name = str(out).replace('b\'', '').replace('n\'', '').strip('\ ').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
+
+    print(out_name)
+
+    def desktop_wine():
+
+        desktop_name = f"{sw_shortcuts}/" + str(out_name) + '.desktop'
+        desktop_sw = f"{sw_path}" + 'StartWine.desktop'
+
+        try:
+            with open(desktop_name, 'r') as desktop:
+                data = desktop.read().replace('=', '\n')
+                data_split = data.split()
+                lst = list()
+                lst.append(data_split[-1])
+                ls_wine = str(lst).strip('\'[').strip(']\'').replace('wine_', 'WINE:\n')
+                print(ls_wine)
+        except IOError as e:
+            print("game desktop not found, set default value")
+            with open(desktop_sw, 'r') as desktop:
+                data = desktop.read().replace('=', '\n')
+                data_split = data.split()
+                lst = list()
+                lst.append(data_split[-1])
+                ls_wine = str(lst).strip('\'[').strip(']\'').replace('wine_', 'WINE:\n')
+                print(ls_wine)
+
+        def desktop_icon():
+
+            try:
+                icon_path = open(f"{sw_icon}" + str(out_name) + '_x96.png')
+            except IOError as e:
+                print("icon not found, set default icon")
+                icon_path = f"{sw_icon}gui_icons/" + 'SW_Launcher_x96.png'
+            else:
+                icon_path = f"{sw_icon}" + str(out_name) + '_x96.png'
+
+            def desktop_pfx():
+
+                file_name = f"{sw_shortcuts}/" + str(out_name) + '.desktop'
+
+                try:
+                    with open(file_name, 'r') as desktop:
+                        data = desktop.read().replace('=', '\n')
+                        data_split = data.split()
+                        lst = list()
+                        lst.append(data_split[5])
+                        ls_pfx = str(lst).strip('\'[').strip(']\'').replace('pfx_', 'pfx_:\n').replace('default_', 'pfx_\ndefault\n')
+                        n_pfx = ls_pfx.split()
+                        n_lst = list()
+                        n_lst.append(n_pfx[1])
+                        pfx = str(n_lst).strip('\'[').strip(']\'')
+                    print(pfx)
+                except IOError as e:
+                    print("game desktop not found, set default value")
+                    game_icon = builder.get_object("game_icon")
+                    game_icon.set_from_file(icon_path)
+                    game_label1 = builder.get_object("game_label1")
+                    game_label1.set_label('START MODE')
+                    game_label2 = builder.get_object("game_label2")
+                    game_label2.set_label("PREFIX:\ndefault")
+                    game_label3 = builder.get_object("game_label3")
+                    game_label3.set_label(str(ls_wine))
+                else:
+                    game_icon = builder.get_object("game_icon")
+                    game_icon.set_from_file(icon_path)
+                    game_label1 = builder.get_object("game_label1")
+                    game_label1.set_label('START MODE')
+                    game_label2 = builder.get_object("game_label2")
+                    game_label2.set_label('PREFIX:\n' + str(pfx))
+                    game_label3 = builder.get_object("game_label3")
+                    game_label3.set_label(str(ls_wine))
+            desktop_pfx()
+        desktop_icon()
+    desktop_wine()
+game_name()
+
+btn_dxvk = builder.get_object("btn_dxvk")
+btn_dxvk.connect("clicked", on_btn_dxvk)
+
+btn_vkd3d = builder.get_object("btn_vkd3d")
+btn_vkd3d.connect("clicked", on_btn_vkd3d)
+
+btn_opengl = builder.get_object("btn_opengl")
+btn_opengl.connect("clicked", on_btn_opengl)
+
+btn_shortcuts = builder.get_object("btn_shortcuts")
+btn_shortcuts.connect("clicked", on_btn_shortcuts)
+
+btn_create_shortcut = builder.get_object("btn_create_shortcut")
+btn_create_shortcut.connect("clicked", on_btn_create_shortcut)
+
+btn_cs_staging = builder.get_object("btn_cs_staging")
+btn_cs_staging.connect("clicked", on_btn_cs_staging)
+
+btn_cs_steam = builder.get_object("btn_cs_steam")
+btn_cs_steam.connect("clicked", on_btn_cs_steam)
+
+btn_cs_ge = builder.get_object("btn_cs_ge")
+btn_cs_ge.connect("clicked", on_btn_cs_ge)
+
+btn_cs_lutris = builder.get_object("btn_cs_lutris")
+btn_cs_lutris.connect("clicked", on_btn_cs_lutris)
+
+btn_cs_lutris_ge = builder.get_object("btn_cs_lutris_ge")
+btn_cs_lutris_ge.connect("clicked", on_btn_cs_lutris_ge)
+
+btn_cs_custom = builder.get_object("btn_cs_custom")
+btn_cs_custom.connect("clicked", on_btn_cs_custom)
+
+btn_cs_custom_1 = builder.get_object("btn_cs_custom_1")
+btn_cs_custom_1.connect("clicked", on_btn_cs_custom_1)
+
+btn_cs_custom_2 = builder.get_object("btn_cs_custom_2")
+btn_cs_custom_2.connect("clicked", on_btn_cs_custom_2)
+
+btn_cs_custom_3 = builder.get_object("btn_cs_custom_3")
+btn_cs_custom_3.connect("clicked", on_btn_cs_custom_3)
+
+btn_cs_custom_4 = builder.get_object("btn_cs_custom_4")
+btn_cs_custom_4.connect("clicked", on_btn_cs_custom_4)
+
+btn_cs_custom_5 = builder.get_object("btn_cs_custom_5")
+btn_cs_custom_5.connect("clicked", on_btn_cs_custom_5)
+
+btn_prefix_tools = builder.get_object("btn_prefix_tools")
+btn_prefix_tools.connect("clicked", on_btn_prefix_tools)
+
+btn_remove_prefix = builder.get_object("btn_remove_prefix")
+btn_remove_prefix.connect("clicked", on_btn_remove_prefix)
+
+btn_reinstall_prefix = builder.get_object("btn_reinstall_prefix")
+btn_reinstall_prefix.connect("clicked", on_btn_reinstall_prefix)
+
+btn_pfx_backup = builder.get_object("btn_pfx_backup")
+btn_pfx_backup.connect("clicked", on_btn_pfx_backup)
+
+btn_pfx_restore = builder.get_object("btn_pfx_restore")
+btn_pfx_restore.connect("clicked", on_btn_pfx_restore)
+
+btn_pfx_full_backup = builder.get_object("btn_pfx_full_backup")
+btn_pfx_full_backup.connect("clicked", on_btn_pfx_full_backup)
+
+btn_pfx_full_restore = builder.get_object("btn_pfx_full_restore")
+btn_pfx_full_restore.connect("clicked", on_btn_pfx_full_restore)
+
+btn_winetools = builder.get_object("btn_winetools")
+btn_winetools.connect("clicked", on_btn_winetools)
+
+btn_winecfg = builder.get_object("btn_winecfg")
+btn_winecfg.connect("clicked", on_btn_winecfg)
+
+btn_wineconsole = builder.get_object("btn_wineconsole")
+btn_wineconsole.connect("clicked", on_btn_wineconsole)
+
+btn_regedit = builder.get_object("btn_regedit")
+btn_regedit.connect("clicked", on_btn_regedit)
+
+btn_file_explorer = builder.get_object("btn_file_explorer")
+btn_file_explorer.connect("clicked", on_btn_file_explorer)
+
+btn_uninstaller = builder.get_object("btn_uninstaller")
+btn_uninstaller.connect("clicked", on_btn_uninstaller)
+
+btn_winetricks = builder.get_object("btn_winetricks")
+btn_winetricks.connect("clicked", on_btn_winetricks)
+
+btn_install_libraries = builder.get_object("btn_install_libraries")
+btn_install_libraries.connect("clicked", on_btn_install_libraries)
+
+btn_debug = builder.get_object("btn_debug")
+btn_debug.connect("clicked", on_btn_debug)
+
+btn_dw = builder.get_object("btn_dw")
+btn_dw.connect("clicked", on_btn_dw)
+
+btn_settings = builder.get_object("btn_settings")
+btn_settings.connect("clicked", on_btn_settings)
+
+btn_back8 = builder.get_object("btn_back8")
+btn_back8.connect("clicked", on_btn_back8)
+
+btn_stop = builder.get_object("btn_stop")
+btn_stop.connect("clicked", on_btn_stop)
+
+btn_back = builder.get_object("btn_back")
+btn_back.connect("clicked", on_btn_back)
+
+btn_back1 = builder.get_object("btn_back1")
+btn_back1.connect("clicked", on_btn_back1)
+
+btn_back5 = builder.get_object("btn_back5")
+btn_back5.connect("clicked", on_btn_back5)
+
+btn_back10 = builder.get_object("btn_back10")
+btn_back10.connect("clicked", on_btn_back10)
+
+btn_back12 = builder.get_object("btn_back12")
+btn_back12.connect("clicked", on_btn_back12)
+
+btn_wine_1 = builder.get_object("btn_staging")
+btn_wine_1.connect("clicked", on_btn_wine_1)
+
+btn_wine_2 = builder.get_object("btn_steam")
+btn_wine_2.connect("clicked", on_btn_wine_2)
+
+btn_wine_3 = builder.get_object("btn_ge")
+btn_wine_3.connect("clicked", on_btn_wine_3)
+
+btn_wine_4 = builder.get_object("btn_lutris")
+btn_wine_4.connect("clicked", on_btn_wine_4)
+
+btn_wine_5 = builder.get_object("btn_lutris_ge")
+btn_wine_5.connect("clicked", on_btn_wine_5)
+
+btn_wine_6 = builder.get_object("btn_custom")
+btn_wine_6.connect("clicked", on_btn_wine_6)
+
+################################################################################
+
+window.connect("destroy", Gtk.main_quit)
+window.show_all()
+
+Gtk.main()

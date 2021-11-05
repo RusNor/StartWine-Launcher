@@ -1,0 +1,121 @@
+#!/bin/bash
+
+################################################################################
+
+. "$(dirname $(readlink -f "$0"))/runlib"
+
+if [ -x "$(command -v apt)" ]; then
+    sudo apt update -y
+    sudo apt install wget zenity zstd unzip -y
+    sudo apt install software-properties-common -y && sudo dpkg --add-architecture i386 && sudo apt update && sudo apt install cabextract icoutils tar wine yad xterm -y
+    sudo apt install gir1.2-appindicator3-0.1 imagemagick mc -y
+elif [ -x "$(command -v dnf)" ]; then
+    sudo dnf update -y
+    sudo dnf install wget zenity zstd unzip -y
+    sudo dnf install cabextract icoutils tar wine yad xterm -y
+    sudo dnf install gir1.2-appindicator3-0.1 imagemagick mc -y
+elif [ -x "$(command -v zypper)" ]; then
+    sudo zypper ref -y
+    sudo zypper in wget zenity zstd unzip -y
+    sudo zypper in cabextract icoutils tar wine yad xterm zenity-lang -y
+    sudo zypper in gir1.2-appindicator3-0.1 imagemagick mc -y
+elif [ -x "$(command -v pacman)" ]; then
+    sudo pacman -Sy -y
+    sudo pacman -S wget zenity zstd unzip cabextract icoutils wine yad xterm libappindicator-gtk3 imagemagick mc -y
+else
+    echo "FAILED TO INSTALL: Package manager not found. You must manually install"
+fi
+
+if [ ! -d "${START_WINE_PATH}/data/wine/wine_steam_proton/bin" ]; then
+    export FTP_URL="https://github.com/RusNor/Wine-Steam-Proton/releases/download/steam-proton-"${SP_VER}"/steam-proton-"${SP_VER}".tar.xz"
+    export DL_NAME="wine-"${SP_VER}"-proton"
+    download_url --output-document="${HOME}/.StartWine/tmp/steam-proton-"${SP_VER}".tar.xz" &&
+    tar -Jxvf "${HOME}/.StartWine/tmp/steam-proton-"${SP_VER}".tar.xz" -C "${HOME}/.StartWine" | sszen &&
+    try_copy_dir "${HOME}/.StartWine/steam-proton-"${SP_VER}"/bin" "${START_WINE_PATH}/data/wine/wine_steam_proton" &&
+    try_copy_dir "${HOME}/.StartWine/steam-proton-"${SP_VER}"/lib" "${START_WINE_PATH}/data/wine/wine_steam_proton" &&
+    try_copy_dir "${HOME}/.StartWine/steam-proton-"${SP_VER}"/lib64" "${START_WINE_PATH}/data/wine/wine_steam_proton" &&
+    try_copy_dir "${HOME}/.StartWine/steam-proton-"${SP_VER}"/share" "${START_WINE_PATH}/data/wine/wine_steam_proton" &&
+    try_copy_file "${HOME}/.StartWine/steam-proton-"${SP_VER}"/version" "${START_WINE_PATH}/data/wine/wine_steam_proton" &&
+    try_remove_file "${HOME}/.StartWine/tmp/steam-proton-"${SP_VER}".tar.xz" &&
+    try_remove_dir "${HOME}/.StartWine/steam-proton-"${SP_VER}""
+fi
+
+if [ ! -d "/home/${USER}/.local/share/applications" ]; then
+    mkdir -p "/home/${USER}/.local/share/applications"
+fi
+
+name_desktop="StartWine" 
+echo "[Desktop Entry]" > "${START_WINE_PATH}/${name_desktop}.desktop"
+echo "Name=${name_desktop}" >> "${START_WINE_PATH}/${name_desktop}.desktop"
+echo "Name_2=pfx_default" >> "${START_WINE_PATH}/${name_desktop}.desktop"
+echo "Exec=env "${START_WINE_PATH}/data/scripts/start %F"" >> "${START_WINE_PATH}/${name_desktop}.desktop"
+echo "Type=Application" >> "${START_WINE_PATH}/${name_desktop}.desktop"
+echo "Categories=Game" >> "${START_WINE_PATH}/${name_desktop}.desktop"
+echo "StartupNotify=true" >> "${START_WINE_PATH}/${name_desktop}.desktop"
+echo "Path="${START_WINE_PATH}/data/scripts/"" >> "${START_WINE_PATH}/${name_desktop}.desktop"
+echo "Icon="${START_WINE_PATH}/data/img/gui_icons/SW_Launcher_x256.png"" >> "${START_WINE_PATH}/${name_desktop}.desktop"
+echo "SW_USE="${DEFAULT_WINE}"" >> "${START_WINE_PATH}/${name_desktop}.desktop"
+chmod +x "${START_WINE_PATH}/${name_desktop}.desktop"
+cp -f "${START_WINE_PATH}/${name_desktop}.desktop" /home/${USER}/.local/share/applications/
+
+for name_desktop in "Stop"
+do
+echo ""[Desktop Entry]"
+"Name=${name_desktop}"
+"Exec="${START_WINE_PATH}/data/scripts/stop""
+"Type=Application"
+"Categories=Game"
+"StartupNotify=true"
+"Path="${START_WINE_PATH}/data/scripts/""
+"Icon="${START_WINE_PATH}/data/img/gui_icons/SW_Stop.png""" > "${START_WINE_PATH}/${name_desktop}.desktop"
+chmod +x "${START_WINE_PATH}/${name_desktop}.desktop"
+done
+
+if [ -d "/home/${USER}/Games_tmp" ]; then
+    mv "/home/${USER}/Games_tmp" "${START_WINE_PATH}/Games"
+fi
+
+if [ -d "/home/${USER}/pfx_backup" ]; then
+    mv "/home/${USER}/pfx_backup" "${START_WINE_PATH}/data/pfx_backup"
+fi
+
+mkdir -p "${START_WINE_PATH}/data/pfx"
+mkdir -p "${START_WINE_PATH}/Shortcuts"
+echo "" > "${START_WINE_PATH}/Shortcuts/.desktop"
+mkdir -p "${START_WINE_PATH}/Games"
+mkdir -p "${START_WINE_PATH}/data/pfx_backup"
+mkdir -p "${START_WINE_PATH}/data/tmp"
+
+${RUNTIME} env WINEDLLOVERRIDES="mscoree,mshtml=;${WINEDLLOVERRIDES}" "${WINELOADER}" wineboot -u || prefix_init_error
+"${WINESERVER}" -w
+
+if [ ! -d "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}" ]; then
+    try_force_link_dir "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/steamuser" "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}"
+fi
+
+if [ ! -d "${WINEPREFIX}/drive_c/users/steamuser/My Documents" ]; then
+    try_force_link_dir "${WINEPREFIX}/drive_c/users/steamuser/Documents" "${WINEPREFIX}/drive_c/users/steamuser/My Documents"
+fi
+
+if [ ! -d "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/Games" ]; then
+    try_force_link_dir "${START_WINE_PATH}/Games/" "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/Games"
+fi
+
+create_new_dir "${WINEPREFIX}/drive_c/users/steamuser/Documents/Steam"
+create_new_dir "${WINEPREFIX}/drive_c/users/Public/Documents/Steam"
+create_new_dir "${WINEPREFIX}/drive_c/windows/Fonts/"
+try_copy_file "${WINEDIR}/share/fonts/"LiberationSans-Regular.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"arial.ttf
+try_copy_file "${WINEDIR}/share/fonts/"LiberationSans-Bold.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"arialbd.ttf
+try_copy_file "${WINEDIR}/share/fonts/"LiberationSerif-Regular.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"times.ttf
+try_copy_file "${WINEDIR}/share/fonts/"LiberationMono-Regular.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"cour.ttf
+try_copy_file "${WINEDIR}/share/fonts/"SourceHanSansSCRegular.otf "${WINEPREFIX}/drive_c/windows/Fonts/"msyh.ttf
+
+clear
+
+echo "##################################"
+echo "#  Install StartWine successful  #"
+echo "##################################"
+
+exit 0
+
+################################################################################

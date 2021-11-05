@@ -1,0 +1,1477 @@
+#!/bin/bash
+
+###############################   NO ROOT   ####################################
+
+[ $(id -u) -eq 0 ] && zenity --error --text "DO NOT USE ROOT" && exit 1
+cd "$(dirname "`readlink -f "$0"`")"
+export link="$(pwd)"
+cd "${link}/../../"
+export START_WINE_PATH="$(pwd)"
+
+###############################   TOOLS   ######################################
+
+export SW_NAME="StartWine-Launcher"
+export SW_VER=" v3.1.1"
+export GE_VER="6.20-GE-1"
+export SP_VER="6.3.7"
+export STAG_VER="6.20"
+export LUTRIS_VER="6.14-4"
+export LUTRIS_GE_VER="6.20-1"
+export LUTRIS_GE_URL="6.20-GE-1"
+export DXVK_VER="1.9.2"
+export VKD3D_VER="2.5"
+export DEFAULT_WINE="wine_steam_proton"
+
+##############################   FUNCTIONS TOOLS   #############################
+
+print_error () {
+
+    echo "ERROR: $@"
+
+}
+
+print_info () {
+
+    echo "INFO: $@"
+
+}
+
+try_copy_file () {
+
+    if [ ! -f "$1" ]; then
+        print_info "file $1 not found for copy" && return 1
+    elif [ -z "$2" ]; then
+        print_error "no way to copy file $1" && return 1
+    else
+        cp -f "$1" "$2"
+        if [ "$?" != 0 ]; then
+            print_error "failed to copy file $1 to $2" || return 1
+        else
+            print_info "copy file $1 to $2 was successful" || return 0
+        fi
+    fi
+
+}
+
+try_copy_dir () {
+
+    if [ ! -d "$1" ]; then
+        print_info "directory $1 not found for copy"
+    elif [ -z "$2" ]; then
+        print_error "no way to copy directory $1"
+    else
+        cp -fr "$1" "$2"
+        [ "$?" != 0 ] && print_error "failed to copy directory $1 to $2" || return 0
+    fi
+    return 1
+
+}
+
+try_force_link_file () {
+
+    if [ ! -f "$1" ]; then
+        print_info "file $1 not found for link"
+    elif [ -z "$2" ]; then
+        print_error "no way to link file $1"
+    else
+        ln -sf "$1" "$2"
+        [ "$?" != 0 ] && print_error "failed to link file $1 to $2" || return 0
+    fi
+    return 1
+
+}
+
+try_force_link_dir () {
+
+    if [ ! -d "$1" ]; then
+        print_info "directory $1 not found for link"
+    elif [ -z "$2" ]; then
+        print_error "no way to link directory $1"
+    else
+        ln -sf "$1" "$2"
+        [ "$?" != 0 ] && print_error "failed to link directory $1 to $2" || return 0
+    fi
+    return 1
+
+}
+
+create_new_dir () {
+
+    if [ ! -d "$1" ]; then
+        mkdir -p "$1"
+    fi
+
+}
+
+try_remove_file () {
+
+    if [ -f "$1" ]; then
+        rm -f "$1"
+        [ "$?" != 0 ] && print_error "failed to remove file $1" || return 0
+    fi
+    return 1
+
+}
+
+try_remove_dir () {
+
+    if [ -d "$1" ]; then
+        rm -fr "$1"
+        [ "$?" != 0 ] && print_error "failed to remove directory $1" || return 0
+    fi
+    return 1
+
+}
+
+var_winedlloverride_update () {
+
+    if [ ! -z "${WINEDLLOVERRIDES}" ]; then
+        export WINEDLLOVERRIDES="${1};${WINEDLLOVERRIDES}"
+    else
+        export WINEDLLOVERRIDES="${1}"
+    fi
+
+}
+
+prefix_init_error () {
+
+    clear
+    echo "There is a problem initializing the Wine prefix !"
+    zenity --title "StartWine" --info --text "There is a problem initializing the Wine prefix !" --width=200
+    rm -rf "${WINEPREFIX}"
+    exit 1
+
+}
+
+wait_wineserver () {
+
+    sleep 3
+    while [ ! -z "$(ls -l /proc/*/exe 2>/dev/null | grep -ie ${SW_NAME} | grep -E 'wine(64)?-preloader|wineserver' | awk -F/ '{print $3}')" ]; do
+        sleep 1
+    done
+
+}
+
+sw_win_ver () {
+
+    if [[ -z `cat "${WINEPREFIX}/system.reg" | grep "Windows $SW_WINDOWS_VER"` ]]; then
+        if [ ! -z "${SW_WINDOWS_VER}" ] && [ `echo "$SW_WINDOWS_VER" | sed 's/.*/\L&/'` == "xp" ]; then
+            if [ "${WINEARCH}" != "win32" ]; then
+                export SW_WINDOWS_VER="xp64"
+            else
+                export SW_WINDOWS_VER="xp"
+            fi
+        fi
+        ${RUNTIME} env "${WINELOADER}" winecfg -v `echo "win${SW_WINDOWS_VER}" | sed 's/.*/\L&/'`
+        echo "Set to win${SW_WINDOWS_VER}"
+        wait_wineserver
+    fi
+
+}
+
+download_url () {
+
+    wget -c -t 5 -T 5 "$1" "${FTP_URL}" 2>&1 | \
+    perl -p -e '$| = 1; s/^.* +([0-9]+%) +([0-9,.]+[GMKB]) +([0-9hms,.]+).*$/\1\n# Downloading... \2 (\3)/' | \
+    zenity --progress --percentage=0 --title="Download ${DL_NAME}" --text=Starting... --auto-close --auto-kill --width=500 --height=90 --no-cancel
+
+}
+
+sszen () {
+
+    zenity --progress --title="StartWine" --text="Please wait..." --pulsate --auto-close --width=500 --height=90 --no-cancel
+
+}
+
+###############################   WINE   #######################################
+
+export GAME_EXE="$(readlink -f "$1")"
+export STARTWINE_EXE="${GAME_EXE}"
+export STARTWINE_NAME="$(basename "${STARTWINE_EXE}" | sed s/".exe"/""/gi | sed 's/ /_/g' )"
+export STARTWINE_PATH="$( cd "$( dirname "${STARTWINE_EXE}" )" >/dev/null 2>&1 && pwd )"
+export name_desktop="${STARTWINE_NAME}"
+
+if [ "$(sed -n '3p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" | sed 's/Name_2=//g' | sed 's/ /_/g' | sed 's/[^pfx_].*//g' )" == "pfx_" ]; then
+    export PFX_GAME="$(sed -n '3p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" | sed 's/Name_2=//g' | sed 's/ /_/g' )"
+else
+    export PFX_GAME="pfx_default"
+fi
+
+cd "${START_WINE_PATH}/data/wine/wine_custom"
+export sw_custom_1="`ls -1 | head -n1 | tail -n1`"
+export sw_custom_2="`ls -1 | head -n2 | tail -n1`"
+export sw_custom_3="`ls -1 | head -n3 | tail -n1`"
+export sw_custom_4="`ls -1 | head -n4 | tail -n1`"
+export sw_custom_5="`ls -1 | head -n5 | tail -n1`"
+
+if [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" )" == "SW_USE=wine_staging" ]; then
+    if [ ! -d "${START_WINE_PATH}/data/wine/wine_staging/bin" ]; then
+        zenity --title "StartWine" --info --text "Click the download wine button in the main menu and download wine staging" --width=200
+        export WINEDIR="${START_WINE_PATH}/data/wine/"${DEFAULT_WINE}""
+    else
+        export USED_PFX_WINE="wine_staging"
+        export WINEDIR="${START_WINE_PATH}/data/wine/wine_staging"
+    fi
+elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" )" == "SW_USE=wine_steam_proton" ]; then
+    export USED_PFX_WINE="wine_steam_proton"
+    export WINEDIR="${START_WINE_PATH}/data/wine/wine_steam_proton"
+elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" )" == "SW_USE=wine_proton_ge" ]; then
+    if [ ! -d "${START_WINE_PATH}/data/wine/wine_proton_ge/bin" ]; then
+        zenity --title "StartWine" --info --text "Click the download wine button in the main menu and download wine proton ge" --width=200
+        export WINEDIR="${START_WINE_PATH}/data/wine/"${DEFAULT_WINE}""
+    else
+        export USED_PFX_WINE="wine_proton_ge"
+        export WINEDIR="${START_WINE_PATH}/data/wine/wine_proton_ge"
+    fi
+elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" )" == "SW_USE=wine_lutris" ]; then
+    if [ ! -d "${START_WINE_PATH}/data/wine/wine_lutris/bin" ]; then
+        zenity --title "StartWine" --info --text "Click the download wine button in the main menu and download wine lutris" --width=200
+        export WINEDIR="${START_WINE_PATH}/data/wine/"${DEFAULT_WINE}""
+     else
+        export USED_PFX_WINE="wine_lutris"
+        export WINEDIR="${START_WINE_PATH}/data/wine/wine_lutris"
+    fi
+elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" )" == "SW_USE=wine_lutris_ge" ]; then
+    if [ ! -d "${START_WINE_PATH}/data/wine/wine_lutris_ge/bin" ]; then
+        zenity --title "StartWine" --info --text "Click the download wine button in the main menu and download wine lutris ge" --width=200
+        export WINEDIR="${START_WINE_PATH}/data/wine/"${DEFAULT_WINE}""
+    else
+        export USED_PFX_WINE="wine_lutris_ge"
+        export WINEDIR="${START_WINE_PATH}/data/wine/wine_lutris_ge"
+    fi
+elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" )" == "SW_USE="${sw_custom_1}"" ]; then
+    if [ ! -d "${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_1}"/bin" ]; then
+        zenity --title "StartWine" --info --text "Click the download wine button in the main menu and click wine custom copy your wine to the opened directory" --width=200
+        export WINEDIR="${START_WINE_PATH}/data/wine/"${DEFAULT_WINE}""
+    else
+        export USED_PFX_WINE="${sw_custom_1}"
+        cd "${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_1}"/share/wine"
+        sed -i '/\AppDefaults\\/g; /HKCU,Software\\Valve\\/g; /HKLM,Software\\Khronos\\/g; /HKLM,Software\\Wow6432Node\\Valve\\Steam/g; /HKCR,steam\\/g' wine.inf
+        export WINEDIR="${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_1}""
+    fi
+elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" )" == "SW_USE="${sw_custom_2}"" ]; then
+    if [ ! -d "${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_2}"/bin" ]; then
+        zenity --title "StartWine" --info --text "Click the download wine button in the main menu and click wine custom copy your wine to the opened directory" --width=200
+        export WINEDIR="${START_WINE_PATH}/data/wine/"${DEFAULT_WINE}""
+    else
+        export USED_PFX_WINE="${sw_custom_2}"
+        cd "${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_2}"/share/wine"
+        sed -i '/\AppDefaults\\/g; /HKCU,Software\\Valve\\/g; /HKLM,Software\\Khronos\\/g; /HKLM,Software\\Wow6432Node\\Valve\\Steam/g; /HKCR,steam\\/g' wine.inf
+        export WINEDIR="${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_2}""
+    fi
+elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" )" == "SW_USE="${sw_custom_3}"" ]; then
+    if [ ! -d "${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_3}"/bin" ]; then
+        zenity --title "StartWine" --info --text "Click the download wine button in the main menu and click wine custom copy your wine to the opened directory" --width=200
+        export WINEDIR="${START_WINE_PATH}/data/wine/"${DEFAULT_WINE}""
+    else
+        export USED_PFX_WINE="${sw_custom_3}"
+        cd "${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_3}"/share/wine"
+        sed -i '/\AppDefaults\\/g; /HKCU,Software\\Valve\\/g; /HKLM,Software\\Khronos\\/g; /HKLM,Software\\Wow6432Node\\Valve\\Steam/g; /HKCR,steam\\/g' wine.inf
+        export WINEDIR="${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_3}""
+    fi
+elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" )" == "SW_USE="${sw_custom_4}"" ]; then
+    if [ ! -d "${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_4}"/bin" ]; then
+        zenity --title "StartWine" --info --text "Click the download wine button in the main menu and click wine custom copy your wine to the opened directory" --width=200
+        export WINEDIR="${START_WINE_PATH}/data/wine/"${DEFAULT_WINE}""
+    else
+        export USED_PFX_WINE="${sw_custom_4}"
+        cd "${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_4}"/share/wine"
+        sed -i '/\AppDefaults\\/g; /HKCU,Software\\Valve\\/g; /HKLM,Software\\Khronos\\/g; /HKLM,Software\\Wow6432Node\\Valve\\Steam/g; /HKCR,steam\\/g' wine.inf
+        export WINEDIR="${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_4}""
+    fi
+elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" )" == "SW_USE="${sw_custom_5}"" ]; then
+    if [ ! -d "${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_5}"/bin" ]; then
+        zenity --title "StartWine" --info --text "Click the download wine button in the main menu and click wine custom copy your wine to the opened directory" --width=200
+        export WINEDIR="${START_WINE_PATH}/data/wine/"${DEFAULT_WINE}""
+    else
+        export USED_PFX_WINE="${sw_custom_5}"
+        cd "${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_5}"/share/wine"
+        sed -i '/\AppDefaults\\/g; /HKCU,Software\\Valve\\/g; /HKLM,Software\\Khronos\\/g; /HKLM,Software\\Wow6432Node\\Valve\\Steam/g; /HKCR,steam\\/g' wine.inf
+        export WINEDIR="${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_5}""
+    fi
+else
+    export USED_PFX_WINE="${DEFAULT_WINE}"
+    export WINEDIR="${START_WINE_PATH}/data/wine/"${DEFAULT_WINE}""
+fi
+
+export WINELIB="${HOME}/.StartWine/steam-runtime"
+export WINELOADER="${WINEDIR}/bin/wine"
+export WINESERVER="${WINEDIR}/bin/wineserver"
+export WINEDLLPATH="${WINEDIR}/lib64/wine:${WINEDIR}/lib/wine"
+export WINEPREFIX="${START_WINE_PATH}/data/pfx/${PFX_GAME}"
+export WINESTART_EXE="start.exe /i /unix"
+
+if [ ! -z "${LD_LIBRARY_PATH}" ]; then
+    export LD_LIBRARY_PATH="${WINEDIR}/lib64/:${WINEDIR}/lib/:${LD_LIBRARY_PATH}"
+else
+    export LD_LIBRARY_PATH="${WINEDIR}/lib64/:${WINEDIR}/lib/"
+fi
+
+if [ -d "${PATH_TO_GAME}" ]; then
+    export WINEDLLPATH="${WINEDIR}/lib64/wine:${WINEDIR}/lib/wine:${PATH_TO_GAME}"
+else
+    export WINEDLLPATH="${WINEDIR}/lib64/wine:${WINEDIR}/lib/wine"
+fi
+
+if [ ! -z "${PATH}" ]; then
+    export PATH="${WINEDIR}/bin:${PATH}"
+else
+    export PATH="${WINEDIR}/bin"
+fi
+
+try_remove_dir "${WINEDIR}/share/default_pfx"
+rm -f  "${WINEDIR}"*/lib*/*steam*
+rm -f  "${WINEDIR}"*/lib*/wine/*steam*
+rm -f  "${WINEDIR}"*/lib*/wine/*/*steam*
+
+##############################   SETTINGS   ####################################
+
+export SCRIPTS="${START_WINE_PATH}/data/scripts"
+
+if [ "$(sed -n '/001/p' "${SCRIPTS}/settings")" == "001_MANGOHUD_DLSYM" ]; then
+    export MANGOHUD_DLSYM=1
+    echo "MANGOHUD_DLSYM  ON"
+else
+    export MANGOHUD_DLSYM=0
+    echo "MANGOHUD_DLSYM  OFF"
+fi
+
+if [ "$(sed -n '/002/p' "${SCRIPTS}/settings")" == "002_MANGOHUD" ]; then
+    export RUN_MANGOHUD=1
+    export MANGOHUD_CONFIG="cpu_stats,cpu_temp,core_load,cpu_mhz,cpu_color=2e97cb,cpu_text=CPU,gpu_stats,gpu_temp,gpu_core_clock,gpu_mem_clock,vulkan_driver,gpu_name,gpu_color=2e9762,gpu_text=GPU,vram,vram_color=ad64c1,ram,ram_color=c26693,io_color=a491d3,frame_timing=1,frametime_color=00ff00,time,arch,wine,wine_color=eb5b5b,engine_color=eb5b5b,media_player_color=ffffff,background_alpha=0.2,font_size=20,background_color=020202,position=top-right,text_color=ffffff,toggle_hud=Shift_R+F12,media_player_name=spotify,no_display,resolution,vkbasalt,gamemode"
+    echo "MANGOHUD  ON"
+else
+    export RUN_MANGOHUD=0
+    echo "MANGOHUD  OFF"
+fi
+
+if [ "$(sed -n '/003/p' "${SCRIPTS}/settings")" == "003_GAMEMODE" ]; then
+    export RUN_GAMEMODE=1
+    echo "GAMEMODE  ON"
+else
+    export RUN_GAMEMODE=0
+    echo "GAMEMODE  OFF"
+fi
+
+if [ "$(sed -n '/004/p' "${SCRIPTS}/settings")" == "004_RUNTIME" ]; then
+    export RUN_RUNTIME=1
+    echo "RUNTIME  ON"
+else
+    export RUN_RUNTIME=0
+    echo "RUNTIME  OFF"
+fi
+
+if [ "$(sed -n '/005/p' "${SCRIPTS}/settings")" == "005_RESTORE_RESOLUTION" ]; then
+    export RESTORE_RESOLUTION=1
+    echo "RESTORE_RESOLUTION  ON"
+else
+    export RESTORE_RESOLUTION=0
+    echo "RESTORE_RESOLUTION  OFF"
+fi
+
+if [ "$(sed -n '/006/p' "${SCRIPTS}/settings")" == "006_VIRTUAL_DESKTOP" ]; then
+    export VIRTUAL_DESKTOP=1
+    echo "VIRTUAL_DESKTOP  ON"
+else
+    export VIRTUAL_DESKTOP=0
+    echo "VIRTUAL_DESKTOP  OFF"
+fi
+
+if [ "$(sed -n '/007/p' "${SCRIPTS}/settings")" == "007_FSYNC" ]; then
+    export WINEFSYNC=1
+    export WINEFSYNC_FUTEX2=1
+    echo "FSYNC  ON"
+else
+    export WINEFSYNC=0
+    export WINEFSYNC_FUTEX2=0
+    echo "FSYNC  OFF"
+fi
+
+if [ "$(sed -n '/008/p' "${SCRIPTS}/settings")" == "008_ESYNC" ]; then
+    export WINEESYNC=1
+    echo "ESYNC  ON"
+else
+    export WINEESYNC=0
+    echo "ESYNC  OFF"
+fi
+
+if [ "$(sed -n '/009/p' "${SCRIPTS}/settings")" == "009_OLD_GL_STRING" ]; then
+    export OLD_GL_STRING=1
+    echo "OLD_GL_STRING  ON"
+else
+    export OLD_GL_STRING=0
+    echo "OLD_GL_STRING  OFF"
+fi
+
+if [ "$(sed -n '/010/p' "${SCRIPTS}/settings")" == "010_NVAPI_DISABLE" ]; then
+    export NVAPI_DISABLE=1
+    echo "NVAPI_DISABLE  ON"
+else
+    export NVAPI_DISABLE=0
+    echo "NVAPI_DISABLE  OFF"
+fi
+
+if [ "$(sed -n '/011/p' "${SCRIPTS}/settings")" == "011_WINEDBG_DISABLE" ]; then
+    export WINEDBG_DISABLE=1
+    echo "WINEDBG_DISABLE  ON"
+else
+    export WINEDBG_DISABLE=0
+    echo "WINEDBG_DISABLE  OFF"
+fi
+
+if [ "$(sed -n '/012/p' "${SCRIPTS}/settings")" == "012_LARGE_ADDRESS_AWARE" ]; then
+    export WINE_LARGE_ADDRESS_AWARE=1
+    echo "LARGE_ADDRESS_AWARE  ON"
+else
+    export WINE_LARGE_ADDRESS_AWARE=0
+    echo "LARGE_ADDRESS_AWARE  OFF"
+fi
+
+if [ "$(sed -n '/013/p' "${SCRIPTS}/settings")" == "013_STAGING_WRITECOPY" ]; then
+    export STAGING_WRITECOPY=1
+    echo "STAGING_WRITECOPY  ON"
+else
+    export STAGING_WRITECOPY=0
+    echo "STAGING_WRITECOPY  OFF"
+fi
+
+if [ "$(sed -n '/014/p' "${SCRIPTS}/settings")" == "014_STAGING_SHARED_MEMORY" ]; then
+    export STAGING_SHARED_MEMORY=1
+    echo "STAGING_SHARED_MEMORY  ON"
+else
+    export STAGING_SHARED_MEMORY=0
+    echo "STAGING_SHARED_MEMORY  OFF"
+fi
+
+if [ "$(sed -n '/015/p' "${SCRIPTS}/settings")" == "015_DXVK_HUD" ]; then
+    export DXVK_HUD=full
+    echo "DXVK_HUD  ON"
+else
+    export DXVK_HUD=0
+    echo "DXVK_HUD  OFF"
+fi
+
+if [ "$(sed -n '/016/p' "${SCRIPTS}/settings")" == "016_DXVK_ASYNC" ]; then
+    export DXVK_ASYNC=1
+    echo "DXVK_ASYNC  ON"
+else
+    export DXVK_ASYNC=0
+    echo "DXVK_ASYNC  OFF"
+fi
+
+if [ "$(sed -n '/017/p' "${SCRIPTS}/settings")" == "017_VKBASALT" ]; then
+    export ENABLE_VKBASALT=1
+    sed -i "s%nobody%/home/$USER/.StartWine%" "${START_WINE_PATH}/data/vkBasalt.conf"
+    export VKBASALT_CONFIG_FILE="${START_WINE_PATH}/data/vkBasalt.conf"
+    echo "VKBASALT  ON"
+else
+    export ENABLE_VKBASALT=0
+    echo "VKBASALT  OFF"
+fi
+
+if [ "$(sed -n '/018/p' "${SCRIPTS}/settings")" == "018_FSR" ]; then
+    export WINE_FULLSCREEN_FSR=1
+    export WINE_FULLSCREEN_FSR_STRENGTH=3
+    echo "FSR  ON"
+else
+    export WINE_FULLSCREEN_FSR=0
+    echo "FSR  OFF"
+fi
+
+if [ "$(sed -n '/019/p' "${SCRIPTS}/settings")" == "019_GSTREAMER" ]; then
+    export WINE_GST_REGISTRY_DIR="${START_WINE_PATH}/data/tmp"
+    export MEDIACONV_AUDIO_DUMP_FILE="${START_WINE_PATH}/data/tmp/audio.foz"
+    export MEDIACONV_AUDIO_TRANSCODED_FILE="${START_WINE_PATH}/data/tmp/transcoded_audio.foz"
+    export MEDIACONV_VIDEO_DUMP_FILE="${START_WINE_PATH}/data/tmp/video.foz"
+    export MEDIACONV_VIDEO_TRANSCODED_FILE="${START_WINE_PATH}/data/tmp/transcoded_video.foz"
+    export GST_PLUGIN_SYSTEM_PATH="${WINEDIR}/lib64/gstreamer-1.0:${WINEDIR}/lib/gstreamer-1.0"
+    echo "GSTREAMER  ON"
+else
+    echo "GSTREAMER  OFF"
+fi
+
+if [ "$(sed -n '/020/p' "${SCRIPTS}/settings")" == "020_DXVK_GE" ]; then
+    export DXVK_GE=1
+    echo "DXVK GE"
+else
+    export DXVK_GE=0
+    echo "DXVK  NATIVE"
+fi
+
+if [ "$(sed -n '/021/p' "${SCRIPTS}/settings")" == "021_VKD3D_GE" ]; then
+    export VKD3D_GE=1
+    echo "VKD3D GE"
+else
+    export VKD3D_GE=0
+    echo "VKD3D  NATIVE"
+fi
+
+if [ "$(sed -n '/022/p' "${SCRIPTS}/settings")" == "022_DRI_PRIME" ]; then
+    export DRI_PRIME=1
+    echo "PRIME ON"
+else
+    echo "PRIME OFF"
+fi
+
+###############################   LOAD GAMES CONFIG   ##########################
+
+cd "${START_WINE_PATH}/data/games_config"
+. "${START_WINE_PATH}/data/games_config/${STARTWINE_NAME}"
+
+###############################   EXPORT   #####################################
+
+export GAMES_CONFIG="${START_WINE_PATH}/data/games_config/${STARTWINE_NAME}"
+export GST_DEBUG="WARNING:0"
+export WINE_MONO_OVERRIDES="Microsoft.Xna.Framework.*,Gac=n"
+export WINEDEBUG="-all"
+export __GL_YIELD="NOTHING"
+export __NV_PRIME_RENDER_OFFLOAD=1
+export __GLX_VENDOR_LIBRARY_NAME="nvidia"
+export __GL_THREADED_OPTIMIZATIONS=0
+export __GL_SHARPEN_IGNORE_FILM_GRAIN=0
+export __GL_LOG_MAX_ANISO=0
+export __GL_ALLOW_FXAA_USAGE=0
+export __GL_SHARPEN_ENABLE=1
+export __GL_SHARPEN_VALUE=0
+export __GL_SHADER_DISK_CACHE=1
+export __GL_SHADER_DISK_CACHE_SIZE=1000000000
+export __GL_SHADER_DISK_CACHE_PATH="${START_WINE_PATH}/data/tmp"
+export __GL_SYNC_TO_VBLANK=0
+
+###############################   AMD + INTEL   ################################
+
+export MESA_GLSL_CACHE_DIR="${START_WINE_PATH}/data/tmp"
+
+###############################   TOOLS OPTIONS   ##############################
+
+if [ ! -z "${OLD_GL_STRING}" ] && [ "${OLD_GL_STRING}" != 0 ]; then
+    export MESA_EXTENSION_MAX_YEAR="2003"
+    export __GL_ExtensionStringVersion="17700"
+fi
+
+if [ ! -z "${NVAPI_DISABLE}" ] && [ "${NVAPI_DISABLE}" != 0 ]; then
+    var_winedlloverride_update "nvapi,nvapi64,nvcuda,nvcuvid,nvencodeapi,nvencodeapi64="
+fi
+
+if [ ! -z "${WINEDBG_DISABLE}" ] && [ "${WINEDBG_DISABLE}" != 0 ]; then
+    var_winedlloverride_update "winedbg.exe="
+fi
+
+if [ ${VIRTUAL_DESKTOP} = 1 ]; then
+    VDESKTOP="explorer /desktop=Wine,`xrandr --current | grep "*" | awk '{print $1;}' | head -1`"
+fi
+
+if [ "${RESTORE_RESOLUTION}" = 1 ]; then
+    SCREEN_RESOLUTION="$(xrandr -q | sed -n -e 's/.* connected primary \([^ +]*\).*/\1/p')"
+    SCREEN_OUTPUT="$(xrandr -q | sed -n -e 's/\([^ ]*\) connected primary.*/\1/p')"
+
+    if [ -z "${SCREEN_RESOLUTION}" ] || [ -z "${SCREEN_OUTPUT}" ]; then
+        SCREEN_RESOLUTION="$(xrandr -q | sed -n -e 's/.* connected \([^ +]*\).*/\1/p')"
+        SCREEN_OUTPUT="$(xrandr -q | sed -n -e 's/\([^ ]*\) connected.*/\1/p')"
+    fi
+fi
+
+if [ ! -f "${GAMES_CONFIG}" ]; then
+   cat "${START_WINE_PATH}/data/games_config/.default" >> "${START_WINE_PATH}/data/games_config/${STARTWINE_NAME}"
+   chmod +x "${START_WINE_PATH}/data/games_config/${STARTWINE_NAME}"
+fi
+
+if [ "${RUN_RUNTIME}" == "1" ]; then
+    export RUNTIME="${WINELIB}/run.sh"
+fi
+
+if [ "${RUN_GAMEMODE}" == "1" ]; then
+    export GAMEMODE=gamemoderun
+fi
+
+if [ "${RUN_MANGOHUD}" == "1" ]; then
+    export MANGOHUD=mangohud
+fi
+
+###############################   OVERRIDE DLL   ###############################
+
+var_winedlloverride_update "openvr_api_dxvk,dxvk_config,winemenubuilder.exe="
+
+var_winedlloverride_update "steam_api,steam_api64,steamclient,steamclient64=n"
+
+#var_winedlloverride_update "lsteamclient,GameOverlayRenderer,GameOverlayRenderer64"
+
+##############################   RUNTIME LIBRARIES   ###########################
+
+if [ ! -d "${HOME}/.StartWine/tmp" ]; then
+    mkdir -p "${HOME}/.StartWine/tmp"
+fi
+
+if [ ! -d "${WINELIB}" ]; then
+    export FTP_URL="https://repo.steampowered.com/steamrt-images-scout/snapshots/latest-steam-client-public-beta/steam-runtime.tar.xz"
+    export DL_NAME="steam-runtime"
+    download_url --output-document="${HOME}/.StartWine/tmp/steam-runtime.tar.xz" &&
+    tar -Jxvf "${HOME}/.StartWine/tmp/steam-runtime.tar.xz" -C "${HOME}/.StartWine" | sszen &&
+    rm -f "${HOME}/.StartWine/tmp/steam-runtime.tar.xz" &&
+    "${WINELIB}"/setup.sh --force
+fi
+
+###############################   DXVK DOWNLOAD   ##############################
+
+if [ ! -d "${HOME}/.StartWine/vulkan/dxvk-"${DXVK_VER}"/x64" ]; then
+    try_remove_dir "${HOME}/.StartWine/vulkan/dxvk-"${DXVK_VER}""
+    create_new_dir "${HOME}/.StartWine/vulkan/"
+    export FTP_URL="https://github.com/doitsujin/dxvk/releases/download/v"${DXVK_VER}"/dxvk-"${DXVK_VER}".tar.gz"
+    export DL_NAME="dxvk-"${DXVK_VER}""
+    download_url --output-document="${HOME}/.StartWine/tmp/dxvk-"${DXVK_VER}".tar.gz" &&
+    tar -xf "${HOME}/.StartWine/tmp/dxvk-"${DXVK_VER}".tar.gz" -C "${HOME}/.StartWine/vulkan/" &&
+    try_remove_file "${HOME}/.StartWine/tmp/dxvk-"${DXVK_VER}".tar.gz" &&
+    try_remove_file "${HOME}/.StartWine/vulkan/dxvk-"${DXVK_VER}"/setup_dxvk.sh"
+fi
+
+###############################   VKD3D DOWNLOAD   #############################
+
+if [ ! -d "${HOME}/.StartWine/vulkan/vkd3d-proton-"${VKD3D_VER}"/x64" ]; then
+    try_remove_dir "${HOME}/.StartWine/vulkan/vkd3d-proton-"${VKD3D_VER}""
+    create_new_dir "${HOME}/.StartWine/vulkan/"
+    export FTP_URL="https://github.com/HansKristian-Work/vkd3d-proton/releases/download/v"${VKD3D_VER}"/vkd3d-proton-"${VKD3D_VER}".tar.zst"
+    export DL_NAME="vkd3d-proton-"${VKD3D_VER}""
+    download_url --output-document="${HOME}/.StartWine/tmp/vkd3d-proton-"${VKD3D_VER}".tar.zst" &&
+    tar -I zstd -xvf "${HOME}/.StartWine/tmp/vkd3d-proton-"${VKD3D_VER}".tar.zst" -C "${HOME}/.StartWine/vulkan/" &&
+    try_remove_file "${HOME}/.StartWine/tmp/vkd3d-proton-"${VKD3D_VER}".tar.zst" &&
+    try_remove_file "${HOME}/.StartWine/vulkan/vkd3d-proton-"${VKD3D_VER}"/setup_vkd3d_proton.sh"
+fi
+
+###############################   VKBASALT DOWNLOAD   ##########################
+
+if [ ! -d "${HOME}/.StartWine/vkBasalt/Shaders/" ]; then
+    try_remove_dir "${HOME}/.StartWine/vkBasalt/"
+    create_new_dir "${HOME}/.StartWine/vkBasalt/"
+    export FTP_URL="https://github.com/crosire/reshade-shaders/archive/master.zip"
+    export DL_NAME="vkbasalt reshade shaders"
+    download_url --output-document="${HOME}/.StartWine/tmp/master.zip" &&
+    unzip "${HOME}/.StartWine/tmp/master.zip" -d "${HOME}/.StartWine/" &&
+    try_copy_dir "${HOME}/.StartWine/reshade-shaders-master/Textures/" "${HOME}/.StartWine/vkBasalt/" &&
+    try_copy_dir "${HOME}/.StartWine/reshade-shaders-master/Shaders/" "${HOME}/.StartWine/vkBasalt/" &&
+    try_remove_file "${HOME}/.StartWine/tmp/master.zip" &&
+    try_remove_dir "${HOME}/.StartWine/reshade-shaders-master/"
+fi
+
+##############################   RUN DXVK   ####################################
+
+RUN_DXVK () {
+
+    sw_win_ver
+
+    if [ "${DXVK_GE}" == "1" ]; then
+        if [ ! -d "${START_WINE_PATH}/data/wine/wine_proton_ge/bin" ]; then
+            for wine_dxvk_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
+                try_copy_file "${HOME}/.StartWine/vulkan/dxvk-"${DXVK_VER}"/x32/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64/"
+                try_copy_file "${HOME}/.StartWine/vulkan/dxvk-"${DXVK_VER}"/x64/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/"
+                var_winedlloverride_update "${wine_dxvk_dll}=n"
+            done
+        else
+            for wine_dxvk_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
+                try_copy_file "${START_WINE_PATH}/data/wine/wine_proton_ge/lib/wine/dxvk/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64/"
+                try_copy_file "${START_WINE_PATH}/data/wine/wine_proton_ge/lib64/wine/dxvk/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/"
+                var_winedlloverride_update "${wine_dxvk_dll}=n"
+            done
+        fi
+    else
+        for wine_dxvk_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
+            try_copy_file "${HOME}/.StartWine/vulkan/dxvk-"${DXVK_VER}"/x32/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64/"
+            try_copy_file "${HOME}/.StartWine/vulkan/dxvk-"${DXVK_VER}"/x64/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/"
+            var_winedlloverride_update "${wine_dxvk_dll}=n"
+        done
+    fi
+
+    var_winedlloverride_update "d3d12,libvkd3d-proton-utils-3="
+
+    export __GL_DXVK_OPTIMIZATIONS=1
+    export DXVK_CONFIG_FILE="${START_WINE_PATH}/data/dxvk.conf"
+    export DXVK_STATE_CACHE_PATH="${START_WINE_PATH}/data/tmp/dxvk_cache"
+    export DXVK_STATE_CACHE=1
+    export DXVK_LOG_LEVEL="none"
+    export DXVK_LOG_PATH="none"
+
+    echo "Use DXVK"
+
+    zenity --notification --text "Use DXVK to vulkan"
+
+    START_EXE="$@"
+    PATH_TO_GAME="$(dirname "${START_EXE}")"
+    cd "${PATH_TO_GAME}"
+
+    ${RUNTIME} env ${GAMEMODE} ${MANGOHUD} "${WINELOADER}" ${VDESKTOP} ${WINESTART_EXE} "${START_EXE}" "${LAUNCH_PARAMETERS}" | sszen
+
+}
+
+#################################   RUN VKD3D   ################################
+
+RUN_VKD3D () {
+
+    sw_win_ver
+
+    if [ "${VKD3D_GE}" == "1" ]; then
+        if [ ! -d "${START_WINE_PATH}/data/wine/wine_proton_ge/bin" ]; then
+            for wine_vkd3d_dll in d3d12 ; do
+                try_copy_file "${HOME}/.StartWine/vulkan/vkd3d-proton-"${VKD3D_VER}"/x86/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64/"
+                try_copy_file "${HOME}/.StartWine/vulkan/vkd3d-proton-"${VKD3D_VER}"/x64/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/"
+                var_winedlloverride_update "${wine_vkd3d_dll}=n"
+            done
+        else
+            for wine_vkd3d_dll in d3d12 libvkd3d-proton-utils-3 ; do
+                try_copy_file "${START_WINE_PATH}/data/wine/wine_proton_ge/lib/wine/vkd3d-proton/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64/"
+                try_copy_file "${START_WINE_PATH}/data/wine/wine_proton_ge/lib64/wine/vkd3d-proton/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/"
+                var_winedlloverride_update "${wine_vkd3d_dll}=n"
+            done
+        fi
+    else
+        for wine_vkd3d_dll in d3d12 ; do
+            try_copy_file "${HOME}/.StartWine/vulkan/vkd3d-proton-"${VKD3D_VER}"/x86/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64/"
+            try_copy_file "${HOME}/.StartWine/vulkan/vkd3d-proton-"${VKD3D_VER}"/x64/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/"
+            var_winedlloverride_update "${wine_vkd3d_dll}=n"
+        done
+    fi
+
+    var_winedlloverride_update "dxgi=b"
+
+    export VKD3D_FEATURE_LEVEL="12_0"
+    export VKD3D_SHADER_DEBUG="none"
+    export VKD3D_DEBUG="none"
+
+    echo "Use VKD3D"
+
+    zenity --notification --text "Use VKD3D to vulkan"
+
+    START_EXE="$@"
+    PATH_TO_GAME="$(dirname "${START_EXE}")"
+    cd "${PATH_TO_GAME}"
+
+    ${RUNTIME} env ${GAMEMODE} ${MANGOHUD} "${WINELOADER}" ${VDESKTOP} ${WINESTART_EXE} "${START_EXE}" "${LAUNCH_PARAMETERS}" | sszen
+
+}
+
+###############################   RUN OPENGL   #################################
+
+RUN_OPENGL () {
+
+    sw_win_ver
+
+    if ! try_copy_file "${WINEDIR}"/lib/wine/fakedlls/dxgi.dll "${WINEPREFIX}/drive_c/windows/syswow64/"; then
+        try_copy_file "${WINEDIR}"/lib/wine/i386-windows/dxgi.dll "${WINEPREFIX}/drive_c/windows/syswow64/"
+    fi
+
+    if ! try_copy_file "${WINEDIR}"/lib64/wine/fakedlls/dxgi.dll "${WINEPREFIX}/drive_c/windows/system32/"; then
+        try_copy_file "${WINEDIR}"/lib64/wine/x86_64-windows/dxgi.dll "${WINEPREFIX}/drive_c/windows/system32/"
+    fi
+
+    for wine_build_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 ; do
+    if ! try_copy_file "${WINEDIR}/lib/wine/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64/"
+        then try_copy_file "${WINEDIR}/lib/wine/i386-windows/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64/"
+    fi
+
+    if ! try_copy_file "${WINEDIR}/lib64/wine/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/"; then
+        try_copy_file "${WINEDIR}/lib64/wine/x86_64-windows/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/"
+    fi
+    done
+
+    var_winedlloverride_update "d3d11,d3d10,d3d10core,d3d10_1,d3d9,dxgi=b;d3d12,libvkd3d-proton-utils-3="
+
+    echo "Use OpenGL"
+
+    zenity --notification --text "Use OpenGL"
+
+    START_EXE="$@"
+    PATH_TO_GAME="$(dirname "${START_EXE}")"
+    cd "${PATH_TO_GAME}"
+
+    ${RUNTIME} env ${GAMEMODE} ${MANGOHUD} "${WINELOADER}" ${VDESKTOP} ${WINESTART_EXE} "${START_EXE}" "${LAUNCH_PARAMETERS}" | sszen
+
+}
+
+###############################   CREATE SHORTCUT   ############################
+
+CREATE_SHORTCUT () {
+
+    `zenity --question --title "StartWine" --width=200 --text "  Сreate a new prefix for this game  ?" --no-wrap ` > /dev/null 2>&1
+
+    if [ $? -eq "0" ]; then
+        export pfx="pfx_"
+    else
+        export pfx="default_"
+    fi
+
+    if [ ! -z "${GAME_EXE}" ]; then
+        STARTWINE_EXE="${GAME_EXE}"
+    else
+        STARTWINE_EXE=$(zenity --file-selection --file-filter=""*.exe" "*.bat"" \
+        --title="StartWine" --filename="${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/")
+
+        if [ $? -eq 1 ]; then
+            exit 1;
+        fi
+
+    fi
+
+    STARTWINE_NAME="$(basename "${STARTWINE_EXE}" | sed s/".exe"/""/gi | sed 's/ /_/g' )"
+    STARTWINE_PATH="$( cd "$( dirname "${STARTWINE_EXE}" )" >/dev/null 2>&1 && pwd )"
+
+    if [ -x "`which wrestool 2>/dev/null`" ]; then
+        wrestool -x --output="${STARTWINE_PATH}/" -t14 "${STARTWINE_EXE}"
+        cp "$(ls -S -1 "${STARTWINE_EXE}"*".ico"  | head -n 1)" "${STARTWINE_EXE}.ico"
+        icotool -x --output="${STARTWINE_PATH}/" "${STARTWINE_EXE}.ico"
+        cp "$(ls -S -1 "${STARTWINE_EXE}"*".png"  | head -n 1)" "${STARTWINE_EXE}.png"
+        cp -f "${STARTWINE_EXE}.png" "${START_WINE_PATH}/data/img/${STARTWINE_NAME}.png"
+        rm -f "${STARTWINE_PATH}/"*.ico
+        rm -f "${STARTWINE_PATH}/"*.png
+    fi
+
+        cd "${START_WINE_PATH}/data/img/"
+        convert -resize 256X256  ${STARTWINE_NAME}.png ${STARTWINE_NAME}_x256.png
+        convert -resize 96X96  ${STARTWINE_NAME}.png ${STARTWINE_NAME}_x96.png
+        rm -f "${START_WINE_PATH}/data/img/${STARTWINE_NAME}.png"
+
+        name_desktop="${STARTWINE_NAME}"
+        echo "[Desktop Entry]" > "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop"
+        echo "Name=${STARTWINE_NAME}" >> "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop"
+        echo "Name_2=${pfx}${STARTWINE_NAME}" >> "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop"
+        echo "Exec=env "\"${START_WINE_PATH}/data/scripts/start\" \"${STARTWINE_EXE}\"""\
+        >> "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop"
+        echo "Type=Application" >> "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop"
+        echo "Categories=Game" >> "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop"
+        echo "StartupNotify=true" >> "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop"
+        echo "Path="${START_WINE_PATH}/data/scripts/"" >> "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop"
+        echo "Icon="${START_WINE_PATH}/data/img/${STARTWINE_NAME}_x256.png"" >> "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop"
+        echo "SW_USE=""${SET}" >> "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop"
+        chmod +x "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop"
+
+    if [ "$(sed -n '3p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" | sed 's/Name_2=//g' | sed 's/[^pfx_].*//g' )" == "pfx_" ]; then
+        export PFX_GAME="$(sed -n '3p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" | sed 's/Name_2=//g' )"
+        export WINEPREFIX="${START_WINE_PATH}/data/pfx/${PFX_GAME}"
+
+        if [ ! -d "${START_WINE_PATH}/data/pfx/"$(sed -n '3p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" | sed 's/Name_2=//g' ) ]; then
+
+            if [ ! -f "${START_WINE_PATH}/data/pfx_backup/${PFX_GAME}.iso" ]; then
+                WINEBOOT_CS
+            else 
+                `zenity --question --title "StartWine" --width=200 --text "  Restore prefix from backup ?" --no-wrap ` > /dev/null 2>&1
+
+                if [ $? -eq "0" ]; then
+                    if [ "${WINEPREFIX}" != "${START_WINE_PATH}/data/pfx/pfx_default" ]; then
+                        try_remove_dir "${START_WINE_PATH}/data/pfx/${PFX_GAME}"
+                        cd "${START_WINE_PATH}/data/pfx_backup"
+                        unsquashfs "${START_WINE_PATH}/data/pfx_backup/${PFX_GAME}.iso" | sszen
+                        mv "${START_WINE_PATH}/data/pfx_backup/squashfs-root" "${START_WINE_PATH}/data/pfx/${PFX_GAME}"
+                    fi
+                else
+                     WINEBOOT_CS
+                fi
+            fi
+        fi
+    else
+        export PFX_GAME="pfx_default"
+        export WINEPREFIX="${START_WINE_PATH}/data/pfx/${PFX_GAME}"
+        if [ ! -d "${START_WINE_PATH}/data/pfx/pfx_default" ]; then
+            WINEBOOT_CS
+        fi
+    fi
+
+}
+
+ADD_SHORTCUT () {
+
+    if [ ! -f "/home/${USER}/.local/share/applications/${name_desktop}.desktop" ]; then
+        try_copy_file "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" /home/${USER}/.local/share/applications/
+    else
+        try_remove_file "/home/${USER}/.local/share/applications/${name_desktop}.desktop"
+    fi
+
+}
+
+#################################   PREFIX TOOLS   #############################
+
+SW_PFX_BACKUP () {
+
+    if [ "${WINEPREFIX}" != "${START_WINE_PATH}/data/pfx/pfx_default" ]; then
+        try_remove_file "${START_WINE_PATH}/data/pfx_backup/${PFX_GAME}.iso"
+        mksquashfs "${START_WINE_PATH}/data/pfx/${PFX_GAME}" "${START_WINE_PATH}/data/pfx_backup/${PFX_GAME}.iso" | sszen
+        zenity --title "StartWine" --info --text "Backup completed successfully" --width=200
+    fi
+
+}
+
+SW_PFX_RESTORE () {
+
+    if [ "${WINEPREFIX}" != "${START_WINE_PATH}/data/pfx/pfx_default" ]; then
+        try_remove_dir "${START_WINE_PATH}/data/pfx/${PFX_GAME}"
+        cd "${START_WINE_PATH}/data/pfx_backup"
+        unsquashfs "${START_WINE_PATH}/data/pfx_backup/${PFX_GAME}.iso" | sszen
+        mv "${START_WINE_PATH}/data/pfx_backup/squashfs-root" "${START_WINE_PATH}/data/pfx/${PFX_GAME}"
+        zenity --title "StartWine" --info --text "Restore completed successfully" --width=200
+    fi
+
+}
+
+SW_PFX_FULL_BACKUP () {
+
+    try_remove_file "${START_WINE_PATH}/data/pfx_backup/pfx_full_backup.iso"
+    mksquashfs "${START_WINE_PATH}/data/pfx" "${START_WINE_PATH}/data/pfx_backup/pfx_full_backup.iso" | sszen
+    zenity --title "StartWine" --info --text "Full backup completed successfully" --width=200
+
+}
+
+SW_PFX_FULL_RESTORE () {
+
+    `zenity --question --title "StartWine" --text "Would you like to save the current game prefixes  ?" --no-wrap ` > /dev/null 2>&1
+
+    if [ $? -eq "0" ]; then
+        mv "${START_WINE_PATH}/data/pfx" "${START_WINE_PATH}/data/pfx_old"
+        cd "${START_WINE_PATH}/data/pfx_backup"
+        unsquashfs "${START_WINE_PATH}/data/pfx_backup/pfx_full_backup.iso" | sszen
+        mv "${START_WINE_PATH}/data/pfx_backup/squashfs-root" "${START_WINE_PATH}/data/pfx"
+        zenity --title "StartWine" --info --text "Full Restore completed successfully" --width=200
+    else
+        try_remove_dir "${START_WINE_PATH}/data/pfx"
+        cd "${START_WINE_PATH}/data/pfx_backup"
+        unsquashfs "${START_WINE_PATH}/data/pfx_backup/pfx_full_backup.iso" | sszen
+        mv "${START_WINE_PATH}/data/pfx_backup/squashfs-root" "${START_WINE_PATH}/data/pfx"
+        zenity --title "StartWine" --info --text "Full Restore completed successfully" --width=200
+    fi
+
+}
+
+##################################   WINE_TOOLS   ##############################
+
+WINECFG () {
+
+    ${RUNTIME} env "${WINELOADER}" "winecfg"
+
+}
+
+WINECONSOLE () {
+
+    cd "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/"
+    ${RUNTIME} env "${WINELOADER}" "wineconsole"
+
+}
+
+REGEDIT () {
+
+    ${RUNTIME} env "${WINELOADER}" "regedit"
+
+}
+
+WINEFILE () {
+
+    ${RUNTIME} env ${GAMEMODE} ${MANGOHUD} "${WINELOADER}" ${VDESKTOP} "explorer"
+
+}
+
+UNINSTALLER () {
+
+    cd "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/"
+    ${RUNTIME} env "${WINELOADER}" "uninstaller"
+
+}
+
+###################################   WINEBOOT   ###############################
+
+REMOVE_PFX () {
+
+    `zenity --question --title "StartWine" --text "Do you really want to remove the prefix  ?" --no-wrap ` > /dev/null 2>&1
+
+    if [ $? -eq "0" ]; then
+
+        if [ "${WINEPREFIX}" = "${START_WINE_PATH}/data/pfx/pfx_default" ]; then
+            try_remove_file "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop"
+            try_remove_file "${START_WINE_PATH}/data/img/${STARTWINE_NAME}_x96.png"
+            try_remove_file "${START_WINE_PATH}/data/img/${STARTWINE_NAME}_x256.png"
+            try_remove_file "/home/${USER}/.local/share/applications/${name_desktop}.desktop"
+        else
+            try_remove_dir "${START_WINE_PATH}/data/pfx/${PFX_GAME}"
+            try_remove_file "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop"
+            try_remove_file "${START_WINE_PATH}/data/img/${STARTWINE_NAME}_x96.png"
+            try_remove_file "${START_WINE_PATH}/data/img/${STARTWINE_NAME}_x256.png"
+            try_remove_file "/home/${USER}/.local/share/applications/${name_desktop}.desktop"
+        fi
+
+    fi
+
+}
+
+REINSTALL_PFX () {
+
+    `zenity --question --title "StartWine" --width=200 --text "Remove prefix ?" --no-wrap ` > /dev/null 2>&1
+
+    if [ $? -eq "0" ]; then
+
+        try_remove_dir "${START_WINE_PATH}/data/pfx/${PFX_GAME}"
+        mkdir -p "${START_WINE_PATH}/Games"
+        mkdir -p "${START_WINE_PATH}/data/tmp"
+
+        ${RUNTIME} env WINEDLLOVERRIDES="mscoree,mshtml=;${WINEDLLOVERRIDES}" "${WINELOADER}" wineboot -u | zenity --progress --title="StartWine" --text="Please wait, the prefix is ​​being updated..." --pulsate --auto-close --width=500 --height=90 --no-cancel || prefix_init_error
+        "${WINESERVER}" -w
+
+        if [ ! -d "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}" ]; then
+              try_force_link_dir "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/steamuser" "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}"
+        fi
+
+        if [ ! -d "${WINEPREFIX}/drive_c/users/steamuser/My Documents" ]; then
+            try_force_link_dir "${WINEPREFIX}/drive_c/users/steamuser/Documents" "${WINEPREFIX}/drive_c/users/steamuser/My Documents"
+        fi
+
+        if [ ! -d "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/Games" ]; then
+            try_force_link_dir "${START_WINE_PATH}/Games/" "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/Games"
+        fi
+
+        create_new_dir "${WINEPREFIX}/drive_c/users/steamuser/Documents/Steam"
+        create_new_dir "${WINEPREFIX}/drive_c/users/Public/Documents/Steam"
+        create_new_dir "${WINEPREFIX}/drive_c/windows/Fonts/"
+        try_copy_file "${WINEDIR}/share/fonts/"LiberationSans-Regular.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"arial.ttf
+        try_copy_file "${WINEDIR}/share/fonts/"LiberationSans-Bold.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"arialbd.ttf
+        try_copy_file "${WINEDIR}/share/fonts/"LiberationSerif-Regular.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"times.ttf
+        try_copy_file "${WINEDIR}/share/fonts/"LiberationMono-Regular.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"cour.ttf
+        try_copy_file "${WINEDIR}/share/fonts/"SourceHanSansSCRegular.otf "${WINEPREFIX}/drive_c/windows/Fonts/"msyh.ttf
+
+        `zenity --question --ok-label "INSTALL RECOMMENDED LIBRARIES" --cancel-label "DON'T INSTALL LIBRARIES" --title "StartWine" --width=200 --text "Updating prefix successful" --no-wrap ` > /dev/null 2>&1
+
+        if [ $? -eq "0" ]; then
+
+            "${WINESERVER}" -k
+
+            if [ ! -f "${HOME}/.Xresources" ]; then
+                cp -f "${START_WINE_PATH}/data/scripts/.Xresources" "${HOME}"
+                xrdb -merge "${HOME}/.Xresources"
+            fi
+
+            export SW_XTERM="/usr/bin/xterm -geometry 80x20 -e"
+            export WINE="$WINELOADER"
+
+            ${SW_XTERM} "${START_WINE_PATH}/data/scripts/winetricks" -q -f d3dcompiler_42 d3dcompiler_43 d3dcompiler_47 d3dx10 d3dx10_43 d3dx11_42 d3dx11_43 d3dx9 mfc120 mfc42 msvcirt physx vcrun2010 vcrun2012 vcrun2013 vcrun2019 vcrun6 vcrun6sp6 win10 &&
+
+        zenity --info --title "StartWine" --width=200 --text "Libraries installed successfully"
+
+        fi
+
+    fi
+
+}
+
+#################################   WINEBOOT CS   ##############################
+
+WINEBOOT_CS () {
+
+    mkdir -p "${START_WINE_PATH}/Games"
+    mkdir -p "${START_WINE_PATH}/data/tmp"
+
+    ${RUNTIME} env WINEDLLOVERRIDES="mscoree,mshtml=;${WINEDLLOVERRIDES}" "${WINELOADER}" wineboot -u | zenity --progress --title="StartWine" --text="Please wait, the prefix is ​​being updated..." --pulsate --auto-close --width=500 --height=90 --no-cancel || prefix_init_error
+    "${WINESERVER}" -w
+
+    if [ ! -d "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}" ]; then
+          try_force_link_dir "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/steamuser" "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}"
+    fi
+
+    if [ ! -d "${WINEPREFIX}/drive_c/users/steamuser/My Documents" ]; then
+        try_force_link_dir "${WINEPREFIX}/drive_c/users/steamuser/Documents" "${WINEPREFIX}/drive_c/users/steamuser/My Documents"
+    fi
+
+    if [ ! -d "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/Games" ]; then
+        try_force_link_dir "${START_WINE_PATH}/Games/" "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/Games"
+    fi
+
+    create_new_dir "${WINEPREFIX}/drive_c/users/steamuser/Documents/Steam"
+    create_new_dir "${WINEPREFIX}/drive_c/users/Public/Documents/Steam"
+    create_new_dir "${WINEPREFIX}/drive_c/windows/Fonts/"
+    try_copy_file "${WINEDIR}/share/fonts/"LiberationSans-Regular.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"arial.ttf
+    try_copy_file "${WINEDIR}/share/fonts/"LiberationSans-Bold.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"arialbd.ttf
+    try_copy_file "${WINEDIR}/share/fonts/"LiberationSerif-Regular.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"times.ttf
+    try_copy_file "${WINEDIR}/share/fonts/"LiberationMono-Regular.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"cour.ttf
+    try_copy_file "${WINEDIR}/share/fonts/"SourceHanSansSCRegular.otf "${WINEPREFIX}/drive_c/windows/Fonts/"msyh.ttf
+
+    `zenity --question --ok-label "INSTALL RECOMMENDED LIBRARIES" --cancel-label "DON'T INSTALL LIBRARIES" --title "StartWine" --width=200 --text "Updating prefix successful" --no-wrap ` > /dev/null 2>&1
+
+    if [ $? -eq "0" ]; then
+
+        "${WINESERVER}" -k
+
+        if [ ! -f "${HOME}/.Xresources" ]; then
+            cp -f "${START_WINE_PATH}/data/scripts/.Xresources" "${HOME}"
+            xrdb -merge "${HOME}/.Xresources"
+        fi
+
+        export SW_XTERM="/usr/bin/xterm -geometry 80x20 -e"
+        export WINE="$WINELOADER"
+
+        ${SW_XTERM} "${START_WINE_PATH}/data/scripts/winetricks" -q -f d3dcompiler_42 d3dcompiler_43 d3dcompiler_47 d3dx10 d3dx10_43 d3dx11_42 d3dx11_43 d3dx9 mfc120 mfc42 msvcirt physx vcrun2010 vcrun2012 vcrun2013 vcrun2019 vcrun6 vcrun6sp6 win10 &&
+
+    zenity --info --title "StartWine" --width=200 --text "Libraries installed successfully"
+
+    fi
+
+}
+
+#################################   WINETRICKS   ###############################
+
+SW_WINETRICKS () {
+
+    "${WINESERVER}" -k
+
+    if [ ! -f "${HOME}/.Xresources" ]; then
+        cp -f "${START_WINE_PATH}/data/scripts/.Xresources" "${HOME}"
+        xrdb -merge "${HOME}/.Xresources"
+    fi
+
+    export SW_XTERM="/usr/bin/xterm -geometry 80x20 -e"
+
+    if [ -f "${START_WINE_PATH}"/data/scripts/winetricks ]; then
+        rm -f "${START_WINE_PATH}"/data/scripts/winetricks
+    fi
+
+    export FTP_URL="https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks"
+    export DL_NAME="winetricks"
+    download_url --output-document=${START_WINE_PATH}/data/scripts/winetricks &&
+    chmod +x "${START_WINE_PATH}/data/scripts/winetricks"
+
+    export WINE="$WINELOADER"
+    ${SW_XTERM} "${START_WINE_PATH}/data/scripts/winetricks" -q -f
+
+}
+
+INSTALL_RL () {
+
+    "${WINESERVER}" -k
+
+    if [ ! -f "${HOME}/.Xresources" ]; then
+        cp -f "${START_WINE_PATH}/data/scripts/.Xresources" "${HOME}"
+        xrdb -merge "${HOME}/.Xresources"
+    fi
+
+    export SW_XTERM="/usr/bin/xterm -geometry 80x20 -e"
+
+    if [ -f "${START_WINE_PATH}"/data/scripts/winetricks ]; then
+        rm -f "${START_WINE_PATH}"/data/scripts/winetricks
+    fi
+
+    export FTP_URL="https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks"
+    export DL_NAME="winetricks"
+    download_url --output-document=${START_WINE_PATH}/data/scripts/winetricks &&
+    chmod +x "${START_WINE_PATH}/data/scripts/winetricks"
+
+    export WINE="$WINELOADER"
+    ${SW_XTERM} "${START_WINE_PATH}/data/scripts/winetricks" -q -f d3dcompiler_42 d3dcompiler_43 d3dcompiler_47 d3dx10 d3dx10_43 d3dx11_42 d3dx11_43 d3dx9 mfc120 mfc42 msvcirt physx vcrun2010 vcrun2012 vcrun2013 vcrun2019 vcrun6 vcrun6sp6 win10 &&
+    zenity --info --title "StartWine" --width=200 --text "Libraries installed successfully"
+
+}
+
+##################################   STOP   ####################################
+
+STOP () {
+
+    wine_pids="$(ls -l /proc/*/exe 2>/dev/null | grep -ie ${SW_NAME} | grep -E 'wine(64)?-preloader|wineserver' | awk -F/ '{print $3}')"
+    if  ! [ -z "${wine_pids}" ]; then
+        kill -n 9 ${wine_pids}
+    fi
+
+    wine_pids="$(ls -l /proc/*/exe 2>/dev/null | grep -E 'wine(64)?-preloader|wineserver' | awk -F/ '{print $3}')"
+    if  ! [ -z "${wine_pids}" ]; then
+        kill -n 9 ${wine_pids}
+    fi
+
+    zenity --notification --text "kill wine porocesses"
+
+    exit
+
+}
+
+#################################   DEBUG   ####################################
+
+DEBUG () {
+
+    export portname="${name_desktop}"
+    rm -f  "${START_WINE_PATH}/data/tmp/${portname}.log"
+    echo "Date and time of start debug for ${portname}" >> "${START_WINE_PATH}/data/tmp/${portname}.log"
+    date >> "${START_WINE_PATH}/data/tmp/${portname}.log"
+    echo "--------------------------------------------------------------------------------------------------" >> "${START_WINE_PATH}/data/tmp/${portname}.log"
+    echo "Operating system" >> "${START_WINE_PATH}/data/tmp/${portname}.log"
+    lsb_release -d | sed s/Description/ОС/g >> "${START_WINE_PATH}/data/tmp/${portname}.log"
+    echo "--------------------------------------------------------------------------------------------------" >> "${START_WINE_PATH}/data/tmp/${portname}.log"
+    echo "Desktop Environment" >> "${START_WINE_PATH}/data/tmp/${portname}.log"
+    echo "$DESKTOP_SESSION" >> "${START_WINE_PATH}/data/tmp/${portname}.log"
+    echo "${XDG_CURRENT_DESKTOP}" >> "${START_WINE_PATH}/data/tmp/${portname}.log"
+    echo "--------------------------------------------------------------------------------------------------" >> "${START_WINE_PATH}/data/tmp/${portname}.log"
+    echo "Kernel" >> "${START_WINE_PATH}/data/tmp/${portname}.log"
+    uname -r >> "${START_WINE_PATH}/data/tmp/${portname}.log"
+    echo "--------------------------------------------------------------------------------------------------" >> "${START_WINE_PATH}/data/tmp/${portname}.log"
+    echo "CPU" >> "${START_WINE_PATH}/data/tmp/${portname}.log"
+    cat /proc/cpuinfo | grep "model name" >> "${START_WINE_PATH}/data/tmp/${portname}.log"
+    echo "--------------------------------------------------------------------------------------------------" >> "${START_WINE_PATH}/data/tmp/${portname}.log"
+    echo "RAM" >> "${START_WINE_PATH}/data/tmp/${portname}.log"
+    free -m >> "${START_WINE_PATH}/data/tmp/${portname}.log"
+    echo "--------------------------------------------------------------------------------------------------" >> "${START_WINE_PATH}/data/tmp/${portname}.log"
+    echo "Graphic cards" >> "${START_WINE_PATH}/data/tmp/${portname}.log"
+    lspci | grep VGA >> "${START_WINE_PATH}/data/tmp/${portname}.log"
+    glxinfo | grep OpenGL >> "${START_WINE_PATH}/data/tmp/${portname}.log"
+    echo "--------------------------------------------------------------------------------------------------" >> "${START_WINE_PATH}/data/tmp/${portname}.log"
+    echo "Version WINE" >> "${START_WINE_PATH}/data/tmp/${portname}.log"
+    "$WINELOADER" --version 2>&1 | tee -a "${START_WINE_PATH}/data/tmp/${portname}.log"
+    echo "--------------------------------------------------------------------------------------------------" >> "${START_WINE_PATH}/data/tmp/${portname}.log"
+    echo "log WINE" >> "${START_WINE_PATH}/data/tmp/${portname}.log"
+    export WINEDEBUG="fixme-all,err+loaddll,err+dll,err+file,err+reg"
+
+    START_EXE="$@"
+    PATH_TO_GAME="$(dirname "${START_EXE}")"
+    cd "${PATH_TO_GAME}"
+
+    ${RUNTIME} env ${GAMEMODE} ${MANGOHUD} "${WINELOADER}" ${VDESKTOP} ${WINESTART_EXE} "${START_EXE}" "${LAUNCH_PARAMETERS}" >> "${START_WINE_PATH}/data/tmp/${portname}.log" 2>&1
+    zenity --info --title "StartWine" --width=200 --text "Click ok to open DEBUG" &&
+    zData=$(cat "${START_WINE_PATH}/data/tmp/${portname}.log")
+    zNewData=$(echo -n "${zData}" | yad --text-info --title "<<< DEBUG >>>" --borders=10 --no-buttons --editable --width 1200 --height 550)
+
+    STOP
+
+}
+
+DEBUG_DXVK () {
+
+    sw_win_ver
+
+    if [ "${DXVK_GE}" == "1" ]; then
+        if [ ! -d "${START_WINE_PATH}/data/wine/wine_proton_ge/bin" ]; then
+            for wine_dxvk_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
+                try_copy_file "${HOME}/.StartWine/vulkan/dxvk-"${DXVK_VER}"/x32/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64/"
+                try_copy_file "${HOME}/.StartWine/vulkan/dxvk-"${DXVK_VER}"/x64/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/"
+                var_winedlloverride_update "${wine_dxvk_dll}=n"
+            done
+        else
+            for wine_dxvk_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
+                try_copy_file "${START_WINE_PATH}/data/wine/wine_proton_ge/lib/wine/dxvk/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64/"
+                try_copy_file "${START_WINE_PATH}/data/wine/wine_proton_ge/lib64/wine/dxvk/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/"
+                var_winedlloverride_update "${wine_dxvk_dll}=n"
+            done
+        fi
+    else
+        for wine_dxvk_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
+            try_copy_file "${HOME}/.StartWine/vulkan/dxvk-"${DXVK_VER}"/x32/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64/"
+            try_copy_file "${HOME}/.StartWine/vulkan/dxvk-"${DXVK_VER}"/x64/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/"
+            var_winedlloverride_update "${wine_dxvk_dll}=n"
+        done
+    fi
+
+    var_winedlloverride_update "d3d12,libvkd3d-proton-utils-3="
+
+    export __GL_DXVK_OPTIMIZATIONS=1
+    export DXVK_CONFIG_FILE="${START_WINE_PATH}/data/dxvk.conf"
+    export DXVK_STATE_CACHE_PATH="${START_WINE_PATH}/data/tmp/dxvk_cache"
+    export DXVK_STATE_CACHE=1
+    export DXVK_LOG_LEVEL="none"
+    export DXVK_LOG_PATH="none"
+
+    echo "Use DXVK"
+
+    zenity --notification --text "Use DXVK to vulkan"
+
+    DEBUG "$@"
+
+}
+
+DEBUG_VKD3D () {
+
+    sw_win_ver
+
+    if [ "${VKD3D_GE}" == "1" ]; then
+        if [ ! -d "${START_WINE_PATH}/data/wine/wine_proton_ge/bin" ]; then
+            for wine_vkd3d_dll in d3d12 ; do
+                try_copy_file "${HOME}/.StartWine/vulkan/vkd3d-proton-"${VKD3D_VER}"/x86/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64/"
+                try_copy_file "${HOME}/.StartWine/vulkan/vkd3d-proton-"${VKD3D_VER}"/x64/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/"
+                var_winedlloverride_update "${wine_vkd3d_dll}=n"
+            done
+        else
+            for wine_vkd3d_dll in d3d12 libvkd3d-proton-utils-3 ; do
+                try_copy_file "${START_WINE_PATH}/data/wine/wine_proton_ge/lib/wine/vkd3d-proton/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64/"
+                try_copy_file "${START_WINE_PATH}/data/wine/wine_proton_ge/lib64/wine/vkd3d-proton/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/"
+                var_winedlloverride_update "${wine_vkd3d_dll}=n"
+            done
+        fi
+    else
+        for wine_vkd3d_dll in d3d12 ; do
+            try_copy_file "${HOME}/.StartWine/vulkan/vkd3d-proton-"${VKD3D_VER}"/x86/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64/"
+            try_copy_file "${HOME}/.StartWine/vulkan/vkd3d-proton-"${VKD3D_VER}"/x64/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/"
+            var_winedlloverride_update "${wine_vkd3d_dll}=n"
+        done
+    fi
+
+    var_winedlloverride_update "dxgi=b"
+
+    export VKD3D_FEATURE_LEVEL="12_0"
+    export VKD3D_SHADER_DEBUG="none"
+    export VKD3D_DEBUG="none"
+
+    echo "Use VKD3D"
+
+    zenity --notification --text "Use VKD3D to vulkan"
+
+    DEBUG "$@"
+
+}
+
+DEBUG_OPENGL () {
+
+    sw_win_ver
+
+    if ! try_copy_file "${WINEDIR}"/lib/wine/fakedlls/dxgi.dll "${WINEPREFIX}/drive_c/windows/syswow64/"; then
+        try_copy_file "${WINEDIR}"/lib/wine/i386-windows/dxgi.dll "${WINEPREFIX}/drive_c/windows/syswow64/"
+    fi
+
+    if ! try_copy_file "${WINEDIR}"/lib64/wine/fakedlls/dxgi.dll "${WINEPREFIX}/drive_c/windows/system32/"; then
+        try_copy_file "${WINEDIR}"/lib64/wine/x86_64-windows/dxgi.dll "${WINEPREFIX}/drive_c/windows/system32/"
+    fi
+
+    for wine_build_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 ; do
+    if ! try_copy_file "${WINEDIR}/lib/wine/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64/"; then
+        try_copy_file "${WINEDIR}/lib/wine/i386-windows/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64/"
+    fi
+
+    if ! try_copy_file "${WINEDIR}/lib64/wine/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/"; then
+        try_copy_file "${WINEDIR}/lib64/wine/x86_64-windows/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/"
+    fi
+    done
+
+    var_winedlloverride_update "d3d11,d3d10,d3d10core,d3d10_1,d3d9,dxgi=b;d3d12,libvkd3d-proton-utils-3="
+
+    echo "Use OpenGL"
+
+    zenity --notification --text "Use OpenGL"
+
+    DEBUG "$@"
+
+}
+
+##############################   DOWNLOAD WINE   ###############################
+
+WINE_1 () {
+
+    if [ ! -d "${START_WINE_PATH}/data/wine/wine_staging/bin" ]; then
+        export FTP_URL="https://github.com/Kron4ek/Wine-Builds/releases/download/"${STAG_VER}"/wine-"${STAG_VER}"-staging-amd64.tar.xz"
+        export DL_NAME="wine-"${STAG_VER}"-staging"
+        download_url --output-document="${HOME}/.StartWine/tmp/wine-"${STAG_VER}"-staging-amd64.tar.xz" &&
+        tar -Jxvf "${HOME}/.StartWine/tmp/wine-"${STAG_VER}"-staging-amd64.tar.xz" -C "${HOME}/.StartWine" | sszen &&
+        try_copy_dir "${HOME}/.StartWine/wine-"${STAG_VER}"-staging-amd64/bin" "${START_WINE_PATH}/data/wine/wine_staging" &&
+        try_copy_dir "${HOME}/.StartWine/wine-"${STAG_VER}"-staging-amd64/lib" "${START_WINE_PATH}/data/wine/wine_staging" &&
+        try_copy_dir "${HOME}/.StartWine/wine-"${STAG_VER}"-staging-amd64/share" "${START_WINE_PATH}/data/wine/wine_staging" &&
+        try_remove_file "${HOME}/.StartWine/tmp/wine-"${STAG_VER}"-staging-amd64.tar.xz" &&
+        try_remove_dir "${HOME}/.StartWine/wine-"${STAG_VER}"-staging-amd64"
+    fi
+
+    zenity --title "StartWine" --info --text "Downloading wine staging completed successfully" --width=200
+
+}
+
+WINE_2 () {
+
+    if [ ! -d "${START_WINE_PATH}/data/wine/wine_steam_proton/bin" ]; then
+        export FTP_URL="https://github.com/RusNor/Wine-Steam-Proton/releases/download/steam-proton-"${SP_VER}"/steam-proton-"${SP_VER}".tar.xz"
+        export DL_NAME="wine-"${SP_VER}"-proton"
+        download_url --output-document="${HOME}/.StartWine/tmp/steam-proton-"${SP_VER}".tar.xz" &&
+        tar -Jxvf "${HOME}/.StartWine/tmp/steam-proton-"${SP_VER}".tar.xz" -C "${HOME}/.StartWine" | sszen &&
+        try_copy_dir "${HOME}/.StartWine/steam-proton-"${SP_VER}"/bin" "${START_WINE_PATH}/data/wine/wine_steam_proton" &&
+        try_copy_dir "${HOME}/.StartWine/steam-proton-"${SP_VER}"/lib" "${START_WINE_PATH}/data/wine/wine_steam_proton" &&
+        try_copy_dir "${HOME}/.StartWine/steam-proton-"${SP_VER}"/lib64" "${START_WINE_PATH}/data/wine/wine_steam_proton" &&
+        try_copy_dir "${HOME}/.StartWine/steam-proton-"${SP_VER}"/share" "${START_WINE_PATH}/data/wine/wine_steam_proton" &&
+        try_copy_file "${HOME}/.StartWine/steam-proton-"${SP_VER}"/version" "${START_WINE_PATH}/data/wine/wine_steam_proton" &&
+        try_remove_file "${HOME}/.StartWine/tmp/steam-proton-"${SP_VER}".tar.xz" &&
+        try_remove_dir "${HOME}/.StartWine/steam-proton-"${SP_VER}""
+    fi
+
+    zenity --title "StartWine" --info --text "Downloading wine steam proton completed successfully" --width=200
+
+}
+
+WINE_3 () {
+
+    if [ ! -d "${START_WINE_PATH}/data/wine/wine_proton_ge/bin" ]; then
+        export FTP_URL="https://github.com/GloriousEggroll/proton-ge-custom/releases/download/"${GE_VER}"/Proton-"${GE_VER}".tar.gz"
+        export DL_NAME="Proton-"${GE_VER}""
+        download_url --output-document="${HOME}/.StartWine/tmp/Proton-"${GE_VER}".tar.gz" &&
+        tar -xf "${HOME}/.StartWine/tmp/Proton-"${GE_VER}".tar.gz" -C "${HOME}/.StartWine" | sszen &&
+        try_copy_dir "${HOME}/.StartWine/Proton-"${GE_VER}"/files/bin" "${START_WINE_PATH}/data/wine/wine_proton_ge" &&
+        try_copy_dir "${HOME}/.StartWine/Proton-"${GE_VER}"/files/lib" "${START_WINE_PATH}/data/wine/wine_proton_ge" &&
+        try_copy_dir "${HOME}/.StartWine/Proton-"${GE_VER}"/files/lib64" "${START_WINE_PATH}/data/wine/wine_proton_ge" &&
+        try_copy_dir "${HOME}/.StartWine/Proton-"${GE_VER}"/files/share" "${START_WINE_PATH}/data/wine/wine_proton_ge" &&
+        try_copy_file "${HOME}/.StartWine/Proton-"${GE_VER}"/version" "${START_WINE_PATH}/data/wine/wine_proton_ge" &&
+        try_remove_file "${HOME}/.StartWine/tmp/Proton-"${GE_VER}".tar.gz" &&
+        try_remove_dir "${HOME}/.StartWine/Proton-"${GE_VER}""
+    fi
+
+    cd "${START_WINE_PATH}/data/wine/wine_proton_ge/share/wine"
+    sed -i '/\AppDefaults\\/g; /HKCU,Software\\Valve\\/g; /HKLM,Software\\Wow6432Node\\Valve\\Steam/g; /HKCR,steam\\/g' wine.inf
+
+    zenity --title "StartWine" --info --text "Downloading wine proton ge completed successfully" --width=200
+
+}
+
+WINE_4 () {
+
+    if [ ! -d "${START_WINE_PATH}/data/wine/wine_lutris/bin" ]; then
+        export FTP_URL="https://github.com/lutris/wine/releases/download/lutris-"${LUTRIS_VER}"/wine-lutris-"${LUTRIS_VER}"-x86_64.tar.xz"
+        export DL_NAME="wine-lutris-"${LUTRIS_VER}""
+        download_url --output-document="${HOME}/.StartWine/tmp/wine-lutris-"${LUTRIS_VER}"-x86_64.tar.xz" &&
+        tar -xf "${HOME}/.StartWine/tmp/wine-lutris-"${LUTRIS_VER}"-x86_64.tar.xz" -C "${HOME}/.StartWine" | sszen &&
+        try_copy_dir "${HOME}/.StartWine/lutris-"${LUTRIS_VER}"-x86_64/bin" "${START_WINE_PATH}/data/wine/wine_lutris" &&
+        try_copy_dir "${HOME}/.StartWine/lutris-"${LUTRIS_VER}"-x86_64/lib" "${START_WINE_PATH}/data/wine/wine_lutris" &&
+        try_copy_dir "${HOME}/.StartWine/lutris-"${LUTRIS_VER}"-x86_64/lib64" "${START_WINE_PATH}/data/wine/wine_lutris" &&
+        try_copy_dir "${HOME}/.StartWine/lutris-"${LUTRIS_VER}"-x86_64/share" "${START_WINE_PATH}/data/wine/wine_lutris" &&
+        try_remove_file "${HOME}/.StartWine/tmp/wine-lutris-"${LUTRIS_VER}"-x86_64.tar.xz" &&
+        try_remove_dir "${HOME}/.StartWine/lutris-"${LUTRIS_VER}"-x86_64"
+    fi
+
+    cd "${START_WINE_PATH}/data/wine/wine_lutris/share/wine"
+    sed -i '/\AppDefaults\\/g; /HKCU,Software\\Valve\\/g; /HKLM,Software\\Wine/g; /HKLM,Software\\Wow6432Node\\Valve\\Steam/g; /HKCR,steam\\/g' wine.inf
+
+    zenity --title "StartWine" --info --text "Downloading wine lutris completed successfully" --width=200
+
+}
+
+WINE_5 () {
+
+    if [ ! -d "${START_WINE_PATH}/data/wine/wine_lutris_ge/bin" ]; then
+        export FTP_URL="https://github.com/GloriousEggroll/wine-ge-custom/releases/download/"${LUTRIS_GE_URL}"/wine-lutris-ge-"${LUTRIS_GE_VER}"-x86_64.tar.xz"
+        export DL_NAME="wine-lutris-"${LUTRIS_GE_URL}""
+        download_url --output-document="${HOME}/.StartWine/tmp/wine-lutris-ge-"${LUTRIS_GE_VER}"-x86_64.tar.xz" &&
+        tar -xf "${HOME}/.StartWine/tmp/wine-lutris-ge-"${LUTRIS_GE_VER}"-x86_64.tar.xz" -C "${HOME}/.StartWine" | sszen &&
+        try_copy_dir "${HOME}/.StartWine/lutris-ge-"${LUTRIS_GE_VER}"-x86_64/bin" "${START_WINE_PATH}/data/wine/wine_lutris_ge" &&
+        try_copy_dir "${HOME}/.StartWine/lutris-ge-"${LUTRIS_GE_VER}"-x86_64/lib" "${START_WINE_PATH}/data/wine/wine_lutris_ge" &&
+        try_copy_dir "${HOME}/.StartWine/lutris-ge-"${LUTRIS_GE_VER}"-x86_64/lib64" "${START_WINE_PATH}/data/wine/wine_lutris_ge" &&
+        try_copy_dir "${HOME}/.StartWine/lutris-ge-"${LUTRIS_GE_VER}"-x86_64/share" "${START_WINE_PATH}/data/wine/wine_lutris_ge" &&
+        try_remove_file "${HOME}/.StartWine/tmp/wine-lutris-ge-"${LUTRIS_GE_VER}"-x86_64.tar.xz" &&
+        try_remove_dir "${HOME}/.StartWine/lutris-ge-"${LUTRIS_GE_VER}"-x86_64"
+    fi
+
+    cd "${START_WINE_PATH}/data/wine/wine_lutris_ge/share/wine"
+    sed -i '/\AppDefaults\\/g; /HKCU,Software\\Valve\\/g; /HKLM,Software\\Wine/g; /HKLM,Software\\Wow6432Node\\Valve\\Steam/g; /HKCR,steam\\/g' wine.inf
+
+    zenity --title "StartWine" --info --text "Downloading wine lutris ge completed successfully" --width=200
+
+}
+
+WINE_6 () {
+
+    xdg-open "${START_WINE_PATH}/data/wine/wine_custom"
+
+}
+
+#############################   STARTING TRAY   ################################
+
+START_TRAY () {
+
+    if [ -z "`pgrep -a python3 | grep "start_tray" | awk '{print $1}'`" ]; then
+        "/home/${USER}/StartWine/data/scripts/start_tray" &
+    else
+        kill -s SIGKILL `pgrep -a python3 | grep "start_tray" | awk '{print $1}'`;
+        "/home/${USER}/StartWine/data/scripts/start_tray" &
+    fi
+
+}
+
+case $1 in
+
+    START_TRAY) "$@" ;;
+
+esac
+
+#################################   THE END   ##################################
