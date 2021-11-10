@@ -184,8 +184,8 @@ def on_btn_resize(self):
 
     def get_resolution():
 
-        width = f"xrandr | grep '*' | cut -d 'x' -f1 | sed 's/ //g'"
-        height = f"xrandr | grep '*' | cut -d 'x' -f2 | cut -d ' ' -f1"
+        width = f"xrandr | grep '*' | cut -d 'x' -f1 | sed 's/ //g' | head -n1"
+        height = f"xrandr | grep '*' | cut -d 'x' -f2 | cut -d ' ' -f1 | head -n1"
 
         proc_1 = subprocess.run(width, shell=True, stdout=subprocess.PIPE)
         proc_2 = subprocess.run(height, shell=True, stdout=subprocess.PIPE)
@@ -3869,16 +3869,20 @@ btn_games_config.connect("clicked", on_btn_games_config)
 
 def get_resolution():
 
-    width = f"xrandr | grep '*' | cut -d 'x' -f1 | sed 's/ //g'"
-    height = f"xrandr | grep '*' | cut -d 'x' -f2 | cut -d ' ' -f1"
+    width = f"xrandr | grep '*' | cut -d 'x' -f1 | sed 's/ //g' | head -n1"
+    height = f"xrandr | grep '*' | cut -d 'x' -f2 | cut -d ' ' -f1 | head -n1"
 
     proc_1 = subprocess.run(width, shell=True, stdout=subprocess.PIPE)
     proc_2 = subprocess.run(height, shell=True, stdout=subprocess.PIPE)
 
     out_1 = str(proc_1.stdout[0:])
     out_name_1 = str(out_1).replace('b\'', '').replace('n\'', '').replace('\\', '\n')
+
     out_2 = str(proc_2.stdout[0:])
     out_name_2 = str(out_2).replace('b\'', '').replace('n\'', '').replace('\\', '\n')
+
+    print(out_name_1)
+    print(out_name_2)
 
     def on_btn_black_theme(self):
 

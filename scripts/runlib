@@ -11,7 +11,7 @@ export START_WINE_PATH="$(pwd)"
 ###############################   TOOLS   ######################################
 
 export SW_NAME="StartWine-Launcher"
-export SW_VER=" v3.1.4"
+export SW_VER=" v3.1.5"
 export GE_VER="6.20-GE-1"
 export SP_VER="6.3.7"
 export STAG_VER="6.21"
