@@ -2,7 +2,6 @@
 ![Снимок экрана_2021-11-11_02-01-19](https://user-images.githubusercontent.com/85447162/141208065-63145f8a-dbbc-4286-95ad-ee41b685905c.png)
 ![Снимок экрана_2021-11-11_02-02-29](https://user-images.githubusercontent.com/85447162/141208097-691ebdc2-03f8-4d65-9ed2-82829127bb04.png)
 ![Снимок экрана_2021-11-11_02-02-46](https://user-images.githubusercontent.com/85447162/141208114-51e2668f-e6d1-43d7-bd28-3b7dca2d32c5.png)
-![Снимок экрана_2021-11-11_02-03-02](https://user-images.githubusercontent.com/85447162/141208126-7cb0c165-8740-4f82-a4e0-b8074cceda2c.png)
 ![Снимок экрана_2021-11-11_02-03-37](https://user-images.githubusercontent.com/85447162/141208140-0e10ae40-4c8d-454e-b921-a6ae706ce92e.png)
 ![Снимок экрана_2021-11-11_02-04-08](https://user-images.githubusercontent.com/85447162/141208151-bd2fbfcf-845a-45dc-8fd2-5e03b13815e1.png)
 ![Снимок экрана_2021-11-11_02-04-47](https://user-images.githubusercontent.com/85447162/141208158-4b7bc4fa-ae15-4e9c-963f-4240724cd441.png)
