@@ -1,3 +1,5 @@
+![Снимок экрана_2021-11-11_02-10-05](https://user-images.githubusercontent.com/85447162/141208519-a93b24ee-2f46-43aa-b7dc-400d7825f7d2.png)
+![Снимок экрана_2021-11-11_02-11-32](https://user-images.githubusercontent.com/85447162/141208532-b4b0a79f-7567-4547-96f1-5a9b776b81dc.png)
 # StartWine-Launcher
 ![Снимок экрана_2021-11-11_02-01-19](https://user-images.githubusercontent.com/85447162/141208065-63145f8a-dbbc-4286-95ad-ee41b685905c.png)
 ![Снимок экрана_2021-11-11_02-02-29](https://user-images.githubusercontent.com/85447162/141208097-691ebdc2-03f8-4d65-9ed2-82829127bb04.png)
