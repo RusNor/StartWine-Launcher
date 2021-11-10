@@ -7,21 +7,21 @@
 if [ -x "$(command -v apt)" ]; then
     sudo apt update -y
     sudo apt install wget zenity zstd unzip -y
-    sudo apt install software-properties-common -y && sudo dpkg --add-architecture i386 && sudo apt update && sudo apt install cabextract icoutils tar wine yad xterm -y
+    sudo apt install software-properties-common -y && sudo dpkg --add-architecture i386 && sudo apt update && sudo apt install cabextract icoutils tar wine xterm -y
     sudo apt install gir1.2-appindicator3-0.1 imagemagick mc -y
 elif [ -x "$(command -v dnf)" ]; then
     sudo dnf update -y
     sudo dnf install wget zenity zstd unzip -y
-    sudo dnf install cabextract icoutils tar wine yad xterm -y
+    sudo dnf install cabextract icoutils tar wine xterm -y
     sudo dnf install gir1.2-appindicator3-0.1 imagemagick mc -y
 elif [ -x "$(command -v zypper)" ]; then
-    sudo zypper ref -y
-    sudo zypper in wget zenity zstd unzip -y
-    sudo zypper in cabextract icoutils tar wine yad xterm zenity-lang -y
-    sudo zypper in gir1.2-appindicator3-0.1 imagemagick mc -y
+    sudo zypper ref
+    sudo zypper in wget zenity zstd unzip
+    sudo zypper in cabextract icoutils tar wine xterm zenity-lang
+    sudo zypper in libappindicator3-1 ImageMagick mc
 elif [ -x "$(command -v pacman)" ]; then
     sudo pacman -Sy -y
-    sudo pacman -S wget zenity zstd unzip cabextract icoutils wine yad xterm libappindicator-gtk3 imagemagick mc -y
+    sudo pacman -S wget zenity zstd unzip cabextract icoutils wine xterm libappindicator-gtk3 imagemagick mc -y
 else
     echo "FAILED TO INSTALL: Package manager not found. You must manually install"
 fi
@@ -39,6 +39,10 @@ if [ ! -d "${START_WINE_PATH}/data/wine/wine_steam_proton/bin" ]; then
     try_remove_file "${HOME}/.StartWine/tmp/steam-proton-"${SP_VER}".tar.xz" &&
     try_remove_dir "${HOME}/.StartWine/steam-proton-"${SP_VER}""
 fi
+
+chmod -R 775 "${START_WINE_PATH}/data/wine/wine_steam_proton"
+
+try_copy_file "${START_WINE_PATH}/data/scripts/.ini" "/home/${USER}/.config/mc/ini"
 
 if [ ! -d "/home/${USER}/.local/share/applications" ]; then
     mkdir -p "/home/${USER}/.local/share/applications"
@@ -109,6 +113,8 @@ try_copy_file "${WINEDIR}/share/fonts/"LiberationSans-Bold.ttf "${WINEPREFIX}/dr
 try_copy_file "${WINEDIR}/share/fonts/"LiberationSerif-Regular.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"times.ttf
 try_copy_file "${WINEDIR}/share/fonts/"LiberationMono-Regular.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"cour.ttf
 try_copy_file "${WINEDIR}/share/fonts/"SourceHanSansSCRegular.otf "${WINEPREFIX}/drive_c/windows/Fonts/"msyh.ttf
+
+chmod -R 775 "${START_WINE_PATH}/data/pfx/pfx_default"
 
 clear
 

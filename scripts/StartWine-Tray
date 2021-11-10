@@ -1,0 +1,768 @@
+#!/usr/bin/env python3
+
+from gettext import gettext as _
+import os
+import sys
+import gi
+gi.require_version('AppIndicator3', '0.1')
+from gi.repository import AppIndicator3 as appindicator
+from gi.repository import Gtk as gtk
+from gi.repository import GLib
+from pathlib import Path
+import subprocess
+from subprocess import *
+import threading
+import traceback
+import logging
+import argparse
+
+APPINDICATOR_ID = 'StartWine'
+
+sw_path = f"{Path.home()}/StartWine/"
+sw_scripts = f"{Path.home()}/StartWine/data/scripts/"
+sw_shortcuts = f"{Path.home()}/StartWine/Shortcuts/"
+
+DIRPATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+
+def main():
+
+    indicator = appindicator.Indicator.new(APPINDICATOR_ID, DIRPATH+"/img/gui_icons/SW_Tray.png", appindicator.IndicatorCategory.APPLICATION_STATUS)
+    indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
+    indicator.set_menu(menu())
+    gtk.main()
+
+def menu():
+
+    menu = gtk.Menu()
+
+##############################   GAME_NAME   ###################################
+
+    def game_name():
+
+        cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\..*//g' | tail -n1"
+        proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        out_name = str(out).replace('b\'', 'Open ').strip('n\'').strip('\ ').replace('start', 'StartWine').replace('%F', '')
+
+        print(out_name)
+
+        cmd_one = gtk.MenuItem.new_with_label(str(out_name))
+        cmd_one.connect('activate', start_game)
+        menu.append(cmd_one)
+
+    game_name()
+
+    cmd_one_1 = gtk.MenuItem.new_with_label('Shortcuts')
+    cmd_one_1.connect('activate', shortcuts)
+    menu.append(cmd_one_1)
+
+    cmd_one_4 = gtk.MenuItem.new_with_label('Settings')
+    cmd_one_4.connect('activate', settings)
+    menu.append(cmd_one_4)
+
+    cmd_one_5 = gtk.MenuItem.new_with_label('Stop')
+    cmd_one_5.connect('activate', kill)
+    menu.append(cmd_one_5)
+
+    exittray = gtk.MenuItem.new_with_label('Exit')
+    exittray.connect('activate', quit)
+    menu.append(exittray)
+
+    menu.show_all()
+    return menu
+
+############################   START GAME   ####################################
+
+def start_game(_):
+
+    cmd = f"{sw_scripts}/run.sh"
+    subprocess.call(cmd, shell=True)
+
+############################   SHORTCUTS   #####################################
+
+def shortcuts(_):
+
+    cmd = f"xdg-open '{sw_shortcuts}'"
+    subprocess.Popen(cmd, shell=True)
+
+############################   SETTINGS   ######################################
+
+def settings(_):
+
+    def on_btn_settings(self):
+        sw_stack.set_visible_child_name("settings_window")
+
+############################   Button_State_on_off   ###########################
+
+    def on_dxvk_ge_activated(dxvk_ge):
+
+        if dxvk_ge.get_active():
+            state = "on"
+            command = f"sed -i '20 s/.*/020_DXVK_GE/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/020/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_vkd3d_ge_activated(vkd3d_ge):
+
+        if vkd3d_ge.get_active():
+            state = "on"
+            command = f"sed -i '21 s/.*/021_VKD3D_GE/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/021/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_dxvk_native_activated(dxvk_native):
+
+        if dxvk_native.get_active():
+            state = "on"
+            command = f"sed -i '20 s/.*/020_DXVK_NATIVE/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/020/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_vkd3d_native_activated(vkd3d_native):
+
+        if vkd3d_native.get_active():
+            state = "on"
+            command = f"sed -i '21 s/.*/021_VKD3D_NATIVE/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/021/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_DLSYM_activated(DLSYM, gparam):
+
+        if DLSYM.get_active():
+            state = "on"
+            command = f"sed -i '1 s/.*/001_MANGOHUD_DLSYM/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/001/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_MHUD_activated(MHUD, gparam):
+
+        if MHUD.get_active():
+            state = "on"
+            command = f"sed -i '2 s/.*/002_MANGOHUD/' {sw_scripts}settings"
+            subprocess.run(command, shell=True)
+            CompletedProcess(command, returncode=0)
+        else:
+            state = "off"
+            command = f"sed -i '/002/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+            CompletedProcess(command, returncode=0)
+
+    def on_GAMEMODE_activated(GAMEMODE, gparam):
+
+        if GAMEMODE.get_active():
+            state = "on"
+            command = f"sed -i '3 s/.*/003_GAMEMODE/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/003/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_RUNTIME_activated(RUNTIME, gparam):
+
+        if RUNTIME.get_active():
+            state = "on"
+            command = f"sed -i '4 s/.*/004_RUNTIME/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/004/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_RESTORE_RESOLUTION_activated(RESTORE_RESOLUTION, gparam):
+
+        if RESTORE_RESOLUTION.get_active():
+            state = "on"
+            command = f"sed -i '5 s/.*/005_RESTORE_RESOLUTION/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/005/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_VIRTUAL_DESKTOP_activated(VIRTUAL_DESKTOP, gparam):
+
+        if VIRTUAL_DESKTOP.get_active():
+            state = "on"
+            command = f"sed -i '6 s/.*/006_VIRTUAL_DESKTOP/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/006/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_FSYNC_activated(FSYNC, gparam):
+
+        if FSYNC.get_active():
+            state = "on"
+            command = f"sed -i '7 s/.*/007_FSYNC/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/007/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_ESYNC_activated(ESYNC, gparam):
+
+        if ESYNC.get_active():
+            state = "on"
+            command = f"sed -i '8 s/.*/008_ESYNC/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/008/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_OLD_GL_STRING_activated(OLD_GL_STRING, gparam):
+
+        if OLD_GL_STRING.get_active():
+            state = "on"
+            command = f"sed -i '9 s/.*/009_OLD_GL_STRING/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/009/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_NVAPI_DISABLE_activated(NVAPI_DISABLE, gparam):
+
+        if NVAPI_DISABLE.get_active():
+            state = "on"
+            command = f"sed -i '10 s/.*/010_NVAPI_DISABLE/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/010/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_WINEDBG_DISABLE_activated(WINEDBG_DISABLE, gparam):
+
+        if WINEDBG_DISABLE.get_active():
+            state = "on"
+            command = f"sed -i '11 s/.*/011_WINEDBG_DISABLE/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/011/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_LARGE_ADDRESS_AWARE_activated(LARGE_ADDRESS_AWARE, gparam):
+
+        if LARGE_ADDRESS_AWARE.get_active():
+            state = "on"
+            command = f"sed -i '12 s/.*/012_LARGE_ADDRESS_AWARE/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/012/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_STAGING_WRITECOPY_activated(STAGING_WRITECOPY, gparam):
+
+        if STAGING_WRITECOPY.get_active():
+            state = "on"
+            command = f"sed -i '13 s/.*/013_STAGING_WRITECOPY/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/013/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_STAGING_SHARED_MEMORY_activated(STAGING_SHARED_MEMORY, gparam):
+
+        if STAGING_SHARED_MEMORY.get_active():
+            state = "on"
+            command = f"sed -i '14 s/.*/014_STAGING_SHARED_MEMORY/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/014/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_DXVK_HUD_activated(DXVK_HUD, gparam):
+
+        if DXVK_HUD.get_active():
+            state = "on"
+            command = f"sed -i '15 s/.*/015_DXVK_HUD/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/015/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_DXVK_ASYNC_activated(DXVK_ASYNC, gparam):
+
+        if DXVK_ASYNC.get_active():
+            state = "on"
+            command = f"sed -i '16 s/.*/016_DXVK_ASYNC/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/016/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_VKBASALT_activated(VKBASALT, gparam):
+
+        if VKBASALT.get_active():
+            state = "on"
+            command = f"sed -i '17 s/.*/017_VKBASALT/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/017/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_FSR_activated(FSR, gparam):
+
+        if FSR.get_active():
+            state = "on"
+            command = f"sed -i '18 s/.*/018_FSR/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/018/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_GSTREAMER_activated(GSTREAMER, gparam):
+
+        if GSTREAMER.get_active():
+            state = "on"
+            command = f"sed -i '19 s/.*/019_GSTREAMER/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/019/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_DRI_PRIME_activated(DRI_PRIME, gparam):
+
+        if DRI_PRIME.get_active():
+            state = "on"
+            command = f"sed -i '22 s/.*/022_DRI_PRIME/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/022/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_btn_back8(self):
+        cmd = f"cat {sw_scripts}run.sh"
+        proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        out_name = str(out).replace('b\'', '').replace('n\'', '').strip('\ ')
+
+        window.close()
+
+        cmd_start = str(out_name)
+        subprocess.Popen(cmd_start, shell=True)
+
+#############################   SWITCH BUTTON   ################################
+
+    builder = gtk.Builder()
+    builder.add_from_file(f"{sw_scripts}sw_menu.glade")
+
+    window = builder.get_object("StartWine")
+
+    sw_stack = builder.get_object("sw_stack")
+    sw_stack.set_transition_type(gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
+
+    sw_stack.set_visible_child_name("settings_window")
+
+    btn_back8 = builder.get_object("btn_back8")
+    btn_back8.connect("clicked", on_btn_back8)
+
+    dxvk_ge = builder.get_object("dxvk_ge")
+    dxvk_ge.connect("toggled", on_dxvk_ge_activated)
+
+    def dxvk_ge_active():
+        dxvk_cmd = f"sed -n '/020/p' {sw_scripts}/settings"
+        proc = subprocess.run(dxvk_cmd, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        dxvk_cmd_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(dxvk_cmd_name) == str('020_DXVK_GE'):
+            dxvk_ge.set_active(True)
+        else:
+            dxvk_ge.set_active(False)
+    dxvk_ge_active()
+
+    vkd3d_ge = builder.get_object("vkd3d_ge")
+    vkd3d_ge.connect("toggled", on_vkd3d_ge_activated)
+
+    def vkd3d_ge_active():
+        vkd3d_cmd = f"sed -n '/021/p' {sw_scripts}/settings"
+        proc = subprocess.run(vkd3d_cmd, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        vkd3d_cmd_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(vkd3d_cmd_name) == str('021_VKD3D_GE'):
+            vkd3d_ge.set_active(True)
+        else:
+            vkd3d_ge.set_active(False)
+    vkd3d_ge_active()
+
+    dxvk_native = builder.get_object("dxvk_native")
+    dxvk_native.connect("toggled", on_dxvk_native_activated)
+
+    def dxvk_native_active():
+        dxvk_cmd = f"sed -n '/001/p' {sw_scripts}/settings"
+        proc = subprocess.run(dxvk_cmd, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        dxvk_cmd_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(dxvk_cmd_name) == str('020_DXVK_NATIVE'):
+            dxvk_native.set_active(True)
+        else:
+            dxvk_native.set_active(False)
+    dxvk_native_active()
+
+    vkd3d_native = builder.get_object("vkd3d_native")
+    vkd3d_native.connect("toggled", on_vkd3d_native_activated)
+
+    def vkd3d_native_active():
+        vkd3d_cmd = f"sed -n '/001/p' {sw_scripts}/settings"
+        proc = subprocess.run(vkd3d_cmd, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        vkd3d_cmd_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(vkd3d_cmd_name) == str('021_VKD3D_NATIVE'):
+            vkd3d_native.set_active(True)
+        else:
+            vkd3d_native.set_active(False)
+    vkd3d_native_active()
+
+    DLSYM = builder.get_object("DLSYM")
+    DLSYM.connect("notify::active", on_DLSYM_activated)
+
+    def dlsym():
+        dlsym = f"sed -n '/001/p' {sw_scripts}/settings"
+        proc = subprocess.run(dlsym, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        dlsym_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(dlsym_name) == str('001_MANGOHUD_DLSYM'):
+            DLSYM.set_active(True)
+        else:
+            DLSYM.set_active(False)
+    dlsym()
+
+    MHUD = builder.get_object("MHUD")
+    MHUD.connect("notify::active", on_MHUD_activated)
+
+    def mhud():
+        mhud = f"sed -n '/002/p' {sw_scripts}/settings"
+        proc = subprocess.run(mhud, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        mhud_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(mhud_name) == str('002_MANGOHUD'):
+            MHUD.set_active(True)
+        else:
+            MHUD.set_active(False)
+    mhud()
+
+    GAMEMODE = builder.get_object("GAMEMODE")
+    GAMEMODE.connect("notify::active", on_GAMEMODE_activated)
+
+    def gamemode():
+        gamemode = f"sed -n '/003/p' {sw_scripts}/settings"
+        proc = subprocess.run(gamemode, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        gamemode_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(gamemode_name) == str('003_GAMEMODE'):
+            GAMEMODE.set_active(True)
+        else:
+            GAMEMODE.set_active(False)
+    gamemode()
+
+    RUNTIME = builder.get_object("RUNTIME")
+    RUNTIME.connect("notify::active", on_RUNTIME_activated)
+
+    def runtime():
+        runtime = f"sed -n '/004/p' {sw_scripts}/settings"
+        proc = subprocess.run(runtime, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        runtime_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(runtime_name) == str('004_RUNTIME'):
+            RUNTIME.set_active(True)
+        else:
+            RUNTIME.set_active(False)
+    runtime()
+
+    RESTORE_RESOLUTION = builder.get_object("RESTORE_RESOLUTION")
+    RESTORE_RESOLUTION.connect("notify::active", on_RESTORE_RESOLUTION_activated)
+
+    def resres():
+        resres = f"sed -n '/005/p' {sw_scripts}/settings"
+        proc = subprocess.run(resres, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        resres_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(resres_name) == str('005_RESTORE_RESOLUTION'):
+            RESTORE_RESOLUTION.set_active(True)
+        else:
+            RESTORE_RESOLUTION.set_active(False)
+    resres()
+
+    VIRTUAL_DESKTOP = builder.get_object("VIRTUAL_DESKTOP")
+    VIRTUAL_DESKTOP.connect("notify::active", on_VIRTUAL_DESKTOP_activated)
+
+    def virdesk():
+        virdesk = f"sed -n '/006/p' {sw_scripts}/settings"
+        proc = subprocess.run(virdesk, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        virdesk_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(virdesk_name) == str('006_VIRTUAL_DESKTOP'):
+            VIRTUAL_DESKTOP.set_active(True)
+        else:
+            VIRTUAL_DESKTOP.set_active(False)
+    virdesk()
+
+    FSYNC = builder.get_object("FSYNC")
+    FSYNC.connect("notify::active", on_FSYNC_activated)
+
+    def fsync():
+        fsync = f"sed -n '/007/p' {sw_scripts}/settings"
+        proc = subprocess.run(fsync, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        fsync_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(fsync_name) == str('007_FSYNC'):
+            FSYNC.set_active(True)
+        else:
+            FSYNC.set_active(False)
+    fsync()
+
+    ESYNC = builder.get_object("ESYNC")
+    ESYNC.connect("notify::active", on_ESYNC_activated)
+
+    def esync():
+        esync = f"sed -n '/008/p' {sw_scripts}/settings"
+        proc = subprocess.run(esync, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        esync_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(esync_name) == str('008_ESYNC'):
+            ESYNC.set_active(True)
+        else:
+            ESYNC.set_active(False)
+    esync()
+
+    OLD_GL_STRING = builder.get_object("OLD_GL_STRING")
+    OLD_GL_STRING.connect("notify::active", on_OLD_GL_STRING_activated)
+
+    def glstring():
+        glstring = f"sed -n '/009/p' {sw_scripts}/settings"
+        proc = subprocess.run(glstring, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        glstring_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(glstring_name) == str('009_OLD_GL_STRING'):
+            OLD_GL_STRING.set_active(True)
+        else:
+            OLD_GL_STRING.set_active(False)
+    glstring()
+
+    NVAPI_DISABLE = builder.get_object("NVAPI_DISABLE")
+    NVAPI_DISABLE.connect("notify::active", on_NVAPI_DISABLE_activated)
+
+    def nvapi():
+        nvapi = f"sed -n '/010/p' {sw_scripts}/settings"
+        proc = subprocess.run(nvapi, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        nvapi_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(nvapi_name) == str('010_NVAPI_DISABLE'):
+            NVAPI_DISABLE.set_active(True)
+        else:
+            NVAPI_DISABLE.set_active(False)
+    nvapi()
+
+    WINEDBG_DISABLE = builder.get_object("WINEDBG_DISABLE")
+    WINEDBG_DISABLE.connect("notify::active", on_WINEDBG_DISABLE_activated)
+
+    def winedbg():
+        winedbg = f"sed -n '/011/p' {sw_scripts}/settings"
+        proc = subprocess.run(winedbg, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        winedbg_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(winedbg_name) == str('011_WINEDBG_DISABLE'):
+            WINEDBG_DISABLE.set_active(True)
+        else:
+            WINEDBG_DISABLE.set_active(False)
+    winedbg()
+
+    LARGE_ADDRESS_AWARE = builder.get_object("LARGE_ADDRESS_AWARE")
+    LARGE_ADDRESS_AWARE.connect("notify::active", on_LARGE_ADDRESS_AWARE_activated)
+
+    def large_aa():
+        large_aa = f"sed -n '/012/p' {sw_scripts}/settings"
+        proc = subprocess.run(large_aa, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        large_aa_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(large_aa_name) == str('012_LARGE_ADDRESS_AWARE'):
+            LARGE_ADDRESS_AWARE.set_active(True)
+        else:
+            LARGE_ADDRESS_AWARE.set_active(False)
+    large_aa()
+
+    STAGING_WRITECOPY = builder.get_object("STAGING_WRITECOPY")
+    STAGING_WRITECOPY.connect("notify::active", on_STAGING_WRITECOPY_activated)
+
+    def staging_w():
+        staging_w = f"sed -n '/013/p' {sw_scripts}/settings"
+        proc = subprocess.run(staging_w, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        staging_w_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(staging_w_name) == str('013_STAGING_WRITECOPY'):
+            STAGING_WRITECOPY.set_active(True)
+        else:
+            STAGING_WRITECOPY.set_active(False)
+    staging_w()
+
+    STAGING_SHARED_MEMORY = builder.get_object("STAGING_SHARED_MEMORY")
+    STAGING_SHARED_MEMORY.connect("notify::active", on_STAGING_SHARED_MEMORY_activated)
+
+    def staging_s():
+        staging_s = f"sed -n '/014/p' {sw_scripts}/settings"
+        proc = subprocess.run(staging_s, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        staging_s_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(staging_s_name) == str('014_STAGING_SHARED_MEMORY'):
+            STAGING_SHARED_MEMORY.set_active(True)
+        else:
+            STAGING_SHARED_MEMORY.set_active(False)
+    staging_s()
+
+    DXVK_HUD = builder.get_object("DXVK_HUD")
+    DXVK_HUD.connect("notify::active", on_DXVK_HUD_activated)
+
+    def dxvk_hud():
+        dxvk_hud = f"sed -n '/015/p' {sw_scripts}/settings"
+        proc = subprocess.run(dxvk_hud, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        dxvk_hud_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(dxvk_hud_name) == str('015_DXVK_HUD'):
+            DXVK_HUD.set_active(True)
+        else:
+            DXVK_HUD.set_active(False)
+    dxvk_hud()
+
+    DXVK_ASYNC = builder.get_object("DXVK_ASYNC")
+    DXVK_ASYNC.connect("notify::active", on_DXVK_ASYNC_activated)
+
+    def dxvk_async():
+        dxvk_async = f"sed -n '/016/p' {sw_scripts}/settings"
+        proc = subprocess.run(dxvk_async, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        dxvk_async_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(dxvk_async_name) == str('016_DXVK_ASYNC'):
+            DXVK_ASYNC.set_active(True)
+        else:
+            DXVK_ASYNC.set_active(False)
+    dxvk_async()
+
+    VKBASALT = builder.get_object("VKBASALT")
+    VKBASALT.connect("notify::active", on_VKBASALT_activated)
+
+    def vkbasalt():
+        vkbasalt = f"sed -n '/017/p' {sw_scripts}/settings"
+        proc = subprocess.run(vkbasalt, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        vkbasalt_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(vkbasalt_name) == str('017_VKBASALT'):
+            VKBASALT.set_active(True)
+        else:
+            VKBASALT.set_active(False)
+    vkbasalt()
+
+    FSR = builder.get_object("FSR")
+    FSR.connect("notify::active", on_FSR_activated)
+
+    def fsr():
+        fsr = f"sed -n '/018/p' {sw_scripts}/settings"
+        proc = subprocess.run(fsr, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        fsr_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(fsr_name) == str('018_FSR'):
+            FSR.set_active(True)
+        else:
+            FSR.set_active(False)
+    fsr()
+
+    GSTREAMER = builder.get_object("GSTREAMER")
+    GSTREAMER.connect("notify::active", on_GSTREAMER_activated)
+
+    def gstreamer():
+        gstreamer = f"sed -n '/019/p' {sw_scripts}/settings"
+        proc = subprocess.run(gstreamer, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        gstreamer_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(gstreamer_name) == str('019_GSTREAMER'):
+            GSTREAMER.set_active(True)
+        else:
+            GSTREAMER.set_active(False)
+    gstreamer()
+
+    DRI_PRIME = builder.get_object("DRI_PRIME")
+    DRI_PRIME.connect("notify::active", on_DRI_PRIME_activated)
+
+    def dri_prime():
+        dri_prime = f"sed -n '/022/p' {sw_scripts}/settings"
+        proc = subprocess.run(dri_prime, shell=True, stdout=subprocess.PIPE)
+        out = str(proc.stdout[0:])
+        dri_prime_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+        if str(dri_prime_name) == str('022_DRI_PRIME'):
+            DRI_PRIME.set_active(True)
+        else:
+            DRI_PRIME.set_active(False)
+    dri_prime()
+
+    window.connect("destroy", gtk.main_quit)
+    window.show_all()
+
+    gtk.main()
+
+###################################   STOP   ###################################
+
+def kill(_):
+
+    cmd = f"{sw_scripts}stop"
+    subprocess.call(cmd, shell=True)
+
+def quit(_):
+
+    gtk.main_quit()
+    os.system("$(kill -s kill `pgrep -a zenity | grep '\-\-title StartWine' | awk '{print $1}'`)")
+
+
+if __name__ == "__main__":
+    main()

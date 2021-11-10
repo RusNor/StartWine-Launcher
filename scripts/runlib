@@ -11,10 +11,10 @@ export START_WINE_PATH="$(pwd)"
 ###############################   TOOLS   ######################################
 
 export SW_NAME="StartWine-Launcher"
-export SW_VER=" v3.1.1"
+export SW_VER=" v3.1.4"
 export GE_VER="6.20-GE-1"
 export SP_VER="6.3.7"
-export STAG_VER="6.20"
+export STAG_VER="6.21"
 export LUTRIS_VER="6.14-4"
 export LUTRIS_GE_VER="6.20-1"
 export LUTRIS_GE_URL="6.20-GE-1"
@@ -137,7 +137,7 @@ prefix_init_error () {
 
     clear
     echo "There is a problem initializing the Wine prefix !"
-    zenity --title "StartWine" --info --text "There is a problem initializing the Wine prefix !" --width=200
+    zenity --title "StartWine" --error --text "There is a problem initializing the Wine prefix" --width=200
     rm -rf "${WINEPREFIX}"
     exit 1
 
@@ -171,7 +171,7 @@ sw_win_ver () {
 
 download_url () {
 
-    wget -c -t 5 -T 5 "$1" "${FTP_URL}" 2>&1 | \
+    wget -c -t 5 -w 2 "$1" "${FTP_URL}" 2>&1 | \
     perl -p -e '$| = 1; s/^.* +([0-9]+%) +([0-9,.]+[GMKB]) +([0-9hms,.]+).*$/\1\n# Downloading... \2 (\3)/' | \
     zenity --progress --percentage=0 --title="Download ${DL_NAME}" --text=Starting... --auto-close --auto-kill --width=500 --height=90 --no-cancel
 
@@ -874,6 +874,59 @@ CREATE_SHORTCUT () {
 
 }
 
+WINEBOOT_CS () {
+
+    mkdir -p "${START_WINE_PATH}/Games"
+    mkdir -p "${START_WINE_PATH}/data/tmp"
+
+    ${RUNTIME} env WINEDLLOVERRIDES="mscoree,mshtml=;${WINEDLLOVERRIDES}" "${WINELOADER}" wineboot -u | zenity --progress --title="StartWine" --text="Please wait, the prefix is ​​being updated..." --pulsate --auto-close --width=500 --height=90 --no-cancel || prefix_init_error
+    "${WINESERVER}" -w
+
+    if [ ! -d "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}" ]; then
+          try_force_link_dir "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/steamuser" "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}"
+    fi
+
+    if [ ! -d "${WINEPREFIX}/drive_c/users/steamuser/My Documents" ]; then
+        try_force_link_dir "${WINEPREFIX}/drive_c/users/steamuser/Documents" "${WINEPREFIX}/drive_c/users/steamuser/My Documents"
+    fi
+
+    if [ ! -d "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/Games" ]; then
+        try_force_link_dir "${START_WINE_PATH}/Games/" "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/Games"
+    fi
+
+    create_new_dir "${WINEPREFIX}/drive_c/users/steamuser/Documents/Steam"
+    create_new_dir "${WINEPREFIX}/drive_c/users/Public/Documents/Steam"
+    create_new_dir "${WINEPREFIX}/drive_c/windows/Fonts/"
+    try_copy_file "${WINEDIR}/share/fonts/"LiberationSans-Regular.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"arial.ttf
+    try_copy_file "${WINEDIR}/share/fonts/"LiberationSans-Bold.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"arialbd.ttf
+    try_copy_file "${WINEDIR}/share/fonts/"LiberationSerif-Regular.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"times.ttf
+    try_copy_file "${WINEDIR}/share/fonts/"LiberationMono-Regular.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"cour.ttf
+    try_copy_file "${WINEDIR}/share/fonts/"SourceHanSansSCRegular.otf "${WINEPREFIX}/drive_c/windows/Fonts/"msyh.ttf
+
+    chmod -R 775 "${START_WINE_PATH}/data/pfx/${PFX_GAME}"
+
+    `zenity --question --ok-label "INSTALL RECOMMENDED LIBRARIES" --cancel-label "DON'T INSTALL LIBRARIES" --title "StartWine" --width=200 --text "Updating prefix successful" --no-wrap ` > /dev/null 2>&1
+
+    if [ $? -eq "0" ]; then
+
+        "${WINESERVER}" -k
+
+        if [ ! -f "${HOME}/.Xresources" ]; then
+            cp -f "${START_WINE_PATH}/data/scripts/.Xresources" "${HOME}"
+            xrdb -merge "${HOME}/.Xresources"
+        fi
+
+        export SW_XTERM="/usr/bin/xterm -geometry 80x20 -e"
+        export WINE="$WINELOADER"
+
+        ${SW_XTERM} "${START_WINE_PATH}/data/scripts/winetricks" -q -f d3dcompiler_42 d3dcompiler_43 d3dcompiler_47 d3dx10 d3dx10_43 d3dx11_42 d3dx11_43 d3dx9 mfc120 mfc42 msvcirt physx vcrun2010 vcrun2012 vcrun2013 vcrun2019 vcrun6 vcrun6sp6 win10 &&
+
+    zenity --info --title "StartWine" --width=200 --text "Libraries installed successfully"
+
+    fi
+
+}
+
 ADD_SHORTCUT () {
 
     if [ ! -f "/home/${USER}/.local/share/applications/${name_desktop}.desktop" ]; then
@@ -885,6 +938,89 @@ ADD_SHORTCUT () {
 }
 
 #################################   PREFIX TOOLS   #############################
+
+REMOVE_PFX () {
+
+    `zenity --question --title "StartWine" --text "Do you really want to remove the prefix  ?" --no-wrap ` > /dev/null 2>&1
+
+    if [ $? -eq "0" ]; then
+
+        if [ "${WINEPREFIX}" = "${START_WINE_PATH}/data/pfx/pfx_default" ]; then
+            try_remove_file "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop"
+            try_remove_file "${START_WINE_PATH}/data/img/${STARTWINE_NAME}_x96.png"
+            try_remove_file "${START_WINE_PATH}/data/img/${STARTWINE_NAME}_x256.png"
+            try_remove_file "/home/${USER}/.local/share/applications/${name_desktop}.desktop"
+        else
+            try_remove_dir "${START_WINE_PATH}/data/pfx/${PFX_GAME}"
+            try_remove_file "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop"
+            try_remove_file "${START_WINE_PATH}/data/img/${STARTWINE_NAME}_x96.png"
+            try_remove_file "${START_WINE_PATH}/data/img/${STARTWINE_NAME}_x256.png"
+            try_remove_file "/home/${USER}/.local/share/applications/${name_desktop}.desktop"
+        fi
+
+    fi
+
+}
+
+REINSTALL_PFX () {
+
+    `zenity --question --title "StartWine" --width=200 --text "Remove prefix ?" --no-wrap ` > /dev/null 2>&1
+
+    if [ $? -eq "0" ]; then
+
+        try_remove_dir "${START_WINE_PATH}/data/pfx/${PFX_GAME}"
+        mkdir -p "${START_WINE_PATH}/Games"
+        mkdir -p "${START_WINE_PATH}/data/tmp"
+
+        ${RUNTIME} env WINEDLLOVERRIDES="mscoree,mshtml=;${WINEDLLOVERRIDES}" "${WINELOADER}" wineboot -u | zenity --progress --title="StartWine" --text="Please wait, the prefix is ​​being updated..." --pulsate --auto-close --width=500 --height=90 --no-cancel || prefix_init_error
+        "${WINESERVER}" -w
+
+        if [ ! -d "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}" ]; then
+              try_force_link_dir "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/steamuser" "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}"
+        fi
+
+        if [ ! -d "${WINEPREFIX}/drive_c/users/steamuser/My Documents" ]; then
+            try_force_link_dir "${WINEPREFIX}/drive_c/users/steamuser/Documents" "${WINEPREFIX}/drive_c/users/steamuser/My Documents"
+        fi
+
+        if [ ! -d "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/Games" ]; then
+            try_force_link_dir "${START_WINE_PATH}/Games/" "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/Games"
+        fi
+
+        create_new_dir "${WINEPREFIX}/drive_c/users/steamuser/Documents/Steam"
+        create_new_dir "${WINEPREFIX}/drive_c/users/Public/Documents/Steam"
+        create_new_dir "${WINEPREFIX}/drive_c/windows/Fonts/"
+        try_copy_file "${WINEDIR}/share/fonts/"LiberationSans-Regular.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"arial.ttf
+        try_copy_file "${WINEDIR}/share/fonts/"LiberationSans-Bold.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"arialbd.ttf
+        try_copy_file "${WINEDIR}/share/fonts/"LiberationSerif-Regular.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"times.ttf
+        try_copy_file "${WINEDIR}/share/fonts/"LiberationMono-Regular.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"cour.ttf
+        try_copy_file "${WINEDIR}/share/fonts/"SourceHanSansSCRegular.otf "${WINEPREFIX}/drive_c/windows/Fonts/"msyh.ttf
+
+        chmod -R 775 "${START_WINE_PATH}/data/pfx/${PFX_GAME}"
+
+        `zenity --question --ok-label "INSTALL RECOMMENDED LIBRARIES" --cancel-label "DON'T INSTALL LIBRARIES" --title "StartWine" --width=200 --text "Updating prefix successful" --no-wrap ` > /dev/null 2>&1
+
+        if [ $? -eq "0" ]; then
+
+            "${WINESERVER}" -k
+
+            if [ ! -f "${HOME}/.Xresources" ]; then
+                cp -f "${START_WINE_PATH}/data/scripts/.Xresources" "${HOME}"
+                xrdb -merge "${HOME}/.Xresources"
+            fi
+
+            export SW_XTERM="/usr/bin/xterm -geometry 80x20 -e"
+            export WINE="$WINELOADER"
+
+            ${SW_XTERM} "${START_WINE_PATH}/data/scripts/winetricks" -q -f d3dcompiler_42 d3dcompiler_43 d3dcompiler_47 d3dx10 d3dx10_43 d3dx11_42 d3dx11_43 d3dx9 mfc120 mfc42 msvcirt physx vcrun2010 vcrun2012 vcrun2013 vcrun2019 vcrun6 vcrun6sp6 win10 &&
+
+        zenity --info --title "StartWine" --width=200 --text "Libraries installed successfully"
+
+        fi
+
+    fi
+
+}
 
 SW_PFX_BACKUP () {
 
@@ -970,144 +1106,6 @@ UNINSTALLER () {
 
 }
 
-###################################   WINEBOOT   ###############################
-
-REMOVE_PFX () {
-
-    `zenity --question --title "StartWine" --text "Do you really want to remove the prefix  ?" --no-wrap ` > /dev/null 2>&1
-
-    if [ $? -eq "0" ]; then
-
-        if [ "${WINEPREFIX}" = "${START_WINE_PATH}/data/pfx/pfx_default" ]; then
-            try_remove_file "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop"
-            try_remove_file "${START_WINE_PATH}/data/img/${STARTWINE_NAME}_x96.png"
-            try_remove_file "${START_WINE_PATH}/data/img/${STARTWINE_NAME}_x256.png"
-            try_remove_file "/home/${USER}/.local/share/applications/${name_desktop}.desktop"
-        else
-            try_remove_dir "${START_WINE_PATH}/data/pfx/${PFX_GAME}"
-            try_remove_file "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop"
-            try_remove_file "${START_WINE_PATH}/data/img/${STARTWINE_NAME}_x96.png"
-            try_remove_file "${START_WINE_PATH}/data/img/${STARTWINE_NAME}_x256.png"
-            try_remove_file "/home/${USER}/.local/share/applications/${name_desktop}.desktop"
-        fi
-
-    fi
-
-}
-
-REINSTALL_PFX () {
-
-    `zenity --question --title "StartWine" --width=200 --text "Remove prefix ?" --no-wrap ` > /dev/null 2>&1
-
-    if [ $? -eq "0" ]; then
-
-        try_remove_dir "${START_WINE_PATH}/data/pfx/${PFX_GAME}"
-        mkdir -p "${START_WINE_PATH}/Games"
-        mkdir -p "${START_WINE_PATH}/data/tmp"
-
-        ${RUNTIME} env WINEDLLOVERRIDES="mscoree,mshtml=;${WINEDLLOVERRIDES}" "${WINELOADER}" wineboot -u | zenity --progress --title="StartWine" --text="Please wait, the prefix is ​​being updated..." --pulsate --auto-close --width=500 --height=90 --no-cancel || prefix_init_error
-        "${WINESERVER}" -w
-
-        if [ ! -d "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}" ]; then
-              try_force_link_dir "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/steamuser" "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}"
-        fi
-
-        if [ ! -d "${WINEPREFIX}/drive_c/users/steamuser/My Documents" ]; then
-            try_force_link_dir "${WINEPREFIX}/drive_c/users/steamuser/Documents" "${WINEPREFIX}/drive_c/users/steamuser/My Documents"
-        fi
-
-        if [ ! -d "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/Games" ]; then
-            try_force_link_dir "${START_WINE_PATH}/Games/" "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/Games"
-        fi
-
-        create_new_dir "${WINEPREFIX}/drive_c/users/steamuser/Documents/Steam"
-        create_new_dir "${WINEPREFIX}/drive_c/users/Public/Documents/Steam"
-        create_new_dir "${WINEPREFIX}/drive_c/windows/Fonts/"
-        try_copy_file "${WINEDIR}/share/fonts/"LiberationSans-Regular.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"arial.ttf
-        try_copy_file "${WINEDIR}/share/fonts/"LiberationSans-Bold.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"arialbd.ttf
-        try_copy_file "${WINEDIR}/share/fonts/"LiberationSerif-Regular.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"times.ttf
-        try_copy_file "${WINEDIR}/share/fonts/"LiberationMono-Regular.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"cour.ttf
-        try_copy_file "${WINEDIR}/share/fonts/"SourceHanSansSCRegular.otf "${WINEPREFIX}/drive_c/windows/Fonts/"msyh.ttf
-
-        `zenity --question --ok-label "INSTALL RECOMMENDED LIBRARIES" --cancel-label "DON'T INSTALL LIBRARIES" --title "StartWine" --width=200 --text "Updating prefix successful" --no-wrap ` > /dev/null 2>&1
-
-        if [ $? -eq "0" ]; then
-
-            "${WINESERVER}" -k
-
-            if [ ! -f "${HOME}/.Xresources" ]; then
-                cp -f "${START_WINE_PATH}/data/scripts/.Xresources" "${HOME}"
-                xrdb -merge "${HOME}/.Xresources"
-            fi
-
-            export SW_XTERM="/usr/bin/xterm -geometry 80x20 -e"
-            export WINE="$WINELOADER"
-
-            ${SW_XTERM} "${START_WINE_PATH}/data/scripts/winetricks" -q -f d3dcompiler_42 d3dcompiler_43 d3dcompiler_47 d3dx10 d3dx10_43 d3dx11_42 d3dx11_43 d3dx9 mfc120 mfc42 msvcirt physx vcrun2010 vcrun2012 vcrun2013 vcrun2019 vcrun6 vcrun6sp6 win10 &&
-
-        zenity --info --title "StartWine" --width=200 --text "Libraries installed successfully"
-
-        fi
-
-    fi
-
-}
-
-#################################   WINEBOOT CS   ##############################
-
-WINEBOOT_CS () {
-
-    mkdir -p "${START_WINE_PATH}/Games"
-    mkdir -p "${START_WINE_PATH}/data/tmp"
-
-    ${RUNTIME} env WINEDLLOVERRIDES="mscoree,mshtml=;${WINEDLLOVERRIDES}" "${WINELOADER}" wineboot -u | zenity --progress --title="StartWine" --text="Please wait, the prefix is ​​being updated..." --pulsate --auto-close --width=500 --height=90 --no-cancel || prefix_init_error
-    "${WINESERVER}" -w
-
-    if [ ! -d "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}" ]; then
-          try_force_link_dir "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/steamuser" "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}"
-    fi
-
-    if [ ! -d "${WINEPREFIX}/drive_c/users/steamuser/My Documents" ]; then
-        try_force_link_dir "${WINEPREFIX}/drive_c/users/steamuser/Documents" "${WINEPREFIX}/drive_c/users/steamuser/My Documents"
-    fi
-
-    if [ ! -d "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/Games" ]; then
-        try_force_link_dir "${START_WINE_PATH}/Games/" "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/Games"
-    fi
-
-    create_new_dir "${WINEPREFIX}/drive_c/users/steamuser/Documents/Steam"
-    create_new_dir "${WINEPREFIX}/drive_c/users/Public/Documents/Steam"
-    create_new_dir "${WINEPREFIX}/drive_c/windows/Fonts/"
-    try_copy_file "${WINEDIR}/share/fonts/"LiberationSans-Regular.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"arial.ttf
-    try_copy_file "${WINEDIR}/share/fonts/"LiberationSans-Bold.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"arialbd.ttf
-    try_copy_file "${WINEDIR}/share/fonts/"LiberationSerif-Regular.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"times.ttf
-    try_copy_file "${WINEDIR}/share/fonts/"LiberationMono-Regular.ttf "${WINEPREFIX}/drive_c/windows/Fonts/"cour.ttf
-    try_copy_file "${WINEDIR}/share/fonts/"SourceHanSansSCRegular.otf "${WINEPREFIX}/drive_c/windows/Fonts/"msyh.ttf
-
-    `zenity --question --ok-label "INSTALL RECOMMENDED LIBRARIES" --cancel-label "DON'T INSTALL LIBRARIES" --title "StartWine" --width=200 --text "Updating prefix successful" --no-wrap ` > /dev/null 2>&1
-
-    if [ $? -eq "0" ]; then
-
-        "${WINESERVER}" -k
-
-        if [ ! -f "${HOME}/.Xresources" ]; then
-            cp -f "${START_WINE_PATH}/data/scripts/.Xresources" "${HOME}"
-            xrdb -merge "${HOME}/.Xresources"
-        fi
-
-        export SW_XTERM="/usr/bin/xterm -geometry 80x20 -e"
-        export WINE="$WINELOADER"
-
-        ${SW_XTERM} "${START_WINE_PATH}/data/scripts/winetricks" -q -f d3dcompiler_42 d3dcompiler_43 d3dcompiler_47 d3dx10 d3dx10_43 d3dx11_42 d3dx11_43 d3dx9 mfc120 mfc42 msvcirt physx vcrun2010 vcrun2012 vcrun2013 vcrun2019 vcrun6 vcrun6sp6 win10 &&
-
-    zenity --info --title "StartWine" --width=200 --text "Libraries installed successfully"
-
-    fi
-
-}
-
-#################################   WINETRICKS   ###############################
-
 SW_WINETRICKS () {
 
     "${WINESERVER}" -k
@@ -1159,26 +1157,6 @@ INSTALL_RL () {
 
 }
 
-##################################   STOP   ####################################
-
-STOP () {
-
-    wine_pids="$(ls -l /proc/*/exe 2>/dev/null | grep -ie ${SW_NAME} | grep -E 'wine(64)?-preloader|wineserver' | awk -F/ '{print $3}')"
-    if  ! [ -z "${wine_pids}" ]; then
-        kill -n 9 ${wine_pids}
-    fi
-
-    wine_pids="$(ls -l /proc/*/exe 2>/dev/null | grep -E 'wine(64)?-preloader|wineserver' | awk -F/ '{print $3}')"
-    if  ! [ -z "${wine_pids}" ]; then
-        kill -n 9 ${wine_pids}
-    fi
-
-    zenity --notification --text "kill wine porocesses"
-
-    exit
-
-}
-
 #################################   DEBUG   ####################################
 
 DEBUG () {
@@ -1208,6 +1186,7 @@ DEBUG () {
     lspci | grep VGA >> "${START_WINE_PATH}/data/tmp/${portname}.log"
     glxinfo | grep OpenGL >> "${START_WINE_PATH}/data/tmp/${portname}.log"
     echo "--------------------------------------------------------------------------------------------------" >> "${START_WINE_PATH}/data/tmp/${portname}.log"
+    echo "Game name  ${name_desktop}" >> "${START_WINE_PATH}/data/tmp/${portname}.log"
     echo "Version WINE" >> "${START_WINE_PATH}/data/tmp/${portname}.log"
     "$WINELOADER" --version 2>&1 | tee -a "${START_WINE_PATH}/data/tmp/${portname}.log"
     echo "--------------------------------------------------------------------------------------------------" >> "${START_WINE_PATH}/data/tmp/${portname}.log"
@@ -1219,9 +1198,9 @@ DEBUG () {
     cd "${PATH_TO_GAME}"
 
     ${RUNTIME} env ${GAMEMODE} ${MANGOHUD} "${WINELOADER}" ${VDESKTOP} ${WINESTART_EXE} "${START_EXE}" "${LAUNCH_PARAMETERS}" >> "${START_WINE_PATH}/data/tmp/${portname}.log" 2>&1
-    zenity --info --title "StartWine" --width=200 --text "Click ok to open DEBUG" &&
+    zenity --info --title "StartWine" --width=200 --text "Please wait a while then press ok to open the log file" &&
     zData=$(cat "${START_WINE_PATH}/data/tmp/${portname}.log")
-    zNewData=$(echo -n "${zData}" | yad --text-info --title "<<< DEBUG >>>" --borders=10 --no-buttons --editable --width 1200 --height 550)
+    zNewData=$(echo -n "${zData}" | zenity --text-info --title "StartWine" --width 1200 --height 550)
 
     STOP
 
@@ -1346,6 +1325,9 @@ DEBUG_OPENGL () {
 
 WINE_1 () {
 
+    try_remove_file "${HOME}/.StartWine/tmp/wine-"${STAG_VER}"-staging-amd64.tar.xz" &&
+    try_remove_dir "${HOME}/.StartWine/wine-"${STAG_VER}"-staging-amd64"
+
     if [ ! -d "${START_WINE_PATH}/data/wine/wine_staging/bin" ]; then
         export FTP_URL="https://github.com/Kron4ek/Wine-Builds/releases/download/"${STAG_VER}"/wine-"${STAG_VER}"-staging-amd64.tar.xz"
         export DL_NAME="wine-"${STAG_VER}"-staging"
@@ -1358,11 +1340,20 @@ WINE_1 () {
         try_remove_dir "${HOME}/.StartWine/wine-"${STAG_VER}"-staging-amd64"
     fi
 
-    zenity --title "StartWine" --info --text "Downloading wine staging completed successfully" --width=200
+    chmod -R 775 "${START_WINE_PATH}/data/wine/wine_staging"
+
+    if [ -d "${START_WINE_PATH}/data/wine/wine_staging/bin" ]; then
+        zenity --title "StartWine" --info --text "Downloading wine staging completed successfully" --width=200
+    else
+        zenity --title "StartWine" --error --text "Download failed, try again" --width=200
+    fi
 
 }
 
 WINE_2 () {
+
+    try_remove_file "${HOME}/.StartWine/tmp/steam-proton-"${SP_VER}".tar.xz" &&
+    try_remove_dir "${HOME}/.StartWine/steam-proton-"${SP_VER}""
 
     if [ ! -d "${START_WINE_PATH}/data/wine/wine_steam_proton/bin" ]; then
         export FTP_URL="https://github.com/RusNor/Wine-Steam-Proton/releases/download/steam-proton-"${SP_VER}"/steam-proton-"${SP_VER}".tar.xz"
@@ -1378,11 +1369,20 @@ WINE_2 () {
         try_remove_dir "${HOME}/.StartWine/steam-proton-"${SP_VER}""
     fi
 
-    zenity --title "StartWine" --info --text "Downloading wine steam proton completed successfully" --width=200
+    chmod -R 775 "${START_WINE_PATH}/data/wine/wine_steam_proton"
+
+    if [ -d "${START_WINE_PATH}/data/wine/wine_steam_proton/bin" ]; then
+        zenity --title "StartWine" --info --text "Downloading wine steam proton completed successfully" --width=200
+    else
+        zenity --title "StartWine" --error --text "Download failed, try again" --width=200
+    fi
 
 }
 
 WINE_3 () {
+
+    try_remove_file "${HOME}/.StartWine/tmp/Proton-"${GE_VER}".tar.gz" &&
+    try_remove_dir "${HOME}/.StartWine/Proton-"${GE_VER}""
 
     if [ ! -d "${START_WINE_PATH}/data/wine/wine_proton_ge/bin" ]; then
         export FTP_URL="https://github.com/GloriousEggroll/proton-ge-custom/releases/download/"${GE_VER}"/Proton-"${GE_VER}".tar.gz"
@@ -1401,11 +1401,20 @@ WINE_3 () {
     cd "${START_WINE_PATH}/data/wine/wine_proton_ge/share/wine"
     sed -i '/\AppDefaults\\/g; /HKCU,Software\\Valve\\/g; /HKLM,Software\\Wow6432Node\\Valve\\Steam/g; /HKCR,steam\\/g' wine.inf
 
-    zenity --title "StartWine" --info --text "Downloading wine proton ge completed successfully" --width=200
+    chmod -R 775 "${START_WINE_PATH}/data/wine/wine_proton_ge"
+
+    if [ -d "${START_WINE_PATH}/data/wine/wine_proton_ge/bin" ]; then
+        zenity --title "StartWine" --info --text "Downloading wine proton ge completed successfully" --width=200
+    else
+        zenity --title "StartWine" --error --text "Download failed, try again" --width=200
+    fi
 
 }
 
 WINE_4 () {
+
+    try_remove_file "${HOME}/.StartWine/tmp/wine-lutris-"${LUTRIS_VER}"-x86_64.tar.xz" &&
+    try_remove_dir "${HOME}/.StartWine/lutris-"${LUTRIS_VER}"-x86_64"
 
     if [ ! -d "${START_WINE_PATH}/data/wine/wine_lutris/bin" ]; then
         export FTP_URL="https://github.com/lutris/wine/releases/download/lutris-"${LUTRIS_VER}"/wine-lutris-"${LUTRIS_VER}"-x86_64.tar.xz"
@@ -1423,11 +1432,20 @@ WINE_4 () {
     cd "${START_WINE_PATH}/data/wine/wine_lutris/share/wine"
     sed -i '/\AppDefaults\\/g; /HKCU,Software\\Valve\\/g; /HKLM,Software\\Wine/g; /HKLM,Software\\Wow6432Node\\Valve\\Steam/g; /HKCR,steam\\/g' wine.inf
 
-    zenity --title "StartWine" --info --text "Downloading wine lutris completed successfully" --width=200
+    chmod -R 775 "${START_WINE_PATH}/data/wine/wine_lutris"
+
+    if [ -d "${START_WINE_PATH}/data/wine/wine_lutris/bin" ]; then
+        zenity --title "StartWine" --info --text "Downloading wine lutris completed successfully" --width=200
+    else
+        zenity --title "StartWine" --error --text "Download failed, try again" --width=200
+    fi
 
 }
 
 WINE_5 () {
+
+    try_remove_file "${HOME}/.StartWine/tmp/wine-lutris-ge-"${LUTRIS_GE_VER}"-x86_64.tar.xz" &&
+    try_remove_dir "${HOME}/.StartWine/lutris-ge-"${LUTRIS_GE_VER}"-x86_64"
 
     if [ ! -d "${START_WINE_PATH}/data/wine/wine_lutris_ge/bin" ]; then
         export FTP_URL="https://github.com/GloriousEggroll/wine-ge-custom/releases/download/"${LUTRIS_GE_URL}"/wine-lutris-ge-"${LUTRIS_GE_VER}"-x86_64.tar.xz"
@@ -1445,7 +1463,13 @@ WINE_5 () {
     cd "${START_WINE_PATH}/data/wine/wine_lutris_ge/share/wine"
     sed -i '/\AppDefaults\\/g; /HKCU,Software\\Valve\\/g; /HKLM,Software\\Wine/g; /HKLM,Software\\Wow6432Node\\Valve\\Steam/g; /HKCR,steam\\/g' wine.inf
 
-    zenity --title "StartWine" --info --text "Downloading wine lutris ge completed successfully" --width=200
+    chmod -R 775 "${START_WINE_PATH}/data/wine/wine_lutris_ge"
+
+    if [ -d "${START_WINE_PATH}/data/wine/wine_lutris_ge/bin" ]; then
+        zenity --title "StartWine" --info --text "Downloading wine lutris ge completed successfully" --width=200
+    else
+        zenity --title "StartWine" --error --text "Download failed, try again" --width=200
+    fi
 
 }
 
@@ -1455,15 +1479,70 @@ WINE_6 () {
 
 }
 
+RM_WINE_1 () {
+
+    try_remove_dir "${START_WINE_PATH}/data/wine/wine_staging"
+    create_new_dir "${START_WINE_PATH}/data/wine/wine_staging"
+
+}
+
+RM_WINE_2 () {
+
+    try_remove_dir "${START_WINE_PATH}/data/wine/wine_steam_proton"
+    create_new_dir "${START_WINE_PATH}/data/wine/wine_steam_proton"
+
+}
+
+RM_WINE_3 () {
+
+    try_remove_dir "${START_WINE_PATH}/data/wine/wine_proton_ge"
+    create_new_dir "${START_WINE_PATH}/data/wine/wine_proton_ge"
+
+}
+
+RM_WINE_4 () {
+
+    try_remove_dir "${START_WINE_PATH}/data/wine/wine_lutris"
+    create_new_dir "${START_WINE_PATH}/data/wine/wine_lutris"
+
+}
+
+RM_WINE_5 () {
+
+    try_remove_dir "${START_WINE_PATH}/data/wine/wine_lutris_ge"
+    create_new_dir "${START_WINE_PATH}/data/wine/wine_lutris_ge"
+
+}
+
+##################################   STOP   ####################################
+
+STOP () {
+
+    wine_pids="$(ls -l /proc/*/exe 2>/dev/null | grep -ie ${SW_NAME} | grep -E 'wine(64)?-preloader|wineserver' | awk -F/ '{print $3}')"
+    if  ! [ -z "${wine_pids}" ]; then
+        kill -n 9 ${wine_pids}
+    fi
+
+    wine_pids="$(ls -l /proc/*/exe 2>/dev/null | grep -E 'wine(64)?-preloader|wineserver' | awk -F/ '{print $3}')"
+    if  ! [ -z "${wine_pids}" ]; then
+        kill -n 9 ${wine_pids}
+    fi
+
+    zenity --notification --text "kill wine porocesses"
+
+    exit
+
+}
+
 #############################   STARTING TRAY   ################################
 
 START_TRAY () {
 
-    if [ -z "`pgrep -a python3 | grep "start_tray" | awk '{print $1}'`" ]; then
-        "/home/${USER}/StartWine/data/scripts/start_tray" &
+    if [ -z "`pgrep -a python3 | grep "StartWine-Tray" | awk '{print $1}'`" ]; then
+        "${START_WINE_PATH}/data/scripts/StartWine-Tray" &
     else
-        kill -s SIGKILL `pgrep -a python3 | grep "start_tray" | awk '{print $1}'`;
-        "/home/${USER}/StartWine/data/scripts/start_tray" &
+        kill -s SIGKILL `pgrep -a python3 | grep "StartWine-Tray" | awk '{print $1}'`;
+        "${START_WINE_PATH}/data/scripts/StartWine-Tray" &
     fi
 
 }
