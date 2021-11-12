@@ -5435,7 +5435,7 @@
                                     <property name="label" translatable="yes">
 StartWine
 
-3.1.5</property>
+3.1.6</property>
                                     <property name="justify">center</property>
                                     <property name="xalign">0.5</property>
                                     <attributes>
@@ -10585,7 +10585,7 @@ Maslov N.G.</property>
                             <property name="label" translatable="yes">
 StartWine
 
-3.1.5</property>
+3.1.6</property>
                             <property name="justify">center</property>
                             <property name="xalign">0.5</property>
                             <attributes>

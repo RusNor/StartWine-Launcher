@@ -11,7 +11,7 @@ export START_WINE_PATH="$(pwd)"
 ###############################   TOOLS   ######################################
 
 export SW_NAME="StartWine-Launcher"
-export SW_VER=" v3.1.5"
+export SW_VER=" v3.1.6"
 export GE_VER="6.20-GE-1"
 export SP_VER="6.3.7"
 export STAG_VER="6.21"
@@ -198,11 +198,11 @@ else
 fi
 
 cd "${START_WINE_PATH}/data/wine/wine_custom"
-export sw_custom_1="`ls -1 | head -n1 | tail -n1`"
-export sw_custom_2="`ls -1 | head -n2 | tail -n1`"
-export sw_custom_3="`ls -1 | head -n3 | tail -n1`"
-export sw_custom_4="`ls -1 | head -n4 | tail -n1`"
-export sw_custom_5="`ls -1 | head -n5 | tail -n1`"
+export sw_custom_1="`ls -1 | tail -n1 | head -n1`"
+export sw_custom_2="`ls -1 | tail -n2 | head -n1`"
+export sw_custom_3="`ls -1 | tail -n3 | head -n1`"
+export sw_custom_4="`ls -1 | tail -n4 | head -n1`"
+export sw_custom_5="`ls -1 | tail -n5 | head -n1`"
 
 if [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" )" == "SW_USE=wine_staging" ]; then
     if [ ! -d "${START_WINE_PATH}/data/wine/wine_staging/bin" ]; then
