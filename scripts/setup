@@ -4,28 +4,6 @@
 
 . "$(dirname $(readlink -f "$0"))/runlib"
 
-if [ -x "$(command -v apt)" ]; then
-    sudo apt update -y
-    sudo apt install wget zenity zstd unzip -y
-    sudo apt install software-properties-common -y && sudo dpkg --add-architecture i386 && sudo apt update && sudo apt install cabextract icoutils tar wine xterm -y
-    sudo apt install gir1.2-appindicator3-0.1 imagemagick mc -y
-elif [ -x "$(command -v dnf)" ]; then
-    sudo dnf update -y
-    sudo dnf install wget zenity zstd unzip -y
-    sudo dnf install cabextract icoutils tar wine xterm -y
-    sudo dnf install gir1.2-appindicator3-0.1 imagemagick mc -y
-elif [ -x "$(command -v zypper)" ]; then
-    sudo zypper ref
-    sudo zypper in wget zenity zstd unzip
-    sudo zypper in cabextract icoutils tar wine xterm zenity-lang
-    sudo zypper in libappindicator3-1 ImageMagick mc
-elif [ -x "$(command -v pacman)" ]; then
-    sudo pacman -Sy -y
-    sudo pacman -S wget zenity zstd unzip cabextract icoutils wine xterm libappindicator-gtk3 imagemagick mc -y
-else
-    echo "FAILED TO INSTALL: Package manager not found. You must manually install"
-fi
-
 if [ ! -d "${START_WINE_PATH}/data/wine/wine_steam_proton/bin" ]; then
     export FTP_URL="https://github.com/RusNor/Wine-Steam-Proton/releases/download/steam-proton-"${SP_VER}"/steam-proton-"${SP_VER}".tar.xz"
     export DL_NAME="wine-"${SP_VER}"-proton"

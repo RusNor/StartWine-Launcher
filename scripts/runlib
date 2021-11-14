@@ -11,13 +11,13 @@ export START_WINE_PATH="$(pwd)"
 ###############################   TOOLS   ######################################
 
 export SW_NAME="StartWine-Launcher"
-export SW_VER=" v3.1.6"
+export SW_VER=" v3.1.7"
 export GE_VER="6.20-GE-1"
 export SP_VER="6.3.7"
 export STAG_VER="6.21"
-export LUTRIS_VER="6.14-4"
-export LUTRIS_GE_VER="6.20-1"
-export LUTRIS_GE_URL="6.20-GE-1"
+export LUTRIS_VER="6.21"
+export LUTRIS_GE_VER="6.21-1"
+export LUTRIS_GE_URL="6.21-GE-1"
 export DXVK_VER="1.9.2"
 export VKD3D_VER="2.5"
 export DEFAULT_WINE="wine_steam_proton"
@@ -809,7 +809,7 @@ CREATE_SHORTCUT () {
 
     fi
 
-    STARTWINE_NAME="$(basename "${STARTWINE_EXE}" | sed s/".exe"/""/gi | sed 's/ /_/g' )"
+    STARTWINE_NAME="$(basename "${STARTWINE_EXE}" | sed 's/\.exe//gi' | sed 's/ /_/g' )"
     STARTWINE_PATH="$( cd "$( dirname "${STARTWINE_EXE}" )" >/dev/null 2>&1 && pwd )"
 
     if [ -x "`which wrestool 2>/dev/null`" ]; then

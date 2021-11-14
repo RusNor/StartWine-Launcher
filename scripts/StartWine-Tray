@@ -7,7 +7,7 @@ import gi
 gi.require_version('AppIndicator3', '0.1')
 from gi.repository import AppIndicator3 as appindicator
 from gi.repository import Gtk as gtk
-from gi.repository import GLib
+from gi.repository import Gdk, GdkPixbuf, Gio, GLib, GObject, Gtk, Vte, Pango
 from pathlib import Path
 import subprocess
 from subprocess import *
@@ -21,6 +21,7 @@ APPINDICATOR_ID = 'StartWine'
 sw_path = f"{Path.home()}/StartWine/"
 sw_scripts = f"{Path.home()}/StartWine/data/scripts/"
 sw_shortcuts = f"{Path.home()}/StartWine/Shortcuts/"
+sw_icon = f"{Path.home()}/StartWine/data/img/"
 
 DIRPATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
@@ -39,7 +40,7 @@ def menu():
 
     def game_name():
 
-        cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\..*//g' | tail -n1"
+        cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\.exe//gi' | tail -n1"
         proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
         out = str(proc.stdout[0:])
         out_name = str(out).replace('b\'', 'Open ').strip('n\'').strip('\ ').replace('start', 'StartWine').replace('%F', '')
@@ -388,6 +389,190 @@ def settings(_):
 
     dxvk_ge = builder.get_object("dxvk_ge")
     dxvk_ge.connect("toggled", on_dxvk_ge_activated)
+
+    def get_resolution():
+
+        def black_theme():
+
+            sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
+            proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            sw_theme_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(sw_theme_name) == str('023_black_theme'):
+
+                img_path = f"{sw_icon}gui_icons/sw_themes/sw_bg1"
+                image = builder.get_object("sw_bgr")
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, 320, 640, preserve_aspect_ratio=True)
+                image.set_from_pixbuf(pixbuf)
+
+            else:
+
+                print("black_theme_off")
+
+        black_theme()
+
+        def gray_theme():
+
+            sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
+            proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            sw_theme_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(sw_theme_name) == str('023_gray_theme'):
+
+                img_path = f"{sw_icon}gui_icons/sw_themes/sw_bg2"
+                image = builder.get_object("sw_bgr")
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, 320, 640, preserve_aspect_ratio=True)
+                image.set_from_pixbuf(pixbuf)
+
+            else:
+
+                print("gray_theme_off")
+
+        gray_theme()
+
+        def red_theme():
+
+            sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
+            proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            sw_theme_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(sw_theme_name) == str('023_red_theme'):
+
+                img_path = f"{sw_icon}gui_icons/sw_themes/sw_bg3"
+                image = builder.get_object("sw_bgr")
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, 320, 640, preserve_aspect_ratio=True)
+                image.set_from_pixbuf(pixbuf)
+
+            else:
+
+                print("red_theme_off")
+
+        red_theme()
+
+        def yellow_theme():
+
+            sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
+            proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            sw_theme_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(sw_theme_name) == str('023_yellow_theme'):
+
+                img_path = f"{sw_icon}gui_icons/sw_themes/sw_bg4"
+                image = builder.get_object("sw_bgr")
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, 320, 640, preserve_aspect_ratio=True)
+                image.set_from_pixbuf(pixbuf)
+
+            else:
+
+                print("yellow_theme_off")
+
+        yellow_theme()
+
+        def green_theme():
+
+            sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
+            proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            sw_theme_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(sw_theme_name) == str('023_green_theme'):
+
+                img_path = f"{sw_icon}gui_icons/sw_themes/sw_bg5"
+                image = builder.get_object("sw_bgr")
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, 320, 640, preserve_aspect_ratio=True)
+                image.set_from_pixbuf(pixbuf)
+
+            else:
+
+                print("green_theme_off")
+
+        green_theme()
+
+        def blue_theme():
+
+            sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
+            proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            sw_theme_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(sw_theme_name) == str('023_blue_theme'):
+
+                img_path = f"{sw_icon}gui_icons/sw_themes/sw_bg6"
+                image = builder.get_object("sw_bgr")
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, 320, 640, preserve_aspect_ratio=True)
+                image.set_from_pixbuf(pixbuf)
+
+            else:
+
+                print("blue_theme_off")
+
+        blue_theme()
+
+        def purple_theme():
+
+            sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
+            proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            sw_theme_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(sw_theme_name) == str('023_purple_theme'):
+
+                img_path = f"{sw_icon}gui_icons/sw_themes/sw_bg7"
+                image = builder.get_object("sw_bgr")
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, 320, 640, preserve_aspect_ratio=True)
+                image.set_from_pixbuf(pixbuf)
+
+            else:
+
+                print("purple_theme_off")
+
+        purple_theme()
+
+        def mix_theme():
+
+            sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
+            proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            sw_theme_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(sw_theme_name) == str('023_mix_theme'):
+
+                img_path = f"{sw_icon}gui_icons/sw_themes/sw_bg8"
+                image = builder.get_object("sw_bgr")
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, 320, 640, preserve_aspect_ratio=True)
+                image.set_from_pixbuf(pixbuf)
+
+            else:
+
+                print("mix_theme_off")
+
+        mix_theme()
+
+        def white_theme():
+
+            sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
+            proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE)
+            out = str(proc.stdout[0:])
+            sw_theme_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+
+            if str(sw_theme_name) == str('023_white_theme'):
+
+                img_path = f"{sw_icon}gui_icons/sw_themes/sw_bg0"
+                image = builder.get_object("sw_bgrw")
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, 320, 640, preserve_aspect_ratio=True)
+                image.set_from_pixbuf(pixbuf)
+
+            else:
+
+                print("white_theme_off")
+
+        white_theme()
+
+    get_resolution()
 
     def dxvk_ge_active():
         dxvk_cmd = f"sed -n '/020/p' {sw_scripts}/settings"
