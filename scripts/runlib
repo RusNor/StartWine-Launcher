@@ -535,7 +535,6 @@ fi
 
 ###############################   EXPORT   #####################################
 
-export GAMES_CONFIG="${START_WINE_PATH}/data/games_config/${STARTWINE_NAME}"
 export GST_DEBUG="WARNING:0"
 export WINE_MONO_OVERRIDES="Microsoft.Xna.Framework.*,Gac=n"
 export WINEDEBUG="-all"
