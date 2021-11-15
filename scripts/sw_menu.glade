@@ -1556,7 +1556,7 @@
                                             <property name="visible">True</property>
                                             <property name="can-focus">False</property>
                                             <property name="tooltip-text" translatable="yes">remove or reinstall the current prefix</property>
-                                            <property name="pixbuf">../img/gui_icons/edit-delete-symbolic.svg</property>
+                                            <property name="pixbuf">../img/gui_icons/toolbox.svg</property>
                                           </object>
                                           <packing>
                                             <property name="expand">False</property>
@@ -5674,7 +5674,7 @@
                                     <property name="label" translatable="yes">
 StartWine
 
-3.1.7</property>
+3.1.8</property>
                                     <property name="justify">center</property>
                                     <property name="xalign">0.5</property>
                                     <attributes>
@@ -7279,7 +7279,7 @@ Maslov N.G.</property>
                                     <property name="visible">True</property>
                                     <property name="can-focus">False</property>
                                     <property name="tooltip-text" translatable="yes">remove or reinstall the current prefix</property>
-                                    <property name="pixbuf">../img/gui_icons/edit-delete-symbolic.svg</property>
+                                    <property name="pixbuf">../img/gui_icons/toolbox.svg</property>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
@@ -11065,7 +11065,7 @@ Maslov N.G.</property>
                             <property name="label" translatable="yes">
 StartWine
 
-3.1.7</property>
+3.1.8</property>
                             <property name="justify">center</property>
                             <property name="xalign">0.5</property>
                             <attributes>

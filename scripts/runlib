@@ -11,7 +11,7 @@ export START_WINE_PATH="$(pwd)"
 ###############################   TOOLS   ######################################
 
 export SW_NAME="StartWine-Launcher"
-export SW_VER=" v3.1.7"
+export SW_VER=" v3.1.8"
 export GE_VER="6.20-GE-1"
 export SP_VER="6.3.7"
 export STAG_VER="6.21"
@@ -187,7 +187,7 @@ sszen () {
 
 export GAME_EXE="$(readlink -f "$1")"
 export STARTWINE_EXE="${GAME_EXE}"
-export STARTWINE_NAME="$(basename "${STARTWINE_EXE}" | sed s/".exe"/""/gi | sed 's/ /_/g' )"
+export STARTWINE_NAME="$(basename "${STARTWINE_EXE}" | sed 's/\.exe//gi' | sed 's/ /_/g' )"
 export STARTWINE_PATH="$( cd "$( dirname "${STARTWINE_EXE}" )" >/dev/null 2>&1 && pwd )"
 export name_desktop="${STARTWINE_NAME}"
 
@@ -292,6 +292,7 @@ elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" )"
 else
     export USED_PFX_WINE="${DEFAULT_WINE}"
     export WINEDIR="${START_WINE_PATH}/data/wine/"${DEFAULT_WINE}""
+    clear
 fi
 
 export WINELIB="${HOME}/.StartWine/steam-runtime"
@@ -515,8 +516,22 @@ fi
 
 ###############################   LOAD GAMES CONFIG   ##########################
 
-cd "${START_WINE_PATH}/data/games_config"
-. "${START_WINE_PATH}/data/games_config/${STARTWINE_NAME}"
+export GAMES_CONFIG="${START_WINE_PATH}/data/games_config/${STARTWINE_NAME}"
+
+if [ ! -f "${GAMES_CONFIG}" ]; then
+
+    if [ ! -z "${STARTWINE_NAME}" ]; then
+        cat "${START_WINE_PATH}/data/games_config/.default" >> "${START_WINE_PATH}/data/games_config/${STARTWINE_NAME}"
+        chmod +x "${START_WINE_PATH}/data/games_config/${STARTWINE_NAME}"
+    fi
+
+fi
+
+if [ ! -z "${STARTWINE_NAME}" ]; then
+
+    . "${START_WINE_PATH}/data/games_config/${STARTWINE_NAME}"
+
+fi
 
 ###############################   EXPORT   #####################################
 
@@ -569,11 +584,6 @@ if [ "${RESTORE_RESOLUTION}" = 1 ]; then
         SCREEN_RESOLUTION="$(xrandr -q | sed -n -e 's/.* connected \([^ +]*\).*/\1/p')"
         SCREEN_OUTPUT="$(xrandr -q | sed -n -e 's/\([^ ]*\) connected.*/\1/p')"
     fi
-fi
-
-if [ ! -f "${GAMES_CONFIG}" ]; then
-   cat "${START_WINE_PATH}/data/games_config/.default" >> "${START_WINE_PATH}/data/games_config/${STARTWINE_NAME}"
-   chmod +x "${START_WINE_PATH}/data/games_config/${STARTWINE_NAME}"
 fi
 
 if [ "${RUN_RUNTIME}" == "1" ]; then
@@ -883,7 +893,7 @@ WINEBOOT_CS () {
     "${WINESERVER}" -w
 
     if [ ! -d "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}" ]; then
-          try_force_link_dir "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/steamuser" "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}"
+        try_force_link_dir "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/steamuser" "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}"
     fi
 
     if [ ! -d "${WINEPREFIX}/drive_c/users/steamuser/My Documents" ]; then

@@ -7,7 +7,7 @@ import gi
 gi.require_version('AppIndicator3', '0.1')
 from gi.repository import AppIndicator3 as appindicator
 from gi.repository import Gtk as gtk
-from gi.repository import Gdk, GdkPixbuf, Gio, GLib, GObject, Gtk, Vte, Pango
+from gi.repository import Gdk, GdkPixbuf, Gio, GLib, GObject, Gtk, Pango
 from pathlib import Path
 import subprocess
 from subprocess import *

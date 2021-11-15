@@ -192,16 +192,18 @@ def on_btn_resize(self):
 
         out_1 = str(proc_1.stdout[0:])
         out_name_1 = str(out_1).replace('b\'', '').replace('n\'', '').replace('\\', '\n')
+        out_print_1 = str(out_1).replace('b\'', '').replace('n\'', '').replace('\\', '')
 
         out_2 = str(proc_2.stdout[0:])
         out_name_2 = str(out_2).replace('b\'', '').replace('n\'', '').replace('\\', '\n')
+        out_print_2 = str(out_2).replace('b\'', '').replace('n\'', '').replace('\\', '')
 
-        print(out_name_1)
-        print(out_name_2)
+
+        print(out_print_1 +"x" + out_print_2)
 
         img_path = f"{sw_icon}gui_icons/sw_top_header"
         image = builder.get_object("sw_top_header")
-        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1)-420, 32, preserve_aspect_ratio=True)
+        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1)-360, 32, preserve_aspect_ratio=True)
         image.set_from_pixbuf(pixbuf)
 
         img_path1 = f"{sw_icon}gui_icons/sw_left_header"
@@ -3877,12 +3879,13 @@ def get_resolution():
 
     out_1 = str(proc_1.stdout[0:])
     out_name_1 = str(out_1).replace('b\'', '').replace('n\'', '').replace('\\', '\n')
+    out_print_1 = str(out_1).replace('b\'', '').replace('n\'', '').replace('\\', '')
 
     out_2 = str(proc_2.stdout[0:])
     out_name_2 = str(out_2).replace('b\'', '').replace('n\'', '').replace('\\', '\n')
+    out_print_2 = str(out_2).replace('b\'', '').replace('n\'', '').replace('\\', '')
 
-    print(out_name_1)
-    print(out_name_2)
+    print(out_print_1 + "x" + out_print_2)
 
     def on_btn_black_theme(self):
 
