@@ -11,11 +11,11 @@ export START_WINE_PATH="$(pwd)"
 ###############################   TOOLS   ######################################
 
 export SW_NAME="StartWine-Launcher"
-export SW_VER=" v3.1.8"
-export GE_VER="6.20-GE-1"
-export SP_VER="6.3.7"
-export STAG_VER="6.21"
-export LUTRIS_VER="6.21"
+export SW_VER=" v3.1.9"
+export GE_VER="6.21-GE-2"
+export SP_VER="6.3.8"
+export STAG_VER="6.22"
+export LUTRIS_VER="6.21-5"
 export LUTRIS_GE_VER="6.21-1"
 export LUTRIS_GE_URL="6.21-GE-1"
 export DXVK_VER="1.9.2"
@@ -145,7 +145,7 @@ prefix_init_error () {
 
 wait_wineserver () {
 
-    sleep 3
+    sleep 1
     while [ ! -z "$(ls -l /proc/*/exe 2>/dev/null | grep -ie ${SW_NAME} | grep -E 'wine(64)?-preloader|wineserver' | awk -F/ '{print $3}')" ]; do
         sleep 1
     done
@@ -493,7 +493,7 @@ fi
 
 if [ "$(sed -n '/020/p' "${SCRIPTS}/settings")" == "020_DXVK_GE" ]; then
     export DXVK_GE=1
-    echo "DXVK GE"
+    echo "DXVK  GE"
 else
     export DXVK_GE=0
     echo "DXVK  NATIVE"
@@ -501,7 +501,7 @@ fi
 
 if [ "$(sed -n '/021/p' "${SCRIPTS}/settings")" == "021_VKD3D_GE" ]; then
     export VKD3D_GE=1
-    echo "VKD3D GE"
+    echo "VKD3D  GE"
 else
     export VKD3D_GE=0
     echo "VKD3D  NATIVE"
@@ -509,9 +509,9 @@ fi
 
 if [ "$(sed -n '/022/p' "${SCRIPTS}/settings")" == "022_DRI_PRIME" ]; then
     export DRI_PRIME=1
-    echo "PRIME ON"
+    echo "PRIME  ON"
 else
-    echo "PRIME OFF"
+    echo "PRIME  OFF"
 fi
 
 ###############################   LOAD GAMES CONFIG   ##########################
@@ -867,6 +867,9 @@ CREATE_SHORTCUT () {
                         cd "${START_WINE_PATH}/data/pfx_backup"
                         unsquashfs "${START_WINE_PATH}/data/pfx_backup/${PFX_GAME}.iso" | sszen
                         mv "${START_WINE_PATH}/data/pfx_backup/squashfs-root" "${START_WINE_PATH}/data/pfx/${PFX_GAME}"
+                        try_copy_file "${START_WINE_PATH}/data/pfx/${PFX_GAME}/${STARTWINE_NAME}" "${START_WINE_PATH}/data/games_config"
+                        try_remove_file "${START_WINE_PATH}/data/pfx/${PFX_GAME}/${STARTWINE_NAME}"
+                        zenity --title "StartWine" --info --text "Restore prefix completed successfully" --width=200
                     fi
                 else
                      WINEBOOT_CS
@@ -985,7 +988,7 @@ REINSTALL_PFX () {
         "${WINESERVER}" -w
 
         if [ ! -d "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}" ]; then
-              try_force_link_dir "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/steamuser" "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}"
+            try_force_link_dir "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/steamuser" "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}"
         fi
 
         if [ ! -d "${WINEPREFIX}/drive_c/users/steamuser/My Documents" ]; then
@@ -1034,8 +1037,10 @@ REINSTALL_PFX () {
 SW_PFX_BACKUP () {
 
     if [ "${WINEPREFIX}" != "${START_WINE_PATH}/data/pfx/pfx_default" ]; then
+        try_copy_file "${START_WINE_PATH}/data/games_config/${STARTWINE_NAME}" "${START_WINE_PATH}/data/pfx/${PFX_GAME}"
         try_remove_file "${START_WINE_PATH}/data/pfx_backup/${PFX_GAME}.iso"
         mksquashfs "${START_WINE_PATH}/data/pfx/${PFX_GAME}" "${START_WINE_PATH}/data/pfx_backup/${PFX_GAME}.iso" | sszen
+        try_remove_file "${START_WINE_PATH}/data/pfx/${PFX_GAME}/${STARTWINE_NAME}"
         zenity --title "StartWine" --info --text "Backup completed successfully" --width=200
     fi
 
@@ -1048,6 +1053,8 @@ SW_PFX_RESTORE () {
         cd "${START_WINE_PATH}/data/pfx_backup"
         unsquashfs "${START_WINE_PATH}/data/pfx_backup/${PFX_GAME}.iso" | sszen
         mv "${START_WINE_PATH}/data/pfx_backup/squashfs-root" "${START_WINE_PATH}/data/pfx/${PFX_GAME}"
+        try_copy_file "${START_WINE_PATH}/data/pfx/${PFX_GAME}/${STARTWINE_NAME}" "${START_WINE_PATH}/data/games_config"
+        try_remove_file "${START_WINE_PATH}/data/pfx/${PFX_GAME}/${STARTWINE_NAME}"
         zenity --title "StartWine" --info --text "Restore completed successfully" --width=200
     fi
 
@@ -1341,12 +1348,17 @@ WINE_1 () {
         export FTP_URL="https://github.com/Kron4ek/Wine-Builds/releases/download/"${STAG_VER}"/wine-"${STAG_VER}"-staging-amd64.tar.xz"
         export DL_NAME="wine-"${STAG_VER}"-staging"
         download_url --output-document="${HOME}/.StartWine/tmp/wine-"${STAG_VER}"-staging-amd64.tar.xz" &&
-        tar -Jxvf "${HOME}/.StartWine/tmp/wine-"${STAG_VER}"-staging-amd64.tar.xz" -C "${HOME}/.StartWine" | sszen &&
+        COPY_BAR () {
+        tar -Jxvf "${HOME}/.StartWine/tmp/wine-"${STAG_VER}"-staging-amd64.tar.xz" -C "${HOME}/.StartWine" &&
         try_copy_dir "${HOME}/.StartWine/wine-"${STAG_VER}"-staging-amd64/bin" "${START_WINE_PATH}/data/wine/wine_staging" &&
         try_copy_dir "${HOME}/.StartWine/wine-"${STAG_VER}"-staging-amd64/lib" "${START_WINE_PATH}/data/wine/wine_staging" &&
         try_copy_dir "${HOME}/.StartWine/wine-"${STAG_VER}"-staging-amd64/share" "${START_WINE_PATH}/data/wine/wine_staging" &&
         try_remove_file "${HOME}/.StartWine/tmp/wine-"${STAG_VER}"-staging-amd64.tar.xz" &&
         try_remove_dir "${HOME}/.StartWine/wine-"${STAG_VER}"-staging-amd64"
+        }
+
+        COPY_BAR | sszen
+
     fi
 
     chmod -R 775 "${START_WINE_PATH}/data/wine/wine_staging"
@@ -1368,7 +1380,8 @@ WINE_2 () {
         export FTP_URL="https://github.com/RusNor/Wine-Steam-Proton/releases/download/steam-proton-"${SP_VER}"/steam-proton-"${SP_VER}".tar.xz"
         export DL_NAME="wine-"${SP_VER}"-proton"
         download_url --output-document="${HOME}/.StartWine/tmp/steam-proton-"${SP_VER}".tar.xz" &&
-        tar -Jxvf "${HOME}/.StartWine/tmp/steam-proton-"${SP_VER}".tar.xz" -C "${HOME}/.StartWine" | sszen &&
+        COPY_BAR () {
+        tar -Jxvf "${HOME}/.StartWine/tmp/steam-proton-"${SP_VER}".tar.xz" -C "${HOME}/.StartWine" &&
         try_copy_dir "${HOME}/.StartWine/steam-proton-"${SP_VER}"/bin" "${START_WINE_PATH}/data/wine/wine_steam_proton" &&
         try_copy_dir "${HOME}/.StartWine/steam-proton-"${SP_VER}"/lib" "${START_WINE_PATH}/data/wine/wine_steam_proton" &&
         try_copy_dir "${HOME}/.StartWine/steam-proton-"${SP_VER}"/lib64" "${START_WINE_PATH}/data/wine/wine_steam_proton" &&
@@ -1376,6 +1389,10 @@ WINE_2 () {
         try_copy_file "${HOME}/.StartWine/steam-proton-"${SP_VER}"/version" "${START_WINE_PATH}/data/wine/wine_steam_proton" &&
         try_remove_file "${HOME}/.StartWine/tmp/steam-proton-"${SP_VER}".tar.xz" &&
         try_remove_dir "${HOME}/.StartWine/steam-proton-"${SP_VER}""
+        }
+
+        COPY_BAR | sszen
+
     fi
 
     chmod -R 775 "${START_WINE_PATH}/data/wine/wine_steam_proton"
@@ -1397,7 +1414,8 @@ WINE_3 () {
         export FTP_URL="https://github.com/GloriousEggroll/proton-ge-custom/releases/download/"${GE_VER}"/Proton-"${GE_VER}".tar.gz"
         export DL_NAME="Proton-"${GE_VER}""
         download_url --output-document="${HOME}/.StartWine/tmp/Proton-"${GE_VER}".tar.gz" &&
-        tar -xf "${HOME}/.StartWine/tmp/Proton-"${GE_VER}".tar.gz" -C "${HOME}/.StartWine" | sszen &&
+        COPY_BAR () {
+        tar -xf "${HOME}/.StartWine/tmp/Proton-"${GE_VER}".tar.gz" -C "${HOME}/.StartWine" &&
         try_copy_dir "${HOME}/.StartWine/Proton-"${GE_VER}"/files/bin" "${START_WINE_PATH}/data/wine/wine_proton_ge" &&
         try_copy_dir "${HOME}/.StartWine/Proton-"${GE_VER}"/files/lib" "${START_WINE_PATH}/data/wine/wine_proton_ge" &&
         try_copy_dir "${HOME}/.StartWine/Proton-"${GE_VER}"/files/lib64" "${START_WINE_PATH}/data/wine/wine_proton_ge" &&
@@ -1405,6 +1423,10 @@ WINE_3 () {
         try_copy_file "${HOME}/.StartWine/Proton-"${GE_VER}"/version" "${START_WINE_PATH}/data/wine/wine_proton_ge" &&
         try_remove_file "${HOME}/.StartWine/tmp/Proton-"${GE_VER}".tar.gz" &&
         try_remove_dir "${HOME}/.StartWine/Proton-"${GE_VER}""
+        }
+
+        COPY_BAR | sszen
+
     fi
 
     cd "${START_WINE_PATH}/data/wine/wine_proton_ge/share/wine"
@@ -1429,13 +1451,18 @@ WINE_4 () {
         export FTP_URL="https://github.com/lutris/wine/releases/download/lutris-"${LUTRIS_VER}"/wine-lutris-"${LUTRIS_VER}"-x86_64.tar.xz"
         export DL_NAME="wine-lutris-"${LUTRIS_VER}""
         download_url --output-document="${HOME}/.StartWine/tmp/wine-lutris-"${LUTRIS_VER}"-x86_64.tar.xz" &&
-        tar -xf "${HOME}/.StartWine/tmp/wine-lutris-"${LUTRIS_VER}"-x86_64.tar.xz" -C "${HOME}/.StartWine" | sszen &&
+        COPY_BAR () {
+        tar -xf "${HOME}/.StartWine/tmp/wine-lutris-"${LUTRIS_VER}"-x86_64.tar.xz" -C "${HOME}/.StartWine" &&
         try_copy_dir "${HOME}/.StartWine/lutris-"${LUTRIS_VER}"-x86_64/bin" "${START_WINE_PATH}/data/wine/wine_lutris" &&
         try_copy_dir "${HOME}/.StartWine/lutris-"${LUTRIS_VER}"-x86_64/lib" "${START_WINE_PATH}/data/wine/wine_lutris" &&
         try_copy_dir "${HOME}/.StartWine/lutris-"${LUTRIS_VER}"-x86_64/lib64" "${START_WINE_PATH}/data/wine/wine_lutris" &&
         try_copy_dir "${HOME}/.StartWine/lutris-"${LUTRIS_VER}"-x86_64/share" "${START_WINE_PATH}/data/wine/wine_lutris" &&
         try_remove_file "${HOME}/.StartWine/tmp/wine-lutris-"${LUTRIS_VER}"-x86_64.tar.xz" &&
         try_remove_dir "${HOME}/.StartWine/lutris-"${LUTRIS_VER}"-x86_64"
+        }
+
+        COPY_BAR | sszen
+
     fi
 
     cd "${START_WINE_PATH}/data/wine/wine_lutris/share/wine"
@@ -1460,13 +1487,18 @@ WINE_5 () {
         export FTP_URL="https://github.com/GloriousEggroll/wine-ge-custom/releases/download/"${LUTRIS_GE_URL}"/wine-lutris-ge-"${LUTRIS_GE_VER}"-x86_64.tar.xz"
         export DL_NAME="wine-lutris-"${LUTRIS_GE_URL}""
         download_url --output-document="${HOME}/.StartWine/tmp/wine-lutris-ge-"${LUTRIS_GE_VER}"-x86_64.tar.xz" &&
-        tar -xf "${HOME}/.StartWine/tmp/wine-lutris-ge-"${LUTRIS_GE_VER}"-x86_64.tar.xz" -C "${HOME}/.StartWine" | sszen &&
+        COPY_BAR () {
+        tar -xf "${HOME}/.StartWine/tmp/wine-lutris-ge-"${LUTRIS_GE_VER}"-x86_64.tar.xz" -C "${HOME}/.StartWine" &&
         try_copy_dir "${HOME}/.StartWine/lutris-ge-"${LUTRIS_GE_VER}"-x86_64/bin" "${START_WINE_PATH}/data/wine/wine_lutris_ge" &&
         try_copy_dir "${HOME}/.StartWine/lutris-ge-"${LUTRIS_GE_VER}"-x86_64/lib" "${START_WINE_PATH}/data/wine/wine_lutris_ge" &&
         try_copy_dir "${HOME}/.StartWine/lutris-ge-"${LUTRIS_GE_VER}"-x86_64/lib64" "${START_WINE_PATH}/data/wine/wine_lutris_ge" &&
         try_copy_dir "${HOME}/.StartWine/lutris-ge-"${LUTRIS_GE_VER}"-x86_64/share" "${START_WINE_PATH}/data/wine/wine_lutris_ge" &&
         try_remove_file "${HOME}/.StartWine/tmp/wine-lutris-ge-"${LUTRIS_GE_VER}"-x86_64.tar.xz" &&
         try_remove_dir "${HOME}/.StartWine/lutris-ge-"${LUTRIS_GE_VER}"-x86_64"
+        }
+
+        COPY_BAR | sszen
+
     fi
 
     cd "${START_WINE_PATH}/data/wine/wine_lutris_ge/share/wine"

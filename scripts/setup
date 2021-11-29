@@ -8,7 +8,8 @@ if [ ! -d "${START_WINE_PATH}/data/wine/wine_steam_proton/bin" ]; then
     export FTP_URL="https://github.com/RusNor/Wine-Steam-Proton/releases/download/steam-proton-"${SP_VER}"/steam-proton-"${SP_VER}".tar.xz"
     export DL_NAME="wine-"${SP_VER}"-proton"
     download_url --output-document="${HOME}/.StartWine/tmp/steam-proton-"${SP_VER}".tar.xz" &&
-    tar -Jxvf "${HOME}/.StartWine/tmp/steam-proton-"${SP_VER}".tar.xz" -C "${HOME}/.StartWine" | sszen &&
+    COPY_BAR () {
+    tar -Jxvf "${HOME}/.StartWine/tmp/steam-proton-"${SP_VER}".tar.xz" -C "${HOME}/.StartWine" &&
     try_copy_dir "${HOME}/.StartWine/steam-proton-"${SP_VER}"/bin" "${START_WINE_PATH}/data/wine/wine_steam_proton" &&
     try_copy_dir "${HOME}/.StartWine/steam-proton-"${SP_VER}"/lib" "${START_WINE_PATH}/data/wine/wine_steam_proton" &&
     try_copy_dir "${HOME}/.StartWine/steam-proton-"${SP_VER}"/lib64" "${START_WINE_PATH}/data/wine/wine_steam_proton" &&
@@ -16,6 +17,10 @@ if [ ! -d "${START_WINE_PATH}/data/wine/wine_steam_proton/bin" ]; then
     try_copy_file "${HOME}/.StartWine/steam-proton-"${SP_VER}"/version" "${START_WINE_PATH}/data/wine/wine_steam_proton" &&
     try_remove_file "${HOME}/.StartWine/tmp/steam-proton-"${SP_VER}".tar.xz" &&
     try_remove_dir "${HOME}/.StartWine/steam-proton-"${SP_VER}""
+    }
+
+    COPY_BAR | sszen
+
 fi
 
 chmod -R 775 "${START_WINE_PATH}/data/wine/wine_steam_proton"

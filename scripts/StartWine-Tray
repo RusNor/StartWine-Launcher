@@ -361,7 +361,7 @@ def settings(_):
             command = f"sed -i '/022/g' {sw_scripts}settings"
             subprocess.call(command, shell=True)
 
-    def on_btn_back8(self):
+    def on_btn_back_st(self):
         cmd = f"cat {sw_scripts}run.sh"
         proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
         out = str(proc.stdout[0:])
@@ -384,8 +384,8 @@ def settings(_):
 
     sw_stack.set_visible_child_name("settings_window")
 
-    btn_back8 = builder.get_object("btn_back8")
-    btn_back8.connect("clicked", on_btn_back8)
+    btn_back_st = builder.get_object("btn_back_st")
+    btn_back_st.connect("clicked", on_btn_back_st)
 
     dxvk_ge = builder.get_object("dxvk_ge")
     dxvk_ge.connect("toggled", on_dxvk_ge_activated)

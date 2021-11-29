@@ -2076,7 +2076,7 @@
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <child>
-                              <object class="GtkButton" id="btn_back4">
+                              <object class="GtkButton" id="btn_back_sc1">
                                 <property name="visible">True</property>
                                 <property name="can-focus">True</property>
                                 <property name="receives-default">True</property>
@@ -2100,7 +2100,6 @@
                           <object class="GtkGrid" id="vte_shortcuts_box">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
-                            <property name="margin-right">128</property>
                             <property name="margin-end">128</property>
                             <property name="hexpand">True</property>
                             <property name="vexpand">True</property>
@@ -2133,7 +2132,7 @@
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <child>
-                              <object class="GtkButton" id="btn_back13">
+                              <object class="GtkButton" id="btn_back_cs1">
                                 <property name="visible">True</property>
                                 <property name="can-focus">True</property>
                                 <property name="receives-default">True</property>
@@ -2174,7 +2173,6 @@
                           <object class="GtkGrid" id="vte_cs_box">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
-                            <property name="margin-right">128</property>
                             <property name="margin-end">128</property>
                             <property name="hexpand">True</property>
                             <property name="vexpand">True</property>
@@ -2191,8 +2189,6 @@
                           <object class="GtkFrame">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
-                            <property name="margin-left">16</property>
-                            <property name="margin-right">16</property>
                             <property name="margin-start">16</property>
                             <property name="margin-end">16</property>
                             <property name="margin-top">32</property>
@@ -2549,7 +2545,7 @@
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <child>
-                              <object class="GtkButton" id="btn_back3">
+                              <object class="GtkButton" id="btn_back_pt1">
                                 <property name="visible">True</property>
                                 <property name="can-focus">True</property>
                                 <property name="receives-default">True</property>
@@ -2591,8 +2587,6 @@
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <property name="halign">start</property>
-                            <property name="margin-left">16</property>
-                            <property name="margin-right">16</property>
                             <property name="margin-start">16</property>
                             <property name="margin-end">16</property>
                             <property name="margin-top">32</property>
@@ -2924,7 +2918,6 @@
                           <object class="GtkGrid" id="vte_prefix_box">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
-                            <property name="margin-right">128</property>
                             <property name="margin-end">128</property>
                             <property name="hexpand">True</property>
                             <property name="vexpand">True</property>
@@ -2956,7 +2949,7 @@
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <child>
-                              <object class="GtkButton" id="btn_back9">
+                              <object class="GtkButton" id="btn_back_wt1">
                                 <property name="visible">True</property>
                                 <property name="can-focus">True</property>
                                 <property name="receives-default">True</property>
@@ -2997,7 +2990,6 @@
                           <object class="GtkGrid" id="vte_wt_box">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
-                            <property name="margin-right">128</property>
                             <property name="margin-end">128</property>
                             <property name="hexpand">True</property>
                             <property name="vexpand">True</property>
@@ -3015,8 +3007,6 @@
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <property name="halign">start</property>
-                            <property name="margin-left">16</property>
-                            <property name="margin-right">16</property>
                             <property name="margin-start">16</property>
                             <property name="margin-end">16</property>
                             <property name="margin-top">32</property>
@@ -3413,7 +3403,7 @@
                             <property name="can-focus">False</property>
                             <property name="valign">start</property>
                             <child>
-                              <object class="GtkButton" id="btn_back6">
+                              <object class="GtkButton" id="btn_back_dbg1">
                                 <property name="visible">True</property>
                                 <property name="can-focus">True</property>
                                 <property name="receives-default">True</property>
@@ -3677,7 +3667,7 @@
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <child>
-                              <object class="GtkButton" id="btn_back2">
+                              <object class="GtkButton" id="btn_back_dw1">
                                 <property name="visible">True</property>
                                 <property name="can-focus">True</property>
                                 <property name="receives-default">True</property>
@@ -4470,7 +4460,7 @@
                             <property name="can-focus">False</property>
                             <property name="hexpand">True</property>
                             <child>
-                              <object class="GtkButton" id="btn_back7">
+                              <object class="GtkButton" id="btn_back_st1">
                                 <property name="visible">True</property>
                                 <property name="can-focus">True</property>
                                 <property name="receives-default">True</property>
@@ -5621,7 +5611,7 @@
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <child>
-                              <object class="GtkButton" id="btn_back11">
+                              <object class="GtkButton" id="btn_back_ab1">
                                 <property name="visible">True</property>
                                 <property name="can-focus">True</property>
                                 <property name="receives-default">True</property>
@@ -5674,7 +5664,7 @@
                                     <property name="label" translatable="yes">
 StartWine
 
-3.1.8</property>
+3.1.9</property>
                                     <property name="justify">center</property>
                                     <property name="xalign">0.5</property>
                                     <attributes>
@@ -7765,7 +7755,7 @@ Maslov N.G.</property>
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <child>
-                      <object class="GtkButton" id="btn_back12">
+                      <object class="GtkButton" id="btn_back_cs">
                         <property name="visible">True</property>
                         <property name="can-focus">True</property>
                         <property name="receives-default">True</property>
@@ -7791,8 +7781,6 @@ Maslov N.G.</property>
                   <object class="GtkFrame">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
-                    <property name="margin-left">16</property>
-                    <property name="margin-right">16</property>
                     <property name="margin-start">16</property>
                     <property name="margin-end">16</property>
                     <property name="margin-top">32</property>
@@ -8152,7 +8140,7 @@ Maslov N.G.</property>
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <child>
-                      <object class="GtkButton" id="btn_back">
+                      <object class="GtkButton" id="btn_back_dw">
                         <property name="visible">True</property>
                         <property name="can-focus">True</property>
                         <property name="receives-default">True</property>
@@ -8906,7 +8894,7 @@ Maslov N.G.</property>
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <child>
-                      <object class="GtkButton" id="btn_back1">
+                      <object class="GtkButton" id="btn_back_pt">
                         <property name="visible">True</property>
                         <property name="can-focus">True</property>
                         <property name="receives-default">True</property>
@@ -8932,8 +8920,6 @@ Maslov N.G.</property>
                   <object class="GtkFrame">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
-                    <property name="margin-left">16</property>
-                    <property name="margin-right">16</property>
                     <property name="margin-start">16</property>
                     <property name="margin-end">16</property>
                     <property name="margin-top">32</property>
@@ -9282,7 +9268,7 @@ Maslov N.G.</property>
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <child>
-                      <object class="GtkButton" id="btn_back5">
+                      <object class="GtkButton" id="btn_back_wt">
                         <property name="visible">True</property>
                         <property name="can-focus">True</property>
                         <property name="receives-default">True</property>
@@ -9308,8 +9294,6 @@ Maslov N.G.</property>
                   <object class="GtkFrame">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
-                    <property name="margin-left">16</property>
-                    <property name="margin-right">16</property>
                     <property name="margin-start">16</property>
                     <property name="margin-end">16</property>
                     <property name="margin-top">32</property>
@@ -9706,7 +9690,7 @@ Maslov N.G.</property>
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <child>
-                      <object class="GtkButton" id="btn_back8">
+                      <object class="GtkButton" id="btn_back_st">
                         <property name="visible">True</property>
                         <property name="can-focus">True</property>
                         <property name="receives-default">True</property>
@@ -11011,7 +10995,7 @@ Maslov N.G.</property>
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <child>
-                      <object class="GtkButton" id="btn_back10">
+                      <object class="GtkButton" id="btn_back_ab">
                         <property name="visible">True</property>
                         <property name="can-focus">True</property>
                         <property name="receives-default">True</property>
@@ -11065,7 +11049,7 @@ Maslov N.G.</property>
                             <property name="label" translatable="yes">
 StartWine
 
-3.1.8</property>
+3.1.9</property>
                             <property name="justify">center</property>
                             <property name="xalign">0.5</property>
                             <attributes>
@@ -11497,6 +11481,126 @@ Maslov N.G.</property>
     <child internal-child="accessible">
       <object class="AtkObject" id="StartWine-atkobject">
         <property name="AtkObject::accessible-role" translatable="yes">window</property>
+      </object>
+    </child>
+  </object>
+  <object class="GtkWindow" id="progress_window">
+    <property name="width-request">420</property>
+    <property name="can-focus">False</property>
+    <property name="title" translatable="yes">StartWine</property>
+    <property name="icon">../img/gui_icons/SW_Launcher_x256.png</property>
+    <child>
+      <!-- n-columns=1 n-rows=2 -->
+      <object class="GtkGrid">
+        <property name="visible">True</property>
+        <property name="can-focus">False</property>
+        <property name="hexpand">True</property>
+        <child>
+          <object class="GtkBox">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="margin-start">16</property>
+            <property name="margin-end">16</property>
+            <property name="spacing">8</property>
+            <child>
+              <object class="GtkImage">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="halign">center</property>
+                <property name="valign">center</property>
+                <property name="margin-start">16</property>
+                <property name="margin-end">16</property>
+                <property name="margin-top">16</property>
+                <property name="margin-bottom">18</property>
+                <property name="pixbuf">../img/gui_icons/folder-wine-symbolic.svg</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="progress_label">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="label" translatable="yes">downloading...</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="left-attach">0</property>
+            <property name="top-attach">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="margin-start">16</property>
+            <property name="margin-end">16</property>
+            <property name="margin-bottom">16</property>
+            <property name="spacing">8</property>
+            <child>
+              <object class="GtkProgressBar" id="progress">
+                <property name="width-request">320</property>
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="valign">center</property>
+                <property name="pulse-step">0.29999999999999999</property>
+                <property name="show-text">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="download_cancel">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="receives-default">True</property>
+                <property name="halign">end</property>
+                <property name="valign">center</property>
+                <property name="relief">none</property>
+                <child>
+                  <object class="GtkBox">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="spacing">16</property>
+                    <child>
+                      <object class="GtkImage">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="pixbuf">../img/gui_icons/edit-delete-symbolic.svg</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="left-attach">0</property>
+            <property name="top-attach">1</property>
+          </packing>
+        </child>
       </object>
     </child>
   </object>
