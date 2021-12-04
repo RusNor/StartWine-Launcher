@@ -567,7 +567,7 @@ export MESA_GLSL_CACHE_DIR="${START_WINE_PATH}/data/tmp"
 ###############################   TOOLS OPTIONS   ##############################
 
 if [ ${WINE_MONO} == 0 ]; then
-    export WINE_MONO_OFF="WINEDLLOVERRIDES="mscoree,mshtml=;${WINEDLLOVERRIDES}""
+    var_winedlloverride_update "mscoree,mshtml="
 fi
 
 if [ ! -z "${OLD_GL_STRING}" ] && [ "${OLD_GL_STRING}" != 0 ]; then
@@ -903,7 +903,7 @@ WINEBOOT_CS () {
     mkdir -p "${START_WINE_PATH}/Games"
     mkdir -p "${START_WINE_PATH}/data/tmp"
 
-    ${RUNTIME} env ${WINE_MONO_OFF} "${WINELOADER}" wineboot -u | zenity --progress --title="StartWine" --text="Please wait, the prefix is ​​being updated..." --pulsate --auto-close --width=500 --height=90 --no-cancel || prefix_init_error
+    ${RUNTIME} env "${WINELOADER}" wineboot -u | zenity --progress --title="StartWine" --text="Please wait, the prefix is ​​being updated..." --pulsate --auto-close --width=500 --height=90 --no-cancel || prefix_init_error
     "${WINESERVER}" -w
 
     if [ ! -d "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}" ]; then
@@ -996,7 +996,7 @@ REINSTALL_PFX () {
         mkdir -p "${START_WINE_PATH}/Games"
         mkdir -p "${START_WINE_PATH}/data/tmp"
 
-        ${RUNTIME} env ${WINE_MONO_OFF} "${WINELOADER}" wineboot -u | zenity --progress --title="StartWine" --text="Please wait, the prefix is ​​being updated..." --pulsate --auto-close --width=500 --height=90 --no-cancel || prefix_init_error
+        ${RUNTIME} env "${WINELOADER}" wineboot -u | zenity --progress --title="StartWine" --text="Please wait, the prefix is ​​being updated..." --pulsate --auto-close --width=500 --height=90 --no-cancel || prefix_init_error
         "${WINESERVER}" -w
 
         if [ ! -d "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}" ]; then
