@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-###   SCRIPTS_V319   ###
+###   SCRIPTS_V320   ###
 
 import os
 import sys
@@ -1538,6 +1538,20 @@ def on_btn_resize(self):
                 command = f"sed -i '/022/g' {sw_scripts}settings"
                 subprocess.call(command, shell=True)
 
+        def on_MONO_ENABLE1_activated(MONO_ENABLE1, gparam):
+
+            if MONO_ENABLE1.get_active():
+
+                state = "on"
+                command = f"sed -i '24 s/.*/024_MONO_ENABLE/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+            else:
+
+                state = "off"
+                command = f"sed -i '/024/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
         def on_btn_back_st1(self):
 
             sw_stack1.set_visible_child_name("page0")
@@ -2003,6 +2017,25 @@ def on_btn_resize(self):
                 DRI_PRIME1.set_active(False)
 
         dri_prime1()
+
+        MONO_ENABLE1 = builder.get_object("MONO_ENABLE1")
+        MONO_ENABLE1.connect("notify::active", on_MONO_ENABLE1_activated)
+
+        def mono_enable1():
+
+            mono_enable1 = f"sed -n '/024/p' {sw_scripts}/settings"
+            proc = subprocess.run(mono_enable1, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+            mono_enable_name1 = str(proc.stdout[0:]).replace('\n', '')
+
+            if str(mono_enable_name1) == str('024_MONO_ENABLE'):
+
+                MONO_ENABLE1.set_active(True)
+
+            else:
+
+                MONO_ENABLE1.set_active(False)
+
+        mono_enable1()
 
 ######################___BUILDER_GET_SW_FULL_WINDOW___##########################
 
@@ -3238,6 +3271,20 @@ def on_btn_settings(self):
             command = f"sed -i '/022/g' {sw_scripts}settings"
             subprocess.call(command, shell=True)
 
+    def on_MONO_ENABLE_activated(MONO_ENABLE, gparam):
+
+        if MONO_ENABLE.get_active():
+
+            state = "on"
+            command = f"sed -i '24 s/.*/024_MONO_ENABLE/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+        else:
+
+            state = "off"
+            command = f"sed -i '/024/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
 #############################___SWITCH BUTTON___################################
 
     dxvk_ge = builder.get_object("dxvk_ge")
@@ -3695,6 +3742,25 @@ def on_btn_settings(self):
             DRI_PRIME.set_active(False)
 
     dri_prime()
+
+    MONO_ENABLE = builder.get_object("MONO_ENABLE")
+    MONO_ENABLE.connect("notify::active", on_MONO_ENABLE_activated)
+
+    def mono_enable():
+
+        mono_enable = f"sed -n '/024/p' {sw_scripts}/settings"
+        proc = subprocess.run(mono_enable, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        mono_enable_name = str(proc.stdout[0:]).replace('\n', '')
+
+        if str(mono_enable_name) == str('024_MONO_ENABLE'):
+
+            MONO_ENABLE.set_active(True)
+
+        else:
+
+            MONO_ENABLE.set_active(False)
+
+    mono_enable()
 
 def on_btn_back_st(self):
 

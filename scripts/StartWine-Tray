@@ -361,6 +361,18 @@ def settings(_):
             command = f"sed -i '/022/g' {sw_scripts}settings"
             subprocess.call(command, shell=True)
 
+    def on_MONO_ENABLE_activated(MONO_ENABLE, gparam):
+
+        if MONO_ENABLE.get_active():
+
+            state = "on"
+            command = f"sed -i '24 s/.*/024_MONO_ENABLE/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+        else:
+            state = "off"
+            command = f"sed -i '/024/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
     def on_btn_back_st(self):
         cmd = f"cat {sw_scripts}run.sh"
         proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
@@ -930,6 +942,25 @@ def settings(_):
         else:
             DRI_PRIME.set_active(False)
     dri_prime()
+
+    MONO_ENABLE = builder.get_object("MONO_ENABLE")
+    MONO_ENABLE.connect("notify::active", on_MONO_ENABLE_activated)
+
+    def mono_enable():
+
+        mono_enable = f"sed -n '/024/p' {sw_scripts}/settings"
+        proc = subprocess.run(mono_enable, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        mono_enable_name = str(proc.stdout[0:]).replace('\n', '')
+
+        if str(mono_enable_name) == str('024_MONO_ENABLE'):
+
+            MONO_ENABLE.set_active(True)
+
+        else:
+
+            MONO_ENABLE.set_active(False)
+
+    mono_enable()
 
     window.connect("destroy", gtk.main_quit)
     window.show_all()

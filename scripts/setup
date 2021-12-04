@@ -73,7 +73,7 @@ mkdir -p "${START_WINE_PATH}/Games"
 mkdir -p "${START_WINE_PATH}/data/pfx_backup"
 mkdir -p "${START_WINE_PATH}/data/tmp"
 
-${RUNTIME} env WINEDLLOVERRIDES="mscoree,mshtml=;${WINEDLLOVERRIDES}" "${WINELOADER}" wineboot -u || prefix_init_error
+${RUNTIME} env ${WINE_MONO_OFF} "${WINELOADER}" wineboot -u || prefix_init_error
 "${WINESERVER}" -w
 
 if [ ! -d "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}" ]; then

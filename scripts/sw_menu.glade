@@ -4500,8 +4500,6 @@
                                     <property name="visible">True</property>
                                     <property name="can-focus">False</property>
                                     <property name="valign">start</property>
-                                    <property name="margin-left">32</property>
-                                    <property name="margin-right">32</property>
                                     <property name="margin-start">32</property>
                                     <property name="margin-end">32</property>
                                     <property name="margin-top">16</property>
@@ -4713,7 +4711,7 @@
                                       </packing>
                                     </child>
                                     <child>
-                                      <!-- n-columns=3 n-rows=20 -->
+                                      <!-- n-columns=3 n-rows=21 -->
                                       <object class="GtkGrid">
                                         <property name="visible">True</property>
                                         <property name="can-focus">False</property>
@@ -5574,6 +5572,48 @@
                                             <property name="top-attach">19</property>
                                           </packing>
                                         </child>
+                                        <child>
+                                          <object class="GtkSwitch" id="MONO_ENABLE1">
+                                            <property name="visible">True</property>
+                                            <property name="can-focus">True</property>
+                                            <property name="halign">center</property>
+                                            <property name="valign">center</property>
+                                          </object>
+                                          <packing>
+                                            <property name="left-attach">0</property>
+                                            <property name="top-attach">20</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkLabel">
+                                            <property name="visible">True</property>
+                                            <property name="can-focus">False</property>
+                                            <property name="halign">start</property>
+                                            <property name="label" translatable="yes">WINE_MONO</property>
+                                            <attributes>
+                                              <attribute name="foreground" value="#ffffffffffff"/>
+                                            </attributes>
+                                          </object>
+                                          <packing>
+                                            <property name="left-attach">1</property>
+                                            <property name="top-attach">20</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkLabel">
+                                            <property name="visible">True</property>
+                                            <property name="can-focus">False</property>
+                                            <property name="halign">start</property>
+                                            <property name="label" translatable="yes">Mono is an open-source and cross-platform implementation of the .NET Framework. Wine can use a Windows build of Mono to run .NET applications. </property>
+                                            <attributes>
+                                              <attribute name="foreground" value="#ffffffffffff"/>
+                                            </attributes>
+                                          </object>
+                                          <packing>
+                                            <property name="left-attach">2</property>
+                                            <property name="top-attach">20</property>
+                                          </packing>
+                                        </child>
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
@@ -5664,7 +5704,7 @@
                                     <property name="label" translatable="yes">
 StartWine
 
-3.1.9</property>
+3.2.0</property>
                                     <property name="justify">center</property>
                                     <property name="xalign">0.5</property>
                                     <attributes>
@@ -9956,7 +9996,7 @@ Maslov N.G.</property>
                                   </packing>
                                 </child>
                                 <child>
-                                  <!-- n-columns=3 n-rows=20 -->
+                                  <!-- n-columns=3 n-rows=21 -->
                                   <object class="GtkGrid">
                                     <property name="visible">True</property>
                                     <property name="can-focus">False</property>
@@ -10951,6 +10991,55 @@ Maslov N.G.</property>
                                         <property name="top-attach">19</property>
                                       </packing>
                                     </child>
+                                    <child>
+                                      <object class="GtkButton">
+                                        <property name="visible">True</property>
+                                        <property name="sensitive">False</property>
+                                        <property name="can-focus">True</property>
+                                        <property name="receives-default">True</property>
+                                        <property name="tooltip-text" translatable="yes">Mono is an open-source and cross-platform implementation of the .NET Framework. Wine can use a Windows build of Mono to run .NET applications. </property>
+                                        <property name="relief">none</property>
+                                        <child>
+                                          <object class="GtkImage">
+                                            <property name="visible">True</property>
+                                            <property name="can-focus">False</property>
+                                            <property name="pixbuf">../img/gui_icons/dialog-information-symbolic.svg</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="left-attach">0</property>
+                                        <property name="top-attach">20</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkSwitch" id="MONO_ENABLE">
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">True</property>
+                                        <property name="halign">center</property>
+                                        <property name="valign">center</property>
+                                      </object>
+                                      <packing>
+                                        <property name="left-attach">1</property>
+                                        <property name="top-attach">20</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                        <property name="halign">start</property>
+                                        <property name="label" translatable="yes">WINE_MONO</property>
+                                        <attributes>
+                                          <attribute name="foreground" value="#9a9a99999696"/>
+                                          <attribute name="absolute-size" value="14336"/>
+                                        </attributes>
+                                      </object>
+                                      <packing>
+                                        <property name="left-attach">2</property>
+                                        <property name="top-attach">20</property>
+                                      </packing>
+                                    </child>
                                   </object>
                                   <packing>
                                     <property name="expand">True</property>
@@ -11049,7 +11138,7 @@ Maslov N.G.</property>
                             <property name="label" translatable="yes">
 StartWine
 
-3.1.9</property>
+3.2.0</property>
                             <property name="justify">center</property>
                             <property name="xalign">0.5</property>
                             <attributes>

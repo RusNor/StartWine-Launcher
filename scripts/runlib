@@ -11,7 +11,7 @@ export START_WINE_PATH="$(pwd)"
 ###############################   TOOLS   ######################################
 
 export SW_NAME="StartWine-Launcher"
-export SW_VER=" v3.1.9"
+export SW_VER=" v3.2.0"
 export GE_VER="6.21-GE-2"
 export SP_VER="6.3.8"
 export STAG_VER="6.22"
@@ -514,6 +514,14 @@ else
     echo "PRIME  OFF"
 fi
 
+if [ "$(sed -n '/024/p' "${SCRIPTS}/settings")" == "024_MONO_ENABLE" ]; then
+    export WINE_MONO=1
+    echo "WINE_MONO_ON"
+else
+    export WINE_MONO=0
+    echo "WINE_MONO_OFF"
+fi
+
 ###############################   LOAD GAMES CONFIG   ##########################
 
 export GAMES_CONFIG="${START_WINE_PATH}/data/games_config/${STARTWINE_NAME}"
@@ -557,6 +565,10 @@ export __GL_SYNC_TO_VBLANK=0
 export MESA_GLSL_CACHE_DIR="${START_WINE_PATH}/data/tmp"
 
 ###############################   TOOLS OPTIONS   ##############################
+
+if [ ${WINE_MONO} == 0 ]; then
+    export WINE_MONO_OFF="WINEDLLOVERRIDES="mscoree,mshtml=;${WINEDLLOVERRIDES}""
+fi
 
 if [ ! -z "${OLD_GL_STRING}" ] && [ "${OLD_GL_STRING}" != 0 ]; then
     export MESA_EXTENSION_MAX_YEAR="2003"
@@ -891,7 +903,7 @@ WINEBOOT_CS () {
     mkdir -p "${START_WINE_PATH}/Games"
     mkdir -p "${START_WINE_PATH}/data/tmp"
 
-    ${RUNTIME} env WINEDLLOVERRIDES="mscoree,mshtml=;${WINEDLLOVERRIDES}" "${WINELOADER}" wineboot -u | zenity --progress --title="StartWine" --text="Please wait, the prefix is ​​being updated..." --pulsate --auto-close --width=500 --height=90 --no-cancel || prefix_init_error
+    ${RUNTIME} env ${WINE_MONO_OFF} "${WINELOADER}" wineboot -u | zenity --progress --title="StartWine" --text="Please wait, the prefix is ​​being updated..." --pulsate --auto-close --width=500 --height=90 --no-cancel || prefix_init_error
     "${WINESERVER}" -w
 
     if [ ! -d "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}" ]; then
@@ -984,7 +996,7 @@ REINSTALL_PFX () {
         mkdir -p "${START_WINE_PATH}/Games"
         mkdir -p "${START_WINE_PATH}/data/tmp"
 
-        ${RUNTIME} env WINEDLLOVERRIDES="mscoree,mshtml=;${WINEDLLOVERRIDES}" "${WINELOADER}" wineboot -u | zenity --progress --title="StartWine" --text="Please wait, the prefix is ​​being updated..." --pulsate --auto-close --width=500 --height=90 --no-cancel || prefix_init_error
+        ${RUNTIME} env ${WINE_MONO_OFF} "${WINELOADER}" wineboot -u | zenity --progress --title="StartWine" --text="Please wait, the prefix is ​​being updated..." --pulsate --auto-close --width=500 --height=90 --no-cancel || prefix_init_error
         "${WINESERVER}" -w
 
         if [ ! -d "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}" ]; then
