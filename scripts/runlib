@@ -11,11 +11,11 @@ export START_WINE_PATH="$(pwd)"
 ###############################   TOOLS   ######################################
 
 export SW_NAME="StartWine-Launcher"
-export SW_VER=" v3.2.0"
+export SW_VER=" v3.2.1"
 export GE_VER="6.21-GE-2"
 export SP_VER="6.3.8"
-export STAG_VER="6.22"
-export LUTRIS_VER="6.21-5"
+export STAG_VER="6.23"
+export LUTRIS_VER="6.21-6"
 export LUTRIS_GE_VER="6.21-1"
 export LUTRIS_GE_URL="6.21-GE-1"
 export DXVK_VER="1.9.2"
@@ -187,12 +187,12 @@ sszen () {
 
 export GAME_EXE="$(readlink -f "$1")"
 export STARTWINE_EXE="${GAME_EXE}"
-export STARTWINE_NAME="$(basename "${STARTWINE_EXE}" | sed 's/\.exe//gi' | sed 's/ /_/g' )"
-export STARTWINE_PATH="$( cd "$( dirname "${STARTWINE_EXE}" )" >/dev/null 2>&1 && pwd )"
+export STARTWINE_NAME="$(basename "${STARTWINE_EXE}" | sed 's/\.exe//gi' | sed 's/ /_/g')"
+export STARTWINE_PATH="$(cd "$(dirname "${STARTWINE_EXE}")" >/dev/null 2>&1 && pwd)"
 export name_desktop="${STARTWINE_NAME}"
 
-if [ "$(sed -n '3p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" | sed 's/Name_2=//g' | sed 's/ /_/g' | sed 's/[^pfx_].*//g' )" == "pfx_" ]; then
-    export PFX_GAME="$(sed -n '3p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" | sed 's/Name_2=//g' | sed 's/ /_/g' )"
+if [ "$(sed -n '3p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" | sed 's/Name_2=//g' | sed 's/ /_/g' | sed 's/[^pfx_].*//g')" == "pfx_" ]; then
+    export PFX_GAME="$(sed -n '3p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" | sed 's/Name_2=//g' | sed 's/ /_/g')"
 else
     export PFX_GAME="pfx_default"
 fi
@@ -204,7 +204,7 @@ export sw_custom_3="`ls -1 | tail -n3 | head -n1`"
 export sw_custom_4="`ls -1 | tail -n4 | head -n1`"
 export sw_custom_5="`ls -1 | tail -n5 | head -n1`"
 
-if [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" )" == "SW_USE=wine_staging" ]; then
+if [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop")" == "SW_USE=wine_staging" ]; then
     if [ ! -d "${START_WINE_PATH}/data/wine/wine_staging/bin" ]; then
         zenity --title "StartWine" --info --text "Click the download wine button in the main menu and download wine staging" --width=200
         export WINEDIR="${START_WINE_PATH}/data/wine/"${DEFAULT_WINE}""
@@ -212,10 +212,10 @@ if [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" )" =
         export USED_PFX_WINE="wine_staging"
         export WINEDIR="${START_WINE_PATH}/data/wine/wine_staging"
     fi
-elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" )" == "SW_USE=wine_steam_proton" ]; then
+elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop")" == "SW_USE=wine_steam_proton" ]; then
     export USED_PFX_WINE="wine_steam_proton"
     export WINEDIR="${START_WINE_PATH}/data/wine/wine_steam_proton"
-elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" )" == "SW_USE=wine_proton_ge" ]; then
+elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop")" == "SW_USE=wine_proton_ge" ]; then
     if [ ! -d "${START_WINE_PATH}/data/wine/wine_proton_ge/bin" ]; then
         zenity --title "StartWine" --info --text "Click the download wine button in the main menu and download wine proton ge" --width=200
         export WINEDIR="${START_WINE_PATH}/data/wine/"${DEFAULT_WINE}""
@@ -223,7 +223,7 @@ elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" )"
         export USED_PFX_WINE="wine_proton_ge"
         export WINEDIR="${START_WINE_PATH}/data/wine/wine_proton_ge"
     fi
-elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" )" == "SW_USE=wine_lutris" ]; then
+elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop")" == "SW_USE=wine_lutris" ]; then
     if [ ! -d "${START_WINE_PATH}/data/wine/wine_lutris/bin" ]; then
         zenity --title "StartWine" --info --text "Click the download wine button in the main menu and download wine lutris" --width=200
         export WINEDIR="${START_WINE_PATH}/data/wine/"${DEFAULT_WINE}""
@@ -231,7 +231,7 @@ elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" )"
         export USED_PFX_WINE="wine_lutris"
         export WINEDIR="${START_WINE_PATH}/data/wine/wine_lutris"
     fi
-elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" )" == "SW_USE=wine_lutris_ge" ]; then
+elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop")" == "SW_USE=wine_lutris_ge" ]; then
     if [ ! -d "${START_WINE_PATH}/data/wine/wine_lutris_ge/bin" ]; then
         zenity --title "StartWine" --info --text "Click the download wine button in the main menu and download wine lutris ge" --width=200
         export WINEDIR="${START_WINE_PATH}/data/wine/"${DEFAULT_WINE}""
@@ -239,54 +239,44 @@ elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" )"
         export USED_PFX_WINE="wine_lutris_ge"
         export WINEDIR="${START_WINE_PATH}/data/wine/wine_lutris_ge"
     fi
-elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" )" == "SW_USE="${sw_custom_1}"" ]; then
+elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop")" == "SW_USE="${sw_custom_1}"" ]; then
     if [ ! -d "${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_1}"/bin" ]; then
         zenity --title "StartWine" --info --text "Click the download wine button in the main menu and click wine custom copy your wine to the opened directory" --width=200
         export WINEDIR="${START_WINE_PATH}/data/wine/"${DEFAULT_WINE}""
     else
         export USED_PFX_WINE="${sw_custom_1}"
-        cd "${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_1}"/share/wine"
-        sed -i '/\AppDefaults\\/g; /HKCU,Software\\Valve\\/g; /HKLM,Software\\Khronos\\/g; /HKLM,Software\\Wow6432Node\\Valve\\Steam/g; /HKCR,steam\\/g' wine.inf
         export WINEDIR="${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_1}""
     fi
-elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" )" == "SW_USE="${sw_custom_2}"" ]; then
+elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop")" == "SW_USE="${sw_custom_2}"" ]; then
     if [ ! -d "${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_2}"/bin" ]; then
         zenity --title "StartWine" --info --text "Click the download wine button in the main menu and click wine custom copy your wine to the opened directory" --width=200
         export WINEDIR="${START_WINE_PATH}/data/wine/"${DEFAULT_WINE}""
     else
         export USED_PFX_WINE="${sw_custom_2}"
-        cd "${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_2}"/share/wine"
-        sed -i '/\AppDefaults\\/g; /HKCU,Software\\Valve\\/g; /HKLM,Software\\Khronos\\/g; /HKLM,Software\\Wow6432Node\\Valve\\Steam/g; /HKCR,steam\\/g' wine.inf
         export WINEDIR="${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_2}""
     fi
-elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" )" == "SW_USE="${sw_custom_3}"" ]; then
+elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop")" == "SW_USE="${sw_custom_3}"" ]; then
     if [ ! -d "${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_3}"/bin" ]; then
         zenity --title "StartWine" --info --text "Click the download wine button in the main menu and click wine custom copy your wine to the opened directory" --width=200
         export WINEDIR="${START_WINE_PATH}/data/wine/"${DEFAULT_WINE}""
     else
         export USED_PFX_WINE="${sw_custom_3}"
-        cd "${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_3}"/share/wine"
-        sed -i '/\AppDefaults\\/g; /HKCU,Software\\Valve\\/g; /HKLM,Software\\Khronos\\/g; /HKLM,Software\\Wow6432Node\\Valve\\Steam/g; /HKCR,steam\\/g' wine.inf
         export WINEDIR="${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_3}""
     fi
-elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" )" == "SW_USE="${sw_custom_4}"" ]; then
+elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop")" == "SW_USE="${sw_custom_4}"" ]; then
     if [ ! -d "${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_4}"/bin" ]; then
         zenity --title "StartWine" --info --text "Click the download wine button in the main menu and click wine custom copy your wine to the opened directory" --width=200
         export WINEDIR="${START_WINE_PATH}/data/wine/"${DEFAULT_WINE}""
     else
         export USED_PFX_WINE="${sw_custom_4}"
-        cd "${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_4}"/share/wine"
-        sed -i '/\AppDefaults\\/g; /HKCU,Software\\Valve\\/g; /HKLM,Software\\Khronos\\/g; /HKLM,Software\\Wow6432Node\\Valve\\Steam/g; /HKCR,steam\\/g' wine.inf
         export WINEDIR="${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_4}""
     fi
-elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" )" == "SW_USE="${sw_custom_5}"" ]; then
+elif [ "$(sed -n '10p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop")" == "SW_USE="${sw_custom_5}"" ]; then
     if [ ! -d "${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_5}"/bin" ]; then
         zenity --title "StartWine" --info --text "Click the download wine button in the main menu and click wine custom copy your wine to the opened directory" --width=200
         export WINEDIR="${START_WINE_PATH}/data/wine/"${DEFAULT_WINE}""
     else
         export USED_PFX_WINE="${sw_custom_5}"
-        cd "${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_5}"/share/wine"
-        sed -i '/\AppDefaults\\/g; /HKCU,Software\\Valve\\/g; /HKLM,Software\\Khronos\\/g; /HKLM,Software\\Wow6432Node\\Valve\\Steam/g; /HKCR,steam\\/g' wine.inf
         export WINEDIR="${START_WINE_PATH}/data/wine/wine_custom/"${sw_custom_5}""
     fi
 else
@@ -830,14 +820,14 @@ CREATE_SHORTCUT () {
 
     fi
 
-    STARTWINE_NAME="$(basename "${STARTWINE_EXE}" | sed 's/\.exe//gi' | sed 's/ /_/g' )"
-    STARTWINE_PATH="$( cd "$( dirname "${STARTWINE_EXE}" )" >/dev/null 2>&1 && pwd )"
+    STARTWINE_NAME="$(basename "${STARTWINE_EXE}" | sed 's/\.exe//gi' | sed 's/ /_/g')"
+    STARTWINE_PATH="$(cd "$(dirname "${STARTWINE_EXE}")" >/dev/null 2>&1 && pwd)"
 
     if [ -x "`which wrestool 2>/dev/null`" ]; then
-        wrestool -x --output="${STARTWINE_PATH}/" -t14 "${STARTWINE_EXE}"
-        cp "$(ls -S -1 "${STARTWINE_EXE}"*".ico"  | head -n 1)" "${STARTWINE_EXE}.ico"
-        icotool -x --output="${STARTWINE_PATH}/" "${STARTWINE_EXE}.ico"
-        cp "$(ls -S -1 "${STARTWINE_EXE}"*".png"  | head -n 1)" "${STARTWINE_EXE}.png"
+        cd "${STARTWINE_PATH}"
+        wrestool -x -t14 "${STARTWINE_EXE}" > "${STARTWINE_EXE}.ico"
+        icotool -x "${STARTWINE_EXE}.ico"
+        cp "$(ls -S -1 "${STARTWINE_EXE}"*.png | head -n 1)" "${STARTWINE_EXE}.png"
         cp -f "${STARTWINE_EXE}.png" "${START_WINE_PATH}/data/img/${STARTWINE_NAME}.png"
         rm -f "${STARTWINE_PATH}/"*.ico
         rm -f "${STARTWINE_PATH}/"*.png
@@ -862,15 +852,23 @@ CREATE_SHORTCUT () {
         echo "SW_USE=""${SET}" >> "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop"
         chmod +x "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop"
 
-    if [ "$(sed -n '3p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" | sed 's/Name_2=//g' | sed 's/[^pfx_].*//g' )" == "pfx_" ]; then
-        export PFX_GAME="$(sed -n '3p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" | sed 's/Name_2=//g' )"
-        export WINEPREFIX="${START_WINE_PATH}/data/pfx/${PFX_GAME}"
+    if [ -f "${START_WINE_PATH}/data/wine/wine_custom/${SET}/bin/wine" ]; then
+        export WINEDIR="${START_WINE_PATH}/data/wine/wine_custom/${SET}"
+        export WINELOADER=$WINEDIR/bin/wine
+        cd "${START_WINE_PATH}/data/wine/wine_custom/${SET}/share/wine"
+        sed -i '/\AppDefaults\\/g; /HKCU,Software\\Valve\\/g; /HKLM,Software\\Khronos\\/g; /HKLM,Software\\Wow6432Node\\Valve\\Steam/g; /HKCR,steam\\/g' wine.inf
+    else
+        export WINEDIR="${START_WINE_PATH}/data/wine/${SET}"
+        export WINELOADER=$WINEDIR/bin/wine
+    fi
 
-        if [ ! -d "${START_WINE_PATH}/data/pfx/"$(sed -n '3p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" | sed 's/Name_2=//g' ) ]; then
+    if [ "$(sed -n '3p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" | sed 's/Name_2=//g' | sed 's/[^pfx_].*//g')" == "pfx_" ]; then
+        export PFX_GAME="$(sed -n '3p' "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" | sed 's/Name_2=//g')"
+        export WINEPREFIX="${START_WINE_PATH}/data/pfx/${PFX_GAME}"
 
             if [ ! -f "${START_WINE_PATH}/data/pfx_backup/${PFX_GAME}.iso" ]; then
                 WINEBOOT_CS
-            else 
+            else
                 `zenity --question --title "StartWine" --width=200 --text "  Restore prefix from backup ?" --no-wrap ` > /dev/null 2>&1
 
                 if [ $? -eq "0" ]; then
@@ -887,13 +885,13 @@ CREATE_SHORTCUT () {
                      WINEBOOT_CS
                 fi
             fi
-        fi
+
     else
+
         export PFX_GAME="pfx_default"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${PFX_GAME}"
-        if [ ! -d "${START_WINE_PATH}/data/pfx/pfx_default" ]; then
-            WINEBOOT_CS
-        fi
+        WINEBOOT_CS
+
     fi
 
 }
@@ -903,7 +901,7 @@ WINEBOOT_CS () {
     mkdir -p "${START_WINE_PATH}/Games"
     mkdir -p "${START_WINE_PATH}/data/tmp"
 
-    ${RUNTIME} env "${WINELOADER}" wineboot -u | zenity --progress --title="StartWine" --text="Please wait, the prefix is ​​being updated..." --pulsate --auto-close --width=500 --height=90 --no-cancel || prefix_init_error
+    ${RUNTIME} env "${WINELOADER}" wineboot | zenity --progress --title="StartWine" --text="Please wait, the prefix is ​​being updated..." --pulsate --auto-close --width=500 --height=90 --no-cancel || prefix_init_error
     "${WINESERVER}" -w
 
     if [ ! -d "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}" ]; then
@@ -996,7 +994,7 @@ REINSTALL_PFX () {
         mkdir -p "${START_WINE_PATH}/Games"
         mkdir -p "${START_WINE_PATH}/data/tmp"
 
-        ${RUNTIME} env "${WINELOADER}" wineboot -u | zenity --progress --title="StartWine" --text="Please wait, the prefix is ​​being updated..." --pulsate --auto-close --width=500 --height=90 --no-cancel || prefix_init_error
+        ${RUNTIME} env "${WINELOADER}" wineboot | zenity --progress --title="StartWine" --text="Please wait, the prefix is ​​being updated..." --pulsate --auto-close --width=500 --height=90 --no-cancel || prefix_init_error
         "${WINESERVER}" -w
 
         if [ ! -d "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}" ]; then

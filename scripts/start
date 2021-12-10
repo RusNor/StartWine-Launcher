@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-###   SCRIPTS_V320   ###
+###   SCRIPTS_V321   ###
 
 import os
 import sys
@@ -98,12 +98,17 @@ def on_btn_resize(self):
         cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
         subprocess.call(cmd_clear, shell=True)
 
+        popover1.hide()
+
     def on_btn_protondb1(self):
 
         cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\..*//g' | tail -n1"
         proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         out_name = str(proc.stdout[0:]).replace('\n', '').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
         btn_protondb1.set_uri("https://www.protondb.com/search?q=" + str(out_name))
+
+        popover1.hide()
+        g_popover1.hide()
 
     def on_btn_winehq1(self):
 
@@ -112,6 +117,8 @@ def on_btn_resize(self):
         out_name = str(proc.stdout[0:]).replace('\n', '').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
 
         btn_winehq1.set_uri("https://www.winehq.org/search?q=" + str(out_name))
+
+        popover1.hide()
 
     def on_btn_lp_entry1(self):
 
@@ -163,6 +170,8 @@ def on_btn_resize(self):
                 subprocess.call(xdg_open_cmd, shell=True)
         except IOError as e:
             print("games_config not found, set default value")
+
+        popover1.hide()
 
 ###########################___VTE_RUNNERS___####################################
 
@@ -2181,6 +2190,7 @@ def on_btn_resize(self):
     game_name1()
 
 ################################################################################
+    popover1 = builder.get_object("popover1")
 
     btn_resize1 = builder.get_object("btn_resize1")
     btn_resize1.connect("clicked", on_btn_resize1)
@@ -2262,12 +2272,16 @@ def on_btn_app_icon(self):
     cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
     subprocess.call(cmd_clear, shell=True)
 
+    popover.hide()
+
 def on_btn_protondb(self):
 
     cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\..*//g' | tail -n1"
     proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
     out_name = str(proc.stdout[0:]).replace('\n', '').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
     btn_protondb.set_uri("https://www.protondb.com/search?q=" + str(out_name))
+
+    popover.hide()
 
 def on_btn_winehq(self):
 
@@ -2276,6 +2290,8 @@ def on_btn_winehq(self):
     out_name = str(proc.stdout[0:]).replace('\n', '').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
 
     btn_winehq.set_uri("https://www.winehq.org/search?q=" + str(out_name))
+
+    popover.hide()
 
 def on_btn_lp_entry(self):
 
@@ -2339,6 +2355,8 @@ def on_btn_games_config(self):
     except IOError as e:
 
         print("game games_config not found, set default value")
+
+    popover.hide()
 
 ###############################___START_MODES___################################
 
@@ -3796,6 +3814,8 @@ about = builder.get_object("about_window")
 
 btn_hide = builder.get_object("btn_hide")
 btn_hide.connect("clicked", on_btn_hide)
+
+popover = builder.get_object("popover")
 
 btn_app_icon = builder.get_object("btn_app_icon")
 btn_app_icon.connect("clicked", on_btn_app_icon)

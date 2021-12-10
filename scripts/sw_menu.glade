@@ -2598,8 +2598,6 @@
                                 <property name="visible">True</property>
                                 <property name="can-focus">False</property>
                                 <property name="halign">center</property>
-                                <property name="margin-left">12</property>
-                                <property name="margin-right">12</property>
                                 <property name="margin-start">12</property>
                                 <property name="margin-end">12</property>
                                 <property name="margin-top">32</property>
@@ -5704,7 +5702,7 @@
                                     <property name="label" translatable="yes">
 StartWine
 
-3.2.0</property>
+3.2.1</property>
                                     <property name="justify">center</property>
                                     <property name="xalign">0.5</property>
                                     <attributes>
@@ -6373,6 +6371,7 @@ Maslov N.G.</property>
     <property name="height-request">640</property>
     <property name="can-focus">False</property>
     <property name="title" translatable="yes">StartWine</property>
+    <property name="resizable">False</property>
     <property name="window-position">center</property>
     <property name="default-width">320</property>
     <property name="default-height">540</property>
@@ -8973,8 +8972,6 @@ Maslov N.G.</property>
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
                         <property name="halign">center</property>
-                        <property name="margin-left">16</property>
-                        <property name="margin-right">16</property>
                         <property name="margin-start">16</property>
                         <property name="margin-end">16</property>
                         <property name="margin-top">32</property>
@@ -11138,7 +11135,7 @@ Maslov N.G.</property>
                             <property name="label" translatable="yes">
 StartWine
 
-3.2.0</property>
+3.2.1</property>
                             <property name="justify">center</property>
                             <property name="xalign">0.5</property>
                             <attributes>
