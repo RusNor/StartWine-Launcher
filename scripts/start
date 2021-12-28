@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-###   SCRIPTS_V321   ###
+###   SCRIPTS_V330   ###
 
 import os
 import sys
@@ -14,14 +14,17 @@ from pathlib import Path
 import subprocess
 from subprocess import *
 import threading
+from threading import *
 import traceback
 import logging
 import argparse
 import urllib.request
+import time
 
 sw_path = f"{Path.home()}/StartWine/"
 sw_scripts = f"{Path.home()}/StartWine/data/scripts/"
 sw_shortcuts = f"{Path.home()}/StartWine/Shortcuts"
+sw_favorites = f"{Path.home()}/StartWine/data/img/favorites"
 sw_icon = f"{Path.home()}/StartWine/data/img/"
 sw_games_config = f"{Path.home()}/StartWine/data/games_config/"
 sw_wine_custom = f"{Path.home()}/StartWine/data/wine/wine_custom/"
@@ -32,6 +35,7 @@ subprocess.call(cmd_start_tray, shell=True)
 pgrep = f"pgrep -a python3 | grep 'start '"
 
 def echo_run():
+
     cmd_echo1 = f"echo '\"'`{pgrep} | sed -n '1p' | cut -d ' ' -f4-100`'\"'"
     proc1 = subprocess.run(cmd_echo1, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
     out1 = str(proc1.stdout[0:])
@@ -54,7 +58,12 @@ echo_run()
 cmd_cut_run = f"cut -d ' ' -f3-100 {sw_scripts}run.sh"
 proc = subprocess.run(cmd_cut_run, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
 path_game = str(proc.stdout[0:]).replace('\n', '')
-print('path_game=' + path_game)
+
+print('|___path_game = ' + path_game + '___|')
+
+exe_name = str(list(path_game.strip('"').split("/"))[-1])
+
+print('|___exe_name = ' + exe_name + '___|')
 
 ###################___STARTWINE_FULLSCREEN_WINDOW___############################
 
@@ -86,43 +95,111 @@ def on_btn_resize(self):
 
         sw_stack1.set_visible_child_name("page0")
 
+    def on_btn_text_edit1(self):
+
+        cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\.exe//gi' | tail -n1"
+        proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name = str(proc.stdout[0:]).replace('\n', '').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
+
+        text_edit_name = f"{sw_shortcuts}/" + str(out_name) + str(".desktop")
+
+        try:
+            with open(text_edit_name, 'r') as ten:
+                xdg_open_cmd = f"xdg-open {text_edit_name}"
+                subprocess.call(xdg_open_cmd, shell=True)
+        except IOError as e:
+            print("unable to open text editor, game shortcut not found, shortcut must be created")
+
+        popover1.hide()
+        g_popover1.hide()
+        return True
+
+    def on_btn_g_text_edit(self):
+
+        on_btn_text_edit1(self)
+
     def on_btn_app_icon1(self):
 
         cmd_cut = f"cut -d ' ' -f3-100 {sw_scripts}run.sh"
         proc = subprocess.run(cmd_cut, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         path_game = str(proc.stdout[0:]).replace('\n', '')
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
+        subprocess.call(cmd_clear, shell=True)
+
         cmd = f"echo ADD_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
         subprocess.call(cmd, shell=True)
 
-        cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+        popover1.hide()
+        g_popover1.hide()
+        return True
+
+    def on_btn_app_icon2(self):
+
+        on_btn_app_icon1(self)
+
+    def on_btn_add_favorites1(self):
+
+        cmd_cut = f"cut -d ' ' -f3-100 {sw_scripts}run.sh"
+        proc = subprocess.run(cmd_cut, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        path_game = str(proc.stdout[0:]).replace('\n', '')
+
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
         subprocess.call(cmd_clear, shell=True)
 
-        popover1.hide()
+        cmd = f"echo ADD_FAVORITES '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+        subprocess.call(cmd, shell=True)
+
+        game_name_flow()
+        return True
 
     def on_btn_protondb1(self):
 
-        cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\..*//g' | tail -n1"
+        cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\.exe//gi' | tail -n1"
         proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         out_name = str(proc.stdout[0:]).replace('\n', '').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
+
         btn_protondb1.set_uri("https://www.protondb.com/search?q=" + str(out_name))
+
+        popover1.hide()
+        g_popover1.hide()
+
+    def on_btn_protondb2(self):
+
+        cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\.exe//gi' | tail -n1"
+        proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name = str(proc.stdout[0:]).replace('\n', '').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
+
+        btn_protondb2.set_uri("https://www.protondb.com/search?q=" + str(out_name))
 
         popover1.hide()
         g_popover1.hide()
 
     def on_btn_winehq1(self):
 
-        cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\..*//g' | tail -n1"
+        cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\.exe//gi' | tail -n1"
         proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         out_name = str(proc.stdout[0:]).replace('\n', '').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
 
         btn_winehq1.set_uri("https://www.winehq.org/search?q=" + str(out_name))
 
         popover1.hide()
+        g_popover1.hide()
+
+    def on_btn_winehq2(self):
+
+        cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\.exe//gi' | tail -n1"
+        proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name = str(proc.stdout[0:]).replace('\n', '').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
+
+        btn_winehq2.set_uri("https://www.winehq.org/search?q=" + str(out_name))
+
+        popover1.hide()
+        g_popover1.hide()
 
     def on_btn_lp_entry1(self):
 
-        cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\..*//g' | tail -n1"
+        cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\.exe//gi' | tail -n1"
         proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         out_name = str(proc.stdout[0:]).replace('\n', '').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
 
@@ -140,7 +217,7 @@ def on_btn_resize(self):
 
     def on_btn_do_entry1(self):
 
-        cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\..*//g' | tail -n1"
+        cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\.exe//gi' | tail -n1"
         proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         out_name = str(proc.stdout[0:]).replace('\n', '').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
 
@@ -157,8 +234,7 @@ def on_btn_resize(self):
             print("games_config not found, set default value")
 
     def on_btn_games_config1(self):
-
-        cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\..*//g' | tail -n1"
+        cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\.exe//gi' | tail -n1"
         proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         out_name = str(proc.stdout[0:]).replace('\n', '').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
 
@@ -172,8 +248,9 @@ def on_btn_resize(self):
             print("games_config not found, set default value")
 
         popover1.hide()
+        g_popover1.hide()
 
-###########################___VTE_RUNNERS___####################################
+###############################___START___####################################
 
     def on_btn_dxvk_1(self):
 
@@ -181,11 +258,11 @@ def on_btn_resize(self):
         proc = subprocess.run(cmd_cut, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         path_game = str(proc.stdout[0:]).replace('\n', '')
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal.feed_child(cmd_clear.encode("UTF-8"))
+
         cmd = f"echo RUN_DXVK '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal.feed_child(cmd.encode("UTF-8"))
-
-        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal.feed_child(cmd1.encode("UTF-8"))
 
     def on_btn_vkd3d_1(self):
 
@@ -193,11 +270,11 @@ def on_btn_resize(self):
         proc = subprocess.run(cmd_cut, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         path_game = str(proc.stdout[0:]).replace('\n', '')
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal.feed_child(cmd_clear.encode("UTF-8"))
+
         cmd = f"echo RUN_VKD3D '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal.feed_child(cmd.encode("UTF-8"))
-
-        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal.feed_child(cmd1.encode("UTF-8"))
 
     def on_btn_opengl_1(self):
 
@@ -205,15 +282,23 @@ def on_btn_resize(self):
         proc = subprocess.run(cmd_cut, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         path_game = str(proc.stdout[0:]).replace('\n', '')
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal.feed_child(cmd_clear.encode("UTF-8"))
+
         cmd = f"echo RUN_OPENGL '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal.feed_child(cmd.encode("UTF-8"))
 
-        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal.feed_child(cmd1.encode("UTF-8"))
-
 #############################___VTE_TITLE___####################################
 
-    def get_resolution():
+    def on_btn_back_terminal(self):
+
+        main_stack.set_visible_child_name("vte_main_box1")
+
+    def on_btn_back_fs(self):
+
+        main_stack.set_visible_child_name("vte_main_box")
+
+    def get_resolution_header():
 
         width = f"xrandr | grep '*' | cut -d 'x' -f1 | sed 's/ //g' | head -n1"
         height = f"xrandr | grep '*' | cut -d 'x' -f2 | cut -d ' ' -f1 | head -n1"
@@ -221,22 +306,22 @@ def on_btn_resize(self):
         proc_1 = subprocess.run(width, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         proc_2 = subprocess.run(height, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
 
-        out_name_1 = str(proc_1.stdout[0:]).replace('\n', '')
-        out_name_2 = str(proc_2.stdout[0:]).replace('\n', '')
+        out_width = str(proc_1.stdout[0:]).replace('\n', '')
+        out_height = str(proc_2.stdout[0:]).replace('\n', '')
 
-        print(out_name_1 +"x" + out_name_2)
+        print(out_width +"x" + out_height)
 
         img_path = f"{sw_icon}gui_icons/sw_top_header"
         image = builder.get_object("sw_top_header")
-        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1)-360, 32, preserve_aspect_ratio=True)
+        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_width)-16, 32, preserve_aspect_ratio=True)
         image.set_from_pixbuf(pixbuf)
 
         img_path1 = f"{sw_icon}gui_icons/sw_left_header"
         image1 = builder.get_object("sw_left_header")
-        pixbuf1 = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path1, 32, int(out_name_2)-32, preserve_aspect_ratio=True)
+        pixbuf1 = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path1, 32, int(out_height)-16, preserve_aspect_ratio=True)
         image1.set_from_pixbuf(pixbuf1)
 
-    get_resolution()
+    get_resolution_header()
 
     menu = builder.get_object("menu_grid")
     terminal = Vte.Terminal()
@@ -261,16 +346,23 @@ def on_btn_resize(self):
     terminal.set_hexpand(True)
     terminal.set_vexpand(True)
 
-    btn_dxvk_1 = builder.get_object("btn_dxvk1")
-    btn_vkd3d_1 = builder.get_object("btn_vkd3d1")
-    btn_opengl_1 = builder.get_object("btn_opengl1")
+    btn_dxvk_1 = builder.get_object("btn_dxvk_1")
+    btn_vkd3d_1 = builder.get_object("btn_vkd3d_1")
+    btn_opengl_1 = builder.get_object("btn_opengl_1")
 
     btn_dxvk_1.connect("clicked", on_btn_dxvk_1)
     btn_vkd3d_1.connect("clicked", on_btn_vkd3d_1)
     btn_opengl_1.connect("clicked", on_btn_opengl_1)
 
     vte_main_box = builder.get_object("vte_main_box")
-    vte_main_box.attach(terminal, 1, 1, 1, 1)
+    vte_main_box1 = builder.get_object("vte_main_box1")
+    vte_main_box1.attach(terminal, 0, 1, 1, 1)
+
+    btn_back_terminal = builder.get_object("btn_back_terminal")
+    btn_back_terminal.connect("clicked", on_btn_back_terminal)
+    btn_back_fs = builder.get_object("btn_back_fs")
+    btn_back_fs.connect("clicked", on_btn_back_fs)
+    main_stack = builder.get_object("main_stack")
 
 #############################___SHORTCUTS___####################################
 
@@ -280,6 +372,1139 @@ def on_btn_resize(self):
 
         run_mc = f"clear && mc\n"
         terminal_sc.feed_child(run_mc.encode('UTF-8'))
+
+################################################################################
+
+        sc_flowbox = builder.get_object("sc_flowbox")
+
+    def on_btn_g_event1(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g1)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '1p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d '=' -f2-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event2(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g2)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '2p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event3(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g3)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '3p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event4(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g4)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '4p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event5(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g5)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '5p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event6(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g6)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '6p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event7(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g7)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '7p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event8(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g8)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '8p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event9(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g9)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '9p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event10(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g10)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '10p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event11(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g11)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '11p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event12(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g12)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '12p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event13(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g13)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '13p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event14(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g14)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '14p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event15(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g15)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '15p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event16(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g16)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '16p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event17(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g17)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '17p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event18(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g18)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '18p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event19(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g19)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '19p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event20(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g20)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '20p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event21(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g21)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '21p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event22(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g22)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '22p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event23(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g23)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '23p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event24(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g24)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '24p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event25(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g25)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '25p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event26(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g26)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '26p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event27(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g27)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '27p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event28(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g28)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '28p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event29(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g29)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '29p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event30(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g30)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '30p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event31(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g31)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '31p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    def on_btn_g_event32(widget, event):
+
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            g_popover1.set_relative_to(btn_g32)
+            g_popover1.show_all()
+
+        cmd_name = f"cd {sw_favorites}/ && ls -1 | sed -n '32p'"
+        proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        cmd = f"sed -i '1d' {sw_scripts}run.sh && echo env '\"'{sw_scripts}start'\"' '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d ' ' -f3-100`'\' >> {sw_scripts}run.sh"
+        subprocess.call(cmd, shell=True)
+        game_name1()
+        return True
+
+    g_popover1 = builder.get_object("g_popover1")
+    popover1 = builder.get_object("popover1")
+    btn_g_text_edit = builder.get_object("btn_g_text_edit")
+    btn_g_text_edit.connect("clicked", on_btn_g_text_edit)
+    btn_g1 = builder.get_object("btn_g1")
+    btn_g2 = builder.get_object("btn_g2")
+    btn_g3 = builder.get_object("btn_g3")
+    btn_g4 = builder.get_object("btn_g4")
+    btn_g5 = builder.get_object("btn_g5")
+    btn_g6 = builder.get_object("btn_g6")
+    btn_g7 = builder.get_object("btn_g7")
+    btn_g8 = builder.get_object("btn_g8")
+    btn_g9 = builder.get_object("btn_g9")
+    btn_g10 = builder.get_object("btn_g10")
+    btn_g11 = builder.get_object("btn_g11")
+    btn_g12 = builder.get_object("btn_g12")
+    btn_g13 = builder.get_object("btn_g13")
+    btn_g14 = builder.get_object("btn_g14")
+    btn_g15 = builder.get_object("btn_g15")
+    btn_g16 = builder.get_object("btn_g16")
+    btn_g17 = builder.get_object("btn_g17")
+    btn_g18 = builder.get_object("btn_g18")
+    btn_g19 = builder.get_object("btn_g19")
+    btn_g20 = builder.get_object("btn_g20")
+    btn_g21 = builder.get_object("btn_g21")
+    btn_g22 = builder.get_object("btn_g22")
+    btn_g23 = builder.get_object("btn_g23")
+    btn_g24 = builder.get_object("btn_g24")
+    btn_g25 = builder.get_object("btn_g25")
+    btn_g26 = builder.get_object("btn_g26")
+    btn_g27 = builder.get_object("btn_g27")
+    btn_g28 = builder.get_object("btn_g28")
+    btn_g29 = builder.get_object("btn_g29")
+    btn_g30 = builder.get_object("btn_g30")
+    btn_g31 = builder.get_object("btn_g31")
+    btn_g32 = builder.get_object("btn_g32")
+
+    def game_name_flow():
+
+        cmd1 = f"cd {sw_favorites}/ && ls -1 | sed -n '1p' | sed 's/\.desktop//g'"
+        cmd2 = f"cd {sw_favorites}/ && ls -1 | sed -n '2p' | sed 's/\.desktop//g'"
+        cmd3 = f"cd {sw_favorites}/ && ls -1 | sed -n '3p' | sed 's/\.desktop//g'"
+        cmd4 = f"cd {sw_favorites}/ && ls -1 | sed -n '4p' | sed 's/\.desktop//g'"
+        cmd5 = f"cd {sw_favorites}/ && ls -1 | sed -n '5p' | sed 's/\.desktop//g'"
+        cmd6 = f"cd {sw_favorites}/ && ls -1 | sed -n '6p' | sed 's/\.desktop//g'"
+        cmd7 = f"cd {sw_favorites}/ && ls -1 | sed -n '7p' | sed 's/\.desktop//g'"
+        cmd8 = f"cd {sw_favorites}/ && ls -1 | sed -n '8p' | sed 's/\.desktop//g'"
+        cmd9 = f"cd {sw_favorites}/ && ls -1 | sed -n '9p' | sed 's/\.desktop//g'"
+        cmd10 = f"cd {sw_favorites}/ && ls -1 | sed -n '10p' | sed 's/\.desktop//g'"
+        cmd11 = f"cd {sw_favorites}/ && ls -1 | sed -n '11p' | sed 's/\.desktop//g'"
+        cmd12 = f"cd {sw_favorites}/ && ls -1 | sed -n '12p' | sed 's/\.desktop//g'"
+        cmd13 = f"cd {sw_favorites}/ && ls -1 | sed -n '13p' | sed 's/\.desktop//g'"
+        cmd14 = f"cd {sw_favorites}/ && ls -1 | sed -n '14p' | sed 's/\.desktop//g'"
+        cmd15 = f"cd {sw_favorites}/ && ls -1 | sed -n '15p' | sed 's/\.desktop//g'"
+        cmd16 = f"cd {sw_favorites}/ && ls -1 | sed -n '16p' | sed 's/\.desktop//g'"
+        cmd17 = f"cd {sw_favorites}/ && ls -1 | sed -n '17p' | sed 's/\.desktop//g'"
+        cmd18 = f"cd {sw_favorites}/ && ls -1 | sed -n '18p' | sed 's/\.desktop//g'"
+        cmd19 = f"cd {sw_favorites}/ && ls -1 | sed -n '19p' | sed 's/\.desktop//g'"
+        cmd20 = f"cd {sw_favorites}/ && ls -1 | sed -n '20p' | sed 's/\.desktop//g'"
+        cmd21 = f"cd {sw_favorites}/ && ls -1 | sed -n '21p' | sed 's/\.desktop//g'"
+        cmd22 = f"cd {sw_favorites}/ && ls -1 | sed -n '22p' | sed 's/\.desktop//g'"
+        cmd23 = f"cd {sw_favorites}/ && ls -1 | sed -n '23p' | sed 's/\.desktop//g'"
+        cmd24 = f"cd {sw_favorites}/ && ls -1 | sed -n '24p' | sed 's/\.desktop//g'"
+        cmd25 = f"cd {sw_favorites}/ && ls -1 | sed -n '25p' | sed 's/\.desktop//g'"
+        cmd26 = f"cd {sw_favorites}/ && ls -1 | sed -n '26p' | sed 's/\.desktop//g'"
+        cmd27 = f"cd {sw_favorites}/ && ls -1 | sed -n '27p' | sed 's/\.desktop//g'"
+        cmd28 = f"cd {sw_favorites}/ && ls -1 | sed -n '28p' | sed 's/\.desktop//g'"
+        cmd29 = f"cd {sw_favorites}/ && ls -1 | sed -n '29p' | sed 's/\.desktop//g'"
+        cmd30 = f"cd {sw_favorites}/ && ls -1 | sed -n '30p' | sed 's/\.desktop//g'"
+        cmd31 = f"cd {sw_favorites}/ && ls -1 | sed -n '31p' | sed 's/\.desktop//g'"
+        cmd32 = f"cd {sw_favorites}/ && ls -1 | sed -n '32p' | sed 's/\.desktop//g'"
+
+        proc1 = subprocess.run(cmd1, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc2 = subprocess.run(cmd2, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc3 = subprocess.run(cmd3, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc4 = subprocess.run(cmd4, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc5 = subprocess.run(cmd5, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc6 = subprocess.run(cmd6, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc7 = subprocess.run(cmd7, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc8 = subprocess.run(cmd8, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc9 = subprocess.run(cmd9, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc10 = subprocess.run(cmd10, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc11 = subprocess.run(cmd11, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc12 = subprocess.run(cmd12, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc13 = subprocess.run(cmd13, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc14 = subprocess.run(cmd14, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc15 = subprocess.run(cmd15, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc16 = subprocess.run(cmd16, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc17 = subprocess.run(cmd17, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc18 = subprocess.run(cmd18, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc19 = subprocess.run(cmd19, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc20 = subprocess.run(cmd20, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc21 = subprocess.run(cmd21, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc22 = subprocess.run(cmd22, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc23 = subprocess.run(cmd23, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc24 = subprocess.run(cmd24, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc25 = subprocess.run(cmd25, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc26 = subprocess.run(cmd26, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc27 = subprocess.run(cmd27, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc28 = subprocess.run(cmd28, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc29 = subprocess.run(cmd29, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc30 = subprocess.run(cmd30, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc31 = subprocess.run(cmd31, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        proc32 = subprocess.run(cmd32, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+
+        out_name1 = str(proc1.stdout[0:]).replace('\n', '')
+        out_name2 = str(proc2.stdout[0:]).replace('\n', '')
+        out_name3 = str(proc3.stdout[0:]).replace('\n', '')
+        out_name4 = str(proc4.stdout[0:]).replace('\n', '')
+        out_name5 = str(proc5.stdout[0:]).replace('\n', '')
+        out_name6 = str(proc6.stdout[0:]).replace('\n', '')
+        out_name7 = str(proc7.stdout[0:]).replace('\n', '')
+        out_name8 = str(proc8.stdout[0:]).replace('\n', '')
+        out_name9 = str(proc9.stdout[0:]).replace('\n', '')
+        out_name10 = str(proc10.stdout[0:]).replace('\n', '')
+        out_name11 = str(proc11.stdout[0:]).replace('\n', '')
+        out_name12 = str(proc12.stdout[0:]).replace('\n', '')
+        out_name13 = str(proc13.stdout[0:]).replace('\n', '')
+        out_name14 = str(proc14.stdout[0:]).replace('\n', '')
+        out_name15 = str(proc15.stdout[0:]).replace('\n', '')
+        out_name16 = str(proc16.stdout[0:]).replace('\n', '')
+        out_name17 = str(proc17.stdout[0:]).replace('\n', '')
+        out_name18 = str(proc18.stdout[0:]).replace('\n', '')
+        out_name19 = str(proc19.stdout[0:]).replace('\n', '')
+        out_name20 = str(proc20.stdout[0:]).replace('\n', '')
+        out_name21 = str(proc21.stdout[0:]).replace('\n', '')
+        out_name22 = str(proc22.stdout[0:]).replace('\n', '')
+        out_name23 = str(proc23.stdout[0:]).replace('\n', '')
+        out_name24 = str(proc24.stdout[0:]).replace('\n', '')
+        out_name25 = str(proc25.stdout[0:]).replace('\n', '')
+        out_name26 = str(proc26.stdout[0:]).replace('\n', '')
+        out_name27 = str(proc27.stdout[0:]).replace('\n', '')
+        out_name28 = str(proc28.stdout[0:]).replace('\n', '')
+        out_name29 = str(proc29.stdout[0:]).replace('\n', '')
+        out_name30 = str(proc30.stdout[0:]).replace('\n', '')
+        out_name31 = str(proc31.stdout[0:]).replace('\n', '')
+        out_name32 = str(proc32.stdout[0:]).replace('\n', '')
+
+        if out_name1 != '':
+
+            try:
+                icon_path1 = open(f"{sw_icon}" + str(out_name1) + '_x96.png')
+            except IOError as e:
+                icon_path1 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path1 = f"{sw_icon}" + str(out_name1) + '_x96.png'
+            btn_g1.show()
+            btn_g1.connect('button-press-event', on_btn_g_event1)
+            g_icon1 = builder.get_object("g_img1")
+            g_icon1.set_from_file(icon_path1)
+            g_label1 = builder.get_object("g_label_1")
+            g_label1.set_label(str(out_name1))
+        else:
+            btn_g1.hide()
+
+        if out_name2 != '':
+
+            try:
+                icon_path2 = open(f"{sw_icon}" + str(out_name2) + '_x96.png')
+            except IOError as e:
+                icon_path2 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path2 = f"{sw_icon}" + str(out_name2) + '_x96.png'
+            btn_g2.show()
+            btn_g2.connect("button-press-event", on_btn_g_event2)
+            g_icon2 = builder.get_object("g_img2")
+            g_icon2.set_from_file(icon_path2)
+            g_label2 = builder.get_object("g_label_2")
+            g_label2.set_label(str(out_name2))
+        else:
+            btn_g2.hide()
+
+        if out_name3 != '':
+
+            try:
+                icon_path3 = open(f"{sw_icon}" + str(out_name3) + '_x96.png')
+            except IOError as e:
+                icon_path3 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path3 = f"{sw_icon}" + str(out_name3) + '_x96.png'
+            btn_g3.show()
+            btn_g3.connect("button-press-event", on_btn_g_event3)
+            g_icon3 = builder.get_object("g_img3")
+            g_icon3.set_from_file(icon_path3)
+            g_label3 = builder.get_object("g_label_3")
+            g_label3.set_label(str(out_name3))
+        else:
+            btn_g3.hide()
+
+        if out_name4 != '':
+
+            try:
+                icon_path4 = open(f"{sw_icon}" + str(out_name4) + '_x96.png')
+            except IOError as e:
+                icon_path4 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path4 = f"{sw_icon}" + str(out_name4) + '_x96.png'
+            btn_g4.show()
+            btn_g4.connect("button-press-event", on_btn_g_event4)
+            g_icon4 = builder.get_object("g_img4")
+            g_icon4.set_from_file(icon_path4)
+            g_label4 = builder.get_object("g_label_4")
+            g_label4.set_label(str(out_name4))
+        else:
+            btn_g4.hide()
+
+        if out_name5 != '':
+
+            try:
+                icon_path5 = open(f"{sw_icon}" + str(out_name5) + '_x96.png')
+            except IOError as e:
+                icon_path5 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path5 = f"{sw_icon}" + str(out_name5) + '_x96.png'
+            btn_g5.show()
+            btn_g5.connect("button-press-event", on_btn_g_event5)
+            g_icon5 = builder.get_object("g_img5")
+            g_icon5.set_from_file(icon_path5)
+            g_label5 = builder.get_object("g_label_5")
+            g_label5.set_label(str(out_name5))
+        else:
+            btn_g5.hide()
+
+        if out_name6 != '':
+
+            try:
+                icon_path6 = open(f"{sw_icon}" + str(out_name6) + '_x96.png')
+            except IOError as e:
+                icon_path6 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path6 = f"{sw_icon}" + str(out_name6) + '_x96.png'
+            btn_g6.show()
+            btn_g6.connect("button-press-event", on_btn_g_event6)
+            g_icon6 = builder.get_object("g_img6")
+            g_icon6.set_from_file(icon_path6)
+            g_label6 = builder.get_object("g_label_6")
+            g_label6.set_label(str(out_name6))
+        else:
+            btn_g6.hide()
+
+        if out_name7 != '':
+
+            try:
+                icon_path7 = open(f"{sw_icon}" + str(out_name7) + '_x96.png')
+            except IOError as e:
+                icon_path7 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path7 = f"{sw_icon}" + str(out_name7) + '_x96.png'
+            btn_g7.show()
+            btn_g7.connect("button-press-event", on_btn_g_event7)
+            g_icon7 = builder.get_object("g_img7")
+            g_icon7.set_from_file(icon_path7)
+            g_label7 = builder.get_object("g_label_7")
+            g_label7.set_label(str(out_name7))
+        else:
+            btn_g7.hide()
+
+        if out_name8 != '':
+
+            try:
+                icon_path8 = open(f"{sw_icon}" + str(out_name8) + '_x96.png')
+            except IOError as e:
+                icon_path8 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path8 = f"{sw_icon}" + str(out_name8) + '_x96.png'
+            btn_g8.show()
+            btn_g8.connect("button-press-event", on_btn_g_event8)
+            g_icon8 = builder.get_object("g_img8")
+            g_icon8.set_from_file(icon_path8)
+            g_label8 = builder.get_object("g_label_8")
+            g_label8.set_label(str(out_name8))
+        else:
+            btn_g8.hide()
+
+        if out_name9 != '':
+
+            try:
+                icon_path9 = open(f"{sw_icon}" + str(out_name9) + '_x96.png')
+            except IOError as e:
+                icon_path9 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path9 = f"{sw_icon}" + str(out_name9) + '_x96.png'
+            btn_g9.show()
+            btn_g9.connect("button-press-event", on_btn_g_event9)
+            g_icon9 = builder.get_object("g_img9")
+            g_icon9.set_from_file(icon_path9)
+            g_label9 = builder.get_object("g_label_9")
+            g_label9.set_label(str(out_name9))
+        else:
+            btn_g9.hide()
+
+        if out_name10 != '':
+
+            try:
+                icon_path10 = open(f"{sw_icon}" + str(out_name10) + '_x96.png')
+            except IOError as e:
+                icon_path10 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path10 = f"{sw_icon}" + str(out_name10) + '_x96.png'
+            btn_g10.show()
+            btn_g10.connect("button-press-event", on_btn_g_event10)
+            g_icon10 = builder.get_object("g_img10")
+            g_icon10.set_from_file(icon_path10)
+            g_label10 = builder.get_object("g_label_10")
+            g_label10.set_label(str(out_name10))
+        else:
+            btn_g10.hide()
+
+        if out_name11 != '':
+
+            try:
+                icon_path11 = open(f"{sw_icon}" + str(out_name11) + '_x96.png')
+            except IOError as e:
+                icon_path11 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path11 = f"{sw_icon}" + str(out_name11) + '_x96.png'
+            btn_g11.show()
+            btn_g11.connect("button-press-event", on_btn_g_event11)
+            g_icon11 = builder.get_object("g_img11")
+            g_icon11.set_from_file(icon_path11)
+            g_label11 = builder.get_object("g_label_11")
+            g_label11.set_label(str(out_name11))
+        else:
+            btn_g11.hide()
+
+        if out_name12 != '':
+
+            try:
+                icon_path12 = open(f"{sw_icon}" + str(out_name12) + '_x96.png')
+            except IOError as e:
+                icon_path12 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path12 = f"{sw_icon}" + str(out_name12) + '_x96.png'
+            btn_g12.show()
+            btn_g12.connect("button-press-event", on_btn_g_event12)
+            g_icon12 = builder.get_object("g_img12")
+            g_icon12.set_from_file(icon_path12)
+            g_label12 = builder.get_object("g_label_12")
+            g_label12.set_label(str(out_name12))
+        else:
+            btn_g12.hide()
+
+        if out_name13 != '':
+
+            try:
+                icon_path13 = open(f"{sw_icon}" + str(out_name13) + '_x96.png')
+            except IOError as e:
+                icon_path13 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path13 = f"{sw_icon}" + str(out_name13) + '_x96.png'
+            btn_g13.show()
+            btn_g13.connect("button-press-event", on_btn_g_event13)
+            g_icon13 = builder.get_object("g_img13")
+            g_icon13.set_from_file(icon_path13)
+            g_label13 = builder.get_object("g_label_13")
+            g_label13.set_label(str(out_name13))
+        else:
+            btn_g13.hide()
+
+        if out_name14 != '':
+
+            try:
+                icon_path14 = open(f"{sw_icon}" + str(out_name14) + '_x96.png')
+            except IOError as e:
+                icon_path14 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path14 = f"{sw_icon}" + str(out_name14) + '_x96.png'
+            btn_g14.show()
+            btn_g14.connect("button-press-event", on_btn_g_event14)
+            g_icon14 = builder.get_object("g_img14")
+            g_icon14.set_from_file(icon_path14)
+            g_label14 = builder.get_object("g_label_14")
+            g_label14.set_label(str(out_name14))
+        else:
+            btn_g14.hide()
+
+        if out_name15 != '':
+
+            try:
+                icon_path15 = open(f"{sw_icon}" + str(out_name15) + '_x96.png')
+            except IOError as e:
+                icon_path15 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path15 = f"{sw_icon}" + str(out_name15) + '_x96.png'
+            btn_g15.show()
+            btn_g15.connect("button-press-event", on_btn_g_event15)
+            g_icon15 = builder.get_object("g_img15")
+            g_icon15.set_from_file(icon_path15)
+            g_label15 = builder.get_object("g_label_15")
+            g_label15.set_label(str(out_name15))
+        else:
+            btn_g15.hide()
+
+        if out_name16 != '':
+
+            try:
+                icon_path16 = open(f"{sw_icon}" + str(out_name16) + '_x96.png')
+            except IOError as e:
+                icon_path16 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path16 = f"{sw_icon}" + str(out_name16) + '_x96.png'
+            btn_g16.show()
+            btn_g16.connect("button-press-event", on_btn_g_event16)
+            g_icon16 = builder.get_object("g_img16")
+            g_icon16.set_from_file(icon_path16)
+            g_label16 = builder.get_object("g_label_16")
+            g_label16.set_label(str(out_name16))
+        else:
+            btn_g16.hide()
+
+        if out_name17 != '':
+
+            try:
+                icon_path17 = open(f"{sw_icon}" + str(out_name17) + '_x96.png')
+            except IOError as e:
+                icon_path17 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path17 = f"{sw_icon}" + str(out_name17) + '_x96.png'
+            btn_g17.show()
+            btn_g17.connect("button-press-event", on_btn_g_event17)
+            g_icon17 = builder.get_object("g_img17")
+            g_icon17.set_from_file(icon_path17)
+            g_label17 = builder.get_object("g_label_17")
+            g_label17.set_label(str(out_name17))
+        else:
+            btn_g17.hide()
+
+        if out_name18 != '':
+
+            try:
+                icon_path18 = open(f"{sw_icon}" + str(out_name18) + '_x96.png')
+            except IOError as e:
+                icon_path18 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path18 = f"{sw_icon}" + str(out_name18) + '_x96.png'
+            btn_g18.show()
+            btn_g18.connect("button-press-event", on_btn_g_event18)
+            g_icon18 = builder.get_object("g_img18")
+            g_icon18.set_from_file(icon_path18)
+            g_label18 = builder.get_object("g_label_18")
+            g_label18.set_label(str(out_name18))
+        else:
+            btn_g18.hide()
+
+        if out_name19 != '':
+
+            try:
+                icon_path19 = open(f"{sw_icon}" + str(out_name19) + '_x96.png')
+            except IOError as e:
+                icon_path19 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path19 = f"{sw_icon}" + str(out_name19) + '_x96.png'
+            btn_g19.show()
+            btn_g19.connect("button-press-event", on_btn_g_event19)
+            g_icon19 = builder.get_object("g_img19")
+            g_icon19.set_from_file(icon_path19)
+            g_label19 = builder.get_object("g_label_19")
+            g_label19.set_label(str(out_name19))
+        else:
+            btn_g19.hide()
+
+        if out_name20 != '':
+
+            try:
+                icon_path20 = open(f"{sw_icon}" + str(out_name20) + '_x96.png')
+            except IOError as e:
+                icon_path20 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path20 = f"{sw_icon}" + str(out_name20) + '_x96.png'
+            btn_g20.show()
+            btn_g20.connect("button-press-event", on_btn_g_event20)
+            g_icon20 = builder.get_object("g_img20")
+            g_icon20.set_from_file(icon_path20)
+            g_label20 = builder.get_object("g_label_20")
+            g_label20.set_label(str(out_name20))
+        else:
+            btn_g20.hide()
+
+        if out_name21 != '':
+
+            try:
+                icon_path21 = open(f"{sw_icon}" + str(out_name21) + '_x96.png')
+            except IOError as e:
+                icon_path21 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path21 = f"{sw_icon}" + str(out_name21) + '_x96.png'
+            btn_g21.show()
+            btn_g21.connect("button-press-event", on_btn_g_event21)
+            g_icon21 = builder.get_object("g_img21")
+            g_icon21.set_from_file(icon_path21)
+            g_label21 = builder.get_object("g_label_21")
+            g_label21.set_label(str(out_name21))
+        else:
+            btn_g21.hide()
+
+        if out_name22 != '':
+
+            try:
+                icon_path22 = open(f"{sw_icon}" + str(out_name22) + '_x96.png')
+            except IOError as e:
+                icon_path22 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path22 = f"{sw_icon}" + str(out_name22) + '_x96.png'
+            btn_g22.show()
+            btn_g22.connect("button-press-event", on_btn_g_event22)
+            g_icon22 = builder.get_object("g_img22")
+            g_icon22.set_from_file(icon_path22)
+            g_label22 = builder.get_object("g_label_22")
+            g_label22.set_label(str(out_name22))
+        else:
+            btn_g22.hide()
+
+        if out_name23 != '':
+
+            try:
+                icon_path23 = open(f"{sw_icon}" + str(out_name23) + '_x96.png')
+            except IOError as e:
+                icon_path23 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path23 = f"{sw_icon}" + str(out_name23) + '_x96.png'
+            btn_g23.show()
+            btn_g23.connect("button-press-event", on_btn_g_event23)
+            g_icon23 = builder.get_object("g_img23")
+            g_icon23.set_from_file(icon_path23)
+            g_label23 = builder.get_object("g_label_23")
+            g_label23.set_label(str(out_name23))
+        else:
+            btn_g23.hide()
+
+        if out_name24 != '':
+
+            try:
+                icon_path24 = open(f"{sw_icon}" + str(out_name24) + '_x96.png')
+            except IOError as e:
+                icon_path24 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path24 = f"{sw_icon}" + str(out_name24) + '_x96.png'
+            btn_g24.show()
+            btn_g24.connect("button-press-event", on_btn_g_event24)
+            g_icon24 = builder.get_object("g_img24")
+            g_icon24.set_from_file(icon_path24)
+            g_label24 = builder.get_object("g_label_24")
+            g_label24.set_label(str(out_name24))
+        else:
+            btn_g24.hide()
+
+        if out_name25 != '':
+
+            try:
+                icon_path25 = open(f"{sw_icon}" + str(out_name25) + '_x96.png')
+            except IOError as e:
+                icon_path25 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path25 = f"{sw_icon}" + str(out_name25) + '_x96.png'
+            btn_g25.show()
+            btn_g25.connect("button-press-event", on_btn_g_event25)
+            g_icon25 = builder.get_object("g_img25")
+            g_icon25.set_from_file(icon_path25)
+            g_label25 = builder.get_object("g_label_25")
+            g_label25.set_label(str(out_name25))
+        else:
+            btn_g25.hide()
+
+        if out_name26 != '':
+
+            try:
+                icon_path26 = open(f"{sw_icon}" + str(out_name26) + '_x96.png')
+            except IOError as e:
+                icon_path26 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path26 = f"{sw_icon}" + str(out_name26) + '_x96.png'
+            btn_g26.show()
+            btn_g26.connect("button-press-event", on_btn_g_event26)
+            g_icon26 = builder.get_object("g_img26")
+            g_icon26.set_from_file(icon_path26)
+            g_label26 = builder.get_object("g_label_26")
+            g_label26.set_label(str(out_name26))
+        else:
+            btn_g26.hide()
+
+        if out_name27 != '':
+
+            try:
+                icon_path27 = open(f"{sw_icon}" + str(out_name27) + '_x96.png')
+            except IOError as e:
+                icon_path27 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path27 = f"{sw_icon}" + str(out_name27) + '_x96.png'
+            btn_g27.show()
+            btn_g27.connect("button-press-event", on_btn_g_event27)
+            g_icon27 = builder.get_object("g_img27")
+            g_icon27.set_from_file(icon_path27)
+            g_label27 = builder.get_object("g_label_27")
+            g_label27.set_label(str(out_name27))
+        else:
+            btn_g27.hide()
+
+        if out_name28 != '':
+            try:
+                icon_path28 = open(f"{sw_icon}" + str(out_name28) + '_x96.png')
+            except IOError as e:
+                icon_path28 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path28 = f"{sw_icon}" + str(out_name28) + '_x96.png'
+            btn_g28.show()
+            btn_g28.connect("button-press-event", on_btn_g_event28)
+            g_icon28 = builder.get_object("g_img28")
+            g_icon28.set_from_file(icon_path28)
+            g_label28 = builder.get_object("g_label_28")
+            g_label28.set_label(str(out_name28))
+        else:
+            btn_g28.hide()
+
+        if out_name29 != '':
+            try:
+                icon_path29 = open(f"{sw_icon}" + str(out_name29) + '_x96.png')
+            except IOError as e:
+                icon_path29 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path29 = f"{sw_icon}" + str(out_name29) + '_x96.png'
+            btn_g29.show()
+            btn_g29.connect("button-press-event", on_btn_g_event29)
+            g_icon29 = builder.get_object("g_img29")
+            g_icon29.set_from_file(icon_path29)
+            g_label29 = builder.get_object("g_label_29")
+            g_label29.set_label(str(out_name29))
+        else:
+            btn_g29.hide()
+
+        if out_name30 != '':
+            try:
+                icon_path30 = open(f"{sw_icon}" + str(out_name30) + '_x96.png')
+            except IOError as e:
+                icon_path30 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path30 = f"{sw_icon}" + str(out_name30) + '_x96.png'
+            btn_g30.show()
+            btn_g30.connect("button-press-event", on_btn_g_event30)
+            g_icon30 = builder.get_object("g_img30")
+            g_icon30.set_from_file(icon_path30)
+            g_label30 = builder.get_object("g_label_30")
+            g_label30.set_label(str(out_name30))
+        else:
+            btn_g30.hide()
+
+        if out_name31 != '':
+            try:
+                icon_path31 = open(f"{sw_icon}" + str(out_name31) + '_x96.png')
+            except IOError as e:
+                icon_path31 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path31 = f"{sw_icon}" + str(out_name31) + '_x96.png'
+            btn_g31.show()
+            btn_g31.connect("button-press-event", on_btn_g_event31)
+            g_icon31 = builder.get_object("g_img31")
+            g_icon31.set_from_file(icon_path31)
+            g_label31 = builder.get_object("g_label_31")
+            g_label31.set_label(str(out_name31))
+        else:
+            btn_g31.hide()
+
+        if out_name32 != '':
+            try:
+                icon_path32 = open(f"{sw_icon}" + str(out_name32) + '_x96.png')
+            except IOError as e:
+                icon_path32 = f"{sw_icon}gui_icons/unavailable.svg"
+            else:
+                icon_path32 = f"{sw_icon}" + str(out_name32) + '_x96.png'
+            btn_g32.show()
+            btn_g32.connect("button-press-event", on_btn_g_event32)
+            g_icon32 = builder.get_object("g_img32")
+            g_icon32.set_from_file(icon_path32)
+            g_label32 = builder.get_object("g_label_32")
+            g_label32.set_label(str(out_name32))
+        else:
+            btn_g32.hide()
+
+    game_name_flow()
+
+################################################################################
 
     def on_btn_back_sc1(self):
 
@@ -341,14 +1566,14 @@ def on_btn_resize(self):
         proc = subprocess.run(cmd_cut, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         path_game = str(proc.stdout[0:]).replace('\n', '')
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
+
         cmd_set = f"echo export SET='\"''wine_staging''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_cs.feed_child(cmd_set.encode('UTF-8'))
 
         cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_cs.feed_child(cmd.encode('UTF-8'))
-
-        cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
 
         game_name1()
 
@@ -358,14 +1583,14 @@ def on_btn_resize(self):
         proc = subprocess.run(cmd_cut, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         path_game = str(proc.stdout[0:]).replace('\n', '')
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
+
         cmd_set = f"echo export SET='\"''wine_steam_proton''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_cs.feed_child(cmd_set.encode('UTF-8'))
 
         cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_cs.feed_child(cmd.encode('UTF-8'))
-
-        cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
 
         game_name1()
 
@@ -375,14 +1600,14 @@ def on_btn_resize(self):
         proc = subprocess.run(cmd_cut, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         path_game = str(proc.stdout[0:]).replace('\n', '')
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
+
         cmd_set = f"echo export SET='\"''wine_proton_ge''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_cs.feed_child(cmd_set.encode('UTF-8'))
 
         cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_cs.feed_child(cmd.encode('UTF-8'))
-
-        cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
 
         game_name1()
 
@@ -392,14 +1617,14 @@ def on_btn_resize(self):
         proc = subprocess.run(cmd_cut, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         path_game = str(proc.stdout[0:]).replace('\n', '')
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
+
         cmd_set = f"echo export SET='\"''wine_lutris''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_cs.feed_child(cmd_set.encode('UTF-8'))
 
         cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_cs.feed_child(cmd.encode('UTF-8'))
-
-        cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
 
         game_name1()
 
@@ -409,14 +1634,14 @@ def on_btn_resize(self):
         proc = subprocess.run(cmd_cut, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         path_game = str(proc.stdout[0:]).replace('\n', '')
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
+
         cmd_set = f"echo export SET='\"''wine_lutris_ge''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_cs.feed_child(cmd_set.encode('UTF-8'))
 
         cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_cs.feed_child(cmd.encode('UTF-8'))
-
-        cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
 
         game_name1()
 
@@ -481,14 +1706,14 @@ def on_btn_resize(self):
         proc = subprocess.run(cmd_ls, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         out_name = str(proc.stdout[0:]).replace('\n', '')
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
+
         cmd_set = f"echo export SET='\"''{out_name}''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_cs.feed_child(cmd_set.encode('UTF-8'))
 
         cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_cs.feed_child(cmd.encode('UTF-8'))
-
-        cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
 
         game_name1()
 
@@ -502,14 +1727,14 @@ def on_btn_resize(self):
         proc = subprocess.run(cmd_ls, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         out_name = str(proc.stdout[0:]).replace('\n', '')
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
+
         cmd_set = f"echo export SET='\"''{out_name}''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_cs.feed_child(cmd_set.encode('UTF-8'))
 
         cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_cs.feed_child(cmd.encode('UTF-8'))
-
-        cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
 
         game_name1()
 
@@ -523,14 +1748,14 @@ def on_btn_resize(self):
         proc = subprocess.run(cmd_ls, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         out_name = str(proc.stdout[0:]).replace('\n', '')
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
+
         cmd_set = f"echo export SET='\"''{out_name}''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_cs.feed_child(cmd_set.encode('UTF-8'))
 
         cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_cs.feed_child(cmd.encode('UTF-8'))
-
-        cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
 
         game_name1()
 
@@ -544,14 +1769,14 @@ def on_btn_resize(self):
         proc = subprocess.run(cmd_ls, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         out_name = str(proc.stdout[0:]).replace('\n', '')
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
+
         cmd_set = f"echo export SET='\"''{out_name}''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_cs.feed_child(cmd_set.encode('UTF-8'))
 
         cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_cs.feed_child(cmd.encode('UTF-8'))
-
-        cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
 
         game_name1()
 
@@ -565,14 +1790,14 @@ def on_btn_resize(self):
         proc = subprocess.run(cmd_ls, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         out_name = str(proc.stdout[0:]).replace('\n', '')
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
+
         cmd_set = f"echo export SET='\"''{out_name}''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_cs.feed_child(cmd_set.encode('UTF-8'))
 
         cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_cs.feed_child(cmd.encode('UTF-8'))
-
-        cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_cs.feed_child(cmd_clear.encode('UTF-8'))
 
         game_name1()
 
@@ -663,11 +1888,11 @@ def on_btn_resize(self):
         cmd_exit = f"exit\n"
         terminal_rp.feed_child(cmd_exit.encode('UTF-8'))
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh && mc {sw_path}data/pfx\n"
+        terminal_rp.feed_child(cmd_clear.encode("UTF-8"))
+
         cmd = f"echo REMOVE_PFX '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_rp.feed_child(cmd.encode("UTF-8"))
-
-        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh && mc {sw_path}data/pfx\n"
-        terminal_rp.feed_child(cmd1.encode("UTF-8"))
 
         game_name1()
 
@@ -680,11 +1905,11 @@ def on_btn_resize(self):
         cmd_exit = f"exit\n"
         terminal_rp.feed_child(cmd_exit.encode('UTF-8'))
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh && mc {sw_path}data/pfx\n"
+        terminal_rp.feed_child(cmd_clear.encode("UTF-8"))
+
         cmd = f"echo REINSTALL_PFX '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_rp.feed_child(cmd.encode("UTF-8"))
-
-        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh && mc {sw_path}data/pfx\n"
-        terminal_rp.feed_child(cmd1.encode("UTF-8"))
 
         game_name1()
 
@@ -697,11 +1922,11 @@ def on_btn_resize(self):
         cmd_exit = f"exit\n"
         terminal_rp.feed_child(cmd_exit.encode('UTF-8'))
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh && mc {sw_path}data/pfx_backup\n"
+        terminal_rp.feed_child(cmd_clear.encode("UTF-8"))
+
         cmd = f"echo SW_PFX_BACKUP '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_rp.feed_child(cmd.encode("UTF-8"))
-
-        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh && mc {sw_path}data/pfx_backup\n"
-        terminal_rp.feed_child(cmd1.encode("UTF-8"))
 
         game_name1()
 
@@ -714,11 +1939,11 @@ def on_btn_resize(self):
         cmd_exit = f"exit\n"
         terminal_rp.feed_child(cmd_exit.encode('UTF-8'))
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh && mc {sw_path}data/pfx\n"
+        terminal_rp.feed_child(cmd_clear.encode("UTF-8"))
+
         cmd = f"echo SW_PFX_RESTORE '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_rp.feed_child(cmd.encode("UTF-8"))
-
-        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh && mc {sw_path}data/pfx\n"
-        terminal_rp.feed_child(cmd1.encode("UTF-8"))
 
         game_name1()
 
@@ -727,11 +1952,11 @@ def on_btn_resize(self):
         cmd_exit = f"exit\n"
         terminal_rp.feed_child(cmd_exit.encode('UTF-8'))
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh && mc {sw_path}data/pfx_backup\n"
+        terminal_rp.feed_child(cmd_clear.encode("UTF-8"))
+
         cmd = f"echo SW_PFX_FULL_BACKUP '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh\n"
         terminal_rp.feed_child(cmd.encode("UTF-8"))
-
-        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh && mc {sw_path}data/pfx_backup\n"
-        terminal_rp.feed_child(cmd1.encode("UTF-8"))
 
         game_name1()
 
@@ -740,11 +1965,11 @@ def on_btn_resize(self):
         cmd_exit = f"exit\n"
         terminal_rp.feed_child(cmd_exit.encode('UTF-8'))
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh && mc {sw_path}data/pfx\n"
+        terminal_rp.feed_child(cmd_clear.encode("UTF-8"))
+
         cmd = f"echo SW_PFX_FULL_RESTORE '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh\n"
         terminal_rp.feed_child(cmd.encode("UTF-8"))
-
-        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh && mc {sw_path}data/pfx\n"
-        terminal_rp.feed_child(cmd1.encode("UTF-8"))
 
         game_name1()
 
@@ -820,11 +2045,11 @@ def on_btn_resize(self):
         proc = subprocess.run(cmd_cut, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         path_game = str(proc.stdout[0:]).replace('\n', '')
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_wt.feed_child(cmd_clear.encode("UTF-8"))
+
         cmd = f"echo WINECFG '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_wt.feed_child(cmd.encode("UTF-8"))
-
-        cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_wt.feed_child(cmd_clear.encode("UTF-8"))
 
     def on_btn_wineconsole1(self):
 
@@ -832,11 +2057,11 @@ def on_btn_resize(self):
         proc = subprocess.run(cmd_cut, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         path_game = str(proc.stdout[0:]).replace('\n', '')
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_wt.feed_child(cmd_clear.encode("UTF-8"))
+
         cmd = f"echo WINECONSOLE '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_wt.feed_child(cmd.encode("UTF-8"))
-
-        cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_wt.feed_child(cmd_clear.encode("UTF-8"))
 
     def on_btn_regedit1(self):
 
@@ -844,11 +2069,11 @@ def on_btn_resize(self):
         proc = subprocess.run(cmd_cut, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         path_game = str(proc.stdout[0:]).replace('\n', '')
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_wt.feed_child(cmd_clear.encode("UTF-8"))
+
         cmd = f"echo REGEDIT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_wt.feed_child(cmd.encode("UTF-8"))
-
-        cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_wt.feed_child(cmd_clear.encode("UTF-8"))
 
     def on_btn_file_explorer1(self):
 
@@ -856,11 +2081,11 @@ def on_btn_resize(self):
         proc = subprocess.run(cmd_cut, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         path_game = str(proc.stdout[0:]).replace('\n', '')
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_wt.feed_child(cmd_clear.encode("UTF-8"))
+
         cmd = f"echo WINEFILE '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_wt.feed_child(cmd.encode("UTF-8"))
-
-        cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_wt.feed_child(cmd_clear.encode("UTF-8"))
 
     def on_btn_uninstaller1(self):
 
@@ -868,11 +2093,11 @@ def on_btn_resize(self):
         proc = subprocess.run(cmd_cut, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         path_game = str(proc.stdout[0:]).replace('\n', '')
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_wt.feed_child(cmd_clear.encode("UTF-8"))
+
         cmd = f"echo UNINSTALLER '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_wt.feed_child(cmd.encode("UTF-8"))
-
-        cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_wt.feed_child(cmd_clear.encode("UTF-8"))
 
     def on_btn_winetricks1(self):
 
@@ -880,11 +2105,11 @@ def on_btn_resize(self):
         proc = subprocess.run(cmd_cut, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         path_game = str(proc.stdout[0:]).replace('\n', '')
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_wt.feed_child(cmd_clear.encode("UTF-8"))
+
         cmd = f"echo SW_WINETRICKS '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_wt.feed_child(cmd.encode("UTF-8"))
-
-        cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_wt.feed_child(cmd_clear.encode("UTF-8"))
 
     def on_btn_install_libraries1(self):
 
@@ -892,11 +2117,11 @@ def on_btn_resize(self):
         proc = subprocess.run(cmd_cut, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         path_game = str(proc.stdout[0:]).replace('\n', '')
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_wt.feed_child(cmd_clear.encode("UTF-8"))
+
         cmd = f"echo INSTALL_RL '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_wt.feed_child(cmd.encode("UTF-8"))
-
-        cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_wt.feed_child(cmd_clear.encode("UTF-8"))
 
     def on_btn_back_wt1(self):
 
@@ -960,83 +2185,83 @@ def on_btn_resize(self):
 
     def on_btn_wine_f1(self):
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_sw.feed_child(cmd_clear.encode("UTF-8"))
+
         cmd = f"echo WINE_1 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh\n"
         terminal_sw.feed_child(cmd.encode("UTF-8"))
 
-        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_sw.feed_child(cmd1.encode("UTF-8"))
-
     def on_btn_rm_staging1(self):
+
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_sw.feed_child(cmd_clear.encode("UTF-8"))
 
         cmd = f"echo RM_WINE_1 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh\n"
         terminal_sw.feed_child(cmd.encode("UTF-8"))
 
-        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_sw.feed_child(cmd1.encode("UTF-8"))
-
     def on_btn_wine_f2(self):
+
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_sw.feed_child(cmd_clear.encode("UTF-8"))
 
         cmd = f"echo WINE_2 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh\n"
         terminal_sw.feed_child(cmd.encode("UTF-8"))
 
-        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_sw.feed_child(cmd1.encode("UTF-8"))
-
     def on_btn_rm_proton1(self):
+
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_sw.feed_child(cmd_clear.encode("UTF-8"))
 
         cmd = f"echo RM_WINE_2 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh\n"
         terminal_sw.feed_child(cmd.encode("UTF-8"))
 
-        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_sw.feed_child(cmd1.encode("UTF-8"))
-
     def on_btn_wine_f3(self):
+
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_sw.feed_child(cmd_clear.encode("UTF-8"))
 
         cmd = f"echo WINE_3 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh\n"
         terminal_sw.feed_child(cmd.encode("UTF-8"))
 
-        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_sw.feed_child(cmd1.encode("UTF-8"))
-
     def on_btn_rm_ge1(self):
+
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_sw.feed_child(cmd_clear.encode("UTF-8"))
 
         cmd = f"echo RM_WINE_3 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh\n"
         terminal_sw.feed_child(cmd.encode("UTF-8"))
 
-        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_sw.feed_child(cmd1.encode("UTF-8"))
-
     def on_btn_wine_f4(self):
+
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_sw.feed_child(cmd_clear.encode("UTF-8"))
 
         cmd = f"echo WINE_4 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh\n"
         terminal_sw.feed_child(cmd.encode("UTF-8"))
 
-        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_sw.feed_child(cmd1.encode("UTF-8"))
-
     def on_btn_rm_lutris1(self):
+
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_sw.feed_child(cmd_clear.encode("UTF-8"))
 
         cmd = f"echo RM_WINE_4 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh\n"
         terminal_sw.feed_child(cmd.encode("UTF-8"))
 
-        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_sw.feed_child(cmd1.encode("UTF-8"))
-
     def on_btn_wine_f5(self):
+
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_sw.feed_child(cmd_clear.encode("UTF-8"))
 
         cmd = f"echo WINE_5 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh\n"
         terminal_sw.feed_child(cmd.encode("UTF-8"))
 
-        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_sw.feed_child(cmd1.encode("UTF-8"))
-
     def on_btn_rm_lutris_ge1(self):
+
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_sw.feed_child(cmd_clear.encode("UTF-8"))
 
         cmd = f"echo RM_WINE_5 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh\n"
         terminal_sw.feed_child(cmd.encode("UTF-8"))
-
-        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_sw.feed_child(cmd1.encode("UTF-8"))
 
     def on_btn_wine_f6(self):
 
@@ -1123,11 +2348,11 @@ def on_btn_resize(self):
         proc = subprocess.run(cmd_cut, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         path_game = str(proc.stdout[0:]).replace('\n', '')
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_dbg.feed_child(cmd_clear.encode("UTF-8"))
+
         cmd = f"echo DEBUG_DXVK '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_dbg.feed_child(cmd.encode("UTF-8"))
-
-        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_dbg.feed_child(cmd1.encode("UTF-8"))
 
     def on_btn_dbg_vkd3d(self):
 
@@ -1135,11 +2360,11 @@ def on_btn_resize(self):
         proc = subprocess.run(cmd_cut, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         path_game = str(proc.stdout[0:]).replace('\n', '')
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_dbg.feed_child(cmd_clear.encode("UTF-8"))
+
         cmd = f"echo DEBUG_VKD3D '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_dbg.feed_child(cmd.encode("UTF-8"))
-
-        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_dbg.feed_child(cmd1.encode("UTF-8"))
 
     def on_btn_dbg_opengl(self):
 
@@ -1147,11 +2372,11 @@ def on_btn_resize(self):
         proc = subprocess.run(cmd_cut, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
         path_game = str(proc.stdout[0:]).replace('\n', '')
 
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+        terminal_dbg.feed_child(cmd_clear.encode("UTF-8"))
+
         cmd = f"echo DEBUG_OPENGL '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
         terminal_dbg.feed_child(cmd.encode("UTF-8"))
-
-        cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-        terminal_dbg.feed_child(cmd1.encode("UTF-8"))
 
     def on_btn_back_dbg1(self):
 
@@ -2061,14 +3286,29 @@ def on_btn_resize(self):
     btn_hide1 = builder.get_object("btn_hide1")
     btn_hide1.connect("clicked", on_btn_hide1)
 
+    btn_text_edit1 = builder.get_object("btn_text_edit1")
+    btn_text_edit1.connect("clicked", on_btn_text_edit1)
+
     btn_app_icon1 = builder.get_object("btn_app_icon1")
     btn_app_icon1.connect("clicked", on_btn_app_icon1)
+
+    btn_app_icon2 = builder.get_object("btn_app_icon2")
+    btn_app_icon2.connect("clicked", on_btn_app_icon1)
+
+    btn_add_favorites1 = builder.get_object("btn_add_favorites1")
+    btn_add_favorites1.connect("clicked", on_btn_add_favorites1)
 
     btn_protondb1 = builder.get_object("btn_protondb1")
     btn_protondb1.connect("activate-link", on_btn_protondb1)
 
+    btn_protondb2 = builder.get_object("btn_protondb2")
+    btn_protondb2.connect("activate-link", on_btn_protondb2)
+
     btn_winehq1 = builder.get_object("btn_winehq1")
     btn_winehq1.connect("activate-link", on_btn_winehq1)
+
+    btn_winehq2 = builder.get_object("btn_winehq2")
+    btn_winehq2.connect("activate-link", on_btn_winehq2)
 
     lp_entry1 = builder.get_object("lp_entry1")
     lp_entry1.set_activates_default(True)
@@ -2084,6 +3324,9 @@ def on_btn_resize(self):
 
     btn_games_config1 = builder.get_object("btn_games_config1")
     btn_games_config1.connect("clicked", on_btn_games_config1)
+
+    btn_games_config2 = builder.get_object("btn_games_config2")
+    btn_games_config2.connect("clicked", on_btn_games_config1)
 
     btn_back_ab1 = builder.get_object("btn_back_ab1")
     btn_back_ab1.connect("clicked", on_btn_back_ab1)
@@ -2264,19 +3507,46 @@ def on_btn_hide(self):
 
     window.close()
 
+def on_btn_text_edit(self):
+
+    cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\.exe//gi' | tail -n1"
+    proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+    out_name = str(proc.stdout[0:]).replace('\n', '').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
+    text_edit_name = f"{sw_shortcuts}/" + str(out_name) + str(".desktop")
+
+    try:
+        with open(text_edit_name, 'r') as ten:
+            xdg_open_cmd = f"xdg-open {text_edit_name}"
+            subprocess.call(xdg_open_cmd, shell=True)
+    except IOError as e:
+        print("unable to open text editor, game shortcut not found, shortcut must be created")
+
+    popover.hide()
+
 def on_btn_app_icon(self):
+
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
 
     cmd = f"echo ADD_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd, shell=True)
 
-    cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    popover.hide()
+
+def on_btn_add_favorites(self):
+
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
     subprocess.call(cmd_clear, shell=True)
 
-    popover.hide()
+    cmd = f"echo ADD_FAVORITES '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+    subprocess.call(cmd, shell=True)
+
+    game_name_flow()
+    return True
 
 def on_btn_protondb(self):
 
-    cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\..*//g' | tail -n1"
+    cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\.exe//gi' | tail -n1"
     proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
     out_name = str(proc.stdout[0:]).replace('\n', '').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
     btn_protondb.set_uri("https://www.protondb.com/search?q=" + str(out_name))
@@ -2285,7 +3555,7 @@ def on_btn_protondb(self):
 
 def on_btn_winehq(self):
 
-    cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\..*//g' | tail -n1"
+    cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\.exe//gi' | tail -n1"
     proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
     out_name = str(proc.stdout[0:]).replace('\n', '').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
 
@@ -2295,7 +3565,7 @@ def on_btn_winehq(self):
 
 def on_btn_lp_entry(self):
 
-    cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\..*//g' | tail -n1"
+    cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\.exe//gi' | tail -n1"
     proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
     out_name = str(proc.stdout[0:]).replace('\n', '').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
 
@@ -2317,7 +3587,7 @@ def on_btn_lp_entry(self):
 
 def on_btn_do_entry(self):
 
-    cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\..*//g' | tail -n1"
+    cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\.exe//gi' | tail -n1"
     proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
     out_name = str(proc.stdout[0:]).replace('\n', '').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
 
@@ -2339,7 +3609,7 @@ def on_btn_do_entry(self):
 
 def on_btn_games_config(self):
 
-    cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\..*//g' | tail -n1"
+    cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\.exe//gi' | tail -n1"
     proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
     out_name = str(proc.stdout[0:]).replace('\n', '').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
 
@@ -2358,35 +3628,35 @@ def on_btn_games_config(self):
 
     popover.hide()
 
-###############################___START_MODES___################################
+###############################___START___######################################
 
 def on_btn_dxvk(self):
 
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
     cmd = f"echo RUN_DXVK '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd, shell=True)
-
-    cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
-    subprocess.call(cmd_clear, shell=True)
 
     Gtk.main_quit()
 
 def on_btn_vkd3d(self):
 
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
     cmd = f"echo RUN_VKD3D '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd, shell=True)
-
-    cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
-    subprocess.call(cmd_clear, shell=True)
 
     Gtk.main_quit()
 
 def on_btn_opengl(self):
 
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
     cmd = f"echo RUN_OPENGL '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd, shell=True)
-
-    cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
-    subprocess.call(cmd_clear, shell=True)
 
     Gtk.main_quit()
 
@@ -2406,14 +3676,14 @@ def on_btn_create_shortcut(self):
 
 def on_btn_cs_staging(self):
 
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
     cmd_set = f"echo export SET='\"''wine_staging''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd_set, shell=True)
 
     cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd, shell=True)
-
-    cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
-    subprocess.call(cmd_clear, shell=True)
 
     game_name()
 
@@ -2421,14 +3691,14 @@ def on_btn_cs_staging(self):
 
 def on_btn_cs_steam(self):
 
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
     cmd_set = f"echo export SET='\"''wine_steam_proton''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd_set, shell=True)
 
     cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd, shell=True)
-
-    cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
-    subprocess.call(cmd_clear, shell=True)
 
     game_name()
 
@@ -2436,14 +3706,14 @@ def on_btn_cs_steam(self):
 
 def on_btn_cs_ge(self):
 
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
     cmd_set = f"echo export SET='\"''wine_proton_ge''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd_set, shell=True)
 
     cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd, shell=True)
-
-    cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
-    subprocess.call(cmd_clear, shell=True)
 
     game_name()
 
@@ -2451,14 +3721,14 @@ def on_btn_cs_ge(self):
 
 def on_btn_cs_lutris(self):
 
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
     cmd_set = f"echo export SET='\"''wine_lutris''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd_set, shell=True)
 
     cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd, shell=True)
-
-    cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
-    subprocess.call(cmd_clear, shell=True)
 
     game_name()
 
@@ -2466,14 +3736,14 @@ def on_btn_cs_lutris(self):
 
 def on_btn_cs_lutris_ge(self):
 
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
     cmd_set = f"echo export SET='\"''wine_lutris_ge''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd_set, shell=True)
 
     cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd, shell=True)
-
-    cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
-    subprocess.call(cmd_clear, shell=True)
 
     game_name()
 
@@ -2532,14 +3802,14 @@ def on_btn_cs_custom_1(self):
     proc = subprocess.run(cmd_ls, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
     out_name = str(proc.stdout[0:]).replace('\n', '')
 
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
     cmd_set = f"echo export SET='\"''{out_name}''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd_set, shell=True)
 
     cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd, shell=True)
-
-    cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
-    subprocess.call(cmd_clear, shell=True)
 
     game_name()
 
@@ -2551,14 +3821,14 @@ def on_btn_cs_custom_2(self):
     proc = subprocess.run(cmd_ls, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
     out_name = str(proc.stdout[0:]).replace('\n', '')
 
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
     cmd_set = f"echo export SET='\"''{out_name}''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd_set, shell=True)
 
     cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd, shell=True)
-
-    cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
-    subprocess.call(cmd_clear, shell=True)
 
     game_name()
 
@@ -2570,14 +3840,14 @@ def on_btn_cs_custom_3(self):
     proc = subprocess.run(cmd_ls, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
     out_name = str(proc.stdout[0:]).replace('\n', '')
 
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
     cmd_set = f"echo export SET='\"''{out_name}''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd_set, shell=True)
 
     cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd, shell=True)
-
-    cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
-    subprocess.call(cmd_clear, shell=True)
 
     game_name()
 
@@ -2589,14 +3859,14 @@ def on_btn_cs_custom_4(self):
     proc = subprocess.run(cmd_ls, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
     out_name = str(proc.stdout[0:]).replace('\n', '')
 
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
     cmd_set = f"echo export SET='\"''{out_name}''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd_set, shell=True)
 
     cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd, shell=True)
-
-    cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
-    subprocess.call(cmd_clear, shell=True)
 
     game_name()
 
@@ -2608,14 +3878,14 @@ def on_btn_cs_custom_5(self):
     proc = subprocess.run(cmd_ls, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
     out_name = str(proc.stdout[0:]).replace('\n', '')
 
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
     cmd_set = f"echo export SET='\"''{out_name}''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd_set, shell=True)
 
     cmd = f"echo CREATE_SHORTCUT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd, shell=True)
-
-    cmd_clear = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
-    subprocess.call(cmd_clear, shell=True)
 
     game_name()
 
@@ -2633,63 +3903,59 @@ def on_btn_winetools(self):
 
 def on_btn_winecfg(self):
 
-    cmd_cut = f"cut -d ' ' -f3-100 {sw_scripts}run.sh"
-    proc = subprocess.run(cmd_cut, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
-    path_game = str(proc.stdout[0:]).replace('\n', '')
-
-    cmd = f"echo WINECFG '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
-    subprocess.call(cmd, shell=True)
-
-    cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
     subprocess.call(cmd_clear, shell=True)
+
+    cmd = f"echo WINECFG '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+    terminal0.feed_child(cmd.encode("UTF-8"))
 
 def on_btn_wineconsole(self):
 
-    cmd = f"echo WINECONSOLE '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
-    subprocess.call(cmd, shell=True)
-
-    cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
     subprocess.call(cmd_clear, shell=True)
+
+    cmd = f"echo WINECONSOLE '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+    terminal1.feed_child(cmd.encode("UTF-8"))
 
 def on_btn_regedit(self):
 
-    cmd = f"echo REGEDIT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
-    subprocess.call(cmd, shell=True)
-
-    cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
     subprocess.call(cmd_clear, shell=True)
+
+    cmd = f"echo REGEDIT '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+    terminal2.feed_child(cmd.encode("UTF-8"))
 
 def on_btn_file_explorer(self):
 
-    cmd = f"echo WINEFILE '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
-    subprocess.call(cmd, shell=True)
-
-    cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
     subprocess.call(cmd_clear, shell=True)
+
+    cmd = f"echo WINEFILE '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+    terminal3.feed_child(cmd.encode("UTF-8"))
 
 def on_btn_uninstaller(self):
 
-    cmd = f"echo UNINSTALLER '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
-    subprocess.call(cmd, shell=True)
-
-    cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
     subprocess.call(cmd_clear, shell=True)
+
+    cmd = f"echo UNINSTALLER '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+    terminal4.feed_child(cmd.encode("UTF-8"))
 
 def on_btn_winetricks(self):
 
-    cmd = f"echo SW_WINETRICKS '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
-    subprocess.call(cmd, shell=True)
-
-    cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
     subprocess.call(cmd_clear, shell=True)
+
+    cmd = f"echo SW_WINETRICKS '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+    terminal5.feed_child(cmd.encode("UTF-8"))
 
 def on_btn_install_libraries(self):
 
-    cmd = f"echo INSTALL_RL '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
-    subprocess.call(cmd, shell=True)
-
-    cmd_clear = f"sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
     subprocess.call(cmd_clear, shell=True)
+
+    cmd = f"echo INSTALL_RL '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
+    terminal6.feed_child(cmd.encode("UTF-8"))
 
 def on_btn_back_wt(self):
 
@@ -2703,61 +3969,61 @@ def on_btn_prefix_tools(self):
 
 def on_btn_remove_prefix(self):
 
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
     cmd = f"echo REMOVE_PFX '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd, shell=True)
-
-    cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
-    subprocess.call(cmd1, shell=True)
 
     game_name()
 
 def on_btn_reinstall_prefix(self):
 
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
     cmd = f"echo REINSTALL_PFX '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd, shell=True)
-
-    cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
-    subprocess.call(cmd1, shell=True)
 
     game_name()
 
 def on_btn_pfx_backup(self):
 
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
     cmd = f"echo SW_PFX_BACKUP '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd, shell=True)
-
-    cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
-    subprocess.call(cmd1, shell=True)
 
     game_name()
 
 def on_btn_pfx_restore(self):
 
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
     cmd = f"echo SW_PFX_RESTORE '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd, shell=True)
-
-    cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
-    subprocess.call(cmd1, shell=True)
 
     game_name()
 
 def on_btn_pfx_full_backup(self):
 
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
     cmd = f"echo SW_PFX_FULL_BACKUP '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd, shell=True)
-
-    cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
-    subprocess.call(cmd1, shell=True)
 
     game_name()
 
 def on_btn_pfx_full_restore(self):
 
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
     cmd = f"echo SW_PFX_FULL_RESTORE '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
     subprocess.call(cmd, shell=True)
-
-    cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
-    subprocess.call(cmd1, shell=True)
 
     game_name()
 
@@ -2821,27 +4087,27 @@ def on_btn_debug(self):
 
         def InputToTerm(self, clicker):
 
+            cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+            self.terminal.feed_child(cmd_clear.encode("UTF-8"))
+
             cmd = f"echo DEBUG_DXVK '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
             self.terminal.feed_child(cmd.encode("UTF-8"))
 
-            cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-            self.terminal.feed_child(cmd1.encode("UTF-8"))
-
         def InputToTerm2(self, clicker):
+
+            cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+            self.terminal.feed_child(cmd_clear.encode("UTF-8"))
 
             cmd = f"echo DEBUG_VKD3D '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
             self.terminal.feed_child(cmd.encode("UTF-8"))
 
-            cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-            self.terminal.feed_child(cmd1.encode("UTF-8"))
-
         def InputToTerm3(self, clicker):
+
+            cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+            self.terminal.feed_child(cmd_clear.encode("UTF-8"))
 
             cmd = f"echo DEBUG_OPENGL '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}\n"
             self.terminal.feed_child(cmd.encode("UTF-8"))
-
-            cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-            self.terminal.feed_child(cmd1.encode("UTF-8"))
 
     win = TheWindow()
     win.connect("delete-event", Gtk.main_quit)
@@ -2856,83 +4122,83 @@ def on_btn_dw(self, widget=False, configuration=dict):
 
 def on_btn_wine_1(self):
 
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
+
     cmd = f"echo WINE_1 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh"
     subprocess.call(cmd, shell=True)
 
-    cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
-    subprocess.call(cmd1, shell=True)
-
 def on_btn_rm_staging(self):
+
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+    subprocess.call(cmd_clear, shell=True)
 
     cmd = f"echo RM_WINE_1 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh\n"
     subprocess.call(cmd, shell=True)
 
-    cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-    subprocess.call(cmd1, shell=True)
-
 def on_btn_wine_2(self):
+
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
 
     cmd = f"echo WINE_2 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh"
     subprocess.call(cmd, shell=True)
 
-    cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
-    subprocess.call(cmd1, shell=True)
-
 def on_btn_rm_proton(self):
+
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+    subprocess.call(cmd_clear, shell=True)
 
     cmd = f"echo RM_WINE_2 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh\n"
     subprocess.call(cmd, shell=True)
 
-    cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-    subprocess.call(cmd1, shell=True)
-
 def on_btn_wine_3(self):
+
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
 
     cmd = f"echo WINE_3 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh"
     subprocess.call(cmd, shell=True)
 
-    cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
-    subprocess.call(cmd1, shell=True)
-
 def on_btn_rm_ge(self):
+
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+    subprocess.call(cmd_clear, shell=True)
 
     cmd = f"echo RM_WINE_3 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh\n"
     subprocess.call(cmd, shell=True)
 
-    cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-    subprocess.call(cmd1, shell=True)
-
 def on_btn_wine_4(self):
+
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
 
     cmd = f"echo WINE_4 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh"
     subprocess.call(cmd, shell=True)
 
-    cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
-    subprocess.call(cmd1, shell=True)
-
 def on_btn_rm_lutris(self):
+
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+    subprocess.call(cmd_clear, shell=True)
 
     cmd = f"echo RM_WINE_4 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh\n"
     subprocess.call(cmd, shell=True)
 
-    cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-    subprocess.call(cmd1, shell=True)
-
 def on_btn_wine_5(self):
+
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
+    subprocess.call(cmd_clear, shell=True)
 
     cmd = f"echo WINE_5 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh"
     subprocess.call(cmd, shell=True)
 
-    cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh"
-    subprocess.call(cmd1, shell=True)
-
 def on_btn_rm_lutris_ge(self):
+
+    cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh\n"
+    subprocess.call(cmd_clear, shell=True)
 
     cmd = f"echo RM_WINE_5 '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh\n"
     subprocess.call(cmd, shell=True)
-
-    cmd1 = f" sed -i '3d;4d;5d;6d;7d' {sw_scripts}function.sh\n"
-    subprocess.call(cmd1, shell=True)
 
 def on_btn_wine_6(self):
 
@@ -3817,8 +5083,14 @@ btn_hide.connect("clicked", on_btn_hide)
 
 popover = builder.get_object("popover")
 
+btn_text_edit = builder.get_object("btn_text_edit")
+btn_text_edit.connect("clicked", on_btn_text_edit)
+
 btn_app_icon = builder.get_object("btn_app_icon")
 btn_app_icon.connect("clicked", on_btn_app_icon)
+
+btn_add_favorites = builder.get_object("btn_add_favorites")
+btn_add_favorites.connect("clicked", on_btn_add_favorites)
 
 btn_protondb = builder.get_object("btn_protondb")
 btn_protondb.connect("activate-link", on_btn_protondb)
@@ -3828,12 +5100,20 @@ btn_winehq.connect("activate-link", on_btn_winehq)
 
 lp_entry = builder.get_object("lp_entry")
 lp_entry.set_activates_default(True)
+lp_entry.connect("activate", on_btn_lp_entry)
+
+lp_icon = f"{sw_icon}gui_icons/regedit.svg"
+lp_pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(lp_icon, 16, 16, preserve_aspect_ratio=True)
+
+lp_entry.set_icon_activatable(0, True)
+lp_entry.set_icon_sensitive(0, True)
 
 btn_lp_entry = builder.get_object("btn_lp_entry")
 btn_lp_entry.connect("clicked", on_btn_lp_entry)
 
 do_entry = builder.get_object("do_entry")
 do_entry.set_activates_default(True)
+do_entry.connect("activate", on_btn_do_entry)
 
 btn_do_entry = builder.get_object("btn_do_entry")
 btn_do_entry.connect("clicked", on_btn_do_entry)
@@ -4531,6 +5811,106 @@ btn_back_dw.connect("clicked", on_btn_back_dw)
 
 btn_back_st = builder.get_object("btn_back_st")
 btn_back_st.connect("clicked", on_btn_back_st)
+
+############################___VTE_ASYNC___#####################################
+
+terminal0 = Vte.Terminal()
+terminal0.spawn_async(
+    Vte.PtyFlags.DEFAULT,
+    os.environ['HOME'],
+    ['/bin/bash'],
+    None,
+    GLib.SpawnFlags.DEFAULT,
+    None, None,
+    -1,
+    None,
+    None,
+    None,
+)
+
+terminal1 = Vte.Terminal()
+terminal1.spawn_async(
+    Vte.PtyFlags.DEFAULT,
+    os.environ['HOME'],
+    ['/bin/bash'],
+    None,
+    GLib.SpawnFlags.DEFAULT,
+    None, None,
+    -1,
+    None,
+    None,
+    None,
+)
+
+terminal2 = Vte.Terminal()
+terminal2.spawn_async(
+    Vte.PtyFlags.DEFAULT,
+    os.environ['HOME'],
+    ['/bin/bash'],
+    None,
+    GLib.SpawnFlags.DEFAULT,
+    None, None,
+    -1,
+    None,
+    None,
+    None,
+)
+
+terminal3 = Vte.Terminal()
+terminal3.spawn_async(
+    Vte.PtyFlags.DEFAULT,
+    os.environ['HOME'],
+    ['/bin/bash'],
+    None,
+    GLib.SpawnFlags.DEFAULT,
+    None, None,
+    -1,
+    None,
+    None,
+    None,
+)
+
+terminal4 = Vte.Terminal()
+terminal4.spawn_async(
+    Vte.PtyFlags.DEFAULT,
+    os.environ['HOME'],
+    ['/bin/bash'],
+    None,
+    GLib.SpawnFlags.DEFAULT,
+    None, None,
+    -1,
+    None,
+    None,
+    None,
+)
+
+terminal5 = Vte.Terminal()
+terminal5.spawn_async(
+    Vte.PtyFlags.DEFAULT,
+    os.environ['HOME'],
+    ['/bin/bash'],
+    None,
+    GLib.SpawnFlags.DEFAULT,
+    None, None,
+    -1,
+    None,
+    None,
+    None,
+)
+
+terminal6 = Vte.Terminal()
+terminal6.spawn_async(
+    Vte.PtyFlags.DEFAULT,
+    os.environ['HOME'],
+    ['/bin/bash'],
+    None,
+    GLib.SpawnFlags.DEFAULT,
+    None, None,
+    -1,
+    None,
+    None,
+    None,
+)
 
 ################################################################################
 

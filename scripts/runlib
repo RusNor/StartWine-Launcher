@@ -11,13 +11,13 @@ export START_WINE_PATH="$(pwd)"
 ###############################   TOOLS   ######################################
 
 export SW_NAME="StartWine-Launcher"
-export SW_VER=" v3.2.1"
-export GE_VER="6.21-GE-2"
+export SW_VER=" v3.3.0"
+export GE_VER="7.0rc3-GE-1"
 export SP_VER="6.3.8"
-export STAG_VER="6.23"
+export STAG_VER="7.0-rc3"
 export LUTRIS_VER="6.21-6"
-export LUTRIS_GE_VER="6.21-1"
-export LUTRIS_GE_URL="6.21-GE-1"
+export LUTRIS_GE_VER="7.0rc3-1"
+export LUTRIS_GE_URL="7.0rc3-GE-1"
 export DXVK_VER="1.9.2"
 export VKD3D_VER="2.5"
 export DEFAULT_WINE="wine_steam_proton"
@@ -173,13 +173,13 @@ download_url () {
 
     wget -c -t 5 -w 2 "$1" "${FTP_URL}" 2>&1 | \
     perl -p -e '$| = 1; s/^.* +([0-9]+%) +([0-9,.]+[GMKB]) +([0-9hms,.]+).*$/\1\n# Downloading... \2 (\3)/' | \
-    zenity --progress --percentage=0 --title="Download ${DL_NAME}" --text=Starting... --auto-close --auto-kill --width=500 --height=90 --no-cancel
+    zenity --progress --percentage=0 --title="Download ${DL_NAME}" --text=Starting... --auto-close --auto-kill --width=400 --height=90 --no-cancel
 
 }
 
 sszen () {
 
-    zenity --progress --title="StartWine" --text="Please wait..." --pulsate --auto-close --width=500 --height=90 --no-cancel
+    zenity --progress --title="StartWine" --text="Please wait..." --pulsate --auto-close --width=400 --height=90 --no-cancel
 
 }
 
@@ -329,7 +329,7 @@ fi
 
 if [ "$(sed -n '/002/p' "${SCRIPTS}/settings")" == "002_MANGOHUD" ]; then
     export RUN_MANGOHUD=1
-    export MANGOHUD_CONFIG="cpu_stats,cpu_temp,core_load,cpu_mhz,cpu_color=2e97cb,cpu_text=CPU,gpu_stats,gpu_temp,gpu_core_clock,gpu_mem_clock,vulkan_driver,gpu_name,gpu_color=2e9762,gpu_text=GPU,vram,vram_color=ad64c1,ram,ram_color=c26693,io_color=a491d3,frame_timing=1,frametime_color=00ff00,time,arch,wine,wine_color=eb5b5b,engine_color=eb5b5b,media_player_color=ffffff,background_alpha=0.2,font_size=20,background_color=020202,position=top-right,text_color=ffffff,toggle_hud=Shift_R+F12,media_player_name=spotify,no_display,resolution,vkbasalt,gamemode"
+    export MANGOHUD_CONFIG="cpu_stats,cpu_temp,core_load,cpu_mhz,cpu_color=2e97cb,cpu_text=CPU,gpu_stats,gpu_temp,gpu_core_clock,gpu_mem_clock,vulkan_driver,gpu_name,gpu_color=2e9762,gpu_text=GPU,vram,vram_color=ad64c1,ram,ram_color=c26693,io_color=a491d3,frame_timing=1,frametime_color=00ff00,time,arch,wine,wine_color=eb5b5b,engine_color=eb5b5b,media_player_color=ffffff,background_alpha=0.2,font_size=20,background_color=020202,position=top-right,text_color=ffffff,toggle_hud=Shift_R+F12,media_player_name=spotify,resolution,vkbasalt,gamemode"
     echo "MANGOHUD  ON"
 else
     export RUN_MANGOHUD=0
@@ -669,6 +669,11 @@ RUN_DXVK () {
 
     sw_win_ver
 
+    for pfx_remove_dll in d3d12 libvkd3d-proton-utils-3 d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
+        try_remove_file "${WINEPREFIX}/drive_c/windows/syswow64/${pfx_remove_dll}.dll"
+        try_remove_file "${WINEPREFIX}/drive_c/windows/system32/${pfx_remove_dll}.dll"
+    done
+
     if [ "${DXVK_GE}" == "1" ]; then
         if [ ! -d "${START_WINE_PATH}/data/wine/wine_proton_ge/bin" ]; then
             for wine_dxvk_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
@@ -700,9 +705,9 @@ RUN_DXVK () {
     export DXVK_LOG_LEVEL="none"
     export DXVK_LOG_PATH="none"
 
-    echo "Use DXVK"
+    echo "DXVK mode"
 
-    zenity --notification --text "Use DXVK to vulkan"
+    zenity --notification --text "DXVK mode"
 
     START_EXE="$@"
     PATH_TO_GAME="$(dirname "${START_EXE}")"
@@ -717,6 +722,11 @@ RUN_DXVK () {
 RUN_VKD3D () {
 
     sw_win_ver
+
+    for pfx_remove_dll in d3d12 libvkd3d-proton-utils-3 ; do
+        try_remove_file "${WINEPREFIX}/drive_c/windows/syswow64/${pfx_remove_dll}.dll"
+        try_remove_file "${WINEPREFIX}/drive_c/windows/system32/${pfx_remove_dll}.dll"
+    done
 
     if [ "${VKD3D_GE}" == "1" ]; then
         if [ ! -d "${START_WINE_PATH}/data/wine/wine_proton_ge/bin" ]; then
@@ -746,9 +756,9 @@ RUN_VKD3D () {
     export VKD3D_SHADER_DEBUG="none"
     export VKD3D_DEBUG="none"
 
-    echo "Use VKD3D"
+    echo "VKD3D mode"
 
-    zenity --notification --text "Use VKD3D to vulkan"
+    zenity --notification --text "VKD3D mode"
 
     START_EXE="$@"
     PATH_TO_GAME="$(dirname "${START_EXE}")"
@@ -763,6 +773,11 @@ RUN_VKD3D () {
 RUN_OPENGL () {
 
     sw_win_ver
+
+    for pfx_remove_dll in d3d12 libvkd3d-proton-utils-3 d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
+        try_remove_file "${WINEPREFIX}/drive_c/windows/syswow64/${pfx_remove_dll}.dll"
+        try_remove_file "${WINEPREFIX}/drive_c/windows/system32/${pfx_remove_dll}.dll"
+    done
 
     if ! try_copy_file "${WINEDIR}"/lib/wine/fakedlls/dxgi.dll "${WINEPREFIX}/drive_c/windows/syswow64/"; then
         try_copy_file "${WINEDIR}"/lib/wine/i386-windows/dxgi.dll "${WINEPREFIX}/drive_c/windows/syswow64/"
@@ -784,9 +799,9 @@ RUN_OPENGL () {
 
     var_winedlloverride_update "d3d11,d3d10,d3d10core,d3d10_1,d3d9,dxgi=b;d3d12,libvkd3d-proton-utils-3="
 
-    echo "Use OpenGL"
+    echo "OpenGL mode"
 
-    zenity --notification --text "Use OpenGL"
+    zenity --notification --text "OpenGL mode"
 
     START_EXE="$@"
     PATH_TO_GAME="$(dirname "${START_EXE}")"
@@ -901,7 +916,7 @@ WINEBOOT_CS () {
     mkdir -p "${START_WINE_PATH}/Games"
     mkdir -p "${START_WINE_PATH}/data/tmp"
 
-    ${RUNTIME} env "${WINELOADER}" wineboot | zenity --progress --title="StartWine" --text="Please wait, the prefix is ​​being updated..." --pulsate --auto-close --width=500 --height=90 --no-cancel || prefix_init_error
+    ${RUNTIME} env "${WINELOADER}" wineboot | zenity --progress --title="StartWine" --text="Please wait, the prefix is ​​being updated..." --pulsate --auto-close --width=400 --height=90 --no-cancel || prefix_init_error
     "${WINESERVER}" -w
 
     if [ ! -d "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}" ]; then
@@ -959,6 +974,20 @@ ADD_SHORTCUT () {
 
 }
 
+ADD_FAVORITES () {
+
+    if [ ! -d "${START_WINE_PATH}/data/img/favorites" ]; then
+        create_new_dir "${START_WINE_PATH}/data/img/favorites"
+    fi
+
+    if [ ! -f "${START_WINE_PATH}/data/img/favorites/${name_desktop}.desktop" ]; then
+        try_copy_file "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" "${START_WINE_PATH}/data/img/favorites"
+    else
+        try_remove_file "${START_WINE_PATH}/data/img/favorites/${name_desktop}.desktop"
+    fi
+
+}
+
 #################################   PREFIX TOOLS   #############################
 
 REMOVE_PFX () {
@@ -994,7 +1023,7 @@ REINSTALL_PFX () {
         mkdir -p "${START_WINE_PATH}/Games"
         mkdir -p "${START_WINE_PATH}/data/tmp"
 
-        ${RUNTIME} env "${WINELOADER}" wineboot | zenity --progress --title="StartWine" --text="Please wait, the prefix is ​​being updated..." --pulsate --auto-close --width=500 --height=90 --no-cancel || prefix_init_error
+        ${RUNTIME} env "${WINELOADER}" wineboot | zenity --progress --title="StartWine" --text="Please wait, the prefix is ​​being updated..." --pulsate --auto-close --width=400 --height=90 --no-cancel || prefix_init_error
         "${WINESERVER}" -w
 
         if [ ! -d "${START_WINE_PATH}/data/pfx/${PFX_GAME}/drive_c/users/${USER}" ]; then
@@ -1058,14 +1087,22 @@ SW_PFX_BACKUP () {
 
 SW_PFX_RESTORE () {
 
-    if [ "${WINEPREFIX}" != "${START_WINE_PATH}/data/pfx/pfx_default" ]; then
-        try_remove_dir "${START_WINE_PATH}/data/pfx/${PFX_GAME}"
-        cd "${START_WINE_PATH}/data/pfx_backup"
-        unsquashfs "${START_WINE_PATH}/data/pfx_backup/${PFX_GAME}.iso" | sszen
-        mv "${START_WINE_PATH}/data/pfx_backup/squashfs-root" "${START_WINE_PATH}/data/pfx/${PFX_GAME}"
-        try_copy_file "${START_WINE_PATH}/data/pfx/${PFX_GAME}/${STARTWINE_NAME}" "${START_WINE_PATH}/data/games_config"
-        try_remove_file "${START_WINE_PATH}/data/pfx/${PFX_GAME}/${STARTWINE_NAME}"
-        zenity --title "StartWine" --info --text "Restore completed successfully" --width=200
+    if [ ! -f "${START_WINE_PATH}/data/pfx_backup/${PFX_GAME}.iso" ]; then
+
+        zenity --title "StartWine" --info --text "You do not have a backup create it first" --width=200
+
+    else
+
+        if [ "${WINEPREFIX}" != "${START_WINE_PATH}/data/pfx/pfx_default" ]; then
+            try_remove_dir "${START_WINE_PATH}/data/pfx/${PFX_GAME}"
+            cd "${START_WINE_PATH}/data/pfx_backup"
+            unsquashfs "${START_WINE_PATH}/data/pfx_backup/${PFX_GAME}.iso" | sszen
+            mv "${START_WINE_PATH}/data/pfx_backup/squashfs-root" "${START_WINE_PATH}/data/pfx/${PFX_GAME}"
+            try_copy_file "${START_WINE_PATH}/data/pfx/${PFX_GAME}/${STARTWINE_NAME}" "${START_WINE_PATH}/data/games_config"
+            try_remove_file "${START_WINE_PATH}/data/pfx/${PFX_GAME}/${STARTWINE_NAME}"
+            zenity --title "StartWine" --info --text "Restore completed successfully" --width=200
+        fi
+
     fi
 
 }
@@ -1080,20 +1117,28 @@ SW_PFX_FULL_BACKUP () {
 
 SW_PFX_FULL_RESTORE () {
 
-    `zenity --question --title "StartWine" --text "Would you like to save the current game prefixes  ?" --no-wrap ` > /dev/null 2>&1
+    if [ ! -f "${START_WINE_PATH}/data/pfx_backup/pfx_full_backup.iso" ]; then
 
-    if [ $? -eq "0" ]; then
-        mv "${START_WINE_PATH}/data/pfx" "${START_WINE_PATH}/data/pfx_old"
-        cd "${START_WINE_PATH}/data/pfx_backup"
-        unsquashfs "${START_WINE_PATH}/data/pfx_backup/pfx_full_backup.iso" | sszen
-        mv "${START_WINE_PATH}/data/pfx_backup/squashfs-root" "${START_WINE_PATH}/data/pfx"
-        zenity --title "StartWine" --info --text "Full Restore completed successfully" --width=200
+            zenity --title "StartWine" --info --text "You do not have a backup create it first" --width=200
+
     else
-        try_remove_dir "${START_WINE_PATH}/data/pfx"
-        cd "${START_WINE_PATH}/data/pfx_backup"
-        unsquashfs "${START_WINE_PATH}/data/pfx_backup/pfx_full_backup.iso" | sszen
-        mv "${START_WINE_PATH}/data/pfx_backup/squashfs-root" "${START_WINE_PATH}/data/pfx"
-        zenity --title "StartWine" --info --text "Full Restore completed successfully" --width=200
+
+        `zenity --question --title "StartWine" --text "Would you like to save the current game prefixes  ?" --no-wrap ` > /dev/null 2>&1
+
+        if [ $? -eq "0" ]; then
+            mv "${START_WINE_PATH}/data/pfx" "${START_WINE_PATH}/data/pfx_old"
+            cd "${START_WINE_PATH}/data/pfx_backup"
+            unsquashfs "${START_WINE_PATH}/data/pfx_backup/pfx_full_backup.iso" | sszen
+            mv "${START_WINE_PATH}/data/pfx_backup/squashfs-root" "${START_WINE_PATH}/data/pfx"
+            zenity --title "StartWine" --info --text "Full Restore completed successfully" --width=200
+        else
+            try_remove_dir "${START_WINE_PATH}/data/pfx"
+            cd "${START_WINE_PATH}/data/pfx_backup"
+            unsquashfs "${START_WINE_PATH}/data/pfx_backup/pfx_full_backup.iso" | sszen
+            mv "${START_WINE_PATH}/data/pfx_backup/squashfs-root" "${START_WINE_PATH}/data/pfx"
+            zenity --title "StartWine" --info --text "Full Restore completed successfully" --width=200
+        fi
+
     fi
 
 }
@@ -1236,6 +1281,11 @@ DEBUG_DXVK () {
 
     sw_win_ver
 
+    for pfx_remove_dll in d3d12 libvkd3d-proton-utils-3 d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
+        try_remove_file "${WINEPREFIX}/drive_c/windows/syswow64/${pfx_remove_dll}.dll"
+        try_remove_file "${WINEPREFIX}/drive_c/windows/system32/${pfx_remove_dll}.dll"
+    done
+
     if [ "${DXVK_GE}" == "1" ]; then
         if [ ! -d "${START_WINE_PATH}/data/wine/wine_proton_ge/bin" ]; then
             for wine_dxvk_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
@@ -1267,9 +1317,9 @@ DEBUG_DXVK () {
     export DXVK_LOG_LEVEL="none"
     export DXVK_LOG_PATH="none"
 
-    echo "Use DXVK"
+    echo "DXVK debug mode"
 
-    zenity --notification --text "Use DXVK to vulkan"
+    zenity --notification --text "DXVK debug mode"
 
     DEBUG "$@"
 
@@ -1278,6 +1328,11 @@ DEBUG_DXVK () {
 DEBUG_VKD3D () {
 
     sw_win_ver
+
+    for pfx_remove_dll in d3d12 libvkd3d-proton-utils-3 ; do
+        try_remove_file "${WINEPREFIX}/drive_c/windows/syswow64/${pfx_remove_dll}.dll"
+        try_remove_file "${WINEPREFIX}/drive_c/windows/system32/${pfx_remove_dll}.dll"
+    done
 
     if [ "${VKD3D_GE}" == "1" ]; then
         if [ ! -d "${START_WINE_PATH}/data/wine/wine_proton_ge/bin" ]; then
@@ -1307,9 +1362,9 @@ DEBUG_VKD3D () {
     export VKD3D_SHADER_DEBUG="none"
     export VKD3D_DEBUG="none"
 
-    echo "Use VKD3D"
+    echo "VKD3D debug mode"
 
-    zenity --notification --text "Use VKD3D to vulkan"
+    zenity --notification --text "VKD3D debug mode"
 
     DEBUG "$@"
 
@@ -1318,6 +1373,11 @@ DEBUG_VKD3D () {
 DEBUG_OPENGL () {
 
     sw_win_ver
+
+    for pfx_remove_dll in d3d12 libvkd3d-proton-utils-3 d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
+        try_remove_file "${WINEPREFIX}/drive_c/windows/syswow64/${pfx_remove_dll}.dll"
+        try_remove_file "${WINEPREFIX}/drive_c/windows/system32/${pfx_remove_dll}.dll"
+    done
 
     if ! try_copy_file "${WINEDIR}"/lib/wine/fakedlls/dxgi.dll "${WINEPREFIX}/drive_c/windows/syswow64/"; then
         try_copy_file "${WINEDIR}"/lib/wine/i386-windows/dxgi.dll "${WINEPREFIX}/drive_c/windows/syswow64/"
@@ -1339,9 +1399,9 @@ DEBUG_OPENGL () {
 
     var_winedlloverride_update "d3d11,d3d10,d3d10core,d3d10_1,d3d9,dxgi=b;d3d12,libvkd3d-proton-utils-3="
 
-    echo "Use OpenGL"
+    echo "OpenGL debug mode"
 
-    zenity --notification --text "Use OpenGL"
+    zenity --notification --text "OpenGL debug mode"
 
     DEBUG "$@"
 
