@@ -21,7 +21,12 @@ APPINDICATOR_ID = 'StartWine'
 sw_path = f"{Path.home()}/StartWine/"
 sw_scripts = f"{Path.home()}/StartWine/data/scripts/"
 sw_shortcuts = f"{Path.home()}/StartWine/Shortcuts/"
+sw_favorites = f"{Path.home()}/StartWine/data/img/favorites/"
 sw_icon = f"{Path.home()}/StartWine/data/img/"
+sw_games_config = f"{Path.home()}/StartWine/data/games_config/"
+sw_wine_custom = f"{Path.home()}/StartWine/data/wine/wine_custom/"
+sw_css_dark = f"{sw_icon}/gui_icons/sw_themes/css/dark/"
+sw_css_light = f"{sw_icon}/gui_icons/sw_themes/css/light/"
 
 DIRPATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
@@ -76,7 +81,7 @@ def menu():
 
 def start_game(_):
 
-    cmd = f"{sw_scripts}/run.sh"
+    cmd = f"{sw_scripts}run.sh"
     subprocess.call(cmd, shell=True)
 
 ############################   SHORTCUTS   #####################################
@@ -396,6 +401,9 @@ def settings(_):
 
     sw_stack.set_visible_child_name("settings_window")
 
+    settings_scrolled = builder.get_object("settings_scrolled")
+    settings_scrolled.set_min_content_height(580)
+
     btn_back_st = builder.get_object("btn_back_st")
     btn_back_st.connect("clicked", on_btn_back_st)
 
@@ -404,18 +412,58 @@ def settings(_):
 
     def get_resolution():
 
+        width = f"xrandr | grep '*' | cut -d 'x' -f1 | sed 's/ //g' | head -n1"
+        height = f"xrandr | grep '*' | cut -d 'x' -f2 | cut -d ' ' -f1 | head -n1"
+        out_name_1 = str(subprocess.run(width, shell=True, stdout=subprocess.PIPE, encoding='UTF-8').stdout[0:]).replace('\n', '')
+        out_name_2 = str(subprocess.run(height, shell=True, stdout=subprocess.PIPE, encoding='UTF-8').stdout[0:]).replace('\n', '')
+
+        print(out_name_1 + "x" + out_name_2)
+
+        def get_css(css_name):
+
+            css = css_name
+
+            screen = Gdk.Screen.get_default()
+            provider = Gtk.CssProvider()
+            style_context = Gtk.StyleContext()
+            style_context.add_provider_for_screen(
+                screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            )
+            provider.load_from_path(css)
+
+        def on_btn_black_theme(self):
+
+            if btn_black_theme.get_active():
+
+                state = "on"
+                command = f"sed -i '23 s/.*/023_black_theme/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+                window.close()
+                path_game = get_arg(get_path_game())
+                cmd = f"{sw_scripts}start {path_game}"
+                subprocess.Popen(cmd, shell=True)
+
+            else:
+
+                state = "off"
+                command = f"sed -i '/023/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
         def black_theme():
 
             sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
-            proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE)
-            out = str(proc.stdout[0:])
-            sw_theme_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+            proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+            sw_theme_name = str(proc.stdout[0:]).replace('\n', '')
 
             if str(sw_theme_name) == str('023_black_theme'):
 
-                img_path = f"{sw_icon}gui_icons/sw_themes/sw_bg1"
+                css_name = f"{sw_css_dark}black/gtk-3.0/gtk.css"
+                get_css(css_name)
+
+                img_path = f"{sw_icon}gui_icons/sw_themes/4k/sw_bg1"
                 image = builder.get_object("sw_bgr")
-                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, 320, 640, preserve_aspect_ratio=True)
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
                 image.set_from_pixbuf(pixbuf)
 
             else:
@@ -424,18 +472,39 @@ def settings(_):
 
         black_theme()
 
+        def on_btn_gray_theme(self):
+
+            if btn_gray_theme.get_active():
+
+                state = "on"
+                command = f"sed -i '23 s/.*/023_gray_theme/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+                window.close()
+                path_game = get_arg(get_path_game())
+                cmd = f"{sw_scripts}start {path_game}"
+                subprocess.Popen(cmd, shell=True)
+
+            else:
+
+                state = "off"
+                command = f"sed -i '/023/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
         def gray_theme():
 
             sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
-            proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE)
-            out = str(proc.stdout[0:])
-            sw_theme_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+            proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+            sw_theme_name = str(proc.stdout[0:]).replace('\n', '')
 
             if str(sw_theme_name) == str('023_gray_theme'):
 
-                img_path = f"{sw_icon}gui_icons/sw_themes/sw_bg2"
+                css_name = f"{sw_css_dark}grey/gtk-3.0/gtk.css"
+                get_css(css_name)
+
+                img_path = f"{sw_icon}gui_icons/sw_themes/4k/sw_bg2"
                 image = builder.get_object("sw_bgr")
-                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, 320, 640, preserve_aspect_ratio=True)
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
                 image.set_from_pixbuf(pixbuf)
 
             else:
@@ -444,18 +513,39 @@ def settings(_):
 
         gray_theme()
 
+        def on_btn_red_theme(self):
+
+            if btn_red_theme.get_active():
+
+                state = "on"
+                command = f"sed -i '23 s/.*/023_red_theme/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+                window.close()
+                path_game = get_arg(get_path_game())
+                cmd = f"{sw_scripts}start {path_game}"
+                subprocess.Popen(cmd, shell=True)
+
+            else:
+
+                state = "off"
+                command = f"sed -i '/023/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
         def red_theme():
 
             sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
-            proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE)
-            out = str(proc.stdout[0:])
-            sw_theme_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+            proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+            sw_theme_name = str(proc.stdout[0:]).replace('\n', '')
 
             if str(sw_theme_name) == str('023_red_theme'):
 
-                img_path = f"{sw_icon}gui_icons/sw_themes/sw_bg3"
+                css_name = f"{sw_css_dark}red/gtk-3.0/gtk.css"
+                get_css(css_name)
+
+                img_path = f"{sw_icon}gui_icons/sw_themes/4k/sw_bg3"
                 image = builder.get_object("sw_bgr")
-                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, 320, 640, preserve_aspect_ratio=True)
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
                 image.set_from_pixbuf(pixbuf)
 
             else:
@@ -464,18 +554,39 @@ def settings(_):
 
         red_theme()
 
+        def on_btn_yellow_theme(self):
+
+            if btn_yellow_theme.get_active():
+
+                state = "on"
+                command = f"sed -i '23 s/.*/023_yellow_theme/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+                window.close()
+                path_game = get_arg(get_path_game())
+                cmd = f"{sw_scripts}start {path_game}"
+                subprocess.Popen(cmd, shell=True)
+
+            else:
+
+                state = "off"
+                command = f"sed -i '/023/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
         def yellow_theme():
 
             sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
-            proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE)
-            out = str(proc.stdout[0:])
-            sw_theme_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+            proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+            sw_theme_name = str(proc.stdout[0:]).replace('\n', '')
 
             if str(sw_theme_name) == str('023_yellow_theme'):
 
-                img_path = f"{sw_icon}gui_icons/sw_themes/sw_bg4"
+                css_name = f"{sw_css_dark}yellow/gtk-3.0/gtk.css"
+                get_css(css_name)
+
+                img_path = f"{sw_icon}gui_icons/sw_themes/4k/sw_bg4"
                 image = builder.get_object("sw_bgr")
-                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, 320, 640, preserve_aspect_ratio=True)
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
                 image.set_from_pixbuf(pixbuf)
 
             else:
@@ -484,18 +595,39 @@ def settings(_):
 
         yellow_theme()
 
+        def on_btn_green_theme(self):
+
+            if btn_green_theme.get_active():
+
+                state = "on"
+                command = f"sed -i '23 s/.*/023_green_theme/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+                window.close()
+                path_game = get_arg(get_path_game())
+                cmd = f"{sw_scripts}start {path_game}"
+                subprocess.Popen(cmd, shell=True)
+
+            else:
+
+                state = "off"
+                command = f"sed -i '/023/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
         def green_theme():
 
             sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
-            proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE)
-            out = str(proc.stdout[0:])
-            sw_theme_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+            proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+            sw_theme_name = str(proc.stdout[0:]).replace('\n', '')
 
             if str(sw_theme_name) == str('023_green_theme'):
 
-                img_path = f"{sw_icon}gui_icons/sw_themes/sw_bg5"
+                css_name = f"{sw_css_dark}green/gtk-3.0/gtk.css"
+                get_css(css_name)
+
+                img_path = f"{sw_icon}gui_icons/sw_themes/4k/sw_bg5"
                 image = builder.get_object("sw_bgr")
-                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, 320, 640, preserve_aspect_ratio=True)
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
                 image.set_from_pixbuf(pixbuf)
 
             else:
@@ -504,18 +636,39 @@ def settings(_):
 
         green_theme()
 
+        def on_btn_blue_theme(self):
+
+            if btn_blue_theme.get_active():
+
+                state = "on"
+                command = f"sed -i '23 s/.*/023_blue_theme/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+                window.close()
+                path_game = get_arg(get_path_game())
+                cmd = f"{sw_scripts}start {path_game}"
+                subprocess.Popen(cmd, shell=True)
+
+            else:
+
+                state = "off"
+                command = f"sed -i '/023/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
         def blue_theme():
 
             sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
-            proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE)
-            out = str(proc.stdout[0:])
-            sw_theme_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+            proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+            sw_theme_name = str(proc.stdout[0:]).replace('\n', '')
 
             if str(sw_theme_name) == str('023_blue_theme'):
 
-                img_path = f"{sw_icon}gui_icons/sw_themes/sw_bg6"
+                css_name = f"{sw_css_dark}blue/gtk-3.0/gtk.css"
+                get_css(css_name)
+
+                img_path = f"{sw_icon}gui_icons/sw_themes/4k/sw_bg6"
                 image = builder.get_object("sw_bgr")
-                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, 320, 640, preserve_aspect_ratio=True)
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
                 image.set_from_pixbuf(pixbuf)
 
             else:
@@ -524,18 +677,39 @@ def settings(_):
 
         blue_theme()
 
+        def on_btn_purple_theme(self):
+
+            if btn_purple_theme.get_active():
+
+                state = "on"
+                command = f"sed -i '23 s/.*/023_purple_theme/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+                window.close()
+                path_game = get_arg(get_path_game())
+                cmd = f"{sw_scripts}start {path_game}"
+                subprocess.Popen(cmd, shell=True)
+
+            else:
+
+                state = "off"
+                command = f"sed -i '/023/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
         def purple_theme():
 
             sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
-            proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE)
-            out = str(proc.stdout[0:])
-            sw_theme_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+            proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+            sw_theme_name = str(proc.stdout[0:]).replace('\n', '')
 
             if str(sw_theme_name) == str('023_purple_theme'):
 
-                img_path = f"{sw_icon}gui_icons/sw_themes/sw_bg7"
+                css_name = f"{sw_css_dark}purple/gtk-3.0/gtk.css"
+                get_css(css_name)
+
+                img_path = f"{sw_icon}gui_icons/sw_themes/4k/sw_bg7"
                 image = builder.get_object("sw_bgr")
-                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, 320, 640, preserve_aspect_ratio=True)
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
                 image.set_from_pixbuf(pixbuf)
 
             else:
@@ -544,18 +718,39 @@ def settings(_):
 
         purple_theme()
 
+        def on_btn_mix_theme(self):
+
+            if btn_mix_theme.get_active():
+
+                state = "on"
+                command = f"sed -i '23 s/.*/023_mix_theme/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+                window.close()
+                path_game = get_arg(get_path_game())
+                cmd = f"{sw_scripts}start {path_game}"
+                subprocess.Popen(cmd, shell=True)
+
+            else:
+
+                state = "off"
+                command = f"sed -i '/023/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
         def mix_theme():
 
             sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
-            proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE)
-            out = str(proc.stdout[0:])
-            sw_theme_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+            proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+            sw_theme_name = str(proc.stdout[0:]).replace('\n', '')
 
             if str(sw_theme_name) == str('023_mix_theme'):
 
-                img_path = f"{sw_icon}gui_icons/sw_themes/sw_bg8"
+                css_name = f"{sw_css_dark}brown/gtk-3.0/gtk.css"
+                get_css(css_name)
+
+                img_path = f"{sw_icon}gui_icons/sw_themes/4k/sw_bg8"
                 image = builder.get_object("sw_bgr")
-                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, 320, 640, preserve_aspect_ratio=True)
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
                 image.set_from_pixbuf(pixbuf)
 
             else:
@@ -564,25 +759,72 @@ def settings(_):
 
         mix_theme()
 
+        def on_btn_white_theme(self):
+
+            if btn_white_theme.get_active():
+
+                state = "on"
+                command = f"sed -i '23 s/.*/023_white_theme/' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
+                window.close()
+                path_game = get_arg(get_path_game())
+                cmd = f"{sw_scripts}start {path_game}"
+                subprocess.Popen(cmd, shell=True)
+
+            else:
+
+                state = "off"
+                command = f"sed -i '/023/g' {sw_scripts}settings"
+                subprocess.call(command, shell=True)
+
         def white_theme():
 
             sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
-            proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE)
-            out = str(proc.stdout[0:])
-            sw_theme_name = str(out).replace('b\'', '').replace('n\'', '').replace('\\', '')
+            proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+            sw_theme_name = str(proc.stdout[0:]).replace('\n', '')
 
             if str(sw_theme_name) == str('023_white_theme'):
 
-                img_path = f"{sw_icon}gui_icons/sw_themes/sw_bg0"
+                css_name = f"{sw_css_light}black/gtk-3.0/gtk.css"
+                get_css(css_name)
+                img_path = f"{sw_icon}gui_icons/sw_themes/4k/sw_bg0"
                 image = builder.get_object("sw_bgrw")
-                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, 320, 640, preserve_aspect_ratio=True)
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
                 image.set_from_pixbuf(pixbuf)
 
             else:
 
-                print("white_theme_off")
+                print("")
 
         white_theme()
+
+        btn_black_theme = builder.get_object("btn_black_theme")
+        btn_black_theme.connect("toggled", on_btn_black_theme)
+
+        btn_gray_theme = builder.get_object("btn_gray_theme")
+        btn_gray_theme.connect("toggled", on_btn_gray_theme)
+
+        btn_red_theme = builder.get_object("btn_red_theme")
+        btn_red_theme.connect("toggled", on_btn_red_theme)
+
+        btn_yellow_theme = builder.get_object("btn_yellow_theme")
+        btn_yellow_theme.connect("toggled", on_btn_yellow_theme)
+
+        btn_green_theme = builder.get_object("btn_green_theme")
+        btn_green_theme.connect("toggled", on_btn_green_theme)
+
+        btn_blue_theme = builder.get_object("btn_blue_theme")
+        btn_blue_theme.connect("toggled", on_btn_blue_theme)
+
+        btn_purple_theme = builder.get_object("btn_purple_theme")
+        btn_purple_theme.connect("toggled", on_btn_purple_theme)
+
+        btn_mix_theme = builder.get_object("btn_mix_theme")
+        btn_mix_theme.connect("toggled", on_btn_mix_theme)
+
+        btn_white_theme = builder.get_object("btn_white_theme")
+        btn_white_theme.connect("toggled", on_btn_white_theme)
 
     get_resolution()
 
@@ -978,7 +1220,6 @@ def quit(_):
 
     gtk.main_quit()
     os.system("$(kill -s kill `pgrep -a zenity | grep '\-\-title StartWine' | awk '{print $1}'`)")
-
 
 if __name__ == "__main__":
     main()
