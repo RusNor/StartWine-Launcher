@@ -1075,12 +1075,7 @@ w_verify_sha256sum()
         if [ "${WINETRICKS_FORCE}" = 1 ]; then
             w_warn "sha256sum mismatch! However --force was used, so trying anyway. Caveat emptor."
         else
-            case ${LANG} in
-                pl*) w_die "Niezgodność sumy sha256sum! Zmień nazwę ${_W_vs_file} i spróbuj ponownie." ;;
-                pt*) w_die "sha256sum não confere! Renomeie ${_W_vs_file} e tente novamente. Alternativamente, use --force para ignorar esta verificação." ;;
-                ru*) w_die "Контрольная сумма sha256sum не совпадает! Переименуйте файл ${_W_vs_file} и попробуйте еще раз." ;;
-                *) w_die "sha256sum mismatch! Rename ${_W_vs_file} and try again. Alternatively, use --force to ignore this check." ;;
-            esac
+            w_askpermission "SHA256 mismatch!\n\nURL: ${_W_url}\nDownloaded: ${_W_gotsha256sum}\nExpected: ${_W_vs_wantsum}\n\nThis is often the result of an updated package such as vcrun2019.\nIf you are willing to accept the risk, you can bypass this check.\nAlternatively, you may use the --force option to ignore this check entirely.\n\nContinue anyway?"
         fi
     fi
     unset _W_vs_wantsum _W_vs_file _W_gotsha256sum
@@ -3520,25 +3515,41 @@ winetricks_early_wine_arch()
 
 winetricks_detect_gui()
 {
-    if test -x "$(command -v zenity 2>/dev/null)"; then
+    if [ -n "$1" ]; then
+        if [ "$1" = "kdialog" ] && test -x "$(command -v kdialog 2>/dev/null)"; then
+            WINETRICKS_GUI=kdialog
+            WINETRICKS_GUI_VERSION="$(kdialog --version)"
+        elif [ "$1" = "zenity" ] || [ "$1" = "--gui" ] && test -x "$(command -v zenity 2>/dev/null)"; then
+            WINETRICKS_GUI=zenity
+            WINETRICKS_GUI_VERSION="$(zenity --version)"
+            WINETRICKS_MENU_HEIGHT=500
+            WINETRICKS_MENU_WIDTH=1010
+        else
+            echo "Invalid argument for --gui"
+            echo "Valid options are 'zenity' and 'kdialog'"
+            exit 1
+        fi
+    elif [ "${XDG_CURRENT_DESKTOP}" = "KDE" ] && test -x "$(command -v kdialog 2>/dev/null)"; then
+        WINETRICKS_GUI=kdialog
+        WINETRICKS_GUI_VERSION="$(kdialog --version)"
+    elif test -x "$(command -v zenity 2>/dev/null)"; then
         WINETRICKS_GUI=zenity
         WINETRICKS_GUI_VERSION="$(zenity --version)"
         WINETRICKS_MENU_HEIGHT=500
         WINETRICKS_MENU_WIDTH=1010
     elif test -x "$(command -v kdialog 2>/dev/null)"; then
-        echo "Zenity not found!  Using kdialog as poor substitute."
         WINETRICKS_GUI=kdialog
         WINETRICKS_GUI_VERSION="$(kdialog --version)"
     else
-        echo "No arguments given, so tried to start GUI, but zenity not found."
-        echo "Please install zenity if you want a graphical interface, or "
-        echo "run with --help for more options."
+        echo "No arguments given, so tried to start GUI, but neither zenity"
+        echo "nor kdialog were found. Please install one of them if you want"
+        echo "a graphical interface, or run with --help for more options."
         exit 1
     fi
 
     # Print zenity/dialog version info for debugging:
     if [ -z "${WINETRICKS_SUPER_QUIET}" ] ; then
-       echo "winetricks GUI enabled, using ${WINETRICKS_GUI} ${WINETRICKS_GUI_VERSION}"
+       echo "winetricks GUI enabled, using ${WINETRICKS_GUI} ${WINETRICKS_GUI_VERSION##kdialog }"
     fi
 }
 
@@ -5747,6 +5758,7 @@ Options:
     --country=CC      Set country code to CC and don't detect your IP address
 -f, --force           Don't check whether packages were already installed
     --gui             Show gui diagnostics even when driven by commandline
+    --gui=OPT         Set OPT to kdialog or zenity to override GUI engine
     --isolate         Install each app or game in its own bottle (WINEPREFIX)
     --self-update     Update this application to the last version
     --update-rollback Rollback the last self update
@@ -5788,7 +5800,7 @@ winetricks_handle_option()
     case "$1" in
         --country=*) W_COUNTRY="${1##--country=}" ;;
         -f|--force) WINETRICKS_FORCE=1;;
-        --gui) winetricks_detect_gui;;
+        --gui*) winetricks_detect_gui "${1##--gui=}";;
         -h|--help) winetricks_usage ; exit 0 ;;
         --isolate) WINETRICKS_OPT_SHAREDPREFIX=0 ;;
         -k|--keep_isos) WINETRICKS_OPT_KEEPISOS=1 ;;
@@ -8348,6 +8360,42 @@ load_dxvk192()
 {
     # https://github.com/doitsujin/dxvk
     w_download "https://github.com/doitsujin/dxvk/releases/download/v1.9.2/dxvk-1.9.2.tar.gz" 24bcee655767f4731b8d3883dd93ba4edc7f1e87421e15fab19499d57236b8e9
+    helper_dxvk_d9vk "${file1}" "5.14" "1.2.140" "dxgi,d3d9,d3d10core,d3d11"
+}
+
+w_metadata dxvk193 dlls \
+    title="Vulkan-based D3D9/D3D10/D3D11 implementation for Linux / Wine (1.9.3)" \
+    publisher="Philip Rebohle" \
+    year="2017" \
+    media="download" \
+    file1="dxvk-1.9.3.tar.gz" \
+    installed_file1="${W_SYSTEM32_DLLS_WIN}/d3d9.dll" \
+    installed_file2="${W_SYSTEM32_DLLS_WIN}/d3d10core.dll" \
+    installed_file3="${W_SYSTEM32_DLLS_WIN}/d3d11.dll" \
+    installed_file4="${W_SYSTEM32_DLLS_WIN}/dxgi.dll"
+
+load_dxvk193()
+{
+    # https://github.com/doitsujin/dxvk
+    w_download "https://github.com/doitsujin/dxvk/releases/download/v1.9.3/dxvk-1.9.3.tar.gz" cfcf4fac1f6bfc5a09183e77362a0af7fead4e54961bb548aef3e6cddadbe9bf
+    helper_dxvk_d9vk "${file1}" "5.14" "1.2.140" "dxgi,d3d9,d3d10core,d3d11"
+}
+
+w_metadata dxvk194 dlls \
+    title="Vulkan-based D3D9/D3D10/D3D11 implementation for Linux / Wine (1.9.4)" \
+    publisher="Philip Rebohle" \
+    year="2017" \
+    media="download" \
+    file1="dxvk-1.9.4.tar.gz" \
+    installed_file1="${W_SYSTEM32_DLLS_WIN}/d3d9.dll" \
+    installed_file2="${W_SYSTEM32_DLLS_WIN}/d3d10core.dll" \
+    installed_file3="${W_SYSTEM32_DLLS_WIN}/d3d11.dll" \
+    installed_file4="${W_SYSTEM32_DLLS_WIN}/dxgi.dll"
+
+load_dxvk194()
+{
+    # https://github.com/doitsujin/dxvk
+    w_download "https://github.com/doitsujin/dxvk/releases/download/v1.9.4/dxvk-1.9.4.tar.gz" 854f564c3b58a4cdf7b16eb9a4b6bc6ddc0f83d68c4f979a529fc23f7a770502
     helper_dxvk_d9vk "${file1}" "5.14" "1.2.140" "dxgi,d3d9,d3d10core,d3d11"
 }
 
@@ -11580,16 +11628,23 @@ load_peverify()
 w_metadata physx dlls \
     title="PhysX" \
     publisher="Nvidia" \
-    year="2019" \
+    year="2021" \
     media="download" \
-    file1="PhysX-9.19.0218-SystemSoftware.exe" \
-    installed_file1="${W_PROGRAMS_X86_WIN}/NVIDIA Corporation/PhysX/Engine/86C5F4F22ECD/APEX_Particles_x64.dll"
+    file1="PhysX_9.21.0713_SystemSoftware.exe" \
 
 load_physx()
 {
-    w_download https://uk.download.nvidia.com/Windows/9.19.0218/PhysX-9.19.0218-SystemSoftware.exe 4f36389fcbfbdef4781fb85e7a68373542903235f65d93f7143693738324917c
-    w_try_cd "${W_CACHE}/${W_PACKAGE}"
-    w_try "${WINE}" PhysX-9.19.0218-SystemSoftware.exe ${W_OPT_UNATTENDED:+/s}
+    w_get_sha256sum "${W_PROGRAMS_X86_UNIX}/NVIDIA Corporation/PhysX/Engine/86C5F4F22ECD/APEX_Particles_x64.dll"
+    if [ "${_W_gotsha256sum}"x = "b3991e0165a9802b60e2f7d14c1be5f879071999ae74a38263cec9bf043a9eaa"x ] ; then
+        w_warn "${W_PACKAGE} is already installed - not updating"
+        unset _W_gotsha256sum
+        return
+    else
+        unset _W_gotsha256sum
+        w_download https://us.download.nvidia.com/Windows/9.21.0713/PhysX_9.21.0713_SystemSoftware.exe 26d62c5c347c15cb27c3be92bf10706113511b48b28aecc09f61ee58b3b62778
+        w_try_cd "${W_CACHE}/${W_PACKAGE}"
+        w_try "${WINE}" PhysX_9.21.0713_SystemSoftware.exe ${W_OPT_UNATTENDED:+/s}
+    fi
 }
 
 #----------------------------------------------------------------
@@ -12992,12 +13047,13 @@ load_vcrun2019()
     # 2021/06/06: 91c21c93a88dd82e8ae429534dacbc7a4885198361eae18d82920c714e328cf9
     # 2021/08/26: 1acd8d5ea1cdc3eb2eb4c87be3ab28722d0825c15449e5c9ceef95d897de52fa
     # 2021/10/23: 80c7969f4e05002a0cd820b746e0acb7406d4b85e52ef096707315b390927824
+    # 2022/01/18: 4c6c420cf4cbf2c9c9ed476e96580ae92a97b2822c21329a2e49e8439ac5ad30
 
     w_warn "ucrtbase.dll is no longer included in vcrun2019. For details see: https://github.com/Winetricks/winetricks/issues/1770"
 
     w_override_dlls native,builtin api-ms-win-crt-private-l1-1-0 api-ms-win-crt-conio-l1-1-0 api-ms-win-crt-heap-l1-1-0 api-ms-win-crt-locale-l1-1-0 api-ms-win-crt-math-l1-1-0 api-ms-win-crt-runtime-l1-1-0 api-ms-win-crt-stdio-l1-1-0 api-ms-win-crt-time-l1-1-0 atl140 concrt140 msvcp140 msvcp140_1 msvcp140_2 msvcr140 vcomp140 vcruntime140
 
-    w_download https://aka.ms/vs/16/release/vc_redist.x86.exe 80c7969f4e05002a0cd820b746e0acb7406d4b85e52ef096707315b390927824
+    w_download https://aka.ms/vs/16/release/vc_redist.x86.exe 4c6c420cf4cbf2c9c9ed476e96580ae92a97b2822c21329a2e49e8439ac5ad30
 
     if w_workaround_wine_bug 50894 "Working around failing wusa.exe lookup via C:\windows\SysNative"; then
         w_set_winver winxp
@@ -13022,11 +13078,12 @@ load_vcrun2019()
             # 2021/06/06: a1592d3da2b27230c087a3b069409c1e82c2664b0d4c3b511701624702b2e2a3
             # 2021/08/26: 003063723b2131da23f40e2063fb79867bae275f7b5c099dbd1792e25845872b
             # 2021/10/23: 9b9dd72c27ab1db081de56bb7b73bee9a00f60d14ed8e6fde45dab3e619b5f04
+            # 2022/01/18: 296f96cd102250636bcd23ab6e6cf70935337b1bbb3507fe8521d8d9cfaa932f
 
             # vcruntime140_1 is only shipped on x64:
             w_override_dlls native,builtin vcruntime140_1
 
-            w_download https://aka.ms/vs/16/release/vc_redist.x64.exe 9b9dd72c27ab1db081de56bb7b73bee9a00f60d14ed8e6fde45dab3e619b5f04
+            w_download https://aka.ms/vs/16/release/vc_redist.x64.exe 296f96cd102250636bcd23ab6e6cf70935337b1bbb3507fe8521d8d9cfaa932f
             w_try "${WINE}" vc_redist.x64.exe ${W_OPT_UNATTENDED:+/q}
             ;;
     esac
@@ -22399,6 +22456,24 @@ _EOF_
     w_try_regedit crashdialog.reg
 }
 
+w_metadata set_userpath settings \
+    title_uk="" \
+    title="set user PATH variable in wine prefix specified by native and/or wine paths in WINEPATH environment variable with ';' as path separator"
+
+load_set_userpath()
+{
+    wineuserpath=$(winepath -w "${WINEPATH}" | sed 's,\\,\\\\,g')
+    cat > "${W_TMP}"/setuserpath.reg <<_EOF_
+REGEDIT4
+
+[HKEY_CURRENT_USER\\Environment]
+"PATH"="${wineuserpath}"
+
+_EOF_
+    w_try_cd "${W_TMP}"
+    w_try_regedit setuserpath.reg
+}
+
 ####
 # settings->misc
 
@@ -23233,7 +23308,9 @@ if ! test "${WINETRICKS_LIB}"; then
 
             # GUI case
             # No non-option arguments given, so read them from GUI, and loop until user quits
-            winetricks_detect_gui
+            if [ ${WINETRICKS_GUI} = "none" ]; then
+                winetricks_detect_gui
+            fi
             winetricks_detect_sudo
             test -z "${WINETRICKS_ISO_MOUNT}" && winetricks_detect_iso_mount
             while true; do

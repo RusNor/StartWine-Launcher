@@ -19,10 +19,6 @@ fi
 
 chmod -R 775 "${START_WINE_PATH}/data/wine/wine_steam_proton"
 
-if [ ! -d "/home/${USER}/.local/share/applications" ]; then
-    mkdir -p "/home/${USER}/.local/share/applications"
-fi
-
 name_desktop="StartWine"
 echo "[Desktop Entry]" > "${START_WINE_PATH}/${name_desktop}.desktop"
 echo "Name=${name_desktop}" >> "${START_WINE_PATH}/${name_desktop}.desktop"
@@ -35,7 +31,8 @@ echo "Path="${START_WINE_PATH}/data/scripts/"" >> "${START_WINE_PATH}/${name_des
 echo "Icon="${START_WINE_PATH}/data/img/gui_icons/SW_Launcher_x256.png"" >> "${START_WINE_PATH}/${name_desktop}.desktop"
 echo "SW_USE="${DEFAULT_WINE}"" >> "${START_WINE_PATH}/${name_desktop}.desktop"
 chmod +x "${START_WINE_PATH}/${name_desktop}.desktop"
-cp -f "${START_WINE_PATH}/${name_desktop}.desktop" /home/${USER}/.local/share/applications/
+
+try_copy_file "${START_WINE_PATH}/${name_desktop}.desktop" "/home/${USER}/.local/share/applications"
 
 if [ -d "/home/${USER}/Games_tmp" ]; then
     mv "/home/${USER}/Games_tmp" "${START_WINE_PATH}/Games"
@@ -44,17 +41,6 @@ fi
 if [ -d "/home/${USER}/pfx_backup" ]; then
     mv "/home/${USER}/pfx_backup" "${START_WINE_PATH}/data/pfx_backup"
 fi
-
-if [ -d "/home/${USER}/.StartWine" ]; then
-    try_remove_dir "/home/${USER}/.StartWine"
-fi
-
-mkdir -p "${START_WINE_PATH}/data/pfx"
-mkdir -p "${START_WINE_PATH}/Shortcuts"
-mkdir -p "${START_WINE_PATH}/Games"
-mkdir -p "${START_WINE_PATH}/data/pfx_backup"
-mkdir -p "${START_WINE_PATH}/data/tmp"
-mkdir -p "${START_WINE_PATH}/data/tmp/log"
 
 clear
 

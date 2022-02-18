@@ -11,17 +11,16 @@ export START_WINE_PATH="$(pwd)"
 ###############################   TOOLS   ######################################
 
 export SW_NAME="StartWine-Launcher"
-export SW_VER=" v3.4.0"
+export SW_VER=" v3.4.1"
 export GE_VER="7.1-GE-2"
 export SP_VER="6.3.8"
-export STAG_VER="7.1"
-export LUTRIS_VER="6.21-6"
-export LUTRIS_GE_VER="7.1-1"
-export LUTRIS_GE_URL="7.1-GE-1"
+export STAG_VER="7.2"
+export LUTRIS_VER="7.1"
+export LUTRIS_GE_VER="7.2-2"
+export LUTRIS_GE_URL="7.2-GE-2"
 export DXVK_VER="1.9.4"
 export VKD3D_VER="2.5"
-export UTILS_VER="v0.4"
-export SW_FPS_LIMIT="60"
+export UTILS_VER="v0.5"
 export DEFAULT_WINE="wine_steam_proton"
 
 ##############################   FUNCTIONS TOOLS   #############################
@@ -254,6 +253,28 @@ try_fix_pfx () {
 
 }
 
+sw_d3d_plugins () {
+
+    for sw_d3d_plugins in d3dcompiler_33 d3dcompiler_34 d3dcompiler_35 d3dcompiler_36 d3dcompiler_37 d3dcompiler_38 d3dcompiler_39 d3dcompiler_40 d3dcompiler_41 d3dcompiler_42 d3dcompiler_43 d3dcompiler_46 d3dcompiler_47 d3dx10_33 d3dx10_34 d3dx10_35 d3dx10_36 d3dx10_37 d3dx10_38 d3dx10_39 d3dx10_40 d3dx10_41 d3dx10_42 d3dx10_43 d3dx10 d3dx11_42 d3dx11_43 d3dx9_24 d3dx9_25 d3dx9_26 d3dx9_27 d3dx9_28 d3dx9_29 d3dx9_30 d3dx9_31 d3dx9_32 d3dx9_33 d3dx9_34 d3dx9_35 d3dx9_36 d3dx9_37 d3dx9_38 d3dx9_39 d3dx9_40 d3dx9_41 d3dx9_42 d3dx9_43
+    do
+
+    if [ "${WINEARCH}" != "win32" ]; then
+        try_force_link_file "${START_WINE_PATH}/data/tools/d3d_extras/x64/${sw_d3d_plugins}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+        try_force_link_file "${START_WINE_PATH}/data/tools/d3d_extras/x32/${sw_d3d_plugins}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
+    else
+        try_force_link_file "${START_WINE_PATH}/data/tools/d3d_extras/x64/${sw_d3d_plugins}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+    fi
+
+    var_winedlloverride_update "${sw_d3d_plugins}=n,b"
+
+    if [[ -z "`grep "${sw_d3d_plugins}" "${WINEPREFIX}/winetricks.log"`" ]]; then
+        echo "${sw_d3d_plugins}" >> "${WINEPREFIX}/winetricks.log"
+    fi
+
+    done
+
+}
+
 ###############################   WINE   #######################################
 
 export GAME_EXE="$(readlink -f "$1")"
@@ -388,19 +409,17 @@ export WINESTART_EXE="start.exe /i /unix"
 export SCRIPTS="${START_WINE_PATH}/data/scripts"
 
 if [ "$(sed -n '/001/p' "${SCRIPTS}/settings")" == "001_MANGOHUD_DLSYM" ]; then
-    export MANGOHUD_DLSYM=on
+    export SW_MANGOHUD_DLSYM=1
     echo "MANGOHUD_DLSYM  ON"
 else
     echo "MANGOHUD_DLSYM  OFF"
 fi
 
 if [ "$(sed -n '/002/p' "${SCRIPTS}/settings")" == "002_MANGOHUD" ]; then
-    export MANGOHUD=on
-    export MANGOHUD_LIB_NAME="libMangoHud.so"
-    export MANGOHUD_CONFIG="cpu_stats,cpu_temp,core_load,cpu_mhz,cpu_color=2e97cb,cpu_text=CPU,gpu_stats,gpu_temp,gpu_core_clock,gpu_mem_clock,vulkan_driver,gpu_name,gpu_color=2e9762,gpu_text=GPU,vram,vram_color=ad64c1,ram,ram_color=c26693,io_color=a491d3,frame_timing=1,frametime_color=00ff00,time,arch,wine,wine_color=eb5b5b,engine_color=eb5b5b,media_player_color=ffffff,background_alpha=0.2,font_size=20,background_color=020202,position=top-right,text_color=ffffff,toggle_hud=Shift_R+F12,media_player_name=spotify,resolution,vkbasalt,gamemode,fps_limit=${SW_FPS_LIMIT},version"
+    export SW_MANGOHUD=1
+    export SW_FPS_LIMIT="$(sed -n '25p' ${START_WINE_PATH}/data/scripts/settings)"
     echo "MANGOHUD  ON"
 else
-    export DISABLE_MANGOHUD=on
     echo "MANGOHUD  OFF"
 fi
 
@@ -408,7 +427,6 @@ if [ "$(sed -n '/003/p' "${SCRIPTS}/settings")" == "003_GAMEMODE" ]; then
     export RUN_GAMEMODE=1
     echo "GAMEMODE  ON"
 else
-    export RUN_GAMEMODE=0
     echo "GAMEMODE  OFF"
 fi
 
@@ -416,7 +434,6 @@ if [ "$(sed -n '/004/p' "${SCRIPTS}/settings")" == "004_RUNTIME" ]; then
     export RUN_RUNTIME=1
     echo "RUNTIME  ON"
 else
-    export RUN_RUNTIME=0
     echo "RUNTIME  OFF"
 fi
 
@@ -424,7 +441,6 @@ if [ "$(sed -n '/005/p' "${SCRIPTS}/settings")" == "005_RESTORE_RESOLUTION" ]; t
     export RESTORE_RESOLUTION=1
     echo "RESTORE_RESOLUTION  ON"
 else
-    export RESTORE_RESOLUTION=0
     echo "RESTORE_RESOLUTION  OFF"
 fi
 
@@ -432,17 +448,13 @@ if [ "$(sed -n '/006/p' "${SCRIPTS}/settings")" == "006_VIRTUAL_DESKTOP" ]; then
     export VIRTUAL_DESKTOP=1
     echo "VIRTUAL_DESKTOP  ON"
 else
-    export VIRTUAL_DESKTOP=0
     echo "VIRTUAL_DESKTOP  OFF"
 fi
 
 if [ "$(sed -n '/007/p' "${SCRIPTS}/settings")" == "007_FSYNC" ]; then
-    export WINEFSYNC=1
-    export WINEFSYNC_FUTEX2=1
+    export SW_FSYNC=1
     echo "FSYNC  ON"
 else
-    export WINEFSYNC=0
-    export WINEFSYNC_FUTEX2=0
     echo "FSYNC  OFF"
 fi
 
@@ -450,7 +462,6 @@ if [ "$(sed -n '/008/p' "${SCRIPTS}/settings")" == "008_ESYNC" ]; then
     export WINEESYNC=1
     echo "ESYNC  ON"
 else
-    export WINEESYNC=0
     echo "ESYNC  OFF"
 fi
 
@@ -458,7 +469,6 @@ if [ "$(sed -n '/009/p' "${SCRIPTS}/settings")" == "009_OLD_GL_STRING" ]; then
     export OLD_GL_STRING=1
     echo "OLD_GL_STRING  ON"
 else
-    export OLD_GL_STRING=0
     echo "OLD_GL_STRING  OFF"
 fi
 
@@ -466,7 +476,6 @@ if [ "$(sed -n '/010/p' "${SCRIPTS}/settings")" == "010_NVAPI_DISABLE" ]; then
     export NVAPI_DISABLE=1
     echo "NVAPI_DISABLE  ON"
 else
-    export NVAPI_DISABLE=0
     echo "NVAPI_DISABLE  OFF"
 fi
 
@@ -474,7 +483,6 @@ if [ "$(sed -n '/011/p' "${SCRIPTS}/settings")" == "011_WINEDBG_DISABLE" ]; then
     export WINEDBG_DISABLE=1
     echo "WINEDBG_DISABLE  ON"
 else
-    export WINEDBG_DISABLE=0
     echo "WINEDBG_DISABLE  OFF"
 fi
 
@@ -482,7 +490,6 @@ if [ "$(sed -n '/012/p' "${SCRIPTS}/settings")" == "012_LARGE_ADDRESS_AWARE" ]; 
     export WINE_LARGE_ADDRESS_AWARE=1
     echo "LARGE_ADDRESS_AWARE  ON"
 else
-    export WINE_LARGE_ADDRESS_AWARE=0
     echo "LARGE_ADDRESS_AWARE  OFF"
 fi
 
@@ -490,7 +497,6 @@ if [ "$(sed -n '/013/p' "${SCRIPTS}/settings")" == "013_STAGING_WRITECOPY" ]; th
     export STAGING_WRITECOPY=1
     echo "STAGING_WRITECOPY  ON"
 else
-    export STAGING_WRITECOPY=0
     echo "STAGING_WRITECOPY  OFF"
 fi
 
@@ -498,7 +504,6 @@ if [ "$(sed -n '/014/p' "${SCRIPTS}/settings")" == "014_STAGING_SHARED_MEMORY" ]
     export STAGING_SHARED_MEMORY=1
     echo "STAGING_SHARED_MEMORY  ON"
 else
-    export STAGING_SHARED_MEMORY=0
     echo "STAGING_SHARED_MEMORY  OFF"
 fi
 
@@ -506,7 +511,6 @@ if [ "$(sed -n '/015/p' "${SCRIPTS}/settings")" == "015_DXVK_HUD" ]; then
     export DXVK_HUD=full
     echo "DXVK_HUD  ON"
 else
-    export DXVK_HUD=0
     echo "DXVK_HUD  OFF"
 fi
 
@@ -514,38 +518,25 @@ if [ "$(sed -n '/016/p' "${SCRIPTS}/settings")" == "016_DXVK_ASYNC" ]; then
     export DXVK_ASYNC=1
     echo "DXVK_ASYNC  ON"
 else
-    export DXVK_ASYNC=0
     echo "DXVK_ASYNC  OFF"
 fi
 
 if [ "$(sed -n '/017/p' "${SCRIPTS}/settings")" == "017_VKBASALT" ]; then
-    export ENABLE_VKBASALT=on
-    export VKBASALT_CONFIG_FILE="${START_WINE_PATH}/data/vkBasalt.conf"
-    export VKBASALT_SHADER_PATH="${START_WINE_PATH}/data/tools/vkBasalt/Shaders"
-    export VKBASALT_LOG_FILE="${START_WINE_PATH}/data/tmp/vkBasalt.log"
+    export SW_ENABLE_VKBASALT=1
     echo "VKBASALT  ON"
 else
-    export DISABLE_VKBASALT=on
     echo "VKBASALT  OFF"
 fi
 
 if [ "$(sed -n '/018/p' "${SCRIPTS}/settings")" == "018_FSR" ]; then
-    export WINE_FULLSCREEN_FSR=1
-    export WINE_FULLSCREEN_FSR_STRENGTH=3
+    export SW_FULLSCREEN_FSR=1
     echo "FSR  ON"
 else
-    export WINE_FULLSCREEN_FSR=0
     echo "FSR  OFF"
 fi
 
 if [ "$(sed -n '/019/p' "${SCRIPTS}/settings")" == "019_GSTREAMER" ]; then
-    export GST_DEBUG="0:WARNING"
-    export WINE_GST_REGISTRY_DIR="${START_WINE_PATH}/data/tmp"
-    export MEDIACONV_AUDIO_DUMP_FILE="${START_WINE_PATH}/data/tmp/audio.foz"
-    export MEDIACONV_AUDIO_TRANSCODED_FILE="${START_WINE_PATH}/data/tmp/transcoded_audio.foz"
-    export MEDIACONV_VIDEO_DUMP_FILE="${START_WINE_PATH}/data/tmp/video.foz"
-    export MEDIACONV_VIDEO_TRANSCODED_FILE="${START_WINE_PATH}/data/tmp/transcoded_video.foz"
-    export GST_PLUGIN_SYSTEM_PATH="${WINEDIR}/lib64/gstreamer-1.0:${WINEDIR}/lib/gstreamer-1.0"
+    export SW_GSTREAMER=1
     echo "GSTREAMER  ON"
 else
     echo "GSTREAMER  OFF"
@@ -555,7 +546,6 @@ if [ "$(sed -n '/020/p' "${SCRIPTS}/settings")" == "020_DXVK_GE" ]; then
     export DXVK_GE=1
     echo "DXVK  GE"
 else
-    export DXVK_GE=0
     echo "DXVK  NATIVE"
 fi
 
@@ -563,12 +553,11 @@ if [ "$(sed -n '/021/p' "${SCRIPTS}/settings")" == "021_VKD3D_GE" ]; then
     export VKD3D_GE=1
     echo "VKD3D  GE"
 else
-    export VKD3D_GE=0
     echo "VKD3D  NATIVE"
 fi
 
 if [ "$(sed -n '/022/p' "${SCRIPTS}/settings")" == "022_DRI_PRIME" ]; then
-    export DRI_PRIME=1
+    export SW_DRI_PRIME=1
     echo "PRIME  ON"
 else
     echo "PRIME  OFF"
@@ -584,24 +573,20 @@ fi
 
 ###############################   LOAD GAMES CONFIG   ##########################
 
-if [ "${STARTWINE_NAME}" != "START_TRAY" ]; then
+export GAMES_CONFIG="${START_WINE_PATH}/data/games_config/${STARTWINE_NAME}"
 
-    export GAMES_CONFIG="${START_WINE_PATH}/data/games_config/${STARTWINE_NAME}"
-
-    if [ ! -f "${GAMES_CONFIG}" ]; then
-
-        if [ ! -z "${STARTWINE_NAME}" ]; then
-            cat "${START_WINE_PATH}/data/games_config/.default" >> "${START_WINE_PATH}/data/games_config/${STARTWINE_NAME}"
-            chmod +x "${START_WINE_PATH}/data/games_config/${STARTWINE_NAME}"
-        fi
-
-    fi
+if [ ! -f "${GAMES_CONFIG}" ]; then
 
     if [ ! -z "${STARTWINE_NAME}" ]; then
-
-        . "${START_WINE_PATH}/data/games_config/${STARTWINE_NAME}"
-
+        cat "${START_WINE_PATH}/data/games_config/.default" >> "${START_WINE_PATH}/data/games_config/${STARTWINE_NAME}"
+        chmod +x "${START_WINE_PATH}/data/games_config/${STARTWINE_NAME}"
     fi
+
+fi
+
+if [ ! -z "${STARTWINE_NAME}" ]; then
+
+    . "${START_WINE_PATH}/data/games_config/${STARTWINE_NAME}"
 
 fi
 
@@ -611,16 +596,6 @@ export VK_LAYER_PATH="${VK_LAYER_PATH}:${START_WINE_PATH}/data/tools/utils/impli
 export STEAM_COMPAT_CLIENT_INSTALL_PATH="${START_WINE_PATH}/data/pfx/${PFX_GAME}"
 export STEAM_COMPAT_DATA_PATH="${START_WINE_PATH}/data/pfx/${PFX_GAME}"
 export WINE_MONO_OVERRIDES="Microsoft.Xna.Framework.*,Gac=n"
-export WINEDEBUG="-all"
-export __GL_YIELD="NOTHING"
-export __NV_PRIME_RENDER_OFFLOAD=1
-export __GLX_VENDOR_LIBRARY_NAME="nvidia"
-export __GL_THREADED_OPTIMIZATIONS=0
-export __GL_SHARPEN_IGNORE_FILM_GRAIN=0
-export __GL_LOG_MAX_ANISO=0
-export __GL_ALLOW_FXAA_USAGE=0
-export __GL_SHARPEN_ENABLE=1
-export __GL_SHARPEN_VALUE=0
 export __GL_SHADER_DISK_CACHE=1
 export __GL_SHADER_DISK_CACHE_SIZE=1000000000
 export __GL_SHADER_DISK_CACHE_PATH="${START_WINE_PATH}/data/tmp"
@@ -630,44 +605,74 @@ export __GL_SYNC_TO_VBLANK=0
 
 export MESA_GLSL_CACHE_DIR="${START_WINE_PATH}/data/tmp"
 
-###############################   TOOLS OPTIONS   ##############################
+################################  CREATE_DIR   #################################
 
-if [ ! -d "${HOME}/StartWine/data/tools" ]; then
-    mkdir -p "${HOME}/StartWine/data/tools"
+if [ ! -d "${START_WINE_PATH}/Games" ]; then
+    create_new_dir "${START_WINE_PATH}/Games"
+fi
+
+if [ ! -d "${START_WINE_PATH}/data/pfx" ]; then
+    create_new_dir "${START_WINE_PATH}/data/pfx"
+fi
+
+if [ ! -d "${START_WINE_PATH}/data/tmp" ]; then
+    create_new_dir "${START_WINE_PATH}/data/tmp"
+fi
+
+if [ ! -d "${START_WINE_PATH}/Shortcuts" ]; then
+    create_new_dir "${START_WINE_PATH}/Shortcuts"
+fi
+
+if [ ! -d "${START_WINE_PATH}/data/tools" ]; then
+    create_new_dir "${START_WINE_PATH}/data/tools"
 fi
 
 if [ ! -d "${START_WINE_PATH}/data/tmp/log" ]; then
-    mkdir -p "${START_WINE_PATH}/data/tmp/log"
+    create_new_dir "${START_WINE_PATH}/data/tmp/log"
 fi
 
-if [ "${SW_BATTLEYE}" == 1 ]; then
-    export PROTON_BATTLEYE_RUNTIME="${START_WINE_PATH}/data/tools/battleye_runtime"
+if [ ! -d "${START_WINE_PATH}/data/pfx_backup" ]; then
+    create_new_dir "${START_WINE_PATH}/data/pfx_backup"
+fi
+
+if [ ! -d "${START_WINE_PATH}/data/img/favorites" ]; then
+    create_new_dir "${START_WINE_PATH}/data/img/favorites"
+fi
+
+if [ ! -d "/home/${USER}/.local/share/applications" ]; then
+    create_new_dir "/home/${USER}/.local/share/applications"
+fi
+
+if [ ! -d "${START_WINE_PATH}/data/tools/d3d_extras" ]; then
+    create_new_dir "${START_WINE_PATH}/data/tools/d3d_extras"
+fi
+
+###############################   TOOLS OPTIONS   ##############################
+
+if [ "${SW_MANGOHUD}" == 1 ]; then
+    export MANGOHUD=on
+    export MANGOHUD_CONFIG="cpu_stats,cpu_temp,core_load,cpu_mhz,cpu_color=2e97cb,cpu_text=CPU,gpu_stats,gpu_temp,gpu_core_clock,gpu_mem_clock,vulkan_driver,gpu_name,gpu_color=2e9762,gpu_text=GPU,vram,vram_color=ad64c1,ram,ram_color=c26693,io_color=a491d3,frame_timing=1,frametime_color=00ff00,time,arch,wine,wine_color=eb5b5b,engine_color=eb5b5b,media_player_color=ffffff,background_alpha=0.2,font_size=20,background_color=020202,position=top-right,text_color=ffffff,toggle_hud=Shift_R+F12,media_player_name=spotify,resolution,vkbasalt,gamemode,fps_limit=${SW_FPS_LIMIT},version"
+    export MANGOHUD_LIB_NAME="libMangoHud.so"
+    export VK_INSTANCE_LAYERS="${VK_INSTANCE_LAYERS}:VK_LAYER_MangoHud_64:VK_LAYER_MangoHud_32"
 else
-    unset PROTON_BATTLEYE_RUNTIME
+    export DISABLE_MANGOHUD=on
 fi
 
-if [ ${WINE_MONO} == 0 ]; then
-    var_winedlloverride_update "mscoree,mshtml="
+if [ "${SW_MANGOHUD_DLSYM}" == 1 ]; then
+    export MANGOHUD_LIB_NAME="libMangoHud_dlsym.so:${MANGOHUD_LIB_NAME}"
 fi
 
-if [ ! -z "${OLD_GL_STRING}" ] && [ "${OLD_GL_STRING}" != 0 ]; then
-    export MESA_EXTENSION_MAX_YEAR="2003"
-    export __GL_ExtensionStringVersion="17700"
+export LD_PRELOAD="${LD_PRELOAD}:${MANGOHUD_LIB_NAME}"
+
+if [ "${RUN_GAMEMODE}" == 1 ]; then
+    export SW_GAMEMODE="${START_WINE_PATH}/data/tools/utils/bin/gamemoderun"
 fi
 
-if [ ! -z "${NVAPI_DISABLE}" ] && [ "${NVAPI_DISABLE}" != 0 ]; then
-    var_winedlloverride_update "nvapi,nvapi64,nvcuda,nvcuvid,nvencodeapi,nvencodeapi64="
+if [ "${RUN_RUNTIME}" == 1 ]; then
+    export SW_RUNTIME="${WINELIB}/run.sh"
 fi
 
-if [ ! -z "${WINEDBG_DISABLE}" ] && [ "${WINEDBG_DISABLE}" != 0 ]; then
-    var_winedlloverride_update "winedbg.exe="
-fi
-
-if [ ${VIRTUAL_DESKTOP} = 1 ]; then
-    VDESKTOP="explorer /desktop=Wine,`xrandr --current | grep "*" | awk '{print $1;}' | head -1`"
-fi
-
-if [ "${RESTORE_RESOLUTION}" = 1 ]; then
+if [ "${RESTORE_RESOLUTION}" == 1 ]; then
     SCREEN_RESOLUTION="$(xrandr -q | sed -n -e 's/.* connected primary \([^ +]*\).*/\1/p')"
     SCREEN_OUTPUT="$(xrandr -q | sed -n -e 's/\([^ ]*\) connected primary.*/\1/p')"
 
@@ -677,27 +682,69 @@ if [ "${RESTORE_RESOLUTION}" = 1 ]; then
     fi
 fi
 
-if [ "${RUN_RUNTIME}" == "1" ]; then
-    export SW_RUNTIME="${WINELIB}/run.sh"
+if [ "${VIRTUAL_DESKTOP}" == 1 ]; then
+    VDESKTOP="explorer /desktop=Wine,`xrandr --current | grep "*" | awk '{print $1;}' | head -1`"
 fi
 
-if [ "${RUN_GAMEMODE}" == "1" ]; then
-    export SW_GAMEMODE="${START_WINE_PATH}/data/tools/utils/bin/gamemoderun"
+if [ "${SW_FSYNC}" == 1 ]; then
+    export WINEFSYNC=1
+    export WINEFSYNC_FUTEX2=1
 fi
 
-if [ "${MANGOHUD}" == on ]; then
-    export VK_INSTANCE_LAYERS="${VK_INSTANCE_LAYERS}:VK_LAYER_MangoHud_64:VK_LAYER_MangoHud_32"
+if [ "${OLD_GL_STRING}" == 1 ]; then
+    export MESA_EXTENSION_MAX_YEAR="2003"
+    export __GL_ExtensionStringVersion="17700"
 fi
 
-if [ "${ENABLE_VKBASALT}" == on ]; then
-   export VK_INSTANCE_LAYERS="${VK_INSTANCE_LAYERS}:VK_LAYER_VKBASALT_PostProcess64:VK_LAYER_VKBASALT_PostProcess32"
+if [ "${NVAPI_DISABLE}" == 1 ]; then
+    var_winedlloverride_update "nvapi,nvapi64,nvcuda,nvcuvid,nvencodeapi,nvencodeapi64="
 fi
 
-if [ "${MANGOHUD_DLSYM}" == on ]; then
-    export MANGOHUD_LIB_NAME="libMangoHud_dlsym.so:${MANGOHUD_LIB_NAME}"
+if [ "${WINEDBG_DISABLE}" == 1 ]; then
+    export WINEDEBUG="-all"
+    var_winedlloverride_update "winedbg.exe="
 fi
 
-export LD_PRELOAD="${LD_PRELOAD}:${MANGOHUD_LIB_NAME}"
+if [ "${SW_ENABLE_VKBASALT}" == 1 ]; then
+    export ENABLE_VKBASALT=on
+    export VKBASALT_CONFIG_FILE="${START_WINE_PATH}/data/vkBasalt.conf"
+    export VKBASALT_SHADER_PATH="${START_WINE_PATH}/data/tools/vkBasalt/Shaders"
+    export VKBASALT_LOG_FILE="${START_WINE_PATH}/data/tmp/vkBasalt.log"
+    sed -i "s%nobody%${START_WINE_PATH}/data/tools%" "${START_WINE_PATH}/data/vkBasalt.conf"
+    export VK_INSTANCE_LAYERS="${VK_INSTANCE_LAYERS}:VK_LAYER_VKBASALT_PostProcess64:VK_LAYER_VKBASALT_PostProcess32"
+else
+    export DISABLE_VKBASALT=on
+fi
+
+if [ "${SW_FULLSCREEN_FSR}" == 1 ]; then
+    export WINE_FULLSCREEN_FSR=1
+    export WINE_FULLSCREEN_FSR_STRENGTH=3
+fi
+
+if [ "${SW_GSTREAMER}" == 1 ]; then
+    export GST_DEBUG="0:WARNING"
+    export WINE_GST_REGISTRY_DIR="${START_WINE_PATH}/data/tmp"
+    export MEDIACONV_AUDIO_DUMP_FILE="${START_WINE_PATH}/data/tmp/audio.foz"
+    export MEDIACONV_AUDIO_TRANSCODED_FILE="${START_WINE_PATH}/data/tmp/transcoded_audio.foz"
+    export MEDIACONV_VIDEO_DUMP_FILE="${START_WINE_PATH}/data/tmp/video.foz"
+    export MEDIACONV_VIDEO_TRANSCODED_FILE="${START_WINE_PATH}/data/tmp/transcoded_video.foz"
+    export GST_PLUGIN_SYSTEM_PATH="${WINEDIR}/lib64/gstreamer-1.0:${WINEDIR}/lib/gstreamer-1.0"
+fi
+
+if [ "${SW_DRI_PRIME}" == 1 ]; then
+    export __NV_PRIME_RENDER_OFFLOAD=1
+    export DRI_PRIME=1
+fi
+
+if [ "${WINE_MONO}" == 0 ]; then
+    var_winedlloverride_update "mscoree,mshtml="
+fi
+
+if [ "${SW_BATTLEYE}" == 1 ]; then
+    export PROTON_BATTLEYE_RUNTIME="${START_WINE_PATH}/data/tools/battleye_runtime"
+else
+    unset PROTON_BATTLEYE_RUNTIME
+fi
 
 ###############################   OVERRIDE DLL   ###############################
 
@@ -709,7 +756,7 @@ var_winedlloverride_update "steam_api,steam_api64,steamclient,steamclient64=n"
 
 var_winedlloverride_update "SteamAppId,SteamGameId="
 
-##############################   RUNTIME LIBRARIES   ###########################
+##############################   RUNTIME DOWNLOAD   ############################
 
 if [ ! -d "${WINELIB}" ]; then
     export FTP_URL="https://repo.steampowered.com/steamrt-images-scout/snapshots/latest-steam-client-public-beta/steam-runtime.tar.xz"
@@ -759,7 +806,6 @@ if [ ! -d "${START_WINE_PATH}/data/tools/vkBasalt/Shaders/" ]; then
     try_copy_dir "${START_WINE_PATH}/data/tmp/reshade-shaders-master/Shaders/" "${START_WINE_PATH}/data/tools/vkBasalt/"
     try_remove_file "${START_WINE_PATH}/data/tmp/master.zip"
     try_remove_dir "${START_WINE_PATH}/data/tmp/reshade-shaders-master"
-    sed -i "s%nobody%${START_WINE_PATH}/data/tools%" "${START_WINE_PATH}/data/vkBasalt.conf"
 fi
 
 ############################   UTILS DOWNLOAD   ################################
@@ -789,6 +835,22 @@ if [ ! -d "${START_WINE_PATH}/data/tools/battleye_runtime" ]; then
     download_url --output-document="${START_WINE_PATH}/data/tmp/battleye_runtime.tar.xz" &&
     tar -Jxvf "${START_WINE_PATH}/data/tmp/battleye_runtime.tar.xz" -C "${START_WINE_PATH}/data/tools" &&
     try_remove_file "${START_WINE_PATH}/data/tmp/battleye_runtime.tar.xz"
+fi
+
+###########################   D3D EXTRAS DOWNLOAD   ############################
+
+if [ ! -d "${START_WINE_PATH}/data/tools/d3d_extras/x64" ]; then
+    try_remove_dir "${START_WINE_PATH}/data/tools/d3d_extras/x32"
+    try_remove_dir "${START_WINE_PATH}/data/tools/d3d_extras/x64"
+    try_remove_file "${START_WINE_PATH}/data/tmp/v2.tar.xz"
+    export FTP_URL="https://github.com/lutris/d3d_extras/releases/download/v2/v2.tar.xz"
+    export DL_NAME="d3d extras"
+    download_url --output-document="${START_WINE_PATH}/data/tmp/v2.tar.xz" &&
+    tar -Jxvf "${START_WINE_PATH}/data/tmp/v2.tar.xz" -C "${START_WINE_PATH}/data/tmp" &&
+    try_copy_dir "${START_WINE_PATH}/data/tmp/v2/x32" "${START_WINE_PATH}/data/tools/d3d_extras"
+    try_copy_dir "${START_WINE_PATH}/data/tmp/v2/x64" "${START_WINE_PATH}/data/tools/d3d_extras"
+    try_remove_file "${START_WINE_PATH}/data/tmp/v2.tar.xz"
+    try_remove_dir "${START_WINE_PATH}/data/tmp/v2"
 fi
 
 ##############################   RUN VULKAN   ##################################
@@ -922,56 +984,6 @@ RUN_VULKAN () {
 
 }
 
-###############################   RUN OPENGL   #################################
-
-RUN_OPENGL () {
-
-    if [ ! -d "${START_WINE_PATH}/data/pfx/${PFX_GAME}" ]; then
-        ${SW_RUNTIME} env "${WINELOADER}" wineboot || prefix_init_error
-        "${WINESERVER}" -w
-
-        try_fix_pfx
-    fi
-
-    sw_win_ver
-
-    for pfx_remove_dll in d3d12 libvkd3d-proton-utils-3 d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
-        try_remove_file "${WINEPREFIX}/drive_c/windows/syswow64/${pfx_remove_dll}.dll"
-        try_remove_file "${WINEPREFIX}/drive_c/windows/system32/${pfx_remove_dll}.dll"
-    done
-
-    if ! try_copy_file "${WINEDIR}"/lib/wine/fakedlls/dxgi.dll "${WINEPREFIX}/drive_c/windows/syswow64/"; then
-        try_copy_file "${WINEDIR}"/lib/wine/i386-windows/dxgi.dll "${WINEPREFIX}/drive_c/windows/syswow64/"
-    fi
-
-    if ! try_copy_file "${WINEDIR}"/lib64/wine/fakedlls/dxgi.dll "${WINEPREFIX}/drive_c/windows/system32/"; then
-        try_copy_file "${WINEDIR}"/lib64/wine/x86_64-windows/dxgi.dll "${WINEPREFIX}/drive_c/windows/system32/"
-    fi
-
-    for wine_build_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 ; do
-    if ! try_copy_file "${WINEDIR}/lib/wine/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64/"
-        then try_copy_file "${WINEDIR}/lib/wine/i386-windows/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64/"
-    fi
-
-    if ! try_copy_file "${WINEDIR}/lib64/wine/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/"; then
-        try_copy_file "${WINEDIR}/lib64/wine/x86_64-windows/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/"
-    fi
-    done
-
-    var_winedlloverride_update "d3d11,d3d10,d3d10core,d3d10_1,d3d9,dxgi=b;d3d12,libvkd3d-proton-utils-3="
-
-    echo "OpenGL mode"
-
-    zenity --notification --text "OpenGL mode"
-
-    START_EXE="$@"
-    PATH_TO_GAME="$(dirname "${START_EXE}")"
-    cd "${PATH_TO_GAME}"
-
-    ${SW_RUNTIME} env ${SW_GAMEMODE} "${WINELOADER}" ${VDESKTOP} ${WINESTART_EXE} "${START_EXE}" ${LAUNCH_PARAMETERS}
-
-}
-
 ###############################   CREATE SHORTCUT   ############################
 
 CREATE_SHORTCUT () {
@@ -1074,9 +1086,6 @@ CREATE_SHORTCUT () {
 
 WINEBOOT_CS () {
 
-    mkdir -p "${START_WINE_PATH}/Games"
-    mkdir -p "${START_WINE_PATH}/data/tmp"
-
     ${SW_RUNTIME} env "${WINELOADER}" wineboot || prefix_init_error
     "${WINESERVER}" -w
 
@@ -1103,10 +1112,6 @@ ADD_SHORTCUT () {
 }
 
 ADD_FAVORITES () {
-
-    if [ ! -d "${START_WINE_PATH}/data/img/favorites" ]; then
-        create_new_dir "${START_WINE_PATH}/data/img/favorites"
-    fi
 
     if [ ! -f "${START_WINE_PATH}/data/img/favorites/${name_desktop}.desktop" ]; then
         try_copy_file "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop" "${START_WINE_PATH}/data/img/favorites"
@@ -1371,7 +1376,9 @@ INSTALL_RL () {
 
     export WINE="$WINELOADER"
 
-    "${START_WINE_PATH}/data/scripts/winetricks" -q -f d3dcompiler_42 d3dcompiler_43 d3dcompiler_47 d3dx10 d3dx10_43 d3dx11_42 d3dx11_43 d3dx9 mfc120 mfc42 msvcirt physx vcrun2010 vcrun2012 vcrun2013 vcrun2019 vcrun6 vcrun6sp6 win10 || libraries_init_error
+    sw_d3d_plugins
+
+    "${START_WINE_PATH}/data/scripts/winetricks" -q -f mfc120 mfc42 msvcirt physx vcrun2010 vcrun2012 vcrun2013 vcrun2019 vcrun6 vcrun6sp6 win10 || libraries_init_error
     "${WINESERVER}" -w
 
     try_fix_pfx
@@ -1423,19 +1430,6 @@ DEBUG_VULKAN () {
     DEBUG_LOG
 
     RUN_VULKAN >> "${START_WINE_PATH}/data/tmp/${portname}.log" 2>&1 "$@"
-    zenity --info --title "StartWine" --width=200 --text "Please wait a while then press ok to open the log file" &&
-    zData=$(cat "${START_WINE_PATH}/data/tmp/${portname}.log")
-    zNewData=$(echo -n "${zData}" | zenity --text-info --title "StartWine" --width 1200 --height 550)
-
-    STOP
-
-}
-
-DEBUG_OPENGL () {
-
-    DEBUG_LOG
-
-    RUN_OPENGL >> "${START_WINE_PATH}/data/tmp/${portname}.log" 2>&1 "$@"
     zenity --info --title "StartWine" --width=200 --text "Please wait a while then press ok to open the log file" &&
     zData=$(cat "${START_WINE_PATH}/data/tmp/${portname}.log")
     zNewData=$(echo -n "${zData}" | zenity --text-info --title "StartWine" --width 1200 --height 550)
@@ -1681,24 +1675,5 @@ STOP () {
     exit
 
 }
-
-#############################   STARTING TRAY   ################################
-
-START_TRAY () {
-
-    if [ -z "`pgrep -a python3 | grep "StartWine-Tray" | awk '{print $1}'`" ]; then
-        "${START_WINE_PATH}/data/scripts/StartWine-Tray" &
-    else
-        kill -s SIGKILL `pgrep -a python3 | grep "StartWine-Tray" | awk '{print $1}'`;
-        "${START_WINE_PATH}/data/scripts/StartWine-Tray" &
-    fi
-
-}
-
-case $1 in
-
-    START_TRAY) "$@" ;;
-
-esac
 
 #################################   THE END   ##################################

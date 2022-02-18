@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-#####################################   SCRIPTS_v340   #####################################################
+#####################################   SCRIPTS_V341   ############################################################
 
 import os
 import sys
@@ -34,10 +34,46 @@ pgrep = f"pgrep -a python3 | grep 'start '"
 echo1 = f"echo env '\"'{sw_scripts}start'\"' '\"'`{pgrep} | sed -n '1p' | cut -d ' ' -f4-100`'\"'"
 echo2 = f"echo env '\"'{sw_scripts}start'\"' '\"'`{pgrep} | sed -n '2p' | cut -d ' ' -f4-100`'\"'"
 
+def preload_runlib():
+
+    cmd = f"{sw_scripts}runlib"
+    subprocess.call(cmd, shell=True)
+
+preload_runlib()
+
+def get_path_game():
+
+    cmd_cut = f"cut -d ' ' -f3-100 {sw_scripts}run.sh"
+    path_game = str(subprocess.run(cmd_cut, shell=True, stdout=subprocess.PIPE, encoding='UTF-8').stdout[0:]).replace('\n', '').replace('%F', '')
+    return path_game
+
+def get_arg(arg):
+
+    return arg
+
+get_arg(get_path_game())
+
+path_game = get_arg(get_path_game())
+exe_name = str(list(str(get_arg(get_path_game())).strip('"').split("/"))[-1].split(" ")[-1])
+print(path_game)
+print(exe_name)
+
 def start_tray():
 
-    cmd_start_tray = f"{sw_scripts}runlib START_TRAY"
-    subprocess.call(cmd_start_tray, shell=True)
+    get_arg(get_path_game())
+
+    try:
+        cmd = f"pgrep -a python3 | grep StartWine-Tray | cut -d ' ' -f1"
+        proc = str(subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8').stdout[0:]).replace('\n', '')
+    except OSError as e:
+        tray = f"{sw_scripts}StartWine-Tray {path_game}"
+        subprocess.Popen(tray, shell=True, start_new_session=True)
+    else:
+        kill = f"kill -s KILL {proc}"
+        subprocess.call(kill, shell=True)
+
+        tray = f"{sw_scripts}StartWine-Tray {path_game}"
+        subprocess.Popen(tray, shell=True, start_new_session=True)
 
 start_tray()
 
@@ -58,28 +94,11 @@ def echo_run():
 
 echo_run()
 
-def get_path_game():
-
-    cmd_cut = f"cut -d ' ' -f3-100 {sw_scripts}run.sh"
-    path_game = str(subprocess.run(cmd_cut, shell=True, stdout=subprocess.PIPE, encoding='UTF-8').stdout[0:]).replace('\n', '')
-    return path_game
-
-def get_arg(arg):
-
-    return arg
-
-get_arg(get_path_game())
-
-path_game = get_arg(get_path_game())
-exe_name = str(list(str(get_arg(get_path_game())).strip('"').split("/"))[-1].split(" ")[-1])
-print(path_game)
-print(exe_name)
-
 def get_out():
 
     cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\.exe//gi' | tail -n1"
     proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
-    out_cmd = str(proc.stdout[0:]).replace('\n', '').replace('start', 'StartWine').replace('%F', '').replace(' ', '_')
+    out_cmd = str(proc.stdout[0:]).replace('\n', '').replace('start', 'StartWine').replace(' %F', '').replace(' ', '_')
     return out_cmd
 
 ##################################################___SW_MENU___#########################################################
@@ -218,7 +237,6 @@ def on_btn_get_favorites(self):
               h = screen.get_monitor(x).get_geometry().height
     x = w * scale_factor
     y = h * scale_factor
-    print (f"{x}*{y}")
 
     favorites_btn_stack.set_visible_child_name("hide_favorites")
 
@@ -906,6 +924,7 @@ def echo_func_name(func_name):
     if str(func) == str("ADD_SHORTCUT") or str(func) == str("ADD_FAVORITES"):
         cmd = f"echo {func} '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
         subprocess.call(cmd, shell=True)
+
     else:
         cmd = f"echo {func} '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
         subprocess.Popen(cmd, shell=True, start_new_session=True, stderr=sys.stderr, encoding='UTF-8')
@@ -1052,6 +1071,21 @@ def on_btn_games_config(self):
 
 ###############################___START___##############################################################################
 
+def on_fps_limit_scale_main(fps_limit_scale_main):
+
+    fps = fps_limit_scale_main.get_value()
+    command = f"sed -i '25 s/.*/{fps}/' {sw_scripts}settings"
+    subprocess.call(command, shell=True)
+
+def on_fps_limit_main(adjustment_fps_main):
+
+    cmd = f"sed -n '25p' {sw_scripts}/settings"
+    proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+    fps_value = str(proc.stdout[0:]).replace('.0\n', '')
+
+    if str(fps_value) != str(''):
+        adjustment_fps_main.set_value(int(fps_value))
+
 def progress():
 
     progressbar.pulse()
@@ -1090,6 +1124,7 @@ def on_btn_start(self):
             progress_timeout = GLib.timeout_add(60, progress)
 
         else:
+
             Thread(target=run_vulkan).start()
             Thread(target=progress).start()
 
@@ -1128,7 +1163,7 @@ def run_opengl():
     g_log = f"{sw_path}data/tmp/log/{exe_name}.log"
     sys.stderr = open(g_log, 'w')
 
-    func_name = f"RUN_OPENGL"
+    func_name = f"USE_OPENGL='\"''1''\"' RUN_VULKAN"
     echo_func_name(func_name)
 
 def run_gamemode():
@@ -1782,12 +1817,12 @@ def debug_vulkan():
 
 def debug_opengl():
 
-    func_name = f"DEBUG_OPENGL"
+    func_name = f"USE_OPENGL='\"''1''\"' DEBUG_OPENGL"
     echo_func_name(func_name)
 
 #################################################___DOWNLOAD_WINE___####################################################
 
-def on_btn_dw(self, widget=False, configuration=dict):
+def on_btn_dw(self):
 
     sw_stack.set_visible_child_name("download_wine_window")
 
@@ -1921,6 +1956,12 @@ def on_btn_settings(self):
             state = "off"
             command = f"sed -i '/021/g' {sw_scripts}settings"
             subprocess.call(command, shell=True)
+
+    def on_fps_limit_scale(fps_limit_scale):
+
+        fps = fps_limit_scale.get_value()
+        command = f"sed -i '25 s/.*/{fps}/' {sw_scripts}settings"
+        subprocess.call(command, shell=True)
 
     def on_DLSYM_activated(DLSYM, gparam):
 
@@ -2295,6 +2336,23 @@ def on_btn_settings(self):
             vkd3d_native.set_active(False)
 
     vkd3d_native_active()
+
+    fps_limit_scale = builder.get_object("fps_limit_scale")
+    fps_limit_scale.connect("value-changed", on_fps_limit_scale)
+
+    def on_fps_limit(adjustment_fps):
+
+        cmd = f"sed -n '25p' {sw_scripts}/settings"
+        proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        fps_value = str(proc.stdout[0:]).replace('.0\n', '')
+
+        if str(fps_value) != str(''):
+            adjustment_fps.set_value(int(fps_value))
+
+    adjustment_fps = builder.get_object("adjustment_fps")
+    adjustment_fps.connect("value-changed", on_fps_limit)
+
+    on_fps_limit(adjustment_fps)
 
     DLSYM = builder.get_object("DLSYM")
     DLSYM.connect("notify::active", on_DLSYM_activated)
@@ -2785,6 +2843,9 @@ btn_winehq.connect("activate-link", on_btn_winehq)
 btn_winehq2 = builder.get_object("btn_winehq2")
 btn_winehq2.connect("activate-link", on_btn_winehq2)
 
+start_stack = builder.get_object("start_stack")
+start_btn_back_stack = builder.get_object("start_btn_back_stack")
+
 lp_entry = builder.get_object("lp_entry")
 lp_entry.set_activates_default(True)
 lp_entry.connect("activate", on_btn_lp_entry)
@@ -2812,12 +2873,18 @@ btn_games_config.connect("clicked", on_btn_games_config)
 
 def get_resolution():
 
-    width = f"xrandr | grep '*' | cut -d 'x' -f1 | sed 's/ //g' | head -n1"
-    height = f"xrandr | grep '*' | cut -d 'x' -f2 | cut -d ' ' -f1 | head -n1"
-    out_name_1 = str(subprocess.run(width, shell=True, stdout=subprocess.PIPE, encoding='UTF-8').stdout[0:]).replace('\n', '')
-    out_name_2 = str(subprocess.run(height, shell=True, stdout=subprocess.PIPE, encoding='UTF-8').stdout[0:]).replace('\n', '')
-
-    print(out_name_1 + "x" + out_name_2)
+    screen = Gdk.Display.get_default()
+    monitor = screen.get_primary_monitor()
+    scale_factor = monitor.get_scale_factor()
+    w = 0
+    h = 0
+    for x in range(0, screen.get_n_monitors()):
+         w += screen.get_monitor(x).get_geometry().width
+         if ( h < screen.get_monitor(x).get_geometry().height ):
+              h = screen.get_monitor(x).get_geometry().height
+    out_name_1 = w * scale_factor
+    out_name_2 = h * scale_factor
+    print (f"{out_name_1}*{out_name_2}")
 
     def get_css(css_name):
 
@@ -2845,7 +2912,6 @@ def get_resolution():
             subprocess.Popen(cmd, shell=True)
 
         else:
-
             state = "off"
             command = f"sed -i '/023/g' {sw_scripts}settings"
             subprocess.call(command, shell=True)
@@ -2865,10 +2931,9 @@ def get_resolution():
             image = builder.get_object("sw_bgr")
             pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
             image.set_from_pixbuf(pixbuf)
-
+            print("black_theme_ACTIVE")
         else:
-
-            print("black_theme_off")
+            print("black_theme_OFF")
 
     black_theme()
 
@@ -2886,7 +2951,6 @@ def get_resolution():
             subprocess.Popen(cmd, shell=True)
 
         else:
-
             state = "off"
             command = f"sed -i '/023/g' {sw_scripts}settings"
             subprocess.call(command, shell=True)
@@ -2906,10 +2970,9 @@ def get_resolution():
             image = builder.get_object("sw_bgr")
             pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
             image.set_from_pixbuf(pixbuf)
-
+            print("gray_theme_ACTIVE")
         else:
-
-            print("gray_theme_off")
+            print("gray_theme_OFF")
 
     gray_theme()
 
@@ -2927,7 +2990,6 @@ def get_resolution():
             subprocess.Popen(cmd, shell=True)
 
         else:
-
             state = "off"
             command = f"sed -i '/023/g' {sw_scripts}settings"
             subprocess.call(command, shell=True)
@@ -2947,10 +3009,9 @@ def get_resolution():
             image = builder.get_object("sw_bgr")
             pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
             image.set_from_pixbuf(pixbuf)
-
+            print("red_theme_ACTIVE")
         else:
-
-            print("red_theme_off")
+            print("red_theme_OFF")
 
     red_theme()
 
@@ -2968,7 +3029,6 @@ def get_resolution():
             subprocess.Popen(cmd, shell=True)
 
         else:
-
             state = "off"
             command = f"sed -i '/023/g' {sw_scripts}settings"
             subprocess.call(command, shell=True)
@@ -2988,10 +3048,9 @@ def get_resolution():
             image = builder.get_object("sw_bgr")
             pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
             image.set_from_pixbuf(pixbuf)
-
+            print("yellow_theme_ACTIVE")
         else:
-
-            print("yellow_theme_off")
+            print("yellow_theme_OFF")
 
     yellow_theme()
 
@@ -3009,7 +3068,6 @@ def get_resolution():
             subprocess.Popen(cmd, shell=True)
 
         else:
-
             state = "off"
             command = f"sed -i '/023/g' {sw_scripts}settings"
             subprocess.call(command, shell=True)
@@ -3029,10 +3087,9 @@ def get_resolution():
             image = builder.get_object("sw_bgr")
             pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
             image.set_from_pixbuf(pixbuf)
-
+            print("green_theme_ACTIVE")
         else:
-
-            print("green_theme_off")
+            print("green_theme_OFF")
 
     green_theme()
 
@@ -3050,7 +3107,6 @@ def get_resolution():
             subprocess.Popen(cmd, shell=True)
 
         else:
-
             state = "off"
             command = f"sed -i '/023/g' {sw_scripts}settings"
             subprocess.call(command, shell=True)
@@ -3070,10 +3126,9 @@ def get_resolution():
             image = builder.get_object("sw_bgr")
             pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
             image.set_from_pixbuf(pixbuf)
-
+            print("blue_theme_ACTIVE")
         else:
-
-            print("blue_theme_off")
+            print("blue_theme_OFF")
 
     blue_theme()
 
@@ -3091,7 +3146,6 @@ def get_resolution():
             subprocess.Popen(cmd, shell=True)
 
         else:
-
             state = "off"
             command = f"sed -i '/023/g' {sw_scripts}settings"
             subprocess.call(command, shell=True)
@@ -3111,10 +3165,9 @@ def get_resolution():
             image = builder.get_object("sw_bgr")
             pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
             image.set_from_pixbuf(pixbuf)
-
+            print("purple_theme_ACTIVE")
         else:
-
-            print("purple_theme_off")
+            print("purple_theme_OFF")
 
     purple_theme()
 
@@ -3132,7 +3185,6 @@ def get_resolution():
             subprocess.Popen(cmd, shell=True)
 
         else:
-
             state = "off"
             command = f"sed -i '/023/g' {sw_scripts}settings"
             subprocess.call(command, shell=True)
@@ -3152,10 +3204,9 @@ def get_resolution():
             image = builder.get_object("sw_bgr")
             pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
             image.set_from_pixbuf(pixbuf)
-
+            print("mix_theme_ACTIVE")
         else:
-
-            print("mix_theme_off")
+            print("mix_theme_OFF")
 
     mix_theme()
 
@@ -3173,7 +3224,6 @@ def get_resolution():
             subprocess.Popen(cmd, shell=True)
 
         else:
-
             state = "off"
             command = f"sed -i '/023/g' {sw_scripts}settings"
             subprocess.call(command, shell=True)
@@ -3192,10 +3242,9 @@ def get_resolution():
             image = builder.get_object("sw_bgrw")
             pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
             image.set_from_pixbuf(pixbuf)
-
+            print("white_theme_ACTIVE")
         else:
-
-            print("")
+            print("white_theme_OFF")
 
     white_theme()
 

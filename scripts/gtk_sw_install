@@ -17,9 +17,7 @@ import logging
 import argparse
 
 sw_path = f"{Path.home()}/StartWine"
-sw_hide = f"{Path.home()}/.StartWine"
 sw_application = f"{Path.home()}/.local/share/applications"
-
 
 class TheWindow(Gtk.Window):
 
@@ -86,11 +84,8 @@ class TheWindow(Gtk.Window):
         cmd_rm = f"rm -fr {sw_path}"
         subprocess.call(cmd_rm, shell=True)
 
-        cmd_rm_2 = f"rm -fr {sw_hide}"
+        cmd_rm_2 = f"rm -f {sw_application}/StartWine.desktop"
         subprocess.call(cmd_rm_2, shell=True)
-
-        cmd_rm_3 = f"rm -f {sw_application}/StartWine.desktop"
-        subprocess.call(cmd_rm_3, shell=True)
 
         cmd_clear = f"clear\n"
 
@@ -104,7 +99,6 @@ class TheWindow(Gtk.Window):
 
         print("Closing application")
         Gtk.main_quit()
-
 
 win = TheWindow()
 win.connect("delete-event", Gtk.main_quit)
