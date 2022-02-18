@@ -1,2 +1,3 @@
-# StartWine-Launcher![git](https://user-images.githubusercontent.com/85447162/154725576-8ce72c10-d357-46c3-a846-f69422c82e92.png)
-![git2](https://user-images.githubusercontent.com/85447162/154725584-7ba042ef-2656-40fb-b29b-6aad69909597.png)
+# StartWine-Launcher
+![git2](https://user-images.githubusercontent.com/85447162/154725718-1178897a-383c-4584-b6ac-6d05670b32e5.png)
+![git](https://user-images.githubusercontent.com/85447162/154725725-642fbab1-6f9d-4fb7-a2f5-bad264a5ce47.png)
