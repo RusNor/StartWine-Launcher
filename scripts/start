@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-#####################################   SCRIPTS_V341   ############################################################
+#####################################   SCRIPTS_V342   ############################################################
 
 import os
 import sys
@@ -27,8 +27,8 @@ sw_favorites = f"{Path.home()}/StartWine/data/img/favorites/"
 sw_icon = f"{Path.home()}/StartWine/data/img/"
 sw_games_config = f"{Path.home()}/StartWine/data/games_config/"
 sw_wine_custom = f"{Path.home()}/StartWine/data/wine/wine_custom/"
-sw_css_dark = f"{sw_icon}/gui_icons/sw_themes/css/dark/"
-sw_css_light = f"{sw_icon}/gui_icons/sw_themes/css/light/"
+sw_css_dark = f"{sw_icon}sw_themes/css/dark/"
+sw_css_light = f"{sw_icon}sw_themes/css/light/"
 
 pgrep = f"pgrep -a python3 | grep 'start '"
 echo1 = f"echo env '\"'{sw_scripts}start'\"' '\"'`{pgrep} | sed -n '1p' | cut -d ' ' -f4-100`'\"'"
@@ -227,16 +227,14 @@ def get_size(widget, event):
 def on_btn_get_favorites(self):
 
     screen = Gdk.Display.get_default()
-    monitor = screen.get_primary_monitor()
-    scale_factor = monitor.get_scale_factor()
     w = 0
     h = 0
     for x in range(0, screen.get_n_monitors()):
          w += screen.get_monitor(x).get_geometry().width
          if ( h < screen.get_monitor(x).get_geometry().height ):
               h = screen.get_monitor(x).get_geometry().height
-    x = w * scale_factor
-    y = h * scale_factor
+    x = w
+    y = h
 
     favorites_btn_stack.set_visible_child_name("hide_favorites")
 
@@ -2874,16 +2872,14 @@ btn_games_config.connect("clicked", on_btn_games_config)
 def get_resolution():
 
     screen = Gdk.Display.get_default()
-    monitor = screen.get_primary_monitor()
-    scale_factor = monitor.get_scale_factor()
     w = 0
     h = 0
     for x in range(0, screen.get_n_monitors()):
          w += screen.get_monitor(x).get_geometry().width
          if ( h < screen.get_monitor(x).get_geometry().height ):
               h = screen.get_monitor(x).get_geometry().height
-    out_name_1 = w * scale_factor
-    out_name_2 = h * scale_factor
+    out_name_1 = w
+    out_name_2 = h
     print (f"{out_name_1}*{out_name_2}")
 
     def get_css(css_name):
@@ -2927,7 +2923,7 @@ def get_resolution():
             css_name = f"{sw_css_dark}black/gtk-3.0/gtk.css"
             get_css(css_name)
 
-            img_path = f"{sw_icon}gui_icons/sw_themes/4k/sw_bg1"
+            img_path = f"{sw_icon}sw_themes/4k/sw_bg1"
             image = builder.get_object("sw_bgr")
             pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
             image.set_from_pixbuf(pixbuf)
@@ -2966,7 +2962,7 @@ def get_resolution():
             css_name = f"{sw_css_dark}grey/gtk-3.0/gtk.css"
             get_css(css_name)
 
-            img_path = f"{sw_icon}gui_icons/sw_themes/4k/sw_bg2"
+            img_path = f"{sw_icon}sw_themes/4k/sw_bg2"
             image = builder.get_object("sw_bgr")
             pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
             image.set_from_pixbuf(pixbuf)
@@ -3005,7 +3001,7 @@ def get_resolution():
             css_name = f"{sw_css_dark}red/gtk-3.0/gtk.css"
             get_css(css_name)
 
-            img_path = f"{sw_icon}gui_icons/sw_themes/4k/sw_bg3"
+            img_path = f"{sw_icon}sw_themes/4k/sw_bg3"
             image = builder.get_object("sw_bgr")
             pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
             image.set_from_pixbuf(pixbuf)
@@ -3044,7 +3040,7 @@ def get_resolution():
             css_name = f"{sw_css_dark}yellow/gtk-3.0/gtk.css"
             get_css(css_name)
 
-            img_path = f"{sw_icon}gui_icons/sw_themes/4k/sw_bg4"
+            img_path = f"{sw_icon}sw_themes/4k/sw_bg4"
             image = builder.get_object("sw_bgr")
             pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
             image.set_from_pixbuf(pixbuf)
@@ -3083,7 +3079,7 @@ def get_resolution():
             css_name = f"{sw_css_dark}green/gtk-3.0/gtk.css"
             get_css(css_name)
 
-            img_path = f"{sw_icon}gui_icons/sw_themes/4k/sw_bg5"
+            img_path = f"{sw_icon}sw_themes/4k/sw_bg5"
             image = builder.get_object("sw_bgr")
             pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
             image.set_from_pixbuf(pixbuf)
@@ -3122,7 +3118,7 @@ def get_resolution():
             css_name = f"{sw_css_dark}blue/gtk-3.0/gtk.css"
             get_css(css_name)
 
-            img_path = f"{sw_icon}gui_icons/sw_themes/4k/sw_bg6"
+            img_path = f"{sw_icon}sw_themes/4k/sw_bg6"
             image = builder.get_object("sw_bgr")
             pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
             image.set_from_pixbuf(pixbuf)
@@ -3161,7 +3157,7 @@ def get_resolution():
             css_name = f"{sw_css_dark}purple/gtk-3.0/gtk.css"
             get_css(css_name)
 
-            img_path = f"{sw_icon}gui_icons/sw_themes/4k/sw_bg7"
+            img_path = f"{sw_icon}sw_themes/4k/sw_bg7"
             image = builder.get_object("sw_bgr")
             pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
             image.set_from_pixbuf(pixbuf)
@@ -3200,7 +3196,7 @@ def get_resolution():
             css_name = f"{sw_css_dark}brown/gtk-3.0/gtk.css"
             get_css(css_name)
 
-            img_path = f"{sw_icon}gui_icons/sw_themes/4k/sw_bg8"
+            img_path = f"{sw_icon}sw_themes/4k/sw_bg8"
             image = builder.get_object("sw_bgr")
             pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
             image.set_from_pixbuf(pixbuf)
@@ -3238,7 +3234,8 @@ def get_resolution():
 
             css_name = f"{sw_css_light}black/gtk-3.0/gtk.css"
             get_css(css_name)
-            img_path = f"{sw_icon}gui_icons/sw_themes/4k/sw_bg0"
+
+            img_path = f"{sw_icon}sw_themes/4k/sw_bg0"
             image = builder.get_object("sw_bgrw")
             pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
             image.set_from_pixbuf(pixbuf)
