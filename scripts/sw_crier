@@ -1,0 +1,594 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+import gi
+gi.require_version('Gtk', '3.0')
+gi.require_version('Gdk', '3.0')
+#gi.require_version('Vte', '2.91')
+from gi.repository import Gdk, GdkPixbuf, Gio, GLib, GObject, Gtk, Pango
+from pathlib import Path
+import subprocess
+from subprocess import *
+import threading
+from threading import *
+import traceback
+import logging
+import argparse
+import urllib.request
+from urllib.request import urlretrieve
+import time
+import tarfile
+import zipfile
+import shutil
+
+link = f"{sys.argv[0]}/"
+path_link = Path(link).parent
+sw_scripts = f"{path_link}/"
+sw_path = Path(sw_scripts).parent.parent
+sw_icon = Path(sw_path) / 'data/img'
+sw_css_dark = f"{sw_icon}/sw_themes/css/dark/"
+sw_css_light = f"{sw_icon}/sw_themes/css/light/"
+crier_title = f"StartWine"
+
+try:
+    m = str(sys.argv[1])
+except IndexError as e:
+    print("No arguments specified, set argument default")
+    m = str("")
+
+def get_css(css_name):
+
+    css = css_name
+    screen = Gdk.Screen.get_default()
+    provider = Gtk.CssProvider()
+    style_context = Gtk.StyleContext()
+    style_context.add_provider_for_screen(
+        screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+    )
+    provider.load_from_path(css)
+
+def black_theme():
+
+    sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
+    proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+    sw_theme_name = str(proc.stdout[0:]).replace('\n', '')
+
+    if str(sw_theme_name) == str('023_black_theme'):
+
+        css_name = f"{sw_css_dark}black/gtk-3.0/gtk.css"
+        get_css(css_name)
+
+black_theme()
+
+def gray_theme():
+
+    sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
+    proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+    sw_theme_name = str(proc.stdout[0:]).replace('\n', '')
+
+    if str(sw_theme_name) == str('023_gray_theme'):
+
+        css_name = f"{sw_css_dark}grey/gtk-3.0/gtk.css"
+        get_css(css_name)
+
+gray_theme()
+
+def red_theme():
+
+    sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
+    proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+    sw_theme_name = str(proc.stdout[0:]).replace('\n', '')
+
+    if str(sw_theme_name) == str('023_red_theme'):
+
+        css_name = f"{sw_css_dark}red/gtk-3.0/gtk.css"
+        get_css(css_name)
+
+red_theme()
+
+def yellow_theme():
+
+    sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
+    proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+    sw_theme_name = str(proc.stdout[0:]).replace('\n', '')
+
+    if str(sw_theme_name) == str('023_yellow_theme'):
+
+        css_name = f"{sw_css_dark}yellow/gtk-3.0/gtk.css"
+        get_css(css_name)
+
+yellow_theme()
+
+def green_theme():
+
+    sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
+    proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+    sw_theme_name = str(proc.stdout[0:]).replace('\n', '')
+
+    if str(sw_theme_name) == str('023_green_theme'):
+
+        css_name = f"{sw_css_dark}green/gtk-3.0/gtk.css"
+        get_css(css_name)
+
+green_theme()
+
+def blue_theme():
+
+    sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
+    proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+    sw_theme_name = str(proc.stdout[0:]).replace('\n', '')
+
+    if str(sw_theme_name) == str('023_blue_theme'):
+
+        css_name = f"{sw_css_dark}blue/gtk-3.0/gtk.css"
+        get_css(css_name)
+
+blue_theme()
+
+def purple_theme():
+
+    sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
+    proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+    sw_theme_name = str(proc.stdout[0:]).replace('\n', '')
+
+    if str(sw_theme_name) == str('023_purple_theme'):
+
+        css_name = f"{sw_css_dark}purple/gtk-3.0/gtk.css"
+        get_css(css_name)
+
+purple_theme()
+
+def mix_theme():
+
+    sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
+    proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+    sw_theme_name = str(proc.stdout[0:]).replace('\n', '')
+
+    if str(sw_theme_name) == str('023_mix_theme'):
+
+        css_name = f"{sw_css_dark}brown/gtk-3.0/gtk.css"
+        get_css(css_name)
+
+mix_theme()
+
+def white_theme():
+
+    sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
+    proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+    sw_theme_name = str(proc.stdout[0:]).replace('\n', '')
+
+    if str(sw_theme_name) == str('023_white_theme'):
+
+        css_name = f"{sw_css_light}black/gtk-3.0/gtk.css"
+        get_css(css_name)
+
+white_theme()
+
+class sw_crier():
+
+###################___INFO___:
+
+    def on_info(i):
+
+        text_info = i
+        dialog = Gtk.MessageDialog(
+            flags=0,
+            message_type=Gtk.MessageType.INFO,
+            buttons=Gtk.ButtonsType.OK,
+            text=f"{crier_title} INFO",
+        )
+        dialog.format_secondary_text(
+            text_info
+        )
+        dialog.set_default_size(320, 120)
+        dialog.run()
+        print("INFO dialog closed")
+
+        dialog.destroy()
+
+    if m == str("-i"):
+        i = str(sys.argv[2])
+        on_info(i)
+
+####################___ERROR___:
+
+    def on_error(e):
+        text_error = e
+        dialog = Gtk.MessageDialog(
+            flags=0,
+            message_type=Gtk.MessageType.ERROR,
+            buttons=Gtk.ButtonsType.CANCEL,
+            text=f"{crier_title} ERROR",
+        )
+        dialog.format_secondary_text(
+            text_error
+        )
+        dialog.set_default_size(320, 120)
+        dialog.run()
+        print("ERROR dialog closed")
+
+        dialog.destroy()
+
+    if m == str("-e"):
+        e = str(sys.argv[2])
+        on_error(e)
+
+###################___WARNING___:
+
+    def on_warn(w):
+        text_warn = w
+        dialog = Gtk.MessageDialog(
+            flags=0,
+            message_type=Gtk.MessageType.WARNING,
+            buttons=Gtk.ButtonsType.OK_CANCEL,
+            text=f"{crier_title} WARNING",
+        )
+        dialog.format_secondary_text(
+            text_warn
+        )
+        dialog.set_default_size(320, 120)
+        response = dialog.run()
+
+        if response == Gtk.ResponseType.OK:
+            p = print("0")
+            return p
+        elif response == Gtk.ResponseType.CANCEL:
+            p = print("1")
+            return p
+
+        dialog.destroy()
+
+    if m == str("-w"):
+        w = str(sys.argv[2])
+        on_warn(w)
+
+#######################___QUESTION___:
+
+    def on_question(q):
+        text_quest = q
+        dialog = Gtk.MessageDialog(
+            flags=0,
+            message_type=Gtk.MessageType.QUESTION,
+            buttons=Gtk.ButtonsType.YES_NO,
+            text=f"{crier_title} QUESTION",
+        )
+        dialog.format_secondary_text(
+            text_quest
+        )
+        dialog.set_default_size(320, 120)
+        response = dialog.run()
+
+        if response == Gtk.ResponseType.YES:
+            p = print("0")
+            return p
+        elif response == Gtk.ResponseType.NO:
+            p = print("1")
+            return p
+
+        dialog.destroy()
+
+    if m == str("-q"):
+        q = str(sys.argv[2])
+        on_question(q)
+
+#######################___TEXT_INFO___:
+
+    def text_info(t):
+
+        def on_response(dialog, response):
+            if response == Gtk.ResponseType.OK:
+                p = print("0")
+                Gtk.main_quit()
+                return p
+#            elif response == Gtk.ResponseType.CANCEL:
+#                p = print("1")
+#                Gtk.main_quit()
+#                return p
+            else:
+                print("Dialog closed")
+
+        dialog = Gtk.Dialog()
+        dialog.set_title("Dialog")
+        dialog.set_default_size(960, 540)
+        dialog.add_button("_OK", Gtk.ResponseType.OK)
+#        dialog.add_button("_Cancel", Gtk.ResponseType.CANCEL)
+        dialog.connect("response", on_response)
+        view = Gtk.TextView()
+        text = t
+        buffer = view.get_buffer()
+        buffer.set_text(text)
+        view.set_vexpand(True)
+        view.set_hexpand(True)
+        scrolled = Gtk.ScrolledWindow()
+        scrolled.add(view)
+        dialog.vbox.add(scrolled)
+        dialog.connect("destroy", Gtk.main_quit)
+        dialog.show_all()
+        Gtk.main()
+
+    if m == str("-t"):
+        t = str(sys.argv[2])
+        text_info(t)
+
+####################___FILE_CHOOSER_WINDOW___:
+
+    def on_file(fl):
+
+        path = fl
+
+        def add_filters(dialog):
+            filter_text = Gtk.FileFilter()
+            filter_text.set_name("Text files")
+            filter_text.add_mime_type("text/plain")
+            dialog.add_filter(filter_text)
+
+            filter_py = Gtk.FileFilter()
+            filter_py.set_name("Python files")
+            filter_py.add_mime_type("text/x-python")
+            dialog.add_filter(filter_py)
+
+            filter_any = Gtk.FileFilter()
+            filter_any.set_name("Any files")
+            filter_any.add_pattern("*")
+            dialog.add_filter(filter_any)
+
+        dialog = Gtk.FileChooserDialog(
+            title="Please choose a file", action=Gtk.FileChooserAction.OPEN
+        )
+        dialog.add_buttons(
+            Gtk.STOCK_CANCEL,
+            Gtk.ResponseType.CANCEL,
+            Gtk.STOCK_OPEN,
+            Gtk.ResponseType.OK,
+        )
+
+        add_filters(dialog)
+        dialog.set_current_folder(path)
+
+        response = dialog.run()
+
+        if response == Gtk.ResponseType.OK:
+            print("Open clicked")
+            print(dialog.get_filename())
+        elif response == Gtk.ResponseType.CANCEL:
+            print("Cancel clicked")
+
+        dialog.destroy()
+
+    if m == str("-fl"):
+        fl = str(sys.argv[2])
+        on_file(fl)
+
+    def on_folder(fd):
+
+        path = fd
+
+        def add_filters(dialog):
+            filter_text = Gtk.FileFilter()
+            filter_text.set_name("Any files")
+            filter_text.add_mime_type("*")
+            dialog.add_filter(filter_text)
+
+            filter_py = Gtk.FileFilter()
+            filter_py.set_name("Python files")
+            filter_py.add_mime_type("text/x-python")
+            dialog.add_filter(filter_py)
+
+            filter_any = Gtk.FileFilter()
+            filter_any.set_name("Text files")
+            filter_any.add_pattern("text/plain")
+            dialog.add_filter(filter_any)
+
+        dialog = Gtk.FileChooserDialog(
+            title="Please choose a folder",
+            action=Gtk.FileChooserAction.SELECT_FOLDER,
+        )
+        dialog.add_buttons(
+            Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, "Select", Gtk.ResponseType.OK
+        )
+        dialog.set_current_folder(path)
+
+        response = dialog.run()
+
+        if response == Gtk.ResponseType.OK:
+            print("Select clicked")
+            print(dialog.get_filename())
+        elif response == Gtk.ResponseType.CANCEL:
+            print("Cancel clicked")
+
+        dialog.destroy()
+
+    if m == str("-fd"):
+        fd = str(sys.argv[2])
+        on_folder(fd)
+
+############################___DOWNLOAD___:
+
+    def download(url, filename):
+        window = progressbar = label = quit = None
+        event = Event()
+        def reporthook(blocknum, blocksize, totalsize):
+            nonlocal quit
+            if blocknum == 0:
+                def guiloop():
+                    nonlocal window, progressbar, label
+                    window = Gtk.Window(default_height=80, default_width=320)
+                    window.set_title(f"{crier_title}")
+                    progressbar = Gtk.ProgressBar(show_text=True)
+                    progressbar.set_hexpand(True)
+                    label = Gtk.Label()
+                    name = str(list(filename.replace('/','\n').split())[-1])
+                    label.set_label(name)
+                    box1 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+                    box1.pack_start(label, False, True, 16)
+                    box2 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+                    box2.pack_start(progressbar, False, True, 16)
+                    grid = Gtk.Grid()
+                    grid.set_row_spacing(16)
+                    grid.attach(box1, 0, 0, 1, 1)
+                    grid.attach(box2, 0, 1, 1, 1)
+                    window.add(grid)
+                    window.connect("destroy", Gtk.main_quit)
+                    window.show_all()
+                    event.set()
+                    Gtk.main()
+                Thread(target=guiloop).start()
+            event.wait(1)
+            percent = blocknum * blocksize / totalsize
+            if quit is None:
+                def bar():
+                    progressbar.set_fraction(percent)
+                GLib.timeout_add(50, bar)
+            if percent >= 1:
+                quit = GLib.timeout_add(100, Gtk.main_quit)
+
+        return urlretrieve(url, filename, reporthook)
+
+    if m == str("-d"):
+        url = str(sys.argv[2])
+        filename = str(sys.argv[3])
+        download(url, filename)
+
+##############################___EXTRACTION___:
+
+############___extract_tar___:
+
+    def extract_tar(filename, path):
+        window = progressbar = label = quit = None
+        event = Event()
+
+        def tar_file():
+            nonlocal quit
+            if Path(filename).exists():
+                taro = tarfile.open(filename)
+
+                def guiloop():
+                    nonlocal window, progressbar, label
+                    window = Gtk.Window(default_height=80, default_width=320)
+                    window.set_title(f"{crier_title}")
+                    progressbar = Gtk.ProgressBar(show_text=True)
+                    progressbar.set_hexpand(True)
+                    label = Gtk.Label()
+                    name = str("Extracting...")
+                    label.set_label(name)
+                    box1 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+                    box1.pack_start(label, False, True, 16)
+                    box2 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+                    box2.pack_start(progressbar, False, True, 16)
+                    grid = Gtk.Grid()
+                    grid.set_row_spacing(16)
+                    grid.attach(box1, 0, 0, 1, 1)
+                    grid.attach(box2, 0, 1, 1, 1)
+                    window.add(grid)
+                    window.connect("destroy", Gtk.main_quit)
+                    window.show_all()
+                    event.set()
+                    Gtk.main()
+                Thread(target=guiloop).start()
+            event.wait(1)
+
+            if quit is None:
+
+                def bar():
+                    progressbar.pulse()
+                    return True
+                GLib.timeout_add(100, bar)
+
+            def tar_info():
+                try:
+                    progressbar.set_show_text(True)
+                    progressbar.set_text(filename)
+                    for member_info in taro.getmembers():
+                        print("- extracting: " + member_info.name)
+                        taro.extract(member_info, path=path)
+                    taro.close()
+                    quit = GLib.timeout_add(100, Gtk.main_quit)
+                except:
+                    quit = GLib.timeout_add(100, Gtk.main_quit)
+            Thread(target=tar_info).start()
+        return tar_file()
+
+    if m == str("-tar"):
+        filename = str(sys.argv[2])
+        path = str(sys.argv[3])
+        extract_tar(filename, path)
+
+############___extract_zip___:
+
+    def extract_zip(filename, path):
+        window = progressbar = label = quit = None
+        event = Event()
+
+        def zip_file():
+            nonlocal quit
+            if Path(filename).exists():
+                zipo = zipfile.ZipFile(filename)
+
+                def guiloop():
+                    nonlocal window, progressbar, label
+                    window = Gtk.Window(default_height=80, default_width=320)
+                    window.set_title(f"{crier_title}")
+                    progressbar = Gtk.ProgressBar(show_text=True)
+                    progressbar.set_hexpand(True)
+                    label = Gtk.Label()
+                    name = str("Extracting...")
+                    label.set_label(name)
+                    box1 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+                    box1.pack_start(label, False, True, 16)
+                    box2 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+                    box2.pack_start(progressbar, False, True, 16)
+                    grid = Gtk.Grid()
+                    grid.set_row_spacing(16)
+                    grid.attach(box1, 0, 0, 1, 1)
+                    grid.attach(box2, 0, 1, 1, 1)
+                    window.add(grid)
+                    window.connect("destroy", Gtk.main_quit)
+                    window.show_all()
+                    event.set()
+                    Gtk.main()
+                Thread(target=guiloop).start()
+            event.wait(1)
+
+            if quit is None:
+
+                def bar():
+                    progressbar.pulse()
+                    return True
+                GLib.timeout_add(200, bar)
+
+            def zip_info():
+                try:
+                    progressbar.set_show_text(True)
+                    progressbar.set_text(filename)
+                    for member_info in zipo.namelist():
+                        print("- extracting: " + member_info)
+                        zipo.extract(member_info, path=path)
+                    zipo.close()
+                    quit = GLib.timeout_add(100, Gtk.main_quit)
+                except:
+                    quit = GLib.timeout_add(100, Gtk.main_quit)
+            Thread(target=zip_info).start()
+        return zip_file()
+
+    if m == str("-zip"):
+        filename = str(sys.argv[2])
+        path = str(sys.argv[3])
+
+        extract_zip(filename, path)
+
+    def helper():
+        print("-i    'text'                                   Info dialog window\n"
+            "-e    'text'                                   Error dialog window\n"
+            "-w    'text'                                   Warning dialog window\n"
+            "-q    'text'                                   Question dialog window\n"
+            "-t    'text'                                   Text-info dialog window\n"
+            "-fl   'path'                                   File chooser dialog window\n"
+            "-fd   'path'                                   Directory chooser dialog window\n"
+            "-d    'url' 'filename'                         Download progressbar window\n"
+            "-tar  'filename, path'                         Extraction tar archive progressbar window\n"
+            "-zip  'filename, path'                         Extraction zip archive progressbar window\n")
+
+    if m == str("-h") or m == str("--help"):
+        helper()
+

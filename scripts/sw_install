@@ -16,7 +16,11 @@ import traceback
 import logging
 import argparse
 
-sw_path = f"{Path.home()}/StartWine"
+link = f"{sys.argv[0]}/"
+path_link = Path(link).parent
+sw_scripts = f"{path_link}/"
+sw_path = Path(sw_scripts).parent.parent
+print(sw_path)
 sw_application = f"{Path.home()}/.local/share/applications"
 
 class TheWindow(Gtk.Window):

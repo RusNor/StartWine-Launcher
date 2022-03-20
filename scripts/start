@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-#####################################   SCRIPTS_V342   ############################################################
+#####################################   SCRIPTS_V351   #################################################################
 
 import os
 import sys
@@ -19,16 +19,22 @@ import logging
 import argparse
 import urllib.request
 import time
+import io
+import re
 
-sw_path = f"{Path.home()}/StartWine/"
-sw_scripts = f"{Path.home()}/StartWine/data/scripts/"
-sw_shortcuts = f"{Path.home()}/StartWine/Shortcuts/"
-sw_favorites = f"{Path.home()}/StartWine/data/img/favorites/"
-sw_icon = f"{Path.home()}/StartWine/data/img/"
-sw_games_config = f"{Path.home()}/StartWine/data/games_config/"
-sw_wine_custom = f"{Path.home()}/StartWine/data/wine/wine_custom/"
-sw_css_dark = f"{sw_icon}sw_themes/css/dark/"
-sw_css_light = f"{sw_icon}sw_themes/css/light/"
+link = f"{sys.argv[0]}/"
+path_link = Path(link).parent
+sw_scripts = f"{path_link}/"
+print(sw_scripts)
+sw_path = Path(sw_scripts).parent.parent
+sw_pfx = Path(sw_path) / 'data/pfx'
+sw_shortcuts = Path(sw_path) / 'Shortcuts'
+sw_favorites = Path(sw_path) / 'data/img/favorites'
+sw_icon = Path(sw_path) / 'data/img'
+sw_games_config = Path(sw_path) / 'data/games_config'
+sw_wine_custom = Path(sw_path) / 'data/wine/wine_custom'
+sw_css_dark = f"{sw_icon}/sw_themes/css/dark/"
+sw_css_light = f"{sw_icon}/sw_themes/css/light/"
 
 pgrep = f"pgrep -a python3 | grep 'start '"
 echo1 = f"echo env '\"'{sw_scripts}start'\"' '\"'`{pgrep} | sed -n '1p' | cut -d ' ' -f4-100`'\"'"
@@ -55,6 +61,7 @@ get_arg(get_path_game())
 
 path_game = get_arg(get_path_game())
 exe_name = str(list(str(get_arg(get_path_game())).strip('"').split("/"))[-1].split(" ")[-1])
+
 print(path_game)
 print(exe_name)
 
@@ -101,12 +108,18 @@ def get_out():
     out_cmd = str(proc.stdout[0:]).replace('\n', '').replace('start', 'StartWine').replace(' %F', '').replace(' ', '_')
     return out_cmd
 
+pfx_name = f"pfx_" + get_arg(get_out()).replace('StartWine', 'default').replace('default_', 'default')
+pfx_path = f"{sw_pfx}/{pfx_name}"
+f_dll = Path(f"{pfx_path}/dll.log")
+f_check = Path(f"{pfx_path}/check.log")
+f_btn = Path(f"{pfx_path}/btn.log")
+
 ##################################################___SW_MENU___#########################################################
 
 def on_btn_back_terminal(self):
 
     cmd_clear = f"clear\n"
-    terminal_sh.feed_child(cmd_clear.encode("UTF-8"))
+    terminal.feed_child(cmd_clear.encode("UTF-8"))
 
     main_stack.set_visible_child_name("vte_main_box")
 
@@ -116,23 +129,23 @@ def on_btn_back_terminal(self):
 
         try:
             with open(f"/usr/bin/jp2a"):
-                name_jpg = f"cd {sw_icon}gui_icons && ls -1 | grep .jpg"
+                name_jpg = f"cd {sw_icon}/gui_icons && ls -1 | grep .jpg"
                 proc = subprocess.run(name_jpg, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
                 out_name = str(proc.stdout[0:]).replace('\n', '')
-                open(f"{sw_icon}gui_icons/{out_name}")
+                open(f"{sw_icon}/gui_icons/{out_name}")
 
         except (IOError, OSError) as e:
-            cmd_ascii = f"clear && cat {sw_path}data/img/gui_icons/ASCII\n"
-            terminal_sh.feed_child(cmd_ascii.encode("UTF-8"))
+            cmd_ascii = f"clear && cat {sw_path}/data/img/gui_icons/ASCII\n"
+            terminal.feed_child(cmd_ascii.encode("UTF-8"))
             print("image not found, set default ASCII")
 
         else:
-            name_jpg = f"cd {sw_icon}gui_icons && ls -1 | grep .jpg"
+            name_jpg = f"cd {sw_icon}/gui_icons && ls -1 | grep .jpg"
             proc = subprocess.run(name_jpg, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
             out_name = str(proc.stdout[0:]).replace('\n', '')
             print(out_name)
-            cmd_ascii = f"clear && jp2a --colors {sw_icon}gui_icons/{out_name} && cat {sw_icon}gui_icons/ASCII_SW\n"
-            terminal_sh.feed_child(cmd_ascii.encode("UTF-8"))
+            cmd_ascii = f"clear && jp2a --colors {sw_icon}/gui_icons/{out_name} && cat {sw_icon}/gui_icons/ASCII_SW\n"
+            terminal.feed_child(cmd_ascii.encode("UTF-8"))
 
     ASCII()
 
@@ -144,53 +157,230 @@ def on_btn_back_fs(self):
 
 def on_btn_back_app_conf(self):
 
-    main_stack.set_visible_child_name("app_conf_main_box")
+    app_conf_activate()
+
+def app_conf_activate():
+
+    main_stack.set_visible_child_name("app_settings_main_box")
+
+    hud_posR = builder.get_object('btn_R')
+    hud_posL = builder.get_object('btn_L')
 
     out_cmd = get_arg(get_out())
-    games_config_name = f"{sw_games_config}" + str(out_cmd)
+    gc = Path(f"{sw_games_config}/" + str(out_cmd))
+    default = Path(f"{sw_games_config}/.default")
+
+    if not gc.exists():
+        gc.write_text(default.read_text())
 
     try:
-        with open(games_config_name, 'r') as gc:
-            text = gc.read()
-            app_conf_text.set_editable(True)
-            buffer = app_conf_text.get_buffer()
-            buffer.set_text(text)
+        file = gc.read_text().split('\n')
+        position = file[11]
+        reposition = str(re.findall(r'\w* \w*="', position))[2:-3]
+        rtol = str(position).replace(reposition, '')[1:-1]
+
+        if rtol == str('R'):
+            hud_posL.set_active(False)
+            hud_posR.set_active(True)
+        else:
+            hud_posL.set_active(True)
+            hud_posR.set_active(False)
     except IOError as e:
-        print("games_config not found, set default value")
-        on_btn_app_conf_default(self)
+        print()
 
-def on_btn_back_app_conf_1(self):
+    with open(gc, 'r') as f:
+        l = f.readlines()
+        count = -1
+        for line in l:
+            count += 1
+            btn_check = builder.get_object(str('c') + str(count))
+            entry = builder.get_object(str('e') + str(count))
+            btn_switch = builder.get_object(str('s') + str(count))
+            adjustment_fps_1 = builder.get_object(str('fps_') + str(count))
 
-    on_btn_back_app_conf(self)
+            if btn_check is not None:
+                file = gc.read_text().split('\n')
+                export = file[int(count) + 2]
+                reexport = re.findall(r'\Wexport', export)
 
-def on_btn_app_conf_save(self):
+                if str(reexport) == str(['#export']):
+                    btn_check.set_active(False)
+                else:
+                    btn_check.set_active(True)
+
+            if entry is not None:
+                file = gc.read_text().split('\n')
+                text = file[int(count) + 2]
+                retext = str(re.findall(r'\w* \w*="', text))[2:-3]
+                t = str(text).replace(retext, '')[1:-1]
+
+                if str(retext) != 0:
+                    entry.set_text(t)
+                else:
+                    entry.set_text('')
+
+            if btn_switch is not None:
+                file = gc.read_text().split('\n')
+                config = file[int(count) + 2]
+                reconfig = re.findall(r'=\w+', config)
+
+                if str(reconfig) == str(['=1']):
+                    btn_switch.set_active(True)
+                else:
+                    btn_switch.set_active(False)
+
+            if adjustment_fps_1 is not None:
+
+                def on_fps_limit_1(adjustment_fps_1):
+                    try:
+                        file = gc.read_text().split('\n')
+                        text = file[int(count) + 2]
+                        retext = str(re.findall(r'\W*\w* \w*="', text))[2:-3]
+                        fps_value = str(text).replace(retext, '')[1:-1]
+                        print(retext)
+                        print(fps_value)
+
+                        if str(fps_value) != str('0'):
+                            adjustment_fps_1.set_value(int(fps_value))
+
+                    except IndexError as e:
+                        print()
+
+                adjustment_fps_1.connect("value-changed", on_fps_limit_1)
+                on_fps_limit_1(adjustment_fps_1)
+
+def on_btn_check_conf(object):
+
+    def on_switch_activated(btn_switch, gparam):
+
+        if btn_switch.get_active():
+            file = gc.read_text().split('\n')
+            config = file[int(check_num) + 2]
+            gc.write_text(gc.read_text().replace(config, config.replace('=0', '=1')))
+        else:
+            file = gc.read_text().split('\n')
+            config = file[int(check_num) + 2]
+            gc.write_text(gc.read_text().replace(config, config.replace('=1', '=0')))
+
+    def on_btn_ok(self):
+
+        gettext = entry.get_text()
+        file = gc.read_text().split('\n')
+        text = file[int(entry_num) + 2]
+        refind = str(re.findall(r'\w* \w*="', text))[2:-3]
+        retext = str(text).replace(refind, '')
+        gc.write_text(gc.read_text().replace(text, text.replace(retext, '"' + gettext + '"')))
+
+    def on_fps_limit_scale_1(fps_limit_scale_1):
+
+        get_fps = fps_limit_scale_1.get_value()
+        out_cmd = get_arg(get_out())
+        gc = Path(f"{sw_games_config}/" + str(out_cmd))
+        file = gc.read_text().split('\n')
+        value = file[int(entry_num) + 2]
+        revalue = str(re.findall(r'\W*\w* \w*="', value))[2:-3]
+        fps = str(value).replace(revalue, '')[1:-1]
+        gc.write_text(gc.read_text().replace(value, value.replace(fps, str(get_fps).replace('.0', ''))))
+
+    def on_hud_activated(self):
+
+        if hud_posR.get_active():
+            hud_posL.set_active(False)
+
+            try:
+                file = gc.read_text().split('\n')
+                position = file[11]
+                gc.write_text(gc.read_text().replace(position, position.replace(str('="L"'), str('="R"'))))
+            except IOError as e:
+                print()
+        else:
+            hud_posL.set_active(True)
+
+            try:
+                file = gc.read_text().split('\n')
+                position = file[11]
+                gc.write_text(gc.read_text().replace(position, position.replace(str('="R"'), str('="L"'))))
+            except IOError as e:
+                print()
 
     out_cmd = get_arg(get_out())
-    games_config_name = f"{sw_games_config}" + str(out_cmd)
+    gc = Path(f"{sw_games_config}/" + str(out_cmd))
+    file = gc.read_text().split('\n')
 
-    try:
-        with open(games_config_name, 'w') as gc:
-            buffer = app_conf_text.get_buffer()
-            startIter, endIter = buffer.get_bounds()
-            t = buffer.get_text(startIter, endIter, False)
-            gc.write(t)
-    except IOError as e:
-        print("application config not found, set default value")
+    btn_check_name = Gtk.Buildable.get_name(object)
+    check_num = btn_check_name.replace('c', '')
+    btn_check = builder.get_object(btn_check_name)
+
+    btn_switch_name = btn_check_name.replace('c', 's')
+    switch_num = btn_check_name.replace('c', '')
+    btn_switch = builder.get_object(btn_switch_name)
+
+    btn_ok_name = btn_check_name.replace('c', 'b')
+    ok_num = btn_check_name.replace('c', '')
+    btn_ok = builder.get_object(btn_ok_name)
+
+    entry_name = btn_check_name.replace('c', 'e')
+    entry_num = btn_check_name.replace('c', '')
+    entry = builder.get_object(entry_name)
+
+    fps_name = btn_check_name.replace('c', 'fps_')
+    fps_num = btn_check_name.replace('c', '')
+    fps_limit_scale_1 = builder.get_object(fps_name)
+
+    hud_posR = builder.get_object('btn_R')
+    hud_posL = builder.get_object('btn_L')
+    hud_posR.connect("toggled", on_hud_activated)
+    hud_posL.connect("toggled", on_hud_activated)
+
+    if btn_check.get_active():
+        try:
+            file = gc.read_text().split('\n')
+            export = file[int(check_num) + 2]
+            gc.write_text(gc.read_text().replace(export, export.replace('#export', 'export')))
+
+            if btn_ok is not None:
+                btn_ok.set_sensitive(True)
+                btn_ok.connect('clicked', on_btn_ok)
+
+            if btn_switch is not None:
+                btn_switch.set_sensitive(True)
+                btn_switch.connect("notify::active", on_switch_activated)
+
+            if fps_limit_scale_1 is not None:
+                fps_limit_scale_1.connect("value-changed", on_fps_limit_scale_1)
+
+            app_conf_activate()
+
+        except IOError as e:
+            print("games_config not found, set default value")
+    else:
+        try:
+            file = gc.read_text().split('\n')
+            export = file[int(check_num) + 2]
+            gc.write_text(gc.read_text().replace(export, export.replace('export', '#export')))
+
+            if btn_ok is not None:
+                btn_ok.set_sensitive(False)
+
+            if btn_switch is not None:
+                btn_switch.set_sensitive(False)
+
+        except IOError as e:
+            print("games_config not found, set default value")
 
 def on_btn_app_conf_default(self):
 
     out_cmd = get_arg(get_out())
-    games_config_name = f"{sw_games_config}" + str(out_cmd)
-    games_config_default = f"{sw_games_config}.default"
+    gc = Path(f"{sw_games_config}/" + str(out_cmd))
+    gc_default = Path(f"{sw_games_config}/.default")
     try:
-        gcd = open(games_config_default, 'r')
-        text = gcd.read()
-        buffer = app_conf_text.get_buffer()
-        buffer.set_text(text)
-        gcn = open(games_config_name, 'w')
-        gcn.write(text)
+        gc.write_text(gc_default.read_text())
+        app_conf_activate()
     except IOError as e:
         print("application config not found, set default value")
+    else:
+        gc.write_text(gc_default.read_text())
+        app_conf_activate()
 
 def run_htop():
 
@@ -210,13 +400,13 @@ def get_size(widget, event):
     w = window.get_size().width
     h = window.get_size().height
 
-    favorites_scrolled.set_max_content_height(h*0.8)
-    app_conf_scrolled.set_max_content_height(h*0.8)
-    vte_scrolled.set_max_content_height(h*0.8)
-    settings_scrolled.set_min_content_height(h*0.85)
+    favorites_scrolled.set_max_content_height(h*0.85)
+    app_settings_scrolled.set_max_content_height(h*0.8)
+    vte_scrolled.set_max_content_height(h*0.85)
+    settings_scrolled.set_min_content_height(h*0.9)
 
     if w > 360:
-        img_path = f"{sw_icon}gui_icons/sw_top_header"
+        img_path = f"{sw_icon}/gui_icons/sw_top_header"
         pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, w-360, 32, preserve_aspect_ratio=False)
         top_header.set_from_pixbuf(pixbuf)
     if w <= 320:
@@ -227,6 +417,8 @@ def get_size(widget, event):
 def on_btn_get_favorites(self):
 
     screen = Gdk.Display.get_default()
+#    monitor = screen.get_primary_monitor()
+#    scale_factor = monitor.get_scale_factor()
     w = 0
     h = 0
     for x in range(0, screen.get_n_monitors()):
@@ -234,7 +426,9 @@ def on_btn_get_favorites(self):
          if ( h < screen.get_monitor(x).get_geometry().height ):
               h = screen.get_monitor(x).get_geometry().height
     x = w
+    # * scale_factor
     y = h
+    # * scale_factor
 
     favorites_btn_stack.set_visible_child_name("hide_favorites")
 
@@ -260,15 +454,14 @@ def echo_favorites_path(fav_name):
     cmd_name = f"cd {sw_favorites} && ls -1 | sed -n {fav_num}"
     proc1 = subprocess.run(cmd_name, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
     out_name1 = str(proc1.stdout[0:]).replace('\n', '')
-    cmd = f"sed -i '1d' {sw_scripts}run.sh && echo '\'`sed -n '4p' {sw_favorites}{out_name1} | cut -d '=' -f2-100`'\' >> {sw_scripts}run.sh"
+    cmd = f"sed -i '1d' {sw_scripts}run.sh && echo '\'`sed -n '4p' {sw_favorites}/{out_name1} | cut -d '=' -f2-100`'\' >> {sw_scripts}run.sh"
     subprocess.call(cmd, shell=True)
     game_name()
     get_favorites()
     start_tray()
     return True
 
-
-###################################___FAVORITES_EVENT_ON_BTN___#########################################################
+#############################################___FAVORITES_EVENT_ON_BTN___###############################################
 
 def on_btn_g_event1(widget, event):
 
@@ -632,13 +825,13 @@ def game_name_flow():
         out_name = out_num
         try:
             icon_path = f"icon_path{num}"
-            icon_path = open(f"{sw_icon}" + str(out_name) + '_x96.png')
+            icon_path = open(f"{sw_icon}/" + str(out_name) + '_x96.png')
         except IOError as e:
             icon_path = f"icon_path{num}"
-            icon_path = f"{sw_icon}gui_icons/unavailable.svg"
+            icon_path = f"{sw_icon}/gui_icons/unavailable.svg"
         else:
             icon_path = f"icon_path{num}"
-            icon_path = f"{sw_icon}" + str(out_name) + '_x96.png'
+            icon_path = f"{sw_icon}/" + str(out_name) + '_x96.png'
 
         btn_g = eval(f"btn_g{num}")
         btn_g.show()
@@ -916,7 +1109,7 @@ def echo_func_name(func_name):
     cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
     subprocess.call(cmd_clear, shell=True)
 
-    g_log = f"{sw_path}data/tmp/log/{exe_name}.log"
+    g_log = f"{sw_path}/data/tmp/log/{exe_name}.log"
     sys.stderr = open(g_log, 'w')
 
     if str(func) == str("ADD_SHORTCUT") or str(func) == str("ADD_FAVORITES"):
@@ -944,7 +1137,7 @@ def on_btn_hide(self):
 def on_btn_text_edit(self):
 
     out_cmd = get_arg(get_out())
-    text_edit_name = f"{sw_shortcuts}" + str(out_cmd) + str(".desktop")
+    text_edit_name = f"{sw_shortcuts}/" + str(out_cmd) + str(".desktop")
 
     try:
         with open(text_edit_name, 'r') as ten:
@@ -1013,45 +1206,39 @@ def on_btn_winehq2(self):
 def on_btn_lp_entry(self):
 
     out_cmd = get_arg(get_out())
-    games_config_name = f"{sw_games_config}" + str(out_cmd)
+    gc = Path(f"{sw_games_config}/" + str(out_cmd))
 
     try:
-
-        with open(games_config_name, 'r') as gc_name:
-
-            lp_text = lp_entry.get_text()
-            text = str(lp_text)
-            print(lp_text)
-            lp_cmd = f"sed -i 's/LAUNCH_PARAMETERS=\".*\"/LAUNCH_PARAMETERS=\"{text}\"/g' {games_config_name}"
-            subprocess.call(lp_cmd, shell=True)
+        gettext = lp_entry.get_text()
+        file = gc.read_text().split('\n')
+        text = file[2]
+        refind = str(re.findall(r'\W*\w* \w*="', text))[2:-3]
+        retext = str(text).replace(refind, '')
+        gc.write_text(gc.read_text().replace(text, text.replace(retext, '"' + gettext + '"')))
 
     except IOError as e:
-
         print("game games_config not found, set default value")
 
 def on_btn_do_entry(self):
 
     out_cmd = get_arg(get_out())
-    games_config_name = f"{sw_games_config}" + str(out_cmd)
+    gc = Path(f"{sw_games_config}/" + str(out_cmd))
 
     try:
-
-        with open(games_config_name, 'r') as gc_name:
-
-            do_text = do_entry.get_text()
-            text = str(do_text)
-            print(do_text)
-            do_cmd = f"sed -i 's/WINEDLLOVERRIDES=\".*\"/WINEDLLOVERRIDES=\"{text}\"/g' {games_config_name}"
-            subprocess.call(do_cmd, shell=True)
+        gettext = do_entry.get_text()
+        file = gc.read_text().split('\n')
+        text = file[3]
+        refind = str(re.findall(r'\W*\w* \w*="', text))[2:-3]
+        retext = str(text).replace(refind, '')
+        gc.write_text(gc.read_text().replace(text, text.replace(retext, '"' + gettext + '"')))
 
     except IOError as e:
-
         print("game games_config not found, set default value")
 
 def on_btn_games_config(self):
 
     out_cmd = get_arg(get_out())
-    games_config_name = f"{sw_games_config}" + str(out_cmd)
+    games_config_name = f"{sw_games_config}/" + str(out_cmd)
 
     try:
 
@@ -1067,22 +1254,7 @@ def on_btn_games_config(self):
     popover.hide()
     g_popover1.hide()
 
-###############################___START___##############################################################################
-
-def on_fps_limit_scale_main(fps_limit_scale_main):
-
-    fps = fps_limit_scale_main.get_value()
-    command = f"sed -i '25 s/.*/{fps}/' {sw_scripts}settings"
-    subprocess.call(command, shell=True)
-
-def on_fps_limit_main(adjustment_fps_main):
-
-    cmd = f"sed -n '25p' {sw_scripts}/settings"
-    proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
-    fps_value = str(proc.stdout[0:]).replace('.0\n', '')
-
-    if str(fps_value) != str(''):
-        adjustment_fps_main.set_value(int(fps_value))
+#######################################################___START___######################################################
 
 def progress():
 
@@ -1098,13 +1270,16 @@ def on_btn_start(self):
     run_gamemode()
 
     ver = f"vulkaninfo | grep driverName | cut -d '=' -f2 | head -n1"
+    ver2 = f"vulkaninfo | grep driverName | cut -d '=' -f2 | tail -n1"
     proc = subprocess.run(ver, shell=True, stderr=subprocess.DEVNULL, stdout=subprocess.PIPE, encoding='UTF-8')
     vulkan_dri = str(proc.stdout[0:]).replace('\n', '').replace(' ', '')
+    proc = subprocess.run(ver2, shell=True, stderr=subprocess.DEVNULL, stdout=subprocess.PIPE, encoding='UTF-8')
+    vulkan_dri2 = str(proc.stdout[0:]).replace('\n', '').replace(' ', '')
 
     progressbar.set_show_text(True)
     progressbar.set_text('THE APP IS LOADING...')
 
-    if str(vulkan_dri) == str(''):
+    if str(vulkan_dri) == str('') and str(vulkan_dri2) == str(''):
 
         Thread(target=run_opengl).start()
         Thread(target=progress).start()
@@ -1113,7 +1288,7 @@ def on_btn_start(self):
         progress_timeout = GLib.timeout_add(60, progress)
 
     else:
-        if str(vulkan_dri) == str('llvmpipe'):
+        if str(vulkan_dri) == str('llvmpipe') and str(vulkan_dri2) == str('llvmpipe'):
 
             Thread(target=run_opengl).start()
             Thread(target=progress).start()
@@ -1150,7 +1325,7 @@ def get_pid_name():
 
 def run_vulkan():
 
-    g_log = f"{sw_path}data/tmp/log/{exe_name}.log"
+    g_log = f"{sw_path}/data/tmp/log/{exe_name}.log"
     sys.stderr = open(g_log, 'w')
 
     func_name = f"RUN_VULKAN"
@@ -1158,7 +1333,7 @@ def run_vulkan():
 
 def run_opengl():
 
-    g_log = f"{sw_path}data/tmp/log/{exe_name}.log"
+    g_log = f"{sw_path}/data/tmp/log/{exe_name}.log"
     sys.stderr = open(g_log, 'w')
 
     func_name = f"USE_OPENGL='\"''1''\"' RUN_VULKAN"
@@ -1166,10 +1341,10 @@ def run_opengl():
 
 def run_gamemode():
 
-    gmod_log = f"{sw_path}data/tmp/log/gamemoded.log"
+    gmod_log = f"{sw_path}/data/tmp/log/gamemoded.log"
     sys.stderr = open(gmod_log, 'w')
 
-    cmd_gmod = f"{sw_path}data/tools/utils/bin/gamemoded"
+    cmd_gmod = f"{sw_path}/data/tools/utils/bin/gamemoded"
     proc = subprocess.Popen(cmd_gmod, shell=True, start_new_session=True, stderr=subprocess.STDOUT, stdout=sys.stderr, encoding='UTF-8')
 
 #################################################___SHORTCUTS___########################################################
@@ -1476,7 +1651,7 @@ def on_btn_back_cs(self):
 
     sw_stack.set_visible_child_name("page0")
 
-############################___WINE_TOOLS___############################################################################
+######################################################___WINE_TOOLS___##################################################
 
 def on_btn_winetools(self):
 
@@ -1529,22 +1704,201 @@ def uninstaller():
 
 def on_btn_winetricks(self):
 
-    Thread(target=winetricks).start()
-    Thread(target=time.sleep(.5)).start()
-    Thread(target=progressbar_WT).start()
+    pfx_name = f"pfx_" + get_arg(get_out()).replace('StartWine', 'default').replace('default_', 'default')
+    pfx_path = f"{sw_pfx}/{pfx_name}"
+    f_dll = Path(f"{pfx_path}/dll.log")
+    f_check = Path(f"{pfx_path}/check.log")
+    f_btn = Path(f"{pfx_path}/btn.log")
 
-    GLib.timeout_add(500, get_pid_name_WT)
+    window.set_resizable(True)
+    sw_stack.set_visible_child_name("winetricks_window")
+    window.resize(1280, 720)
+    winetricks_scrolled.set_min_content_width(1280)
+    winetricks_scrolled.set_min_content_height(500)
+    window.set_resizable(False)
+    pfx_label.set_label(pfx_path)
+
+    def set_btn_active():
+
+        with open(f_btn, 'r') as f:
+            l = f.readlines()
+            count = 0
+            for line in l:
+                count += 1
+                btn_num = "{}".format(line.strip())
+                btn_num = builder.get_object(btn_num)
+                btn_num.set_active(True)
+        try:
+            f_check.unlink()
+            f_dll.unlink()
+
+        except IOError as e:
+            print("check log not created, set to default")
+
+    if f_dll.exists() and f_check.exists():
+
+        if f_btn.exists():
+            f_btn.write_text(f_btn.read_text() + f_check.read_text())
+
+        else:
+            f_btn.write_text(f_check.read_text())
+        set_btn_active()
+
+    else:
+        if f_btn.exists():
+            set_btn_active()
+
+def on_btn_check_fonts(object):
+
+    pfx_name = f"pfx_" + get_arg(get_out()).replace('StartWine', 'default').replace('default_', 'default')
+    pfx_path = f"{sw_pfx}/{pfx_name}"
+    f_dll = Path(f"{pfx_path}/dll.log")
+    f_check = Path(f"{pfx_path}/check.log")
+
+    font_num = Gtk.Buildable.get_name(object)
+    buffer = fonts_view.get_buffer()
+    startIter, endIter = buffer.get_bounds()
+    bgt = buffer.get_text(startIter, endIter, False)
+    font = str(bgt.split()[int(font_num.replace('_', ''))])
+    btn_font = builder.get_object(font_num)
+
+    if btn_font.get_active():
+
+        with open(f_dll, 'a') as f:
+            f.write(font + " ")
+        with open(f_check, 'a') as f:
+            f.write(font_num + "\n")
+
+    else:
+        f_dll.write_text(f_dll.read_text().replace(font + ' ', ''))
+        f_check.write_text(f_check.read_text().replace(font_num + '\n', ''))
+
+def on_btn_check_dll(object):
+
+    pfx_name = f"pfx_" + get_arg(get_out()).replace('StartWine', 'default').replace('default_', 'default')
+    pfx_path = f"{sw_pfx}/{pfx_name}"
+    f_dll = Path(f"{pfx_path}/dll.log")
+    f_check = Path(f"{pfx_path}/check.log")
+
+    num = Gtk.Buildable.get_name(object)
+    buffer = winetricks_text_view.get_buffer()
+    startIter, endIter = buffer.get_bounds()
+    bgt = buffer.get_text(startIter, endIter, False)
+    dll = str(bgt.split()[int(num)])
+    btn_dll = builder.get_object(num)
+
+    if btn_dll.get_active():
+
+        with open(f_dll, 'a') as f:
+            f.write(dll + " ")
+        with open(f_check, 'a') as f:
+            f.write(num + "\n")
+
+    else:
+        f_dll.write_text(f_dll.read_text().replace(dll + ' ', ''))
+        f_check.write_text(f_check.read_text().replace(num + '\n', ''))
+
+def on_btn_install_dll(self):
+
+    Thread(target=install_dll).start()
+    Thread(target=time.sleep(.5)).start()
+    Thread(target=progressbar_DLL).start()
+
+    GLib.timeout_add(500, get_pid_name_DLL)
 
     if progressbar_lock.acquire(False):
-        GLib.timeout_add(60, progressbar_WT)
-        GLib.timeout_add(1000, pid_name_print_WT)
+        GLib.timeout_add(60, progressbar_DLL)
+        GLib.timeout_add(1000, pid_name_print_DLL)
 
-def winetricks():
+def install_dll():
 
-    func_name = f"SW_WINETRICKS"
-    echo_func_name(func_name)
+    pfx_name = f"pfx_" + get_arg(get_out()).replace('StartWine', 'default').replace('default_', 'default')
+    pfx_path = f"{sw_pfx}/{pfx_name}"
+    f_dll = Path(f"{pfx_path}/dll.log")
 
-def on_btn_install_libraries(self):
+    with open(f_dll, 'r') as f:
+
+        path_game = get_arg(get_path_game())
+        dll_name = f.read()
+        func_name = f"SW_WINETRICKS"
+
+        cmd_clear = f"sed -i '3,100d' {sw_scripts}function.sh"
+        subprocess.call(cmd_clear, shell=True)
+
+#        g_log = f"{sw_path}/data/tmp/log/{exe_name}.log"
+#        sys.stderr = open(g_log, 'w')
+
+        cmd_dll = f"echo export DLL='\"''{dll_name}''\"' >> {sw_scripts}function.sh"
+        subprocess.call(cmd_dll, shell=True)
+
+        cmd = f"echo {func_name} '\"''$@''\"' >> {sw_scripts}function.sh && {sw_scripts}function.sh {path_game}"
+        subprocess.call(cmd, shell=True)
+
+def on_btn_back_winetricks(self):
+
+    window.set_resizable(True)
+    window.resize(320, 640)
+    sw_stack.set_visible_child_name("winetools_window")
+    winetricks_scrolled.set_min_content_width(-1)
+    winetricks_scrolled.set_min_content_height(-1)
+    pfx_label.set_label("")
+    window.set_resizable(False)
+
+def key_event(widget, event):
+
+    if event.keyval == Gdk.KEY_Return or event.keyval == Gdk.KEY_KP_Enter:
+        gettext = se.get_text()
+
+        with open(f"{sw_scripts}data", 'r') as f:
+            count = -1
+            for line in f:
+                count +=1
+                if gettext in line:
+                    b = builder.get_object(str(count))
+                    b.set_active(True)
+                    print(count)
+                    se.set_text("")
+
+def get_selected(self, view, store):
+
+    find = se.get_text()
+    file = data_content.split()
+
+    found = [line for line in file if find in line]
+    num = view.to_string()
+    f_num = found[int(num)]
+    se.set_text(f_num)
+
+    gettext = se.get_text()
+    with open(f"{sw_scripts}data", 'r') as f:
+        count = -1
+        for line in f:
+            count +=1
+            if gettext in line:
+                b = builder.get_object(str(count))
+                b.set_active(True)
+                print(count)
+                se.set_text("")
+
+def search_changed(self):
+
+    find = se.get_text()
+    file = data_content.split()
+
+    if find == str(""):
+        se_stack.set_visible_child_name("winetricks_notebook")
+    else:
+        se_stack.set_visible_child_name("se_view")
+
+    found = [line for line in file if find in line]
+    store.clear()
+    count = 0
+    for line in found:
+        count +=1
+        fline = "{}".format(line.strip())
+        store.append([fline])
+
+def on_btn_install_rl(self):
 
     Thread(target=install_rl).start()
     Thread(target=time.sleep(.5)).start()
@@ -1560,6 +1914,52 @@ def install_rl():
 
     func_name = f"INSTALL_RL"
     echo_func_name(func_name)
+
+def progressbar_DLL():
+
+    try:
+        cmd = f"pgrep -l function.sh"
+        pid = str(list(subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8').stdout.split())[-1])
+
+        if str(pid) == str('function.sh'):
+            progressbar_dll.pulse()
+            return True
+
+    except (IndexError, OSError) as e:
+        print('|___all process is done___|')
+
+def pid_name_print_DLL():
+
+    try:
+        cmd = f"pgrep -l function.sh"
+        pid = str(list(subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8').stdout.split())[-1])
+
+        if str(pid) == str('function.sh'):
+
+            cmd_print = f"pgrep -fl .exe"
+            pid_print = str(list(subprocess.run(cmd_print, shell=True, stdout=subprocess.PIPE, encoding='UTF-8').stdout.split())[-3])
+
+            progressbar_dll.set_show_text(True)
+            progressbar_dll.set_text(pid_print)
+
+            return True
+
+    except (IndexError, OSError) as e:
+        print('|___all process is done___|')
+
+def get_pid_name_DLL():
+
+    try:
+        cmd = f"pgrep -l function.sh"
+        pid = str(list(subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8').stdout.split())[-1])
+        return pid
+
+    except (IndexError, OSError) as e:
+        progressbar_dll.set_fraction(0.0)
+        progressbar_lock.release()
+        Thread(target=time.sleep(1)).start()
+        progressbar_dll.set_text('')
+        return False
 
 def progressbar_WT():
 
@@ -1611,7 +2011,7 @@ def on_btn_back_wt(self):
 
     sw_stack.set_visible_child_name("page0")
 
-###############################  PREFIX_TOOLS  #########################################################################
+###############################################___PREFIX_TOOLS___#######################################################
 
 def on_btn_prefix_tools(self):
 
@@ -1815,7 +2215,7 @@ def debug_vulkan():
 
 def debug_opengl():
 
-    func_name = f"USE_OPENGL='\"''1''\"' DEBUG_OPENGL"
+    func_name = f"USE_OPENGL='\"''1''\"' DEBUG_VULKAN"
     echo_func_name(func_name)
 
 #################################################___DOWNLOAD_WINE___####################################################
@@ -1886,7 +2286,7 @@ def on_btn_rm_lutris_ge(self):
 
 def on_btn_wine_6(self):
 
-    cmd = f"xdg-open {sw_path}data/wine/wine_custom"
+    cmd = f"xdg-open {sw_path}/data/wine/wine_custom"
     subprocess.Popen(cmd, shell=True)
 
 def on_btn_back_dw(self):
@@ -2257,7 +2657,63 @@ def on_btn_settings(self):
             command = f"sed -i '/024/g' {sw_scripts}settings"
             subprocess.call(command, shell=True)
 
-#############################___SWITCH BUTTON___########################################################################
+    def on_BATTLEYE_activated(BATTLEYE, gparam):
+
+        if BATTLEYE.get_active():
+
+            state = "on"
+            command = f"sed -i '26 s/.*/026_BATTLEYE/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+        else:
+
+            state = "off"
+            command = f"sed -i '/026/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_EASY_ANTICHEAT_activated(EASY_ANTICHEAT, gparam):
+
+        if EASY_ANTICHEAT.get_active():
+
+            state = "on"
+            command = f"sed -i '27 s/.*/027_EASYANTICHEAT/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+        else:
+
+            state = "off"
+            command = f"sed -i '/027/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_D3D_PLUGINS_activated(D3D_PLUGINS, gparam):
+
+        if D3D_PLUGINS.get_active():
+
+            state = "on"
+            command = f"sed -i '28 s/.*/028_D3D_PLUGINS/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+        else:
+
+            state = "off"
+            command = f"sed -i '/028/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+    def on_VSYNC_DISABLE_activated(VSYNC_DISABLE, gparam):
+
+        if VSYNC_DISABLE.get_active():
+
+            state = "on"
+            command = f"sed -i '29 s/.*/029_VSYNC_DISABLE/' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+        else:
+
+            state = "off"
+            command = f"sed -i '/029/g' {sw_scripts}settings"
+            subprocess.call(command, shell=True)
+
+#################################################___SWITCH BUTTON___####################################################
 
     dxvk_ge = builder.get_object("dxvk_ge")
     dxvk_ge.connect("toggled", on_dxvk_ge_activated)
@@ -2751,12 +3207,87 @@ def on_btn_settings(self):
 
     mono_enable()
 
+    BATTLEYE = builder.get_object("BATTLEYE")
+    BATTLEYE.connect("notify::active", on_BATTLEYE_activated)
+
+    def battleye():
+
+        battleye = f"sed -n '/026/p' {sw_scripts}/settings"
+        proc = subprocess.run(battleye, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        battleye_name = str(proc.stdout[0:]).replace('\n', '')
+
+        if str(battleye_name) == str('026_BATTLEYE'):
+
+            BATTLEYE.set_active(True)
+
+        else:
+
+            BATTLEYE.set_active(False)
+
+    battleye()
+
+    EASY_ANTICHEAT = builder.get_object("EASY_ANTICHEAT")
+    EASY_ANTICHEAT.connect("notify::active", on_EASY_ANTICHEAT_activated)
+
+    def easy_anticheat():
+
+        easy_anticheat = f"sed -n '/027/p' {sw_scripts}/settings"
+        proc = subprocess.run(easy_anticheat, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        easy_anticheat_name = str(proc.stdout[0:]).replace('\n', '')
+
+        if str(easy_anticheat_name) == str('027_EASYANTICHEAT'):
+
+            EASY_ANTICHEAT.set_active(True)
+
+        else:
+
+            EASY_ANTICHEAT.set_active(False)
+
+    easy_anticheat()
+
+    D3D_PLUGINS = builder.get_object("D3D_PLUGINS")
+    D3D_PLUGINS.connect("notify::active", on_D3D_PLUGINS_activated)
+
+    def d3d_plugins():
+
+        d3d_plugins = f"sed -n '/028/p' {sw_scripts}/settings"
+        proc = subprocess.run(d3d_plugins, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        d3d_plugins_name = str(proc.stdout[0:]).replace('\n', '')
+
+        if str(d3d_plugins_name) == str('028_D3D_PLUGINS'):
+
+            D3D_PLUGINS.set_active(True)
+
+        else:
+
+            D3D_PLUGINS.set_active(False)
+
+    d3d_plugins()
+
+    VSYNC_DISABLE = builder.get_object("VSYNC_DISABLE")
+    VSYNC_DISABLE.connect("notify::active", on_VSYNC_DISABLE_activated)
+
+    def vsync_disable():
+
+        vsync_disable = f"sed -n '/029/p' {sw_scripts}/settings"
+        proc = subprocess.run(vsync_disable, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        vsync_disable_name = str(proc.stdout[0:]).replace('\n', '')
+
+        if str(vsync_disable_name) == str('029_VSYNC_DISABLE'):
+
+            VSYNC_DISABLE.set_active(True)
+
+        else:
+
+            VSYNC_DISABLE.set_active(False)
+
+    vsync_disable()
+
 def on_btn_back_st(self):
 
     sw_stack.set_visible_child_name("page0")
 
 ###############################################___KILL_PROCESS___#######################################################
-
 def on_btn_stop(self):
 
     cmd = f"{sw_scripts}stop"
@@ -2807,17 +3338,7 @@ btn_get_favorites.connect("clicked", on_btn_get_favorites)
 btn_hide_favorites = builder.get_object("btn_hide_favorites")
 btn_hide_favorites.connect("clicked", on_btn_hide_favorites)
 
-btn_back_fs = builder.get_object("btn_back_fs")
-btn_back_fs.connect("clicked", on_btn_back_fs)
-
-btn_back_app_conf = builder.get_object("btn_back_app_conf")
-btn_back_app_conf.connect("clicked", on_btn_back_app_conf)
-
-app_conf_scrolled = builder.get_object("app_conf_scrolled")
-app_conf_text = builder.get_object("app_conf_text")
-
-btn_app_conf_save = builder.get_object("btn_app_conf_save")
-btn_app_conf_save.connect("clicked", on_btn_app_conf_save)
+app_settings_scrolled = builder.get_object("app_settings_scrolled")
 
 btn_app_conf_default = builder.get_object("btn_app_conf_default")
 btn_app_conf_default.connect("clicked", on_btn_app_conf_default)
@@ -2848,7 +3369,7 @@ lp_entry = builder.get_object("lp_entry")
 lp_entry.set_activates_default(True)
 lp_entry.connect("activate", on_btn_lp_entry)
 
-lp_icon = f"{sw_icon}gui_icons/regedit.svg"
+lp_icon = f"{sw_icon}/gui_icons/regedit.svg"
 lp_pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(lp_icon, 16, 16, preserve_aspect_ratio=True)
 
 lp_entry.set_icon_activatable(0, True)
@@ -2872,6 +3393,8 @@ btn_games_config.connect("clicked", on_btn_games_config)
 def get_resolution():
 
     screen = Gdk.Display.get_default()
+#    monitor = screen.get_primary_monitor()
+#    scale_factor = monitor.get_scale_factor()
     w = 0
     h = 0
     for x in range(0, screen.get_n_monitors()):
@@ -2879,7 +3402,9 @@ def get_resolution():
          if ( h < screen.get_monitor(x).get_geometry().height ):
               h = screen.get_monitor(x).get_geometry().height
     out_name_1 = w
+    # * scale_factor
     out_name_2 = h
+    # * scale_factor
     print (f"{out_name_1}*{out_name_2}")
 
     def get_css(css_name):
@@ -2923,7 +3448,7 @@ def get_resolution():
             css_name = f"{sw_css_dark}black/gtk-3.0/gtk.css"
             get_css(css_name)
 
-            img_path = f"{sw_icon}sw_themes/4k/sw_bg1"
+            img_path = f"{sw_icon}/sw_themes/4k/sw_bg1"
             image = builder.get_object("sw_bgr")
             pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
             image.set_from_pixbuf(pixbuf)
@@ -2962,7 +3487,7 @@ def get_resolution():
             css_name = f"{sw_css_dark}grey/gtk-3.0/gtk.css"
             get_css(css_name)
 
-            img_path = f"{sw_icon}sw_themes/4k/sw_bg2"
+            img_path = f"{sw_icon}/sw_themes/4k/sw_bg2"
             image = builder.get_object("sw_bgr")
             pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
             image.set_from_pixbuf(pixbuf)
@@ -3001,7 +3526,7 @@ def get_resolution():
             css_name = f"{sw_css_dark}red/gtk-3.0/gtk.css"
             get_css(css_name)
 
-            img_path = f"{sw_icon}sw_themes/4k/sw_bg3"
+            img_path = f"{sw_icon}/sw_themes/4k/sw_bg3"
             image = builder.get_object("sw_bgr")
             pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
             image.set_from_pixbuf(pixbuf)
@@ -3040,7 +3565,7 @@ def get_resolution():
             css_name = f"{sw_css_dark}yellow/gtk-3.0/gtk.css"
             get_css(css_name)
 
-            img_path = f"{sw_icon}sw_themes/4k/sw_bg4"
+            img_path = f"{sw_icon}/sw_themes/4k/sw_bg4"
             image = builder.get_object("sw_bgr")
             pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
             image.set_from_pixbuf(pixbuf)
@@ -3079,7 +3604,7 @@ def get_resolution():
             css_name = f"{sw_css_dark}green/gtk-3.0/gtk.css"
             get_css(css_name)
 
-            img_path = f"{sw_icon}sw_themes/4k/sw_bg5"
+            img_path = f"{sw_icon}/sw_themes/4k/sw_bg5"
             image = builder.get_object("sw_bgr")
             pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
             image.set_from_pixbuf(pixbuf)
@@ -3118,7 +3643,7 @@ def get_resolution():
             css_name = f"{sw_css_dark}blue/gtk-3.0/gtk.css"
             get_css(css_name)
 
-            img_path = f"{sw_icon}sw_themes/4k/sw_bg6"
+            img_path = f"{sw_icon}/sw_themes/4k/sw_bg6"
             image = builder.get_object("sw_bgr")
             pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
             image.set_from_pixbuf(pixbuf)
@@ -3157,7 +3682,7 @@ def get_resolution():
             css_name = f"{sw_css_dark}purple/gtk-3.0/gtk.css"
             get_css(css_name)
 
-            img_path = f"{sw_icon}sw_themes/4k/sw_bg7"
+            img_path = f"{sw_icon}/sw_themes/4k/sw_bg7"
             image = builder.get_object("sw_bgr")
             pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
             image.set_from_pixbuf(pixbuf)
@@ -3196,7 +3721,7 @@ def get_resolution():
             css_name = f"{sw_css_dark}brown/gtk-3.0/gtk.css"
             get_css(css_name)
 
-            img_path = f"{sw_icon}sw_themes/4k/sw_bg8"
+            img_path = f"{sw_icon}/sw_themes/4k/sw_bg8"
             image = builder.get_object("sw_bgr")
             pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
             image.set_from_pixbuf(pixbuf)
@@ -3235,7 +3760,7 @@ def get_resolution():
             css_name = f"{sw_css_light}black/gtk-3.0/gtk.css"
             get_css(css_name)
 
-            img_path = f"{sw_icon}sw_themes/4k/sw_bg0"
+            img_path = f"{sw_icon}/sw_themes/4k/sw_bg0"
             image = builder.get_object("sw_bgrw")
             pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(out_name_1), int(out_name_2), preserve_aspect_ratio=False)
             image.set_from_pixbuf(pixbuf)
@@ -3283,8 +3808,8 @@ def game_name():
 
     def desktop_wine():
 
-        desktop_name = f"{sw_shortcuts}" + str(out_cmd) + '.desktop'
-        desktop_sw = f"{sw_path}" + 'StartWine.desktop'
+        desktop_name = f"{sw_shortcuts}/" + str(out_cmd) + '.desktop'
+        desktop_sw = f"{sw_path}/" + 'StartWine.desktop'
 
         try:
 
@@ -3313,20 +3838,20 @@ def game_name():
 
             try:
 
-                icon_path = open(f"{sw_icon}" + str(out_cmd) + '_x96.png')
+                icon_path = open(f"{sw_icon}/" + str(out_cmd) + '_x96.png')
 
             except IOError as e:
 
                 print("icon not found, set default icon")
-                icon_path = f"{sw_icon}gui_icons/" + 'SW_Launcher_x96.png'
+                icon_path = f"{sw_icon}/gui_icons/" + 'SW_Launcher_x96.png'
 
             else:
 
-                icon_path = f"{sw_icon}" + str(out_cmd) + '_x96.png'
+                icon_path = f"{sw_icon}/" + str(out_cmd) + '_x96.png'
 
             def desktop_pfx():
 
-                file_name = f"{sw_shortcuts}" + str(out_cmd) + '.desktop'
+                file_name = f"{sw_shortcuts}/" + str(out_cmd) + '.desktop'
 
                 try:
 
@@ -3378,7 +3903,7 @@ btn_start.connect("clicked", on_btn_start)
 btn_shortcuts = builder.get_object("btn_shortcuts")
 btn_shortcuts.connect("clicked", on_btn_shortcuts)
 
-############################################___CREATE_SHORTCUT_BUILDER___###############################################
+############################################___BUILDER_CREATE_SHORTCUT___###############################################
 
 btn_create_shortcut = builder.get_object("btn_create_shortcut")
 btn_create_shortcut.connect("clicked", on_btn_create_shortcut)
@@ -3416,7 +3941,7 @@ btn_cs_custom_4.connect("clicked", on_btn_cs_custom_4)
 btn_cs_custom_5 = builder.get_object("btn_cs_custom_5")
 btn_cs_custom_5.connect("clicked", on_btn_cs_custom_5)
 
-#############################################___PREFIX_TOOLS_BUILDER___#################################################
+#############################################___BUILDER_PREFIX_TOOLS___#################################################
 
 btn_prefix_tools = builder.get_object("btn_prefix_tools")
 btn_prefix_tools.connect("clicked", on_btn_prefix_tools)
@@ -3439,7 +3964,7 @@ btn_pfx_full_backup.connect("clicked", on_btn_pfx_full_backup)
 btn_pfx_full_restore = builder.get_object("btn_pfx_full_restore")
 btn_pfx_full_restore.connect("clicked", on_btn_pfx_full_restore)
 
-##############################################___WINE_TOOLS_BUILDER___##################################################
+##############################################___BUILDER_WINE_TOOLS___##################################################
 
 btn_winetools = builder.get_object("btn_winetools")
 btn_winetools.connect("clicked", on_btn_winetools)
@@ -3459,22 +3984,61 @@ btn_file_explorer.connect("clicked", on_btn_file_explorer)
 btn_uninstaller = builder.get_object("btn_uninstaller")
 btn_uninstaller.connect("clicked", on_btn_uninstaller)
 
+#############################################___BUILDER_WINETRICKS___###################################################
+
+se_stack = builder.get_object("se_stack")
+se = builder.get_object("se")
+view = builder.get_object("se_view")
+se.connect("search_changed", search_changed)
+se.connect("key-press-event", key_event)
+view.connect("row-activated", get_selected)
+
+data_path = Path(f"{sw_scripts}data")
+data_content = data_path.read_text()
+
+with open(data_path, 'r') as f:
+
+    file = f.readlines()
+    count = 0
+    for line in file:
+        count += 1
+        data = "{}".format(line.strip())
+        store = Gtk.ListStore(str)
+        for data in file:
+            treeiter = store.append([data.strip()])
+
+view.set_model(store)
+renderer = Gtk.CellRendererText()
+column = view.insert_column_with_attributes(0 , "List" , renderer, text=0)
+
+winetricks_scrolled = builder.get_object("winetricks_scrolled")
+winetricks_notebook = builder.get_object("winetricks_notebook")
+pfx_label = builder.get_object("pfx_label")
+
 btn_winetricks = builder.get_object("btn_winetricks")
 btn_winetricks.connect("clicked", on_btn_winetricks)
 
-btn_install_libraries = builder.get_object("btn_install_libraries")
-btn_install_libraries.connect("clicked", on_btn_install_libraries)
+btn_install_dll = builder.get_object("btn_install_dll")
+btn_install_dll.connect("clicked", on_btn_install_dll)
 
-progressbar_wt = builder.get_object("progressbar_wt")
-progressbar_pt = builder.get_object("progressbar_pt")
-progressbar_cs = builder.get_object("progressbar_cs")
+winetricks_text_view = builder.get_object("winetricks_text_view")
+winetricks_text_buffer = builder.get_object("winetricks_text_buffer")
 
-################################################___DEBUG_BUILDER___#####################################################
+fonts_scrolled = builder.get_object("winetricks_scrolled")
+fonts_view = builder.get_object("fonts_view")
+fonts_buffer = builder.get_object("fonts_buffer")
+
+builder.connect_signals({'on_btn_check_dll': (on_btn_check_dll), 'on_btn_check_fonts': (on_btn_check_fonts), 'on_btn_check_conf': (on_btn_check_conf)})
+
+btn_install_rl = builder.get_object("btn_install_rl")
+btn_install_rl.connect("clicked", on_btn_install_rl)
+
+################################################___BUILDER_DEBUG___#####################################################
 
 btn_debug = builder.get_object("btn_debug")
 btn_debug.connect("clicked", on_btn_debug)
 
-############################################___DOWNLOAD_WINE_BUILDER___#################################################
+############################################___BUILDER_DOWNLOAD_WINE___#################################################
 
 btn_dw = builder.get_object("btn_dw")
 btn_dw.connect("clicked", on_btn_dw)
@@ -3512,7 +4076,7 @@ btn_rm_lutris_ge.connect("clicked", on_btn_rm_lutris_ge)
 btn_wine_6 = builder.get_object("btn_custom")
 btn_wine_6.connect("clicked", on_btn_wine_6)
 
-#############################################___BUTTON_BACK_BUILDER___##################################################
+#############################################___BUILDER_BUTTON_BACK___##################################################
 
 btn_back_ab = builder.get_object("btn_back_ab")
 btn_back_ab.connect("clicked", on_btn_back_ab)
@@ -3538,9 +4102,16 @@ btn_back_dw.connect("clicked", on_btn_back_dw)
 btn_back_st = builder.get_object("btn_back_st")
 btn_back_st.connect("clicked", on_btn_back_st)
 
+btn_back_winetricks = builder.get_object("btn_back_winetricks")
+btn_back_winetricks.connect("clicked", on_btn_back_winetricks)
 
+btn_back_fs = builder.get_object("btn_back_fs")
+btn_back_fs.connect("clicked", on_btn_back_fs)
 
-###############################################___GET_FAVORITES___######################################################
+btn_back_app_conf = builder.get_object("btn_back_app_conf")
+btn_back_app_conf.connect("clicked", on_btn_back_app_conf)
+
+###############################################___BUILDER_FAVORITES___##################################################
 
 top_header = builder.get_object("sw_top_header")
 favorites_icon = builder.get_object("favorites_icon")
@@ -3551,14 +4122,14 @@ def get_favorites():
     out_cmd = get_arg(get_out())
 
     try:
-        favorites_path = open(f"{sw_favorites}" + out_cmd + '.desktop')
+        favorites_path = open(f"{sw_favorites}/" + out_cmd + '.desktop')
 
     except IOError as e:
-        favorites_icon_path = f"{sw_icon}gui_icons/favorites-symbolic.svg"
+        favorites_icon_path = f"{sw_icon}/gui_icons/favorites-symbolic.svg"
         favorites_icon.set_from_file(favorites_icon_path)
 
     else:
-        favorites_icon_path = f"{sw_icon}gui_icons/favorites.png"
+        favorites_icon_path = f"{sw_icon}/gui_icons/favorites.png"
         favorites_icon.set_from_file(favorites_icon_path)
 
 get_favorites()
@@ -3600,13 +4171,18 @@ btn_g31 = builder.get_object("btn_g31")
 btn_g32 = builder.get_object("btn_g32")
 
 game_name_flow()
-########################################################################################################################
+################################################___BUILDER_PROGRESSBAR___###############################################
+
+progressbar = builder.get_object("start_progress")
+progressbar_wt = builder.get_object("progressbar_wt")
+progressbar_pt = builder.get_object("progressbar_pt")
+progressbar_cs = builder.get_object("progressbar_cs")
+progressbar_dll = builder.get_object("progressbar_dll")
 
 progressbar_lock = threading.Lock()
 progress_lock_rl = threading.Lock()
-progressbar = builder.get_object("start_progress")
 
-################################################___GET_VTE___###########################################################
+###################################################___GET_VTE___########################################################
 
 terminal = Vte.Terminal()
 terminal.spawn_async(
@@ -3660,7 +4236,7 @@ main_stack = builder.get_object("main_stack")
 vte_main_box = builder.get_object("vte_main_box")
 vte_main_grid = builder.get_object("vte_main_grid")
 vte_main_grid.attach(terminal, 0, 0, 1, 1)
-vte_main_grid.attach(terminal_sh, 0, 1, 1, 1)
+#vte_main_grid.attach(terminal_sh, 0, 1, 1, 1)
 
 vte_scrolled = builder.get_object("vte_scrolled")
 

@@ -6,12 +6,12 @@
 
 if [ ! -d "${START_WINE_PATH}/data/wine/wine_steam_proton/bin" ]; then
     export FTP_URL="https://github.com/RusNor/Wine-Steam-Proton/releases/download/steam-proton-"${SP_VER}"/steam-proton-"${SP_VER}".tar.xz"
-    wget -c -t 5 -w 2 "${FTP_URL}" --output-document="${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}".tar.xz" &&
-    tar -Jxvf "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}".tar.xz" -C "${START_WINE_PATH}/data/tmp" &&
-    try_copy_dir "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}"/bin" "${START_WINE_PATH}/data/wine/wine_steam_proton" &&
-    try_copy_dir "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}"/lib" "${START_WINE_PATH}/data/wine/wine_steam_proton" &&
-    try_copy_dir "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}"/lib64" "${START_WINE_PATH}/data/wine/wine_steam_proton" &&
-    try_copy_dir "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}"/share" "${START_WINE_PATH}/data/wine/wine_steam_proton" &&
+    crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}".tar.xz"` &&
+
+    crier=`$CRIER -tar "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}".tar.xz" "${START_WINE_PATH}/data/tmp"` &&
+    for copy_dir in bin lib lib64 share ; do
+        try_copy_dir "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}"/${copy_dir}" "${START_WINE_PATH}/data/wine/wine_steam_proton"
+    done
     try_copy_file "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}"/version" "${START_WINE_PATH}/data/wine/wine_steam_proton" &&
     try_remove_file "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}".tar.xz" &&
     try_remove_dir "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}""
@@ -24,7 +24,9 @@ echo "[Desktop Entry]" > "${START_WINE_PATH}/${name_desktop}.desktop"
 echo "Name=${name_desktop}" >> "${START_WINE_PATH}/${name_desktop}.desktop"
 echo "Name_2=pfx_default" >> "${START_WINE_PATH}/${name_desktop}.desktop"
 echo "Exec=env "${START_WINE_PATH}/data/scripts/start %F"" >> "${START_WINE_PATH}/${name_desktop}.desktop"
+echo "Comment=Launch Windows applications on Linux operating systems" >> "${START_WINE_PATH}/${name_desktop}.desktop"
 echo "Type=Application" >> "${START_WINE_PATH}/${name_desktop}.desktop"
+echo "MimeType=application/x-wine-extension-msp;application/x-msi;application/x-ms-dos-executable;" >> "${START_WINE_PATH}/${name_desktop}.desktop"
 echo "Categories=Game" >> "${START_WINE_PATH}/${name_desktop}.desktop"
 echo "StartupNotify=true" >> "${START_WINE_PATH}/${name_desktop}.desktop"
 echo "Path="${START_WINE_PATH}/data/scripts/"" >> "${START_WINE_PATH}/${name_desktop}.desktop"
