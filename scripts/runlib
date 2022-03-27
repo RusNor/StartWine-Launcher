@@ -8,7 +8,7 @@ export START_WINE_PATH="$(pwd)"
 ###############################   TOOLS   ######################################
 
 export SW_NAME="StartWine-Launcher"
-export SW_VER=" v3.5.1"
+export SW_VER=" v3.5.2"
 export GE_VER="7-10"
 export SP_VER="7.0.1"
 export STAG_VER="7.4"
@@ -931,8 +931,12 @@ RUN_VULKAN () {
         sw_win_ver
 
         for pfx_remove_dll in d3d12 libvkd3d-proton-utils-3 d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
-            try_remove_file "${WINEPREFIX}/drive_c/windows/syswow64/${pfx_remove_dll}.dll"
-            try_remove_file "${WINEPREFIX}/drive_c/windows/system32/${pfx_remove_dll}.dll"
+            if [ "${WINEARCH}" != "win32" ]; then
+                try_remove_file "${WINEPREFIX}/drive_c/windows/syswow64/${pfx_remove_dll}.dll"
+                try_remove_file "${WINEPREFIX}/drive_c/windows/system32/${pfx_remove_dll}.dll"
+            else
+                try_remove_file "${WINEPREFIX}/drive_c/windows/system32/${pfx_remove_dll}.dll"
+            fi
         done
 
         if [ "${SW_D3D_PLUGINS}" == 1 ]; then
@@ -944,7 +948,7 @@ RUN_VULKAN () {
                 try_force_link_file "${START_WINE_PATH}/data/tools/d3d_extras/x64/${sw_d3d_plugins}.dll" "${WINEPREFIX}/drive_c/windows/system32"
                 try_force_link_file "${START_WINE_PATH}/data/tools/d3d_extras/x32/${sw_d3d_plugins}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
             else
-                try_force_link_file "${START_WINE_PATH}/data/tools/d3d_extras/x64/${sw_d3d_plugins}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+                try_force_link_file "${START_WINE_PATH}/data/tools/d3d_extras/x32/${sw_d3d_plugins}.dll" "${WINEPREFIX}/drive_c/windows/system32"
             fi
 
             var_winedlloverride_update "${sw_d3d_plugins}=n,b"
@@ -953,23 +957,39 @@ RUN_VULKAN () {
 
         fi
 
-        if ! try_copy_file "${WINEDIR}"/lib/wine/fakedlls/dxgi.dll "${WINEPREFIX}/drive_c/windows/syswow64/"; then
-            try_copy_file "${WINEDIR}"/lib/wine/i386-windows/dxgi.dll "${WINEPREFIX}/drive_c/windows/syswow64/"
-        fi
+        if [ "${WINEARCH}" != "win32" ]; then
 
-        if ! try_copy_file "${WINEDIR}"/lib64/wine/fakedlls/dxgi.dll "${WINEPREFIX}/drive_c/windows/system32/"; then
-            try_copy_file "${WINEDIR}"/lib64/wine/x86_64-windows/dxgi.dll "${WINEPREFIX}/drive_c/windows/system32/"
-        fi
+            if ! try_copy_file "${WINEDIR}"/lib/wine/fakedlls/dxgi.dll "${WINEPREFIX}/drive_c/windows/syswow64"; then
+                 try_copy_file "${WINEDIR}"/lib/wine/i386-windows/dxgi.dll "${WINEPREFIX}/drive_c/windows/syswow64"
+            fi
 
-        for wine_build_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 ; do
-        if ! try_copy_file "${WINEDIR}/lib/wine/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64/"
-            then try_copy_file "${WINEDIR}/lib/wine/i386-windows/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64/"
-        fi
+            if ! try_copy_file "${WINEDIR}"/lib64/wine/fakedlls/dxgi.dll "${WINEPREFIX}/drive_c/windows/system32"; then
+                 try_copy_file "${WINEDIR}"/lib64/wine/x86_64-windows/dxgi.dll "${WINEPREFIX}/drive_c/windows/system32"
+            fi
 
-        if ! try_copy_file "${WINEDIR}/lib64/wine/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/"; then
-            try_copy_file "${WINEDIR}/lib64/wine/x86_64-windows/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/"
+            for wine_build_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 ; do
+            if ! try_copy_file "${WINEDIR}/lib/wine/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"; then
+                 try_copy_file "${WINEDIR}/lib/wine/i386-windows/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
+            fi
+
+            if ! try_copy_file "${WINEDIR}/lib64/wine/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"; then
+                 try_copy_file "${WINEDIR}/lib64/wine/x86_64-windows/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+            fi
+            done
+
+        else
+
+            if ! try_copy_file "${WINEDIR}"/lib/wine/fakedlls/dxgi.dll "${WINEPREFIX}/drive_c/windows/system32"; then
+                 try_copy_file "${WINEDIR}"/lib/wine/i386-windows/dxgi.dll "${WINEPREFIX}/drive_c/windows/system32"
+            fi
+
+            for wine_build_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 ; do
+            if ! try_copy_file "${WINEDIR}/lib/wine/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"; then
+                 try_copy_file "${WINEDIR}/lib/wine/i386-windows/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+            fi
+            done
+
         fi
-        done
 
         var_winedlloverride_update "d3d11,d3d10,d3d10core,d3d10_1,d3d9,dxgi=b;d3d12,libvkd3d-proton-utils-3="
 
@@ -995,8 +1015,12 @@ RUN_VULKAN () {
         sw_win_ver
 
         for pfx_remove_dll in d3d12 libvkd3d-proton-utils-3 d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
-            try_remove_file "${WINEPREFIX}/drive_c/windows/syswow64/${pfx_remove_dll}.dll"
-            try_remove_file "${WINEPREFIX}/drive_c/windows/system32/${pfx_remove_dll}.dll"
+            if [ "${WINEARCH}" != "win32" ]; then
+                try_remove_file "${WINEPREFIX}/drive_c/windows/syswow64/${pfx_remove_dll}.dll"
+                try_remove_file "${WINEPREFIX}/drive_c/windows/system32/${pfx_remove_dll}.dll"
+            else
+                try_remove_file "${WINEPREFIX}/drive_c/windows/system32/${pfx_remove_dll}.dll"
+            fi
         done
 
         if [ "${SW_D3D_PLUGINS}" == 1 ]; then
@@ -1008,7 +1032,7 @@ RUN_VULKAN () {
                 try_force_link_file "${START_WINE_PATH}/data/tools/d3d_extras/x64/${sw_d3d_plugins}.dll" "${WINEPREFIX}/drive_c/windows/system32"
                 try_force_link_file "${START_WINE_PATH}/data/tools/d3d_extras/x32/${sw_d3d_plugins}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
             else
-                try_force_link_file "${START_WINE_PATH}/data/tools/d3d_extras/x64/${sw_d3d_plugins}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+                try_force_link_file "${START_WINE_PATH}/data/tools/d3d_extras/x32/${sw_d3d_plugins}.dll" "${WINEPREFIX}/drive_c/windows/system32"
             fi
 
             var_winedlloverride_update "${sw_d3d_plugins}=n,b"
@@ -1017,42 +1041,80 @@ RUN_VULKAN () {
 
         fi
 
-        if [ "${DXVK_GE}" == "1" ]; then
-            if [ ! -d "${START_WINE_PATH}/data/wine/wine_proton_ge/bin" ]; then
-                for wine_dxvk_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
-                    try_copy_file "${START_WINE_PATH}/data/tools/vulkan/dxvk-"${DXVK_VER}"/x32/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64/"
-                    try_copy_file "${START_WINE_PATH}/data/tools/vulkan/dxvk-"${DXVK_VER}"/x64/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/"
-                done
-            else
-                for wine_dxvk_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
-                    try_copy_file "${START_WINE_PATH}/data/wine/wine_proton_ge/lib/wine/dxvk/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64/"
-                    try_copy_file "${START_WINE_PATH}/data/wine/wine_proton_ge/lib64/wine/dxvk/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/"
-                done
-            fi
-        else
-            for wine_dxvk_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
-                try_copy_file "${START_WINE_PATH}/data/tools/vulkan/dxvk-"${DXVK_VER}"/x32/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64/"
-                try_copy_file "${START_WINE_PATH}/data/tools/vulkan/dxvk-"${DXVK_VER}"/x64/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/"
-            done
-        fi
+        if [ "${WINEARCH}" != "win32" ]; then
 
-        if [ "${VKD3D_GE}" == "1" ]; then
-            if [ ! -d "${START_WINE_PATH}/data/wine/wine_proton_ge/bin" ]; then
-                for wine_vkd3d_dll in d3d12 ; do
-                    try_copy_file "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-"${VKD3D_VER}"/x86/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64/"
-                    try_copy_file "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-"${VKD3D_VER}"/x64/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/"
-                done
+            if [ "${DXVK_GE}" == "1" ]; then
+                if [ ! -d "${START_WINE_PATH}/data/wine/wine_proton_ge/bin" ]; then
+                    for wine_dxvk_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
+                        try_copy_file "${START_WINE_PATH}/data/tools/vulkan/dxvk-"${DXVK_VER}"/x32/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
+                        try_copy_file "${START_WINE_PATH}/data/tools/vulkan/dxvk-"${DXVK_VER}"/x64/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+                    done
+                else
+                    for wine_dxvk_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
+                        try_copy_file "${START_WINE_PATH}/data/wine/wine_proton_ge/lib/wine/dxvk/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
+                        try_copy_file "${START_WINE_PATH}/data/wine/wine_proton_ge/lib64/wine/dxvk/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+                    done
+                fi
             else
-                for wine_vkd3d_dll in d3d12 libvkd3d-proton-utils-3 ; do
-                    try_copy_file "${START_WINE_PATH}/data/wine/wine_proton_ge/lib/wine/vkd3d-proton/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64/"
-                    try_copy_file "${START_WINE_PATH}/data/wine/wine_proton_ge/lib64/wine/vkd3d-proton/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/"
+                for wine_dxvk_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
+                    try_copy_file "${START_WINE_PATH}/data/tools/vulkan/dxvk-"${DXVK_VER}"/x32/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
+                    try_copy_file "${START_WINE_PATH}/data/tools/vulkan/dxvk-"${DXVK_VER}"/x64/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
                 done
             fi
+
+            if [ "${VKD3D_GE}" == "1" ]; then
+                if [ ! -d "${START_WINE_PATH}/data/wine/wine_proton_ge/bin" ]; then
+                    for wine_vkd3d_dll in d3d12 ; do
+                        try_copy_file "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-"${VKD3D_VER}"/x86/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
+                        try_copy_file "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-"${VKD3D_VER}"/x64/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+                    done
+                else
+                    for wine_vkd3d_dll in d3d12 libvkd3d-proton-utils-3 ; do
+                        try_copy_file "${START_WINE_PATH}/data/wine/wine_proton_ge/lib/wine/vkd3d-proton/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
+                        try_copy_file "${START_WINE_PATH}/data/wine/wine_proton_ge/lib64/wine/vkd3d-proton/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+                    done
+                fi
+            else
+                for wine_vkd3d_dll in d3d12 ; do
+                    try_copy_file "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-"${VKD3D_VER}"/x86/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
+                    try_copy_file "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-"${VKD3D_VER}"/x64/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+                done
+            fi
+
         else
-            for wine_vkd3d_dll in d3d12 ; do
-                try_copy_file "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-"${VKD3D_VER}"/x86/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64/"
-                try_copy_file "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-"${VKD3D_VER}"/x64/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/"
-            done
+
+            if [ "${DXVK_GE}" == "1" ]; then
+                if [ ! -d "${START_WINE_PATH}/data/wine/wine_proton_ge/bin" ]; then
+                    for wine_dxvk_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
+                        try_copy_file "${START_WINE_PATH}/data/tools/vulkan/dxvk-"${DXVK_VER}"/x32/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+                    done
+                else
+                    for wine_dxvk_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
+                        try_copy_file "${START_WINE_PATH}/data/wine/wine_proton_ge/lib/wine/dxvk/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+                    done
+                fi
+            else
+                for wine_dxvk_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
+                    try_copy_file "${START_WINE_PATH}/data/tools/vulkan/dxvk-"${DXVK_VER}"/x32/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+                done
+            fi
+
+            if [ "${VKD3D_GE}" == "1" ]; then
+                if [ ! -d "${START_WINE_PATH}/data/wine/wine_proton_ge/bin" ]; then
+                    for wine_vkd3d_dll in d3d12 ; do
+                        try_copy_file "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-"${VKD3D_VER}"/x86/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+                    done
+                else
+                    for wine_vkd3d_dll in d3d12 libvkd3d-proton-utils-3 ; do
+                        try_copy_file "${START_WINE_PATH}/data/wine/wine_proton_ge/lib/wine/vkd3d-proton/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+                    done
+                fi
+            else
+                for wine_vkd3d_dll in d3d12 ; do
+                    try_copy_file "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-"${VKD3D_VER}"/x86/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+                done
+            fi
+
         fi
 
         var_winedlloverride_update "d3d12,libvkd3d-proton-utils-3,d3d11,d3d10,d3d10core,d3d10_1,d3d9,dxgi=n"
@@ -1184,7 +1246,7 @@ WINEBOOT_CS () {
 
     crier=`$CRIER -q "Would you like to install the recommended libraries ?"`
 
-    if [ "$(echo '$crier')" == "0" ]; then
+    if [ "$(echo $crier)" == "0" ]; then
         INSTALL_RL
     fi
 

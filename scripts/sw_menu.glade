@@ -6668,7 +6668,7 @@ Example: amd_ags_x64=b,n</property>
                                     <property name="label" translatable="yes">
 StartWine
 
-3.5.1</property>
+3.5.2</property>
                                     <property name="justify">center</property>
                                     <attributes>
                                       <attribute name="underline" value="True"/>

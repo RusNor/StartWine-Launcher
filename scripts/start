@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-#####################################   SCRIPTS_V351   #################################################################
+#####################################   SCRIPTS_V352   #################################################################
 
 import os
 import sys
@@ -133,12 +133,8 @@ def on_btn_back_terminal(self):
                 proc = subprocess.run(name_jpg, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
                 out_name = str(proc.stdout[0:]).replace('\n', '')
                 open(f"{sw_icon}/gui_icons/{out_name}")
-
         except (IOError, OSError) as e:
-            cmd_ascii = f"clear && cat {sw_path}/data/img/gui_icons/ASCII\n"
-            terminal.feed_child(cmd_ascii.encode("UTF-8"))
-            print("image not found, set default ASCII")
-
+            print("ASCII not found...")
         else:
             name_jpg = f"cd {sw_icon}/gui_icons && ls -1 | grep .jpg"
             proc = subprocess.run(name_jpg, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
