@@ -1,1 +1,1 @@
-env "/home/rus_nor/StartWine/data/scripts/start" ""
+env "/home/$USER/StartWine/data/scripts/start" ""

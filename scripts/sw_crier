@@ -5,7 +5,6 @@ import sys
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gdk', '3.0')
-#gi.require_version('Vte', '2.91')
 from gi.repository import Gdk, GdkPixbuf, Gio, GLib, GObject, Gtk, Pango
 from pathlib import Path
 import subprocess
@@ -27,6 +26,7 @@ path_link = Path(link).parent
 sw_scripts = f"{path_link}/"
 sw_path = Path(sw_scripts).parent.parent
 sw_icon = Path(sw_path) / 'data/img'
+sw_games_config = Path(sw_path) / 'data/games_config'
 sw_css_dark = f"{sw_icon}/sw_themes/css/dark/"
 sw_css_light = f"{sw_icon}/sw_themes/css/light/"
 crier_title = f"StartWine"
@@ -36,6 +36,17 @@ try:
 except IndexError as e:
     print("No arguments specified, set argument default")
     m = str("")
+
+def get_out():
+
+    cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\.exe//gi' | tail -n1"
+    proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+    out_cmd = str(proc.stdout[0:]).replace('\n', '').replace('start', 'StartWine').replace(' %F', '').replace(' ', '_')
+    return out_cmd
+
+def get_arg(arg):
+
+    return arg
 
 def get_css(css_name):
 
@@ -50,118 +61,226 @@ def get_css(css_name):
 
 def black_theme():
 
-    sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
-    proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
-    sw_theme_name = str(proc.stdout[0:]).replace('\n', '')
+    out_cmd = get_arg(get_out())
 
-    if str(sw_theme_name) == str('023_black_theme'):
-
-        css_name = f"{sw_css_dark}black/gtk-3.0/gtk.css"
-        get_css(css_name)
+    try:
+        gc = Path(f"{sw_games_config}/" + str(out_cmd))
+        theme = f"SW_THEME=black_theme"
+        gcread = gc.read_text().split('\n')
+        if theme in gcread:
+            sw_theme_name = str('SW_THEME=black_theme')
+            if str(sw_theme_name) == str('SW_THEME=black_theme'):
+                css_name = f"{sw_css_dark}black/gtk-3.0/gtk.css"
+                get_css(css_name)
+    except:
+        gc = Path(f"{sw_games_config}/.default")
+        theme = f"SW_THEME=black_theme"
+        gcread = gc.read_text().split('\n')
+        if theme in gcread:
+            sw_theme_name = str('SW_THEME=black_theme')
+            if str(sw_theme_name) == str('SW_THEME=black_theme'):
+                css_name = f"{sw_css_dark}black/gtk-3.0/gtk.css"
+                get_css(css_name)
 
 black_theme()
 
 def gray_theme():
 
-    sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
-    proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
-    sw_theme_name = str(proc.stdout[0:]).replace('\n', '')
+    out_cmd = get_arg(get_out())
 
-    if str(sw_theme_name) == str('023_gray_theme'):
-
-        css_name = f"{sw_css_dark}grey/gtk-3.0/gtk.css"
-        get_css(css_name)
+    try:
+        gc = Path(f"{sw_games_config}/" + str(out_cmd))
+        theme = f"SW_THEME=gray_theme"
+        gcread = gc.read_text().split('\n')
+        if theme in gcread:
+            sw_theme_name = str('SW_THEME=gray_theme')
+            if str(sw_theme_name) == str('SW_THEME=gray_theme'):
+                css_name = f"{sw_css_dark}grey/gtk-3.0/gtk.css"
+                get_css(css_name)
+    except:
+        gc = Path(f"{sw_games_config}/.default")
+        theme = f"SW_THEME=gray_theme"
+        gcread = gc.read_text().split('\n')
+        if theme in gcread:
+            sw_theme_name = str('SW_THEME=gray_theme')
+            if str(sw_theme_name) == str('SW_THEME=gray_theme'):
+                css_name = f"{sw_css_dark}grey/gtk-3.0/gtk.css"
+                get_css(css_name)
 
 gray_theme()
 
 def red_theme():
 
-    sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
-    proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
-    sw_theme_name = str(proc.stdout[0:]).replace('\n', '')
+    out_cmd = get_arg(get_out())
 
-    if str(sw_theme_name) == str('023_red_theme'):
-
-        css_name = f"{sw_css_dark}red/gtk-3.0/gtk.css"
-        get_css(css_name)
+    try:
+        gc = Path(f"{sw_games_config}/" + str(out_cmd))
+        theme = f"SW_THEME=red_theme"
+        gcread = gc.read_text().split('\n')
+        if theme in gcread:
+            sw_theme_name = str('SW_THEME=red_theme')
+            if str(sw_theme_name) == str('SW_THEME=red_theme'):
+                css_name = f"{sw_css_dark}red/gtk-3.0/gtk.css"
+                get_css(css_name)
+    except:
+        gc = Path(f"{sw_games_config}/.default")
+        theme = f"SW_THEME=red_theme"
+        gcread = gc.read_text().split('\n')
+        if theme in gcread:
+            sw_theme_name = str('SW_THEME=red_theme')
+            if str(sw_theme_name) == str('SW_THEME=red_theme'):
+                css_name = f"{sw_css_dark}red/gtk-3.0/gtk.css"
+                get_css(css_name)
 
 red_theme()
 
 def yellow_theme():
 
-    sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
-    proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
-    sw_theme_name = str(proc.stdout[0:]).replace('\n', '')
+    out_cmd = get_arg(get_out())
 
-    if str(sw_theme_name) == str('023_yellow_theme'):
-
-        css_name = f"{sw_css_dark}yellow/gtk-3.0/gtk.css"
-        get_css(css_name)
+    try:
+        gc = Path(f"{sw_games_config}/" + str(out_cmd))
+        theme = f"SW_THEME=yellow_theme"
+        gcread = gc.read_text().split('\n')
+        if theme in gcread:
+            sw_theme_name = str('SW_THEME=yellow_theme')
+            if str(sw_theme_name) == str('SW_THEME=yellow_theme'):
+                css_name = f"{sw_css_dark}yellow/gtk-3.0/gtk.css"
+                get_css(css_name)
+    except:
+        gc = Path(f"{sw_games_config}/.default")
+        theme = f"SW_THEME=yellow_theme"
+        gcread = gc.read_text().split('\n')
+        if theme in gcread:
+            sw_theme_name = str('SW_THEME=yellow_theme')
+            if str(sw_theme_name) == str('SW_THEME=yellow_theme'):
+                css_name = f"{sw_css_dark}yellow/gtk-3.0/gtk.css"
+                get_css(css_name)
 
 yellow_theme()
 
 def green_theme():
 
-    sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
-    proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
-    sw_theme_name = str(proc.stdout[0:]).replace('\n', '')
+    out_cmd = get_arg(get_out())
 
-    if str(sw_theme_name) == str('023_green_theme'):
-
-        css_name = f"{sw_css_dark}green/gtk-3.0/gtk.css"
-        get_css(css_name)
+    try:
+        gc = Path(f"{sw_games_config}/" + str(out_cmd))
+        theme = f"SW_THEME=green_theme"
+        gcread = gc.read_text().split('\n')
+        if theme in gcread:
+            sw_theme_name = str('SW_THEME=green_theme')
+            if str(sw_theme_name) == str('SW_THEME=green_theme'):
+                css_name = f"{sw_css_dark}green/gtk-3.0/gtk.css"
+                get_css(css_name)
+    except:
+        gc = Path(f"{sw_games_config}/.default")
+        theme = f"SW_THEME=green_theme"
+        gcread = gc.read_text().split('\n')
+        if theme in gcread:
+            sw_theme_name = str('SW_THEME=green_theme')
+            if str(sw_theme_name) == str('SW_THEME=green_theme'):
+                css_name = f"{sw_css_dark}green/gtk-3.0/gtk.css"
+                get_css(css_name)
 
 green_theme()
 
 def blue_theme():
 
-    sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
-    proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
-    sw_theme_name = str(proc.stdout[0:]).replace('\n', '')
+    out_cmd = get_arg(get_out())
 
-    if str(sw_theme_name) == str('023_blue_theme'):
-
-        css_name = f"{sw_css_dark}blue/gtk-3.0/gtk.css"
-        get_css(css_name)
+    try:
+        gc = Path(f"{sw_games_config}/" + str(out_cmd))
+        theme = f"SW_THEME=blue_theme"
+        gcread = gc.read_text().split('\n')
+        if theme in gcread:
+            sw_theme_name = str('SW_THEME=blue_theme')
+            if str(sw_theme_name) == str('SW_THEME=blue_theme'):
+                css_name = f"{sw_css_dark}blue/gtk-3.0/gtk.css"
+                get_css(css_name)
+    except:
+        gc = Path(f"{sw_games_config}/.default")
+        theme = f"SW_THEME=blue_theme"
+        gcread = gc.read_text().split('\n')
+        if theme in gcread:
+            sw_theme_name = str('SW_THEME=blue_theme')
+            if str(sw_theme_name) == str('SW_THEME=blue_theme'):
+                css_name = f"{sw_css_dark}blue/gtk-3.0/gtk.css"
+                get_css(css_name)
 
 blue_theme()
 
 def purple_theme():
 
-    sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
-    proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
-    sw_theme_name = str(proc.stdout[0:]).replace('\n', '')
+    out_cmd = get_arg(get_out())
 
-    if str(sw_theme_name) == str('023_purple_theme'):
-
-        css_name = f"{sw_css_dark}purple/gtk-3.0/gtk.css"
-        get_css(css_name)
+    try:
+        gc = Path(f"{sw_games_config}/" + str(out_cmd))
+        theme = f"SW_THEME=purple_theme"
+        gcread = gc.read_text().split('\n')
+        if theme in gcread:
+            sw_theme_name = str('SW_THEME=purple_theme')
+            if str(sw_theme_name) == str('SW_THEME=purple_theme'):
+                css_name = f"{sw_css_dark}purple/gtk-3.0/gtk.css"
+                get_css(css_name)
+    except:
+        gc = Path(f"{sw_games_config}/.default")
+        theme = f"SW_THEME=purple_theme"
+        gcread = gc.read_text().split('\n')
+        if theme in gcread:
+            sw_theme_name = str('SW_THEME=purple_theme')
+            if str(sw_theme_name) == str('SW_THEME=purple_theme'):
+                css_name = f"{sw_css_dark}purple/gtk-3.0/gtk.css"
+                get_css(css_name)
 
 purple_theme()
 
 def mix_theme():
 
-    sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
-    proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
-    sw_theme_name = str(proc.stdout[0:]).replace('\n', '')
+    out_cmd = get_arg(get_out())
 
-    if str(sw_theme_name) == str('023_mix_theme'):
-
-        css_name = f"{sw_css_dark}brown/gtk-3.0/gtk.css"
-        get_css(css_name)
+    try:
+        gc = Path(f"{sw_games_config}/" + str(out_cmd))
+        theme = f"SW_THEME=mix_theme"
+        gcread = gc.read_text().split('\n')
+        if theme in gcread:
+            sw_theme_name = str('SW_THEME=mix_theme')
+            if str(sw_theme_name) == str('SW_THEME=mix_theme'):
+                css_name = f"{sw_css_dark}brown/gtk-3.0/gtk.css"
+                get_css(css_name)
+    except:
+        gc = Path(f"{sw_games_config}/.default")
+        theme = f"SW_THEME=mix_theme"
+        gcread = gc.read_text().split('\n')
+        if theme in gcread:
+            sw_theme_name = str('SW_THEME=mix_theme')
+            if str(sw_theme_name) == str('SW_THEME=mix_theme'):
+                css_name = f"{sw_css_dark}brown/gtk-3.0/gtk.css"
+                get_css(css_name)
 
 mix_theme()
 
 def white_theme():
 
-    sw_theme = f"sed -n '/023/p' {sw_scripts}/settings"
-    proc = subprocess.run(sw_theme, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
-    sw_theme_name = str(proc.stdout[0:]).replace('\n', '')
+    out_cmd = get_arg(get_out())
 
-    if str(sw_theme_name) == str('023_white_theme'):
-
-        css_name = f"{sw_css_light}black/gtk-3.0/gtk.css"
-        get_css(css_name)
+    try:
+        gc = Path(f"{sw_games_config}/" + str(out_cmd))
+        theme = f"SW_THEME=white_theme"
+        gcread = gc.read_text().split('\n')
+        if theme in gcread:
+            sw_theme_name = str('SW_THEME=white_theme')
+            if str(sw_theme_name) == str('SW_THEME=white_theme'):
+                css_name = f"{sw_css_light}black/gtk-3.0/gtk.css"
+                get_css(css_name)
+    except:
+        gc = Path(f"{sw_games_config}/.default")
+        theme = f"SW_THEME=white_theme"
+        gcread = gc.read_text().split('\n')
+        if theme in gcread:
+            sw_theme_name = str('SW_THEME=white_theme')
+            if str(sw_theme_name) == str('SW_THEME=white_theme'):
+                css_name = f"{sw_css_light}black/gtk-3.0/gtk.css"
+                get_css(css_name)
 
 white_theme()
 
@@ -281,10 +400,6 @@ class sw_crier():
                 p = print("0")
                 Gtk.main_quit()
                 return p
-#            elif response == Gtk.ResponseType.CANCEL:
-#                p = print("1")
-#                Gtk.main_quit()
-#                return p
             else:
                 print("Dialog closed")
 
@@ -292,7 +407,6 @@ class sw_crier():
         dialog.set_title("Dialog")
         dialog.set_default_size(960, 540)
         dialog.add_button("_OK", Gtk.ResponseType.OK)
-#        dialog.add_button("_Cancel", Gtk.ResponseType.CANCEL)
         dialog.connect("response", on_response)
         view = Gtk.TextView()
         text = t
