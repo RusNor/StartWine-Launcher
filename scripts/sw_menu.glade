@@ -5128,7 +5128,7 @@ Example: -d3d11</property>
                                     <property name="label" translatable="yes">
 StartWine
 
-3.5.3</property>
+3.5.4</property>
                                     <property name="justify">center</property>
                                     <attributes>
                                       <attribute name="underline" value="True"/>
@@ -5441,48 +5441,73 @@ License for more details.</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkBox">
+                              <!-- n-columns=1 n-rows=6 -->
+                              <object class="GtkGrid">
                                 <property name="visible">True</property>
                                 <property name="can-focus">False</property>
-                                <property name="margin-top">8</property>
-                                <property name="margin-bottom">8</property>
-                                <property name="orientation">vertical</property>
-                                <property name="spacing">4</property>
+                                <property name="margin-top">16</property>
+                                <property name="margin-bottom">16</property>
+                                <property name="row-spacing">16</property>
                                 <child>
-                                  <object class="GtkImage">
+                                  <object class="GtkLabel">
                                     <property name="visible">True</property>
                                     <property name="can-focus">False</property>
-                                    <property name="pixbuf">../img/gui_icons/SW_Launcher_x96.png</property>
+                                    <property name="halign">center</property>
+                                    <property name="label" translatable="yes">Authors:</property>
+                                    <attributes>
+                                      <attribute name="underline" value="True"/>
+                                      <attribute name="size" value="11264"/>
+                                      <attribute name="absolute-size" value="14336"/>
+                                    </attributes>
                                   </object>
                                   <packing>
-                                    <property name="expand">False</property>
-                                    <property name="fill">True</property>
-                                    <property name="position">0</property>
+                                    <property name="left-attach">0</property>
+                                    <property name="top-attach">1</property>
                                   </packing>
                                 </child>
                                 <child>
                                   <object class="GtkLabel">
                                     <property name="visible">True</property>
                                     <property name="can-focus">False</property>
-                                    <property name="label" translatable="yes">
-Authors:
-
-Normatov R.R.
-Maslov N.G.
-
-Artists:
-
-Normatov R.R.
+                                    <property name="halign">center</property>
+                                    <property name="label" translatable="yes">Normatov R.R.
 Maslov N.G.</property>
+                                  </object>
+                                  <packing>
+                                    <property name="left-attach">0</property>
+                                    <property name="top-attach">2</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="halign">center</property>
+                                    <property name="label" translatable="yes">Acknowlegment:</property>
                                     <attributes>
+                                      <attribute name="underline" value="True"/>
                                       <attribute name="size" value="11264"/>
                                       <attribute name="absolute-size" value="14336"/>
                                     </attributes>
                                   </object>
                                   <packing>
-                                    <property name="expand">False</property>
-                                    <property name="fill">True</property>
-                                    <property name="position">1</property>
+                                    <property name="left-attach">0</property>
+                                    <property name="top-attach">3</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="halign">center</property>
+                                    <property name="label" translatable="yes">Huskysoul
+Lintech
+Lex
+VHSgunzo</property>
+                                  </object>
+                                  <packing>
+                                    <property name="left-attach">0</property>
+                                    <property name="top-attach">4</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -5504,10 +5529,12 @@ Maslov N.G.</property>
                                           <object class="GtkLabel">
                                             <property name="visible">True</property>
                                             <property name="can-focus">False</property>
+                                            <property name="halign">center</property>
                                             <property name="label" translatable="yes">DONATION</property>
                                             <attributes>
-                                              <attribute name="size" value="9216"/>
-                                              <attribute name="absolute-size" value="12288"/>
+                                              <attribute name="underline" value="True"/>
+                                              <attribute name="size" value="11264"/>
+                                              <attribute name="absolute-size" value="14336"/>
                                             </attributes>
                                           </object>
                                           <packing>
@@ -5520,6 +5547,7 @@ Maslov N.G.</property>
                                           <object class="GtkImage">
                                             <property name="visible">True</property>
                                             <property name="can-focus">False</property>
+                                            <property name="halign">center</property>
                                             <property name="pixbuf">../img/gui_icons/donation.png</property>
                                           </object>
                                           <packing>
@@ -5532,9 +5560,21 @@ Maslov N.G.</property>
                                     </child>
                                   </object>
                                   <packing>
-                                    <property name="expand">False</property>
-                                    <property name="fill">True</property>
-                                    <property name="position">4</property>
+                                    <property name="left-attach">0</property>
+                                    <property name="top-attach">5</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkImage">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="halign">center</property>
+                                    <property name="hexpand">True</property>
+                                    <property name="pixbuf">../img/gui_icons/SW_Launcher_x96.png</property>
+                                  </object>
+                                  <packing>
+                                    <property name="left-attach">0</property>
+                                    <property name="top-attach">0</property>
                                   </packing>
                                 </child>
                               </object>
@@ -11801,8 +11841,8 @@ Maslov N.G.</property>
                                                     <property name="can-focus">True</property>
                                                     <property name="hexpand">True</property>
                                                     <property name="vexpand">True</property>
-                                                    <property name="pixels-above-lines">4</property>
-                                                    <property name="pixels-below-lines">4</property>
+                                                    <property name="pixels-above-lines">8</property>
+                                                    <property name="pixels-below-lines">8</property>
                                                     <property name="editable">False</property>
                                                     <property name="right-margin">32</property>
                                                     <property name="indent">16</property>
@@ -11819,8 +11859,8 @@ Maslov N.G.</property>
                                                     <property name="can-focus">True</property>
                                                     <property name="hexpand">True</property>
                                                     <property name="vexpand">True</property>
-                                                    <property name="pixels-above-lines">4</property>
-                                                    <property name="pixels-below-lines">4</property>
+                                                    <property name="pixels-above-lines">8</property>
+                                                    <property name="pixels-below-lines">8</property>
                                                     <property name="editable">False</property>
                                                     <property name="buffer">winetricks_text_buffer_2</property>
                                                   </object>
@@ -13069,8 +13109,6 @@ Maslov N.G.</property>
                                                 <property name="margin-bottom">16</property>
                                                 <property name="hexpand">True</property>
                                                 <property name="vexpand">True</property>
-                                                <property name="row-spacing">4</property>
-                                                <property name="column-spacing">16</property>
                                                 <child>
                                                   <object class="GtkSwitch" id="s10">
                                                     <property name="visible">True</property>
@@ -15355,7 +15393,6 @@ Maslov N.G.</property>
                                                 <property name="hexpand">True</property>
                                                 <property name="vexpand">True</property>
                                                 <property name="orientation">vertical</property>
-                                                <property name="row-spacing">4</property>
                                                 <property name="column-homogeneous">True</property>
                                                 <child>
                                                   <object class="GtkCheckButton" id="vk0">

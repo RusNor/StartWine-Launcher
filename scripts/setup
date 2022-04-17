@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/bash
 
 ################################################################################
 
@@ -22,7 +22,7 @@ chmod -R 775 "${START_WINE_PATH}/data/wine/wine_steam_proton"
 name_desktop="StartWine"
 echo "[Desktop Entry]" > "${START_WINE_PATH}/${name_desktop}.desktop"
 echo "Name=${name_desktop}" >> "${START_WINE_PATH}/${name_desktop}.desktop"
-echo "Name_2=pfx_default" >> "${START_WINE_PATH}/${name_desktop}.desktop"
+echo "Name_2=default" >> "${START_WINE_PATH}/${name_desktop}.desktop"
 echo "Exec=env "${START_WINE_PATH}/data/scripts/start %F"" >> "${START_WINE_PATH}/${name_desktop}.desktop"
 echo "Comment=Launch Windows applications on Linux operating systems" >> "${START_WINE_PATH}/${name_desktop}.desktop"
 echo "Type=Application" >> "${START_WINE_PATH}/${name_desktop}.desktop"

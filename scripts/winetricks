@@ -6,7 +6,7 @@
 
 # Name of this version of winetricks (YYYYMMDD)
 # (This doesn't change often, use the sha256sum of the file when reporting problems)
-WINETRICKS_VERSION=20210206-next
+WINETRICKS_VERSION=20220411-next
 
 # This is a UTF-8 file
 # You should see an o with two dots over it here [ö]
@@ -29,7 +29,7 @@ WINETRICKS_VERSION=20210206-next
 # - ar, cabextract, unrar, unzip, and 7z are needed by some verbs.
 # - aria2c, wget, curl, or fetch is needed for downloading.
 # - fuseiso, archivemount (Linux), or hdiutil (macOS) is used to mount .iso images.
-# - perl is used to munge steam config files.
+# - perl is used for displaying download progress for wget when using zenity
 # - pkexec, sudo, or kdesu (gksu/gksudo/kdesudo are deprecated upstream but also still supported)
 #   are used to mount .iso images if the user cached them with -k option.
 # - sha256sum, sha256, or shasum (OSX 10.5 does not support these, 10.6+ is required)
@@ -53,7 +53,7 @@ WINETRICKS_VERSION=20210206-next
 #
 # Copyright:
 #   Copyright (C) 2007-2014 Dan Kegel <dank!kegel.com>
-#   Copyright (C) 2008-2019 Austin English <austinenglish!gmail.com>
+#   Copyright (C) 2008-2022 Austin English <austinenglish!gmail.com>
 #   Copyright (C) 2010-2011 Phil Blankenship <phillip.e.blankenship!gmail.com>
 #   Copyright (C) 2010-2015 Shannon VanWagner <shannon.vanwagner!gmail.com>
 #   Copyright (C) 2010 Belhorma Bendebiche <amro256!gmail.com>
@@ -1674,102 +1674,6 @@ w_download_manual()
     w_download_manual_to "${W_PACKAGE}" "$@"
 }
 
-# Turn off news, overlays, and friend interaction in Steam
-# Run from inside C:\Program Files\Steam
-w_steam_safemode()
-{
-    cat > "${W_TMP}/steamconfig.pl" <<"_EOF_"
-#!/usr/bin/env perl
-# Parse Steam's localconfig.vcf, add settings to it, and write it out again
-# The file is a recursive dictionary
-#
-# FILE :== CONTAINER
-#
-# VALUE :== "name" "value" NEWLINE
-#
-# CONTAINER :== "name" NEWLINE "{" NEWLINE ( VALUE | CONTAINER ) * "}" NEWLINE
-#
-# We load it into a recursive hash.
-
-use strict;
-use warnings;
-
-sub read_into_container{
-    my( $pcontainer ) = @_;
-
-    $_ = <FILE> || w_die "Can't read first line of container";
-    /{/ || w_die "First line of container was not {";
-    while (<FILE>) {
-        chomp;
-        if (/"([^"]*)"\s*"([^"]*)"$/) {
-            ${$pcontainer}{$1} = $2;
-        } elsif (/"([^"]*)"$/) {
-            my( %newcon, $name );
-            $name = $1;
-            read_into_container(\%newcon);
-            ${$pcontainer}{$name} = \%newcon;
-        } elsif (/}/) {
-            return;
-        } else {
-            w_die "huh?";
-        }
-    }
-}
-
-sub dump_container{
-    my( $pcontainer, $indent ) = @_;
-    foreach (sort(keys(%{$pcontainer}))) {
-        my( $val ) = ${$pcontainer}{$_};
-        if (ref $val eq 'HASH') {
-            print "${indent}\"$_\"\n";
-            print "${indent}{\n";
-            dump_container($val, "$indent\t");
-            print "${indent}}\n";
-        } else {
-            print "${indent}\"${_}\"\t\t\"$val\"\n";
-        }
-    }
-}
-
-# Disable anything unsafe or annoying
-sub disable_notifications{
-    my( $pcontainer ) = @_;
-    ${$pcontainer}{"friends"}{"PersonaStateDesired"} = "1";
-    ${$pcontainer}{"friends"}{"Notifications_ShowIngame"} = "0";
-    ${$pcontainer}{"friends"}{"Sounds_PlayIngame"} = "0";
-    ${$pcontainer}{"friends"}{"Notifications_ShowOnline"} = "0";
-    ${$pcontainer}{"friends"}{"Sounds_PlayOnline"} = "0";
-    ${$pcontainer}{"friends"}{"Notifications_ShowMessage"} = "0";
-    ${$pcontainer}{"friends"}{"Sounds_PlayMessage"} = "0";
-    ${$pcontainer}{"friends"}{"AutoSignIntoFriends"} = "0";
-    ${$pcontainer}{"News"}{"NotifyAvailableGames"} = "0";
-    ${$pcontainer}{"system"}{"EnableGameOverlay"} = "0";
-}
-
-# Read the file
-my(%top);
-open FILE, $ARGV[0] || w_die "cannot open ".$ARGV[0];
-my($line);
-$line = <FILE> || w_die "Could not read first line from ".$ARGV[0];
-$line =~ /"UserLocalConfigStore"/ || w_die "this is not a localconfig.vdf file";
-read_into_container(\%top);
-
-# Modify it
-disable_notifications(\%top);
-
-# Write modified file
-print "\"UserLocalConfigStore\"\n";
-print "{\n";
-dump_container(\%top, "\t");
-print "}\n";
-_EOF_
-
-for file in userdata/*/config/localconfig.vdf ; do
-    cp "${file}" "${file}.old"
-    perl "${W_TMP}"/steamconfig.pl "${file}.old" > "${file}"
-done
-}
-
 w_question()
 {
     case ${WINETRICKS_GUI} in
@@ -1783,160 +1687,6 @@ w_question()
             echo "${W_ANSWER}";
             unset W_ANSWER;;
     esac
-}
-
-# Reads steam username and password from environment, cache, or user
-# If had to ask user, cache answer.
-w_steam_getid()
-{
-    #TODO: Translate
-    _W_steamidmsg="Please enter your Steam login ID (not email)"
-    _W_steampasswordmsg="Please enter your Steam password"
-
-    if test ! "${W_STEAM_ID}"; then
-        if test -f "${W_CACHE}"/steam_userid.txt; then
-            W_STEAM_ID=$(cat "${W_CACHE}"/steam_userid.txt)
-        else
-            W_STEAM_ID=$(w_question "${_W_steamidmsg}")
-            echo "${W_STEAM_ID}" > "${W_CACHE}"/steam_userid.txt
-            chmod 600 "${W_CACHE}"/steam_userid.txt
-        fi
-    fi
-    if test ! "${W_STEAM_PASSWORD}"; then
-        if test -f "${W_CACHE}"/steam_password.txt; then
-            W_STEAM_PASSWORD=$(cat "${W_CACHE}"/steam_password.txt)
-        else
-            W_STEAM_PASSWORD=$(w_question "${_W_steampasswordmsg}")
-            echo "${W_STEAM_PASSWORD}" > "${W_CACHE}"/steam_password.txt
-            chmod 600 "${W_CACHE}"/steam_password.txt
-        fi
-    fi
-}
-
-# Usage:
-# w_steam_install_game steamidnum windowtitle
-w_steam_install_game()
-{
-    _W_steamid=$1
-    _W_steamtitle="$2"
-
-    w_steam_getid
-
-    # Install the steam runtime
-    WINETRICKS_OPT_SHAREDPREFIX=1 w_call steam
-
-    # Steam puts up a bunch of windows.  Here's the sequence:
-    # "Steam - Updating" - wait for it to close.  May appear twice in a row.
-    # "Steam - Login" - wait for it to close (credentials already given on cmdline)
-    # "Steam" (small window) - connecting, wait for it to close
-    # "Steam" (large window) - the main window
-    # "Steam - Updates News" - close it forcefully
-    # "Install - $title" - send enter, click a couple checkboxes, send enter again
-    # "Updating $title" - small download progress dialog
-    # "Steam - Ready" game install done.  (Only comes up if main window not up.)
-
-    w_try_cd "${W_PROGRAMS_X86_UNIX}/Steam"
-    w_ahk_do "
-        SetTitleMatchMode 2
-        SetWinDelay 500
-        ; Run steam once until it finishes its initial update.
-        ; For me, this exits at 26%.
-        run steam.exe -applaunch ${_W_steamid} -login ${W_STEAM_ID} ${W_STEAM_PASSWORD}
-        Loop
-        {
-            ifWinExist, Steam - Updating
-            {
-                winwaitclose, Steam
-                process close, Steam.exe
-                sleep 1000
-                ; Run a second time; let it finish updating, then kill it.
-                run steam.exe
-                winwait Steam - Updating
-                winwaitclose
-                process close, Steam.exe
-                ; Run a third time, have it log in, wait until it has finished connecting
-                run steam.exe -applaunch ${_W_steamid} -login ${W_STEAM_ID} ${W_STEAM_PASSWORD}
-            }
-            ifWinExist, Steam Login
-            {
-                break
-            }
-            sleep 500
-        }
-        ; wait for login window to close
-        winwaitclose
-
-        winwait Steam  ; wait for small <<connecting>> window
-        winwaitclose
-    "
-
-if [ "${STEAM_DVD}" = "TRUE" ]; then
-    w_ahk_do "
-        ; Run a fourth time, have it install the app.
-        run steam.exe -install ${W_ISO_MOUNT_LETTER}:\\
-    "
-else
-    w_ahk_do "
-        ; Run a fourth time, have it install the app.
-        run steam.exe -applaunch ${_W_steamid}
-    "
-fi
-
-    w_ahk_do "
-        winwait Install - ${_W_steamtitle}
-        if ( w_opt_unattended > 0 ) {
-            send {enter}          ; next (for 1st of 3 pages of install dialog)
-            sleep 1000
-            click 32, 91          ; uncheck create menu item?
-            click 32, 119         ; check create desktop icon?
-            send {enter}          ; next (for 2nd of 3 pages of install dialog)
-            ; dismiss any news dialogs, and click 'next' on third page of install dialog
-            loop
-            {
-                sleep 1000
-                ifwinexist Steam - Updates News
-                {
-                    winclose
-                    continue
-                }
-                ifwinexist Install - ${_W_steamtitle}
-                {
-                    winactivate
-                    send {enter}      ; next (for 3rd of 3 pages of install dialog)
-                }
-                ifwinnotexist Install - ${_W_steamtitle}
-                {
-                    sleep 1000
-                    ifwinnotexist Install - ${_W_steamtitle}
-                        break
-                }
-            }
-        }
-    "
-
-if [ "${STEAM_DVD}" = "TRUE" ]; then
-    # Wait for install to finish
-    while true; do
-        grep "SetHasAllLocalContent(true) called for ${_W_steamid}" "${W_PROGRAMS_X86_UNIX}/Steam/logs/download_log.txt" && break
-        sleep 5
-    done
-fi
-
-    w_ahk_do "
-        ; For DVD's: theoretically, it should be installed now, but most games want to download updates. Do that now.
-        ; For regular downloads: relaunch to coax steam into showing its nice small download progress dialog
-        process close, Steam.exe
-        run steam.exe -login ${W_STEAM_ID} ${W_STEAM_PASSWORD} -applaunch ${_W_steamid}
-        winwait Ready -
-        process close, Steam.exe
-    "
-
-    # Not all users need this disabled, but let's play it safe for now
-    if w_workaround_wine_bug 22053 "Disabling in-game notifications to prevent game crashes on some machines."; then
-        w_steam_safemode
-    fi
-
-    unset _W_steamid _W_steamtitle
 }
 
 #----------------------------------------------------------------
@@ -2804,8 +2554,8 @@ _EOF_
 
 w_unset_winver()
 {
-  w_warn "w_unset_winver() is deprecated, use \'w_set_winver default\' instead"
-  w_set_winver default
+    w_warn "w_unset_winver() is deprecated, use \'w_set_winver default\' instead"
+    w_set_winver default
 }
 
 # Present app $1 with the Windows personality $2
@@ -3324,10 +3074,10 @@ winetricks_dl_url_to_stdout()
     # Executing ... stuff, but still does error checking
     if [ "${WINETRICKS_DOWNLOADER}" = "wget" ] ; then
         ${torify} wget -q -O - --timeout "${WINETRICKS_DOWNLOADER_TIMEOUT}" \
-            --tries "${WINETRICKS_DOWNLOADER_RETRIES}" "$1"
+        --tries "${WINETRICKS_DOWNLOADER_RETRIES}" "$1"
     elif [ "${WINETRICKS_DOWNLOADER}" = "curl" ] ; then
         ${torify} curl -s --connect-timeout "${WINETRICKS_DOWNLOADER_TIMEOUT}" \
-               --retry "${WINETRICKS_DOWNLOADER_RETRIES}" "$1"
+        --retry "${WINETRICKS_DOWNLOADER_RETRIES}" "$1"
     elif [ "${WINETRICKS_DOWNLOADER}" = "aria2c" ] ; then
         # aria2c doesn't have support downloading to stdout:
         # https://github.com/aria2/aria2/issues/190
@@ -3551,7 +3301,7 @@ winetricks_detect_gui()
 
     # Print zenity/dialog version info for debugging:
     if [ -z "${WINETRICKS_SUPER_QUIET}" ] ; then
-       echo "winetricks GUI enabled, using ${WINETRICKS_GUI} ${WINETRICKS_GUI_VERSION##kdialog }"
+        echo "winetricks GUI enabled, using ${WINETRICKS_GUI} ${WINETRICKS_GUI_VERSION##kdialog }"
     fi
 }
 
@@ -3637,93 +3387,93 @@ winetricks_prefixmenu()
 {
     case ${LANG} in
         ru*) _W_msg_title="Winetricks - выберите путь wine (wineprefix)"
-             _W_msg_body='Что вы хотите сделать?'
-             _W_msg_apps='Установить программу'
-             _W_msg_games='Установить игру'
-             _W_msg_benchmarks='Установить приложение для оценки производительности'
-             _W_msg_default="Выберите путь для wine по умолчанию"
-             _W_msg_mkprefix="Создать новый путь wine"
-             _W_msg_unattended0="Отключить автоматическую установку"
-             _W_msg_unattended1="Включить автоматическую установку"
-             _W_msg_help="Просмотр справки (в веб-браузере)"
-             ;;
+            _W_msg_body='Что вы хотите сделать?'
+            _W_msg_apps='Установить программу'
+            _W_msg_games='Установить игру'
+            _W_msg_benchmarks='Установить приложение для оценки производительности'
+            _W_msg_default="Выберите путь для wine по умолчанию"
+            _W_msg_mkprefix="Создать новый путь wine"
+            _W_msg_unattended0="Отключить автоматическую установку"
+            _W_msg_unattended1="Включить автоматическую установку"
+            _W_msg_help="Просмотр справки (в веб-браузере)"
+            ;;
         uk*) _W_msg_title="Winetricks - виберіть wineprefix"
-             _W_msg_body='Що Ви хочете зробити?'
-             _W_msg_apps='Встановити додаток'
-             _W_msg_games='Встановити гру'
-             _W_msg_benchmarks='Встановити benchmark'
-             _W_msg_default="Вибрати wineprefix за замовчуванням"
-             _W_msg_mkprefix="створити новий wineprefix"
-             _W_msg_unattended0="Вимкнути автоматичне встановлення"
-             _W_msg_unattended1="Увімкнути автоматичне встановлення"
-             _W_msg_help="Переглянути довідку"
-             ;;
+            _W_msg_body='Що Ви хочете зробити?'
+            _W_msg_apps='Встановити додаток'
+            _W_msg_games='Встановити гру'
+            _W_msg_benchmarks='Встановити benchmark'
+            _W_msg_default="Вибрати wineprefix за замовчуванням"
+            _W_msg_mkprefix="створити новий wineprefix"
+            _W_msg_unattended0="Вимкнути автоматичне встановлення"
+            _W_msg_unattended1="Увімкнути автоматичне встановлення"
+            _W_msg_help="Переглянути довідку"
+            ;;
         zh_CN*)   _W_msg_title="Winetricks - 择一 Wine 容器"
-             _W_msg_body='君欲何为？'
-             _W_msg_apps='安装一个 Windows 应用'
-             _W_msg_games='安装一个游戏'
-             _W_msg_benchmarks='安装一个基准测试软件'
-             _W_msg_default="选择默认的 Wine 容器"
-             _W_msg_mkprefix="创建新的 Wine 容器"
-             _W_msg_unattended0="禁用静默安装"
-             _W_msg_unattended1="启用静默安装"
-             _W_msg_help="查看帮助"
-             ;;
+            _W_msg_body='君欲何为？'
+            _W_msg_apps='安装一个 Windows 应用'
+            _W_msg_games='安装一个游戏'
+            _W_msg_benchmarks='安装一个基准测试软件'
+            _W_msg_default="选择默认的 Wine 容器"
+            _W_msg_mkprefix="创建新的 Wine 容器"
+            _W_msg_unattended0="禁用静默安装"
+            _W_msg_unattended1="启用静默安装"
+            _W_msg_help="查看帮助"
+            ;;
         zh_TW*|zh_HK*)   _W_msg_title="Winetricks - 取一 Wine 容器"
-             _W_msg_body='君欲何為？'
-             _W_msg_apps='安裝一個 Windows 應用'
-             _W_msg_games='安裝一個遊戲'
-             _W_msg_benchmarks='安裝一個基准測試軟體'
-             _W_msg_default="選取預設的 Wine 容器"
-             _W_msg_mkprefix="建立新的 Wine 容器"
-             _W_msg_unattended0="禁用靜默安裝"
-             _W_msg_unattended1="啟用靜默安裝"
-             _W_msg_help="檢視輔助說明"
-             ;;
+            _W_msg_body='君欲何為？'
+            _W_msg_apps='安裝一個 Windows 應用'
+            _W_msg_games='安裝一個遊戲'
+            _W_msg_benchmarks='安裝一個基准測試軟體'
+            _W_msg_default="選取預設的 Wine 容器"
+            _W_msg_mkprefix="建立新的 Wine 容器"
+            _W_msg_unattended0="禁用靜默安裝"
+            _W_msg_unattended1="啟用靜默安裝"
+            _W_msg_help="檢視輔助說明"
+            ;;
         de*) _W_msg_title="Winetricks - wineprefix auswählen"
-             _W_msg_body='Was möchten Sie tun?'
-             _W_msg_apps='Ein Programm installieren'
-             _W_msg_games='Ein Spiel installieren'
-             _W_msg_benchmarks='Einen Benchmark-Test installieren'
-             _W_msg_default="Standard wineprefix auswählen"
-             _W_msg_mkprefix="Neuen wineprefix erstellen"
-             _W_msg_unattended0="Automatische Installation deaktivieren"
-             _W_msg_unattended1="Automatische Installation aktivieren"
-             _W_msg_help="Hilfe anzeigen"
-             ;;
+            _W_msg_body='Was möchten Sie tun?'
+            _W_msg_apps='Ein Programm installieren'
+            _W_msg_games='Ein Spiel installieren'
+            _W_msg_benchmarks='Einen Benchmark-Test installieren'
+            _W_msg_default="Standard wineprefix auswählen"
+            _W_msg_mkprefix="Neuen wineprefix erstellen"
+            _W_msg_unattended0="Automatische Installation deaktivieren"
+            _W_msg_unattended1="Automatische Installation aktivieren"
+            _W_msg_help="Hilfe anzeigen"
+            ;;
         pl*) _W_msg_title="Winetricks - wybierz prefiks Wine"
-             _W_msg_body='Co chcesz zrobić?'
-             _W_msg_apps='Zainstalować aplikację'
-             _W_msg_games='Zainstalować grę'
-             _W_msg_benchmarks='Zainstalować program sprawdzający wydajność komputera'
-             _W_msg_default="Wybrać domyślny prefiks Wine"
-             _W_msg_mkprefix="Stwórz nowy prefiks Wine"
-             _W_msg_unattended0="Wyłącz cichą instalację"
-             _W_msg_unattended1="Włącz cichą instalację"
-             _W_msg_help="Wyświetl pomoc"
-             ;;
+            _W_msg_body='Co chcesz zrobić?'
+            _W_msg_apps='Zainstalować aplikację'
+            _W_msg_games='Zainstalować grę'
+            _W_msg_benchmarks='Zainstalować program sprawdzający wydajność komputera'
+            _W_msg_default="Wybrać domyślny prefiks Wine"
+            _W_msg_mkprefix="Stwórz nowy prefiks Wine"
+            _W_msg_unattended0="Wyłącz cichą instalację"
+            _W_msg_unattended1="Włącz cichą instalację"
+            _W_msg_help="Wyświetl pomoc"
+            ;;
         pt*) _W_msg_title="Winetricks - Escolha um wineprefix"
-             _W_msg_body='O que você quer fazer?'
-             _W_msg_apps='Instalar um programa'
-             _W_msg_games='Instalar um jogo'
-             _W_msg_benchmarks='Instalar um teste de desempenho/benchmark'
-             _W_msg_default="Selecionar o prefixo padrão wineprefix"
-             _W_msg_mkprefix="Criar novo prefixo wineprefix"
-             _W_msg_unattended0="Desativar instalação silenciosa"
-             _W_msg_unattended1="Ativar instalação silenciosa"
-             _W_msg_help="Ver ajuda"
-             ;;
-        *)   _W_msg_title="Winetricks - choose a wineprefix"
-             _W_msg_body='What do you want to do?'
-             _W_msg_apps='Install an application'
-             _W_msg_games='Install a game'
-             _W_msg_benchmarks='Install a benchmark'
-             _W_msg_default="Select the default wineprefix"
-             _W_msg_mkprefix="Create new wineprefix"
-             _W_msg_unattended0="Disable silent install"
-             _W_msg_unattended1="Enable silent install"
-             _W_msg_help="View help"
-             ;;
+            _W_msg_body='O que você quer fazer?'
+            _W_msg_apps='Instalar um programa'
+            _W_msg_games='Instalar um jogo'
+            _W_msg_benchmarks='Instalar um teste de desempenho/benchmark'
+            _W_msg_default="Selecionar o prefixo padrão wineprefix"
+            _W_msg_mkprefix="Criar novo prefixo wineprefix"
+            _W_msg_unattended0="Desativar instalação silenciosa"
+            _W_msg_unattended1="Ativar instalação silenciosa"
+            _W_msg_help="Ver ajuda"
+            ;;
+        *)  _W_msg_title="Winetricks - choose a wineprefix"
+            _W_msg_body='What do you want to do?'
+            _W_msg_apps='Install an application'
+            _W_msg_games='Install a game'
+            _W_msg_benchmarks='Install a benchmark'
+            _W_msg_default="Select the default wineprefix"
+            _W_msg_mkprefix="Create new wineprefix"
+            _W_msg_unattended0="Disable silent install"
+            _W_msg_unattended1="Enable silent install"
+            _W_msg_help="View help"
+            ;;
     esac
     case "${W_OPT_UNATTENDED}" in
         1) _W_cmd_unattended=attended; _W_msg_unattended="${_W_msg_unattended0}" ;;
@@ -3817,17 +3567,17 @@ winetricks_mkprefixmenu()
     case ${LANG} in
         # TODO: translate to other languages
         de)  _W_msg_title="Winetricks - Neues Wineprefix erstellen"
-             _W_msg_name="Name"
-             _W_msg_arch="Architektur"
-             ;;
+            _W_msg_name="Name"
+            _W_msg_arch="Architektur"
+            ;;
         pt*) _W_msg_title="Winetricks - criar novo wineprefix"
-             _W_msg_name="Nome"
-             _W_msg_arch="Arquitetura"
-             ;;
-        *)   _W_msg_title="Winetricks - create new wineprefix"
-             _W_msg_name="Name"
-             _W_msg_arch="Architecture"
-             ;;
+            _W_msg_name="Nome"
+            _W_msg_arch="Arquitetura"
+            ;;
+        *)  _W_msg_title="Winetricks - create new wineprefix"
+            _W_msg_name="Name"
+            _W_msg_arch="Architecture"
+            ;;
     esac
 
     case ${WINETRICKS_GUI} in
@@ -3854,131 +3604,131 @@ winetricks_mainmenu()
 {
     case ${LANG} in
         da*) _W_msg_title="Vælg en pakke-kategori - Nuværende præfiks er \"${WINEPREFIX}\""
-             _W_msg_body='Hvad ønsker du at gøre?'
-             _W_msg_dlls="Install a Windows DLL"
-             _W_msg_fonts='Install a font'
-             _W_msg_settings='Change Wine settings'
-             _W_msg_winecfg='Run winecfg'
-             _W_msg_regedit='Run regedit'
-             _W_msg_taskmgr='Run taskmgr'
-             _W_msg_explorer='Run explorer'
-             _W_msg_uninstaller='Run uninstaller'
-             _W_msg_shell='Run a commandline shell (for debugging)'
-             _W_msg_folder='Browse files'
-             _W_msg_annihilate="Delete ALL DATA AND APPLICATIONS INSIDE THIS WINEPREFIX"
-             ;;
+            _W_msg_body='Hvad ønsker du at gøre?'
+            _W_msg_dlls="Install a Windows DLL"
+            _W_msg_fonts='Install a font'
+            _W_msg_settings='Change Wine settings'
+            _W_msg_winecfg='Run winecfg'
+            _W_msg_regedit='Run regedit'
+            _W_msg_taskmgr='Run taskmgr'
+            _W_msg_explorer='Run explorer'
+            _W_msg_uninstaller='Run uninstaller'
+            _W_msg_shell='Run a commandline shell (for debugging)'
+            _W_msg_folder='Browse files'
+            _W_msg_annihilate="Delete ALL DATA AND APPLICATIONS INSIDE THIS WINEPREFIX"
+            ;;
         de*) _W_msg_title="Pakettyp auswählen - Aktueller Präfix ist \"${WINEPREFIX}\""
-             _W_msg_body='Was möchten Sie tun?'
-             _W_msg_dlls="Windows-DLL installieren"
-             _W_msg_fonts='Schriftart installieren'
-             _W_msg_settings='Wine Einstellungen ändern'
-             _W_msg_winecfg='winecfg starten'
-             _W_msg_regedit='regedit starten'
-             _W_msg_taskmgr='taskmgr starten'
-             _W_msg_explorer='explorer starten'
-             _W_msg_uninstaller='uninstaller starten'
-             _W_msg_shell='Eine Kommandozeile zum debuggen starten'
-             _W_msg_folder='Ordner durchsuchen'
-             _W_msg_annihilate="ALLE DATEIEN UND PROGRAMME IN DIESEM WINEPREFIX Löschen"
-             ;;
+            _W_msg_body='Was möchten Sie tun?'
+            _W_msg_dlls="Windows-DLL installieren"
+            _W_msg_fonts='Schriftart installieren'
+            _W_msg_settings='Wine Einstellungen ändern'
+            _W_msg_winecfg='winecfg starten'
+            _W_msg_regedit='regedit starten'
+            _W_msg_taskmgr='taskmgr starten'
+            _W_msg_explorer='explorer starten'
+            _W_msg_uninstaller='uninstaller starten'
+            _W_msg_shell='Eine Kommandozeile zum debuggen starten'
+            _W_msg_folder='Ordner durchsuchen'
+            _W_msg_annihilate="ALLE DATEIEN UND PROGRAMME IN DIESEM WINEPREFIX Löschen"
+            ;;
         pl*) _W_msg_title="Winetricks - obecny prefiks to \"${WINEPREFIX}\""
-             _W_msg_body='Co chcesz zrobić w tym prefiksie?'
-             _W_msg_dlls="Zainstalować windowsową bibliotekę DLL lub komponent"
-             _W_msg_fonts='Zainstalować czcionkę'
-             _W_msg_settings='Zmienić ustawienia'
-             _W_msg_winecfg='Uruchomić winecfg'
-             _W_msg_regedit='Uruchomić edytor rejestru'
-             _W_msg_taskmgr='Uruchomić menedżer zadań'
-             _W_msg_explorer='Uruchomić explorer'
-             _W_msg_uninstaller='Uruchomić program odinstalowujący'
-             _W_msg_shell='Uruchomić powłokę wiersza poleceń (dla debugowania)'
-             _W_msg_folder='Przeglądać pliki'
-             _W_msg_annihilate="Usuńąć WSZYSTKIE DANE I APLIKACJE WEWNĄTRZ TEGO PREFIKSU WINE"
-             ;;
+            _W_msg_body='Co chcesz zrobić w tym prefiksie?'
+            _W_msg_dlls="Zainstalować windowsową bibliotekę DLL lub komponent"
+            _W_msg_fonts='Zainstalować czcionkę'
+            _W_msg_settings='Zmienić ustawienia'
+            _W_msg_winecfg='Uruchomić winecfg'
+            _W_msg_regedit='Uruchomić edytor rejestru'
+            _W_msg_taskmgr='Uruchomić menedżer zadań'
+            _W_msg_explorer='Uruchomić explorer'
+            _W_msg_uninstaller='Uruchomić program odinstalowujący'
+            _W_msg_shell='Uruchomić powłokę wiersza poleceń (dla debugowania)'
+            _W_msg_folder='Przeglądać pliki'
+            _W_msg_annihilate="Usuńąć WSZYSTKIE DANE I APLIKACJE WEWNĄTRZ TEGO PREFIKSU WINE"
+            ;;
         pt*) _W_msg_title="Winetricks - o prefixo atual é \"${WINEPREFIX}\""
-             _W_msg_body='O que você gostaria de fazer com este prefixo wineprefix?'
-             _W_msg_dlls="Instalar DLL ou componente do Windows"
-             _W_msg_fonts='Instalar fontes'
-             _W_msg_settings='Alterar configurações'
-             _W_msg_winecfg='Executar winecfg'
-             _W_msg_regedit='Executar regedit'
-             _W_msg_taskmgr='Executar taskmgr'
-             _W_msg_explorer='Executar explorer'
-             _W_msg_uninstaller='Executar desinstalador'
-             _W_msg_shell='Executar linha de comandos shell (para depuração)'
-             _W_msg_folder='Gerenciar arquivos'
-             _W_msg_annihilate="Apagar TODOS OS DADOS E APLICATIVOS DENTRO DESTE WINEPREFIX"
-             ;;
+            _W_msg_body='O que você gostaria de fazer com este prefixo wineprefix?'
+            _W_msg_dlls="Instalar DLL ou componente do Windows"
+            _W_msg_fonts='Instalar fontes'
+            _W_msg_settings='Alterar configurações'
+            _W_msg_winecfg='Executar winecfg'
+            _W_msg_regedit='Executar regedit'
+            _W_msg_taskmgr='Executar taskmgr'
+            _W_msg_explorer='Executar explorer'
+            _W_msg_uninstaller='Executar desinstalador'
+            _W_msg_shell='Executar linha de comandos shell (para depuração)'
+            _W_msg_folder='Gerenciar arquivos'
+            _W_msg_annihilate="Apagar TODOS OS DADOS E APLICATIVOS DENTRO DESTE WINEPREFIX"
+            ;;
         ru*) _W_msg_title="Winetricks - текущий путь для wine (wineprefix) \"${WINEPREFIX}\""
-             _W_msg_body='Что вы хотите сделать с этим wineprefix?'
-             _W_msg_dlls="Установить библиотеку DLL или компонент Windows"
-             _W_msg_fonts='Установить шрифт'
-             _W_msg_settings='Поменять настройки'
-             _W_msg_winecfg='Запустить winecfg (редактор настроек wine)'
-             _W_msg_regedit='Запустить regedit (редактор реестра)'
-             _W_msg_taskmgr='Запустить taskmgr (менеджер задач)'
-             _W_msg_explorer='Запустить explorer'
-             _W_msg_uninstaller='Запустить uninstaller (деинсталлятор)'
-             _W_msg_shell='Запустить графический терминал (для отладки)'
-             _W_msg_folder='Проводник файлов'
-             _W_msg_annihilate="Удалить ВСЕ ДАННЫЕ И ПРИЛОЖЕНИЯ В ЭТОМ WINEPREFIX"
-             ;;
+            _W_msg_body='Что вы хотите сделать с этим wineprefix?'
+            _W_msg_dlls="Установить библиотеку DLL или компонент Windows"
+            _W_msg_fonts='Установить шрифт'
+            _W_msg_settings='Поменять настройки'
+            _W_msg_winecfg='Запустить winecfg (редактор настроек wine)'
+            _W_msg_regedit='Запустить regedit (редактор реестра)'
+            _W_msg_taskmgr='Запустить taskmgr (менеджер задач)'
+            _W_msg_explorer='Запустить explorer'
+            _W_msg_uninstaller='Запустить uninstaller (деинсталлятор)'
+            _W_msg_shell='Запустить графический терминал (для отладки)'
+            _W_msg_folder='Проводник файлов'
+            _W_msg_annihilate="Удалить ВСЕ ДАННЫЕ И ПРИЛОЖЕНИЯ В ЭТОМ WINEPREFIX"
+            ;;
         uk*) _W_msg_title="Winetricks - поточний prefix \"${WINEPREFIX}\""
-             _W_msg_body='Що Ви хочете зробити для цього wineprefix?'
-             _W_msg_dlls="Встановити Windows DLL чи компонент(и)"
-             _W_msg_fonts='Встановити шрифт'
-             _W_msg_settings='Змінити налаштування'
-             _W_msg_winecfg='Запустити winecfg'
-             _W_msg_regedit='Запустити regedit'
-             _W_msg_taskmgr='Запустити taskmgr'
-             _W_msg_explorer='Запустити explorer'
-             _W_msg_uninstaller='Встановлення/видалення програм'
-             _W_msg_shell='Запуск командної оболонки (для налагодження)'
-             _W_msg_folder='Перегляд файлів'
-             _W_msg_annihilate="Видалити УСІ ДАНІ ТА ПРОГРАМИ З ЦЬОГО WINEPREFIX"
-             ;;
+            _W_msg_body='Що Ви хочете зробити для цього wineprefix?'
+            _W_msg_dlls="Встановити Windows DLL чи компонент(и)"
+            _W_msg_fonts='Встановити шрифт'
+            _W_msg_settings='Змінити налаштування'
+            _W_msg_winecfg='Запустити winecfg'
+            _W_msg_regedit='Запустити regedit'
+            _W_msg_taskmgr='Запустити taskmgr'
+            _W_msg_explorer='Запустити explorer'
+            _W_msg_uninstaller='Встановлення/видалення програм'
+            _W_msg_shell='Запуск командної оболонки (для налагодження)'
+            _W_msg_folder='Перегляд файлів'
+            _W_msg_annihilate="Видалити УСІ ДАНІ ТА ПРОГРАМИ З ЦЬОГО WINEPREFIX"
+            ;;
         zh_CN*)   _W_msg_title="Winetricks - 当前容器路径是 \"${WINEPREFIX}\""
-             _W_msg_body='管理当前容器'
-             _W_msg_dlls="安装 Windows DLL 或组件"
-             _W_msg_fonts='安装字体'
-             _W_msg_settings='修改设置'
-             _W_msg_winecfg='运行 Wine 配置程序'
-             _W_msg_regedit='运行注册表'
-             _W_msg_taskmgr='运行任务管理器'
-             _W_msg_explorer='运行资源管理器'
-             _W_msg_uninstaller='运行卸载程序'
-             _W_msg_shell='运行命令提示窗口 (作为调试)'
-             _W_msg_folder='浏览容器中的文件'
-             _W_msg_annihilate="删除容器中所有数据和应用程序"
-             ;;
+            _W_msg_body='管理当前容器'
+            _W_msg_dlls="安装 Windows DLL 或组件"
+            _W_msg_fonts='安装字体'
+            _W_msg_settings='修改设置'
+            _W_msg_winecfg='运行 Wine 配置程序'
+            _W_msg_regedit='运行注册表'
+            _W_msg_taskmgr='运行任务管理器'
+            _W_msg_explorer='运行资源管理器'
+            _W_msg_uninstaller='运行卸载程序'
+            _W_msg_shell='运行命令提示窗口 (作为调试)'
+            _W_msg_folder='浏览容器中的文件'
+            _W_msg_annihilate="删除容器中所有数据和应用程序"
+            ;;
         zh_TW*|zh_HK*)   _W_msg_title="Winetricks - 目前容器路徑是 \"${WINEPREFIX}\""
-             _W_msg_body='管理目前容器'
-             _W_msg_dlls="安裝 Windows DLL 或套件"
-             _W_msg_fonts='安裝字型'
-             _W_msg_settings='修改設定'
-             _W_msg_winecfg='執行 Wine 設定程式'
-             _W_msg_regedit='執行登錄編輯程式'
-             _W_msg_taskmgr='執行工作管理員'
-             _W_msg_explorer='執行檔案總管'
-             _W_msg_uninstaller='執行解除安裝程式'
-             _W_msg_shell='執行命令提示視窗 (作為偵錯)'
-             _W_msg_folder='瀏覽容器中的檔案'
-             _W_msg_annihilate="刪除容器中所有資料和應用程式"
-             ;;
-        *)   _W_msg_title="Winetricks - current prefix is \"${WINEPREFIX}\""
-             _W_msg_body='What would you like to do to this wineprefix?'
-             _W_msg_dlls="Install a Windows DLL or component"
-             _W_msg_fonts='Install a font'
-             _W_msg_settings='Change settings'
-             _W_msg_winecfg='Run winecfg'
-             _W_msg_regedit='Run regedit'
-             _W_msg_taskmgr='Run taskmgr'
-             _W_msg_explorer='Run explorer'
-             _W_msg_uninstaller='Run uninstaller'
-             _W_msg_shell='Run a commandline shell (for debugging)'
-             _W_msg_folder='Browse files'
-             _W_msg_annihilate="Delete ALL DATA AND APPLICATIONS INSIDE THIS WINEPREFIX"
-             ;;
+            _W_msg_body='管理目前容器'
+            _W_msg_dlls="安裝 Windows DLL 或套件"
+            _W_msg_fonts='安裝字型'
+            _W_msg_settings='修改設定'
+            _W_msg_winecfg='執行 Wine 設定程式'
+            _W_msg_regedit='執行登錄編輯程式'
+            _W_msg_taskmgr='執行工作管理員'
+            _W_msg_explorer='執行檔案總管'
+            _W_msg_uninstaller='執行解除安裝程式'
+            _W_msg_shell='執行命令提示視窗 (作為偵錯)'
+            _W_msg_folder='瀏覽容器中的檔案'
+            _W_msg_annihilate="刪除容器中所有資料和應用程式"
+            ;;
+        *)  _W_msg_title="Winetricks - current prefix is \"${WINEPREFIX}\""
+            _W_msg_body='What would you like to do to this wineprefix?'
+            _W_msg_dlls="Install a Windows DLL or component"
+            _W_msg_fonts='Install a font'
+            _W_msg_settings='Change settings'
+            _W_msg_winecfg='Run winecfg'
+            _W_msg_regedit='Run regedit'
+            _W_msg_taskmgr='Run taskmgr'
+            _W_msg_explorer='Run explorer'
+            _W_msg_uninstaller='Run uninstaller'
+            _W_msg_shell='Run a commandline shell (for debugging)'
+            _W_msg_folder='Browse files'
+            _W_msg_annihilate="Delete ALL DATA AND APPLICATIONS INSIDE THIS WINEPREFIX"
+            ;;
     esac
 
     case ${WINETRICKS_GUI} in
@@ -4006,7 +3756,7 @@ winetricks_mainmenu()
                     FALSE shell       '${_W_msg_shell}' \
                     FALSE folder      '${_W_msg_folder}' \
                     FALSE annihilate  '${_W_msg_annihilate}' \
-                 "
+                "
             ) > "${WINETRICKS_WORKDIR}"/zenity.sh
 
             sh "${WINETRICKS_WORKDIR}"/zenity.sh | tr '|' ' '
@@ -4041,32 +3791,32 @@ winetricks_settings_menu()
     # FIXME: these translations should really be centralized/reused:
     case ${LANG} in
         da*) _W_msg_title="Vælg en pakke - Nuværende præfiks er \"${WINEPREFIX}\""
-             _W_msg_body='Which settings would you like to change?'
-             ;;
+            _W_msg_body='Which settings would you like to change?'
+            ;;
         de*) _W_msg_title="Winetricks - Aktueller Präfix ist \"${WINEPREFIX}\""
-             _W_msg_body='Welche Einstellungen möchten Sie ändern?'
-             ;;
+            _W_msg_body='Welche Einstellungen möchten Sie ändern?'
+            ;;
         pl*) _W_msg_title="Winetricks - obecny prefiks to \"${WINEPREFIX}\""
-             _W_msg_body='Jakie ustawienia chcesz zmienić?'
-             ;;
+            _W_msg_body='Jakie ustawienia chcesz zmienić?'
+            ;;
         pt*) _W_msg_title="Winetricks - o prefixo atual é \"${WINEPREFIX}\""
-             _W_msg_body='Quais configurações você gostaria de alterar?'
-             ;;
+            _W_msg_body='Quais configurações você gostaria de alterar?'
+            ;;
         ru*) _W_msg_title="Winetricks - текущий путь wine (wineprefix) \"${WINEPREFIX}\""
-             _W_msg_body='Какие настройки вы хотите изменить?'
-             ;;
+            _W_msg_body='Какие настройки вы хотите изменить?'
+            ;;
         uk*) _W_msg_title="Winetricks - поточний prefix \"${WINEPREFIX}\""
-             _W_msg_body='Які налаштування Ви хочете змінити?'
-             ;;
+            _W_msg_body='Які налаштування Ви хочете змінити?'
+            ;;
         zh_CN*)   _W_msg_title="Winetricks - 当前容器路径是 \"${WINEPREFIX}\""
-             _W_msg_body='您想要更改哪项设置？'
-             ;;
+            _W_msg_body='您想要更改哪项设置？'
+            ;;
         zh_TW*|zh_HK*)   _W_msg_title="Winetricks - 目前容器路徑是 \"${WINEPREFIX}\""
-             _W_msg_body='您想要變更哪項設定？'
-             ;;
-        *)   _W_msg_title="Winetricks - current prefix is \"${WINEPREFIX}\""
-             _W_msg_body='Which settings would you like to change?'
-             ;;
+            _W_msg_body='您想要變更哪項設定？'
+            ;;
+        *)  _W_msg_title="Winetricks - current prefix is \"${WINEPREFIX}\""
+            _W_msg_body='Which settings would you like to change?'
+            ;;
     esac
 
     case ${WINETRICKS_GUI} in
@@ -4227,41 +3977,41 @@ winetricks_showmenu()
 {
     case ${LANG} in
         da*) _W_msg_title='Vælg en pakke'
-             _W_msg_body='Vilken pakke vil du installere?'
-             _W_cached="cached"
-             ;;
+            _W_msg_body='Vilken pakke vil du installere?'
+            _W_cached="cached"
+            ;;
         de*) _W_msg_title="Winetricks - Aktueller Prefix ist \"${WINEPREFIX}\""
-             _W_msg_body='Welche Paket(e) möchten Sie installieren?'
-             _W_cached="gecached"
-             ;;
+            _W_msg_body='Welche Paket(e) möchten Sie installieren?'
+            _W_cached="gecached"
+            ;;
         pl*) _W_msg_title="Winetricks - obecny prefiks to \"${WINEPREFIX}\""
-             _W_msg_body='Które paczki chesz zainstalować?'
-             _W_cached="zarchiwizowane"
-             ;;
+            _W_msg_body='Które paczki chesz zainstalować?'
+            _W_cached="zarchiwizowane"
+            ;;
         pt*) _W_msg_title="Winetricks - o prefixo atual é \"${WINEPREFIX}\""
-             _W_msg_body='Quais pacotes você gostaria de instalar?'
-             _W_cached="em cache"
-             ;;
+            _W_msg_body='Quais pacotes você gostaria de instalar?'
+            _W_cached="em cache"
+            ;;
         ru*) _W_msg_title="Winetricks - текущий путь wine (wineprefix) \"${WINEPREFIX}\""
-             _W_msg_body='Какое приложение(я) вы хотите установить?'
-             _W_cached="в кэше"
-             ;;
+            _W_msg_body='Какое приложение(я) вы хотите установить?'
+            _W_cached="в кэше"
+            ;;
         uk*) _W_msg_title="Winetricks - поточний prefix \"${WINEPREFIX}\""
-             _W_msg_body='Які пакунки Ви хочете встановити?'
-             _W_cached="кешовано"
-             ;;
+            _W_msg_body='Які пакунки Ви хочете встановити?'
+            _W_cached="кешовано"
+            ;;
         zh_CN*)   _W_msg_title="Winetricks - 当前容器路径是 \"${WINEPREFIX}\""
-             _W_msg_body='您想要安装什么应用程序？'
-             _W_cached="已缓存"
-             ;;
+            _W_msg_body='您想要安装什么应用程序？'
+            _W_cached="已缓存"
+            ;;
         zh_TW*|zh_HK*)   _W_msg_title="Winetricks - 目前容器路徑是 \"${WINEPREFIX}\""
-             _W_msg_body='您想要安裝什麼應用程式？'
-             _W_cached="已緩存"
-             ;;
-        *)   _W_msg_title="Winetricks - current prefix is \"${WINEPREFIX}\""
-             _W_msg_body='Which package(s) would you like to install?'
-             _W_cached="cached"
-             ;;
+            _W_msg_body='您想要安裝什麼應用程式？'
+            _W_cached="已緩存"
+            ;;
+        *)  _W_msg_title="Winetricks - current prefix is \"${WINEPREFIX}\""
+            _W_msg_body='Which package(s) would you like to install?'
+            _W_cached="cached"
+            ;;
     esac
 
 
@@ -4283,7 +4033,7 @@ winetricks_showmenu()
                         --height ${WINETRICKS_MENU_HEIGHT} \
                         --width ${WINETRICKS_MENU_WIDTH} \
                         "
-                    ;;
+                        ;;
                 de*) printf %s "zenity \
                         --title '${_W_msg_title}' \
                         --text '${_W_msg_body}' \
@@ -4299,7 +4049,7 @@ winetricks_showmenu()
                         --height ${WINETRICKS_MENU_HEIGHT} \
                         --width ${WINETRICKS_MENU_WIDTH} \
                         "
-                     ;;
+                        ;;
                 pl*) printf %s "zenity \
                         --title '${_W_msg_title}' \
                         --text '${_W_msg_body}' \
@@ -4315,7 +4065,7 @@ winetricks_showmenu()
                         --height ${WINETRICKS_MENU_HEIGHT} \
                         --width ${WINETRICKS_MENU_WIDTH} \
                         "
-                     ;;
+                        ;;
                 pt*) printf %s "zenity \
                         --title '${_W_msg_title}' \
                         --text '${_W_msg_body}' \
@@ -4331,7 +4081,7 @@ winetricks_showmenu()
                         --height ${WINETRICKS_MENU_HEIGHT} \
                         --width ${WINETRICKS_MENU_WIDTH} \
                         "
-                     ;;
+                        ;;
                 ru*) printf %s "zenity \
                         --title '${_W_msg_title}' \
                         --text '${_W_msg_body}' \
@@ -4347,7 +4097,7 @@ winetricks_showmenu()
                         --height ${WINETRICKS_MENU_HEIGHT} \
                         --width ${WINETRICKS_MENU_WIDTH} \
                         "
-                     ;;
+                        ;;
                 uk*) printf %s "zenity \
                         --title '${_W_msg_title}' \
                         --text '${_W_msg_body}' \
@@ -4363,7 +4113,7 @@ winetricks_showmenu()
                         --height ${WINETRICKS_MENU_HEIGHT} \
                         --width ${WINETRICKS_MENU_WIDTH} \
                         "
-                     ;;
+                        ;;
                 zh_CN*) printf %s "zenity \
                         --title '${_W_msg_title}' \
                         --text '${_W_msg_body}' \
@@ -4379,7 +4129,7 @@ winetricks_showmenu()
                         --height ${WINETRICKS_MENU_HEIGHT} \
                         --width ${WINETRICKS_MENU_WIDTH} \
                         "
-                     ;;
+                        ;;
                 zh_TW*|zh_HK*) printf %s "zenity \
                         --title '${_W_msg_title}' \
                         --text '${_W_msg_body}' \
@@ -4395,7 +4145,7 @@ winetricks_showmenu()
                         --height ${WINETRICKS_MENU_HEIGHT} \
                         --width ${WINETRICKS_MENU_WIDTH} \
                         "
-                     ;;
+                        ;;
                 *) printf %s "zenity \
                         --title '${_W_msg_title}' \
                         --text '${_W_msg_body}' \
@@ -4411,7 +4161,7 @@ winetricks_showmenu()
                         --height ${WINETRICKS_MENU_HEIGHT} \
                         --width ${WINETRICKS_MENU_WIDTH} \
                         "
-                     ;;
+                        ;;
             esac > "${WINETRICKS_WORKDIR}"/zenity.sh
 
             true > "${WINETRICKS_WORKDIR}"/installed.txt
@@ -4543,20 +4293,24 @@ winetricks_is_installed()
                     _W_prefix="${WINEPREFIX}"
                     ;;
             esac
+
             if test -d "${_W_prefix}/dosdevices"; then
-              # 'win7 vcrun2005' creates different file than 'winxp vcrun2005'
-              # so let it specify multiple, separated by |
-              _W_IFS="${IFS}"
-              IFS='|'
-              for _W_file_ in ${_W_file}; do
-                _W_file_unix="$(WINEPREFIX="${_W_prefix}" w_pathconv -u "${_W_file_}")"
-                if test -f "${_W_file_unix}" && ! grep -q "Wine placeholder DLL" "${_W_file_unix}"; then
-                    IFS="${_W_IFS}"
-                    unset _W_file _W_file_ _W_file_unix _W_prefix _W_IFS
-                    return "${TRUE}"  # installed
-                fi
-              done
-             IFS="${_W_IFS}"
+                # 'win7 vcrun2005' creates different file than 'winxp vcrun2005'
+                # so let it specify multiple, separated by |
+                _W_IFS="${IFS}"
+                IFS='|'
+
+                for _W_file_ in ${_W_file}; do
+                    _W_file_unix="$(WINEPREFIX="${_W_prefix}" w_pathconv -u "${_W_file_}")"
+
+                    if test -f "${_W_file_unix}" && ! grep -q "Wine placeholder DLL" "${_W_file_unix}"; then
+                        IFS="${_W_IFS}"
+                        unset _W_file _W_file_ _W_file_unix _W_prefix _W_IFS
+                        return "${TRUE}"  # installed
+                    fi
+                done
+
+                IFS="${_W_IFS}"
             fi
             ;;
     esac
@@ -4881,16 +4635,17 @@ winetricks_cache_iso()
     # Use conv=noerror,sync to replace unreadable blocks with zeroes
     case ${WINETRICKS_OPT_DD} in
         dd)
-          ${WINETRICKS_OPT_DD} if=${WINETRICKS_DEV} of="${W_CACHE}"/temp.iso bs=2048 conv=noerror,sync &
-          WINETRICKS_DD_PID=$!
-          ;;
+            ${WINETRICKS_OPT_DD} if=${WINETRICKS_DEV} of="${W_CACHE}"/temp.iso bs=2048 conv=noerror,sync &
+            WINETRICKS_DD_PID=$!
+            ;;
         ddrescue)
-          if [ ! -x "$(command -v ddrescue)" ]; then
-              w_die "Please install ddrescue first."
-          fi
-          ${WINETRICKS_OPT_DD} -v -b 2048 ${WINETRICKS_DEV} "${W_CACHE}"/temp.iso &
-          WINETRICKS_DD_PID=$!
-          ;;
+            if [ ! -x "$(command -v ddrescue)" ]; then
+                w_die "Please install ddrescue first."
+            fi
+
+            ${WINETRICKS_OPT_DD} -v -b 2048 ${WINETRICKS_DEV} "${W_CACHE}"/temp.iso &
+            WINETRICKS_DD_PID=$!
+            ;;
     esac
 
     echo "${WINETRICKS_DD_PID}" > "${WINETRICKS_WORKDIR}"/dd-pid
@@ -5936,7 +5691,7 @@ helper_d3dx9_xx()
     w_try_cabextract -d "${W_TMP}" -L -F "*${dllname}*x86*" "${W_CACHE}"/directx9/${DIRECTX_NAME}
 
     for x in "${W_TMP}"/*.cab; do
-      w_try_cabextract -d "${W_SYSTEM32_DLLS}" -L -F "${dllname}.dll" "${x}"
+        w_try_cabextract -d "${W_SYSTEM32_DLLS}" -L -F "${dllname}.dll" "${x}"
     done
 
     if test "${W_ARCH}" = "win64"; then
@@ -6331,10 +6086,12 @@ load_d3dcompiler_42()
 
     w_try_cabextract -d "${W_TMP}" -L -F "*${dllname}*x86*" "${W_CACHE}"/directx9/${DIRECTX_NAME}
     for x in "${W_TMP}"/*.cab; do
-      w_try_cabextract -d "${W_SYSTEM32_DLLS}" -L -F "${dllname}.dll" "${x}"
+        w_try_cabextract -d "${W_SYSTEM32_DLLS}" -L -F "${dllname}.dll" "${x}"
     done
+
     if test "${W_ARCH}" = "win64"; then
         w_try_cabextract -d "${W_TMP}" -L -F "*${dllname}*x64*" "${W_CACHE}"/directx9/${DIRECTX_NAME}
+
         for x in "${W_TMP}"/*x64.cab; do
             w_try_cabextract -d "${W_SYSTEM64_DLLS}" -L -F "${dllname}.dll" "${x}"
         done
@@ -6364,11 +6121,14 @@ load_d3dcompiler_43()
     helper_directx_Jun2010
 
     w_try_cabextract -d "${W_TMP}" -L -F "*${dllname}*x86*" "${W_CACHE}"/directx9/${DIRECTX_NAME}
+
     for x in "${W_TMP}"/*.cab; do
-      w_try_cabextract -d "${W_SYSTEM32_DLLS}" -L -F "${dllname}.dll" "${x}"
+        w_try_cabextract -d "${W_SYSTEM32_DLLS}" -L -F "${dllname}.dll" "${x}"
     done
+
     if test "${W_ARCH}" = "win64"; then
         w_try_cabextract -d "${W_TMP}" -L -F "*${dllname}*x64*" "${W_CACHE}"/directx9/${DIRECTX_NAME}
+
         for x in "${W_TMP}"/*x64.cab; do
             w_try_cabextract -d "${W_SYSTEM64_DLLS}" -L -F "${dllname}.dll" "${x}"
         done
@@ -6467,11 +6227,14 @@ load_d3dx9()
 
     # Kinder, less invasive directx - only extract and override d3dx9_??.dll
     w_try_cabextract -d "${W_TMP}" -L -F '*d3dx9*x86*' "${W_CACHE}"/directx9/${DIRECTX_NAME}
+
     for x in "${W_TMP}"/*.cab; do
-      w_try_cabextract -d "${W_SYSTEM32_DLLS}" -L -F 'd3dx9*.dll' "${x}"
+        w_try_cabextract -d "${W_SYSTEM32_DLLS}" -L -F 'd3dx9*.dll' "${x}"
     done
+
     if test "${W_ARCH}" = "win64"; then
         w_try_cabextract -d "${W_TMP}" -L -F '*d3dx9*x64*' "${W_CACHE}"/directx9/${DIRECTX_NAME}
+
         for x in "${W_TMP}"/*x64.cab; do
             w_try_cabextract -d "${W_SYSTEM64_DLLS}" -L -F 'd3dx9*.dll' "${x}"
         done
@@ -6801,10 +6564,12 @@ load_d3dx11_42()
 
     w_try_cabextract -d "${W_TMP}" -L -F "*${dllname}*x86*" "${W_CACHE}"/directx9/${DIRECTX_NAME}
     for x in "${W_TMP}"/*.cab; do
-      w_try_cabextract -d "${W_SYSTEM32_DLLS}" -L -F "${dllname}.dll" "${x}"
+        w_try_cabextract -d "${W_SYSTEM32_DLLS}" -L -F "${dllname}.dll" "${x}"
     done
+
     if test "${W_ARCH}" = "win64"; then
         w_try_cabextract -d "${W_TMP}" -L -F "*${dllname}*x64*" "${W_CACHE}"/directx9/${DIRECTX_NAME}
+
         for x in "${W_TMP}"/*x64.cab; do
             w_try_cabextract -d "${W_SYSTEM64_DLLS}" -L -F "${dllname}.dll" "${x}"
         done
@@ -6831,10 +6596,12 @@ load_d3dx11_43()
 
     w_try_cabextract -d "${W_TMP}" -L -F "*${dllname}*x86*" "${W_CACHE}"/directx9/${DIRECTX_NAME}
     for x in "${W_TMP}"/*.cab; do
-      w_try_cabextract -d "${W_SYSTEM32_DLLS}" -L -F "${dllname}.dll" "${x}"
+        w_try_cabextract -d "${W_SYSTEM32_DLLS}" -L -F "${dllname}.dll" "${x}"
     done
+
     if test "${W_ARCH}" = "win64"; then
         w_try_cabextract -d "${W_TMP}" -L -F "*${dllname}*x64*" "${W_CACHE}"/directx9/${DIRECTX_NAME}
+
         for x in "${W_TMP}"/*x64.cab; do
             w_try_cabextract -d "${W_SYSTEM64_DLLS}" -L -F "${dllname}.dll" "${x}"
         done
@@ -6860,10 +6627,12 @@ load_d3dx10()
     # Kinder, less invasive directx10 - only extract and override d3dx10_??.dll
     w_try_cabextract -d "${W_TMP}" -L -F '*d3dx10*x86*' "${W_CACHE}"/directx9/${DIRECTX_NAME}
     for x in "${W_TMP}"/*.cab; do
-      w_try_cabextract -d "${W_SYSTEM32_DLLS}" -L -F 'd3dx10*.dll' "${x}"
+        w_try_cabextract -d "${W_SYSTEM32_DLLS}" -L -F 'd3dx10*.dll' "${x}"
     done
+
     if test "${W_ARCH}" = "win64"; then
         w_try_cabextract -d "${W_TMP}" -L -F '*d3dx10*x64*' "${W_CACHE}"/directx9/${DIRECTX_NAME}
+
         for x in "${W_TMP}"/*x64.cab; do
             w_try_cabextract -d "${W_SYSTEM64_DLLS}" -L -F 'd3dx10*.dll' "${x}"
         done
@@ -6892,10 +6661,12 @@ load_d3dx10_43()
 
     w_try_cabextract -d "${W_TMP}" -L -F "*${dllname}*x86*" "${W_CACHE}"/directx9/${DIRECTX_NAME}
     for x in "${W_TMP}"/*.cab; do
-      w_try_cabextract -d "${W_SYSTEM32_DLLS}" -L -F "${dllname}.dll" "${x}"
+        w_try_cabextract -d "${W_SYSTEM32_DLLS}" -L -F "${dllname}.dll" "${x}"
     done
+
     if test "${W_ARCH}" = "win64"; then
         w_try_cabextract -d "${W_TMP}" -L -F "*${dllname}*x64*" "${W_CACHE}"/directx9/${DIRECTX_NAME}
+
         for x in "${W_TMP}"/*x64.cab; do
             w_try_cabextract -d "${W_SYSTEM64_DLLS}" -L -F "${dllname}.dll" "${x}"
         done
@@ -7123,9 +6894,9 @@ load_dpvoice()
 
     w_try_cabextract -d "${W_TMP}" -L -F 'dxnt.cab' "${W_CACHE}"/directx9/${DIRECTX_NAME}
     for x in "${W_TMP}"/*.cab; do
-      w_try_cabextract -d "${W_SYSTEM32_DLLS}" -L -F 'dpvoice.dll' "${x}"
-      w_try_cabextract -d "${W_SYSTEM32_DLLS}" -L -F 'dpvvox.dll' "${x}"
-      w_try_cabextract -d "${W_SYSTEM32_DLLS}" -L -F 'dpvacm.dll' "${x}"
+        w_try_cabextract -d "${W_SYSTEM32_DLLS}" -L -F 'dpvoice.dll' "${x}"
+        w_try_cabextract -d "${W_SYSTEM32_DLLS}" -L -F 'dpvvox.dll' "${x}"
+        w_try_cabextract -d "${W_SYSTEM32_DLLS}" -L -F 'dpvacm.dll' "${x}"
     done
     w_override_dlls native dpvoice dpvvox dpvacm
     w_try_regsvr dpvoice.dll
@@ -8419,6 +8190,24 @@ load_dxvk1100()
     helper_dxvk_d9vk "${file1}" "5.14" "1.2.140" "dxgi,d3d9,d3d10core,d3d11"
 }
 
+w_metadata dxvk1101 dlls \
+    title="Vulkan-based D3D9/D3D10/D3D11 implementation for Linux / Wine (1.10.1)" \
+    publisher="Philip Rebohle" \
+    year="2017" \
+    media="download" \
+    file1="dxvk-1.10.1.tar.gz" \
+    installed_file1="${W_SYSTEM32_DLLS_WIN}/d3d9.dll" \
+    installed_file2="${W_SYSTEM32_DLLS_WIN}/d3d10core.dll" \
+    installed_file3="${W_SYSTEM32_DLLS_WIN}/d3d11.dll" \
+    installed_file4="${W_SYSTEM32_DLLS_WIN}/dxgi.dll"
+
+load_dxvk1101()
+{
+    # https://github.com/doitsujin/dxvk
+    w_download "https://github.com/doitsujin/dxvk/releases/download/v1.10.1/dxvk-1.10.1.tar.gz" dc349482cb0a73d4e29c82f8e9ff6031e09e176e84a97ffe91eac64422b307aa
+    helper_dxvk_d9vk "${file1}" "5.14" "1.2.140" "dxgi,d3d9,d3d10core,d3d11"
+}
+
 #----------------------------------------------------------------
 
 w_metadata dxvk dlls \
@@ -9396,6 +9185,7 @@ w_metadata dotnet40 dlls \
 load_dotnet40()
 {
     w_package_broken "https://bugs.winehq.org/show_bug.cgi?id=49532" 5.12 5.18
+    w_package_broken "https://bugs.winehq.org/show_bug.cgi?id=52722" 7.5 7.6
 
     w_package_warn_win64
 
@@ -9425,6 +9215,15 @@ load_dotnet40()
     # Avoid a popup on WINEPREFIX updates, see https://bugs.winehq.org/show_bug.cgi?id=41727#c5
     "${WINE}" reg add "HKLM\\Software\\Microsoft\\.NETFramework" /v OnlyUseLatestCLR /t REG_DWORD /d 0001 /f
 
+    # See https://bugs.winehq.org/show_bug.cgi?id=47277#c9
+    case "${LANG}" in
+        C|en_US.UTF-8*) ;;
+        zh_CN*) w_warn "You may encounter infinite loops when trying to use applications that use WPF. Use LC_ALL=C when running your application as a workaround."
+        # Based on the bug, there may be other locales that are affected. But in the absence of a full list
+        # I don't think it's worth warning *every* non-en_US.UTF-8 user:
+        # *) w_warn "
+    esac
+
     w_set_winver 'default'
 }
 
@@ -9446,6 +9245,7 @@ w_metadata dotnet40_kb2468871 dlls \
 load_dotnet40_kb2468871()
 {
     w_package_broken "https://bugs.winehq.org/show_bug.cgi?id=49532" 5.12 5.18
+    w_package_broken "https://bugs.winehq.org/show_bug.cgi?id=52722" 7.5 7.6
 
     w_call dotnet40
 
@@ -9460,6 +9260,15 @@ load_dotnet40_kb2468871()
 
     w_try_cd "${W_TMP}"
     w_try "${WINE}" msiexec /p NDP40-KB2468871.msp
+
+    # See https://bugs.winehq.org/show_bug.cgi?id=47277#c9
+    case "${LANG}" in
+        C|en_US.UTF-8*) ;;
+        zh_CN*) w_warn "You may encounter infinite loops when trying to use applications that use WPF. Use LC_ALL=C when running your application as a workaround."
+        # Based on the bug, there may be other locales that are affected. But in the absence of a full list
+        # I don't think it's worth warning *every* non-en_US.UTF-8 user:
+        # *) w_warn "
+    esac
 
     w_set_winver 'default'
 }
@@ -9484,6 +9293,7 @@ load_dotnet45()
 {
     w_package_broken "https://bugs.winehq.org/show_bug.cgi?id=49532" 5.12 5.18
     w_package_broken "https://bugs.winehq.org/show_bug.cgi?id=49897" 5.18 6.6
+    w_package_broken "https://bugs.winehq.org/show_bug.cgi?id=52722" 7.5 7.6
 
     w_package_warn_win64
 
@@ -9512,6 +9322,15 @@ load_dotnet45()
 
     w_warn "Setting Windows version to 2003, otherwise applications using .NET 4.5 will subtly fail"
     w_set_winver win2k3
+
+    # See https://bugs.winehq.org/show_bug.cgi?id=47277#c9
+    case "${LANG}" in
+        C|en_US.UTF-8*) ;;
+        zh_CN*) w_warn "You may encounter infinite loops when trying to use applications that use WPF. Use LC_ALL=C when running your application as a workaround."
+        # Based on the bug, there may be other locales that are affected. But in the absence of a full list
+        # I don't think it's worth warning *every* non-en_US.UTF-8 user:
+        # *) w_warn "
+    esac
 }
 
 verify_dotnet45()
@@ -9534,6 +9353,7 @@ load_dotnet452()
 {
     w_package_broken "https://bugs.winehq.org/show_bug.cgi?id=49532" 5.12 5.18
     w_package_broken "https://bugs.winehq.org/show_bug.cgi?id=49897" 5.18 6.6
+    w_package_broken "https://bugs.winehq.org/show_bug.cgi?id=52722" 7.5 7.6
 
     w_package_warn_win64
 
@@ -9559,6 +9379,15 @@ load_dotnet452()
 
     w_warn "Setting Windows version to 2003, otherwise applications using .NET 4.5 will subtly fail"
     w_set_winver win2k3
+
+    # See https://bugs.winehq.org/show_bug.cgi?id=47277#c9
+    case "${LANG}" in
+        C|en_US.UTF-8*) ;;
+        zh_CN*) w_warn "You may encounter infinite loops when trying to use applications that use WPF. Use LC_ALL=C when running your application as a workaround."
+        # Based on the bug, there may be other locales that are affected. But in the absence of a full list
+        # I don't think it's worth warning *every* non-en_US.UTF-8 user:
+        # *) w_warn "
+    esac
 }
 
 verify_dotnet452()
@@ -9580,6 +9409,7 @@ w_metadata dotnet46 dlls \
 load_dotnet46()
 {
     w_package_broken "https://bugs.winehq.org/show_bug.cgi?id=49532" 5.12 5.18
+    w_package_broken "https://bugs.winehq.org/show_bug.cgi?id=52722" 7.5 7.6
 
     w_package_warn_win64
 
@@ -9596,6 +9426,15 @@ load_dotnet46()
     WINEDLLOVERRIDES=fusion=b w_try_ms_installer "${WINE}" "${file1}" ${W_OPT_UNATTENDED:+/q /c:"install.exe /q"}
 
     w_override_dlls native mscoree
+
+    # See https://bugs.winehq.org/show_bug.cgi?id=47277#c9
+    case "${LANG}" in
+        C|en_US.UTF-8*) ;;
+        zh_CN*) w_warn "You may encounter infinite loops when trying to use applications that use WPF. Use LC_ALL=C when running your application as a workaround."
+        # Based on the bug, there may be other locales that are affected. But in the absence of a full list
+        # I don't think it's worth warning *every* non-en_US.UTF-8 user:
+        # *) w_warn "
+    esac
 }
 
 verify_dotnet46()
@@ -9617,6 +9456,7 @@ w_metadata dotnet461 dlls \
 load_dotnet461()
 {
     w_package_broken "https://bugs.winehq.org/show_bug.cgi?id=49532" 5.12 5.18
+    w_package_broken "https://bugs.winehq.org/show_bug.cgi?id=52722" 7.5 7.6
 
     w_package_warn_win64
 
@@ -9636,6 +9476,15 @@ load_dotnet461()
 
     # Do not rely on temporary files. As a workaround, touch a file instead so that we know it's been installed for list-installed
     w_try touch "${W_WINDIR_UNIX}/dotnet461.installed.workaround"
+
+    # See https://bugs.winehq.org/show_bug.cgi?id=47277#c9
+    case "${LANG}" in
+        C|en_US.UTF-8*) ;;
+        zh_CN*) w_warn "You may encounter infinite loops when trying to use applications that use WPF. Use LC_ALL=C when running your application as a workaround."
+        # Based on the bug, there may be other locales that are affected. But in the absence of a full list
+        # I don't think it's worth warning *every* non-en_US.UTF-8 user:
+        # *) w_warn "
+    esac
 }
 
 verify_dotnet461()
@@ -9656,6 +9505,7 @@ w_metadata dotnet462 dlls \
 load_dotnet462()
 {
     w_package_broken "https://bugs.winehq.org/show_bug.cgi?id=49532" 5.12 5.18
+    w_package_broken "https://bugs.winehq.org/show_bug.cgi?id=52722" 7.5 7.6
 
     w_package_warn_win64
 
@@ -9677,6 +9527,15 @@ load_dotnet462()
     # Unfortunately, dotnet462 install the same files that dotnet461 does, but with different checksums
     # The only unique files are temporary ones. As a workaround, touch a file instead so that we know it's been installed for list-installed
     w_try touch "${W_WINDIR_UNIX}/dotnet462.installed.workaround"
+
+    # See https://bugs.winehq.org/show_bug.cgi?id=47277#c9
+    case "${LANG}" in
+        C|en_US.UTF-8*) ;;
+        zh_CN*) w_warn "You may encounter infinite loops when trying to use applications that use WPF. Use LC_ALL=C when running your application as a workaround."
+        # Based on the bug, there may be other locales that are affected. But in the absence of a full list
+        # I don't think it's worth warning *every* non-en_US.UTF-8 user:
+        # *) w_warn "
+    esac
 }
 
 verify_dotnet462()
@@ -9698,6 +9557,7 @@ w_metadata dotnet471 dlls \
 load_dotnet471()
 {
     w_package_broken "https://bugs.winehq.org/show_bug.cgi?id=49532" 5.12 5.18
+    w_package_broken "https://bugs.winehq.org/show_bug.cgi?id=52722" 7.5 7.6
 
     w_package_warn_win64
 
@@ -9717,6 +9577,15 @@ load_dotnet471()
 
     # Do not rely on temporary files. As a workaround, touch a file instead so that we know it's been installed for list-installed
     w_try touch "${W_WINDIR_UNIX}/dotnet471.installed.workaround"
+
+    # See https://bugs.winehq.org/show_bug.cgi?id=47277#c9
+    case "${LANG}" in
+        C|en_US.UTF-8*) ;;
+        zh_CN*) w_warn "You may encounter infinite loops when trying to use applications that use WPF. Use LC_ALL=C when running your application as a workaround."
+        # Based on the bug, there may be other locales that are affected. But in the absence of a full list
+        # I don't think it's worth warning *every* non-en_US.UTF-8 user:
+        # *) w_warn "
+    esac
 }
 
 verify_dotnet471()
@@ -9737,6 +9606,7 @@ w_metadata dotnet472 dlls \
 load_dotnet472()
 {
     w_package_broken "https://bugs.winehq.org/show_bug.cgi?id=49532" 5.12 5.18
+    w_package_broken "https://bugs.winehq.org/show_bug.cgi?id=52722" 7.5 7.6
 
     w_package_warn_win64
 
@@ -9756,6 +9626,15 @@ load_dotnet472()
 
     # Do not rely on temporary files. As a workaround, touch a file instead so that we know it's been installed for list-installed
     w_try touch "${W_WINDIR_UNIX}/dotnet472.installed.workaround"
+
+    # See https://bugs.winehq.org/show_bug.cgi?id=47277#c9
+    case "${LANG}" in
+        C|en_US.UTF-8*) ;;
+        zh_CN*) w_warn "You may encounter infinite loops when trying to use applications that use WPF. Use LC_ALL=C when running your application as a workaround."
+        # Based on the bug, there may be other locales that are affected. But in the absence of a full list
+        # I don't think it's worth warning *every* non-en_US.UTF-8 user:
+        # *) w_warn "
+    esac
 }
 
 verify_dotnet472()
@@ -9797,6 +9676,15 @@ load_dotnet48()
 
     # Do not rely on temporary files. As a workaround, touch a file instead so that we know it's been installed for list-installed
     w_try touch "${W_WINDIR_UNIX}/dotnet48.installed.workaround"
+
+    # See https://bugs.winehq.org/show_bug.cgi?id=47277#c9
+    case "${LANG}" in
+        C|en_US.UTF-8*) ;;
+        zh_CN*) w_warn "You may encounter infinite loops when trying to use applications that use WPF. Use LC_ALL=C when running your application as a workaround."
+        # Based on the bug, there may be other locales that are affected. But in the absence of a full list
+        # I don't think it's worth warning *every* non-en_US.UTF-8 user:
+        # *) w_warn "
+    esac
 }
 
 verify_dotnet48()
@@ -9896,7 +9784,7 @@ load_dotnet_verifier()
     # 2017/06/12: sha256sum 310a0341fbe68f5b8601f2d8deef5d05ca6bce50df03912df391bc843794ef60, adds .NET Framework 4.7 support
     # 2018/06/03: sha256sum 13fd683fd604f9de09a9e649df303100b81e6797f868024d55e5c2f3c14aa9a6, adds .NET Framework 4.7.{1,2} support
 
-    w_download https://msdnshared.blob.core.windows.net/media/2018/05/netfx_setupverifier_new.zip 13fd683fd604f9de09a9e649df303100b81e6797f868024d55e5c2f3c14aa9a6
+    w_download https://web.archive.org/web/20180802234935/https://msdnshared.blob.core.windows.net/media/2018/05/netfx_setupverifier_new.zip 13fd683fd604f9de09a9e649df303100b81e6797f868024d55e5c2f3c14aa9a6
 
     w_try_cd "${W_CACHE}/${W_PACKAGE}"
     w_try_unzip "${W_SYSTEM32_DLLS}" netfx_setupverifier_new.zip netfx_setupverifier.exe
@@ -11736,13 +11624,13 @@ load_python26()
         run pywin32-214.win32-py2.6.exe
         WinWait, Setup, Wizard will install pywin32
         if ( w_opt_unattended > 0 ) {
-             ControlClick Button2   ; next
-             WinWait, Setup, Python 2.6 is required
-             ControlClick Button3   ; next
-             WinWait, Setup, Click Next to begin
-             ControlClick Button3   ; next
-             WinWait, Setup, finished
-             ControlClick Button4   ; Finish
+            ControlClick Button2   ; next
+            WinWait, Setup, Python 2.6 is required
+            ControlClick Button3   ; next
+            WinWait, Setup, Click Next to begin
+            ControlClick Button3   ; next
+            WinWait, Setup, finished
+            ControlClick Button4   ; Finish
         }
         WinWaitClose
         "
@@ -11771,13 +11659,13 @@ load_python27()
         run pywin32-224.win32-py2.7.exe
         WinWait, Setup, Wizard will install pywin32
         if ( w_opt_unattended > 0 ) {
-             ControlClick Button2   ; next
-             WinWait, Setup, Python 2.7 is required
-             ControlClick Button3   ; next
-             WinWait, Setup, Click Next to begin
-             ControlClick Button3   ; next
-             WinWait, Setup, finished
-             ControlClick Button4   ; Finish
+            ControlClick Button2   ; next
+            WinWait, Setup, Python 2.7 is required
+            ControlClick Button3   ; next
+            WinWait, Setup, Click Next to begin
+            ControlClick Button3   ; next
+            WinWait, Setup, finished
+            ControlClick Button4   ; Finish
         }
         WinWaitClose
         "
@@ -13010,7 +12898,7 @@ load_vcrun2017()
 
     w_override_dlls native,builtin api-ms-win-crt-private-l1-1-0 api-ms-win-crt-conio-l1-1-0 api-ms-win-crt-heap-l1-1-0 api-ms-win-crt-locale-l1-1-0 api-ms-win-crt-math-l1-1-0 api-ms-win-crt-runtime-l1-1-0 api-ms-win-crt-stdio-l1-1-0 api-ms-win-crt-time-l1-1-0 atl140 concrt140 msvcp140 msvcp140_1 msvcp140_2 msvcr140 ucrtbase vcomp140 vcruntime140
 
-   if w_workaround_wine_bug 50894 "Working around failing wusa.exe lookup via C:\windows\SysNative"; then
+    if w_workaround_wine_bug 50894 "Working around failing wusa.exe lookup via C:\windows\SysNative"; then
         w_set_winver winxp
     fi
 
@@ -13266,7 +13154,7 @@ load_windowscodecs()
     w_try rm -f "${W_SYSTEM32_DLLS}"/windowscodecs.dll "${W_SYSTEM32_DLLS}"/windowscodecsext.dll "${W_SYSTEM32_DLLS}"/wmphoto.dll "${W_SYSTEM32_DLLS}"/photometadatahandler.dll
 
     if [ "${W_ARCH}" = "win64" ]; then
-         w_try rm -f "${W_SYSTEM64_DLLS}"/windowscodecs.dll "${W_SYSTEM64_DLLS}"/windowscodecsext.dll "${W_SYSTEM64_DLLS}"/wmphoto.dll "${W_SYSTEM64_DLLS}"/photometadatahandler.dll
+        w_try rm -f "${W_SYSTEM64_DLLS}"/windowscodecs.dll "${W_SYSTEM64_DLLS}"/windowscodecsext.dll "${W_SYSTEM64_DLLS}"/wmphoto.dll "${W_SYSTEM64_DLLS}"/photometadatahandler.dll
     fi
 
     # AF says in AppDB entry for .NET 3.0 that windowscodecs has to be native only
@@ -13544,10 +13432,12 @@ load_xinput()
 
     w_try_cabextract -d "${W_TMP}" -L -F '*_xinput_*x86*' "${W_CACHE}"/directx9/${DIRECTX_NAME}
     for x in "${W_TMP}"/*.cab; do
-      w_try_cabextract -d "${W_SYSTEM32_DLLS}" -L -F 'xinput*.dll' "${x}"
+        w_try_cabextract -d "${W_SYSTEM32_DLLS}" -L -F 'xinput*.dll' "${x}"
     done
+
     if test "${W_ARCH}" = "win64"; then
         w_try_cabextract -d "${W_TMP}" -L -F '*_xinput_*x64*' "${W_CACHE}"/directx9/${DIRECTX_NAME}
+
         for x in "${W_TMP}"/*x64.cab; do
             w_try_cabextract -d "${W_SYSTEM64_DLLS}" -L -F 'xinput*.dll' "${x}"
         done
@@ -14781,26 +14671,24 @@ load_autohotkey()
 #----------------------------------------------------------------
 
 w_metadata busybox apps \
-    title="BusyBox FRP-3902-g61e53aa93" \
+    title="BusyBox FRP-4621-gf3c5e8bc3" \
     publisher="Ron Yorston / Busybox authors" \
     year="2021" \
     media="download" \
-    file1="busybox-w32-FRP-3902-g61e53aa93.exe" \
+    file1="busybox-w32-FRP-4621-gf3c5e8bc3.exe" \
     installed_exe1="${W_SYSTEM32_DLLS_WIN}/busybox.exe"
 
 load_busybox()
 {
-    w_download https://frippery.org/files/busybox/busybox-w32-FRP-3902-g61e53aa93.exe 5595ff92795dba4717df671c0b17fe3419c332986b2cf5e6a92b4a0f83312fa3
+    w_download https://frippery.org/files/busybox/busybox-w32-FRP-4621-gf3c5e8bc3.exe 58c9da9ba094eade662572f9a725a6af44350dc3ff5a7897696926c651fdb582
 
     if test "${W_ARCH}" = "win64"; then
-        w_download https://frippery.org/files/busybox/busybox-w64-FRP-3902-g61e53aa93.exe 901f5125fd35df11102df65c70b8877f0d06aad5ac3a27bf9e5d50a43644744b
+        w_download https://frippery.org/files/busybox/busybox-w64-FRP-4621-gf3c5e8bc3.exe 7109bc6f129ab7ce466f7b3175ca830316184b431d16a965ade17b93c035ec7c
         w_try_cp_dll "${W_CACHE}/${W_PACKAGE}/${file1}" "${W_SYSTEM32_DLLS}/busybox.exe"
-        w_try_cp_dll "${W_CACHE}/${W_PACKAGE}/busybox-w64-FRP-2121-ga316078ad.exe" "${W_SYSTEM64_DLLS}/busybox.exe"
+        w_try_cp_dll "${W_CACHE}/${W_PACKAGE}/busybox-w64-FRP-4621-gf3c5e8bc3.exe" "${W_SYSTEM64_DLLS}/busybox.exe"
     else
         w_try_cp_dll "${W_CACHE}/${W_PACKAGE}/${file1}" "${W_SYSTEM32_DLLS}/busybox.exe"
     fi
-
-    w_warn "There are known issues with busybox under wine. For https://bugs.winehq.org/show_bug.cgi?id=49780, set BB_SKIP_ANSI_EMULATION=0. For https://github.com/rmyorston/busybox-w32/issues/210, set BB_ALT_BUFFER=0. I.e., \`BB_SKIP_ANSI_EMULATION=0 BB_ALT_BUFFER=0 ${WINE} busybox.exe\`"
 }
 
 #----------------------------------------------------------------
@@ -15361,11 +15249,13 @@ w_metadata ie8 dlls \
 
 load_ie8()
 {
-    # Installer itself bails out
-    w_package_unsupported_win64
-
-    # Bundled in Windows 7, so refuses to install. Works with XP:
-    w_set_winver winxp
+    if [ "${W_ARCH}" = "win32" ]; then
+        # Bundled in Windows 7, so refuses to install. Works with XP:
+        w_set_winver winxp
+    else
+        # Bundled in Windows 7, so refuses to install. Works with Win2003:
+        w_set_winver win2k3
+    fi
 
     # Unregister Wine IE
     #if [ ! -f "$W_SYSTEM32_DLLS"/plugin.ocx ]; then
@@ -15393,11 +15283,21 @@ load_ie8()
     mkdir -p "${W_SYSTEM32_DLLS}"/catroot/\{f750e6c3-38ee-11d1-85e5-00c04fc295ee\}
     w_try cp -f "${W_CACHE}"/ie8/winetest.cat "${W_SYSTEM32_DLLS}"/catroot/\{f750e6c3-38ee-11d1-85e5-00c04fc295ee\}/oem0.cat
 
-    w_download https://download.microsoft.com/download/C/C/0/CC0BD555-33DD-411E-936B-73AC6F95AE11/IE8-WindowsXP-x86-ENU.exe 5a2c6c82774bfe99b175f50a05b05bcd1fac7e9d0e54db2534049209f50cd6ef
+    if [ "${W_ARCH}" = "win32" ]; then
+        w_download https://download.microsoft.com/download/C/C/0/CC0BD555-33DD-411E-936B-73AC6F95AE11/IE8-WindowsXP-x86-ENU.exe 5a2c6c82774bfe99b175f50a05b05bcd1fac7e9d0e54db2534049209f50cd6ef
+    else
+        w_download https://download.microsoft.com/download/7/5/4/754D6601-662D-4E39-9788-6F90D8E5C097/IE8-WindowsServer2003-x64-ENU.exe bcff753e92ceabf31cfefaa6def146335c7cb27a50b95cd4f4658a0c3326f499
+    fi
 
     # Remove the fake DLLs from the existing WINEPREFIX
     if [ -f "${W_PROGRAMS_X86_UNIX}/Internet Explorer/iexplore.exe" ]; then
         w_try mv "${W_PROGRAMS_X86_UNIX}/Internet Explorer/iexplore.exe" "${W_PROGRAMS_X86_UNIX}/Internet Explorer/iexplore.exe.bak"
+    fi
+
+    if [ "${W_ARCH}" = "win64" ]; then
+        if [ -f "${W_PROGRAMS_UNIX}/Internet Explorer/iexplore.exe" ]; then
+            w_try mv "${W_PROGRAMS_UNIX}/Internet Explorer/iexplore.exe" "${W_PROGRAMS_UNIX}/Internet Explorer/iexplore.exe.bak"
+        fi
     fi
 
     # Replace the fake DLLs by copies from the bundle
@@ -15405,6 +15305,12 @@ load_ie8()
         test -f "${W_SYSTEM32_DLLS}"/${dll}.dll &&
             w_try mv "${W_SYSTEM32_DLLS}"/${dll}.dll "${W_SYSTEM32_DLLS}"/${dll}.dll.bak &&
             w_try_cabextract --directory="${W_SYSTEM32_DLLS}" "${W_CACHE}"/ie8/IE8-WindowsXP-x86-ENU.exe -F ${dll}.dll
+        if [ "${W_ARCH}" = "win64" ]; then
+            test -f "${W_SYSTEM64_DLLS}"/${dll}.dll &&
+                w_try mv "${W_SYSTEM64_DLLS}"/${dll}.dll "${W_SYSTEM64_DLLS}"/${dll}.dll.bak
+                w_try_cabextract --directory="${W_SYSTEM64_DLLS}" "${W_CACHE}"/ie8/IE8-WindowsServer2003-x64-ENU.exe -F ${dll}.dll
+        fi
+
     done
 
     # KLUDGE: if / is writable (as on OS X?), having a Z: mapping to it
@@ -15421,7 +15327,11 @@ load_ie8()
     # FIXME: There's an option for /updates-noupdates to disable checking for updates, but that
     # forces the install to fail on Wine. Not sure if it's an IE8 or Wine bug...
     # FIXME: can't check status, as it always reports failure on wine?
-    "${WINE}" IE8-WindowsXP-x86-ENU.exe ${W_OPT_UNATTENDED:+/quiet /forcerestart}
+    if [ "${W_ARCH}" = "win32" ]; then
+        "${WINE}" IE8-WindowsXP-x86-ENU.exe ${W_OPT_UNATTENDED:+/quiet /forcerestart}
+    else
+        "${WINE}" IE8-WindowsServer2003-x64-ENU.exe ${W_OPT_UNATTENDED:+/quiet /forcerestart}
+    fi
 
     if [ "${_W_restore_z}" = 1 ]; then
         # END KLUDGE: restore Z:, assuming that the user didn't kill us
@@ -15430,7 +15340,6 @@ load_ie8()
 
     # Work around DLL registration bug until ierunonce/RunOnce/wineboot is fixed
     # FIXME: whittle down this list
-    w_try_cd "${W_SYSTEM32_DLLS}"
     for i in actxprxy.dll browseui.dll browsewm.dll cdfview.dll ddraw.dll \
         dispex.dll dsound.dll iedkcs32.dll iepeers.dll iesetup.dll \
         imgutil.dll inetcomm.dll isetup.dll jscript.dll laprxy.dll \
@@ -15442,6 +15351,9 @@ load_ie8()
         wshcon.dll wshext.dll asctrls.ocx hhctrl.ocx mscomct2.ocx \
         plugin.ocx proctexe.ocx tdc.ocx uxtheme.dll webcheck.dll wshom.ocx; do
         "${WINE}" regsvr32 /i ${i} > /dev/null 2>&1
+        if [ "${W_ARCH}" = "win64" ]; then
+            "${WINE64}" regsvr32 /i ${i} > /dev/null 2>&1
+        fi
     done
 
     if w_workaround_wine_bug 25648 "Setting TabProcGrowth=0 to avoid hang"; then
@@ -15461,14 +15373,18 @@ _EOF_
     # around this problem, copy native ieproxy to system32.
     w_try_cp_dll "${W_PROGRAMS_X86_UNIX}/Internet Explorer/ieproxy.dll" "${W_SYSTEM32_DLLS}"
 
+    if [ "${W_ARCH}" = "win64" ]; then
+        w_try_cp_dll "${W_PROGRAMS_UNIX}/Internet Explorer/ieproxy.dll" "${W_SYSTEM64_DLLS}"
+    fi
+
     # Seeing is believing
     case ${WINETRICKS_GUI} in
         none)
-            w_warn "To start ie8, use the command \"${WINE}\" '${W_PROGRAMS_WIN}\\\\Internet Explorer\\\\iexplore'"
+            w_warn "To start ie8, use the command \"${WINE}\" '${W_PROGRAMS_WIN}\\\\Internet Explorer\\\\iexplore.exe'"
             ;;
         *)
-            w_warn "Starting ie8.  To start it later, use the command \"${WINE}\" '${W_PROGRAMS_WIN}\\\\Internet Explorer\\\\iexplore'"
-            "${WINE}" "${W_PROGRAMS_WIN}\\Internet Explorer\\iexplore" https://www.microsoft.com/windows/internet-explorer > /dev/null 2>&1 &
+            w_warn "Starting ie8.  To start it later, use the command \"${WINE}\" '${W_PROGRAMS_WIN}\\\\Internet Explorer\\\\iexplore.exe'"
+            "${WINE}" "${W_PROGRAMS_WIN}\\Internet Explorer\\iexplore.exe" http://www.example.com > /dev/null 2>&1 &
             ;;
     esac
 
@@ -16351,7 +16267,8 @@ load_steam()
     # 2016/10/28: 029f918a29b2b311711788e8a477c8de529c11d7dba3caf99cbbde5a983efdad
     # 2018/06/01: 3bc6942fe09f10ed3447bccdcf4a70ed369366fef6b2c7f43b541f1a3c5d1c51
     # 2021/03/27: 874788b45dfc043289ba05387e83f27b4a046004a88a4c5ee7c073187ff65b9d
-    w_download http://media.steampowered.com/client/installer/SteamSetup.exe 874788b45dfc043289ba05387e83f27b4a046004a88a4c5ee7c073187ff65b9d
+    # 2022/03/27: 3b616cb0beaacffb53884b5ba0453312d2577db598d2a877a3b251125fb281a1
+    w_download http://media.steampowered.com/client/installer/SteamSetup.exe 3b616cb0beaacffb53884b5ba0453312d2577db598d2a877a3b251125fb281a1
     w_try_cd "${W_CACHE}/${W_PACKAGE}"
 
     w_try "${WINE}" SteamSetup.exe ${W_OPT_UNATTENDED:+ /S}
@@ -16716,7 +16633,9 @@ load_wme9()
     # See also https://www.microsoft.com/en-us/download/details.aspx?id=17792
     # Formerly at: https://download.microsoft.com/download/8/1/f/81f9402f-efdd-439d-b2a4-089563199d47/WMEncoder.exe
     # Mirror list: http://www.filewatcher.com/_/?q=WMEncoder.exe
-    w_download https://people.ok.ubc.ca/mberger/MiscSW/WMEncoder.exe 19d1610d12b51c969f64703c4d3a76aae30dee526bae715381b5f3369f717d76
+    # 2018-06-11:  https://people.ok.ubc.ca/mberger/MiscSW/WMEncoder.exe
+    # 2022-03-31:  http://galinet13.free.fr/codec/WMEncoder.exe
+    w_download http://galinet13.free.fr/codec/WMEncoder.exe 19d1610d12b51c969f64703c4d3a76aae30dee526bae715381b5f3369f717d76
 
     w_try_cd "${W_CACHE}/${W_PACKAGE}"
     w_try "${WINE}" WMEncoder.exe ${W_OPT_UNATTENDED:+/q}
@@ -16752,6 +16671,8 @@ w_metadata wmp9 dlls \
 load_wmp9()
 {
     w_skip_windows wmp9 && return
+
+    w_package_broken "https://bugs.winehq.org/show_bug.cgi?id=52772" 6.6
 
     # Not really expected to work well yet; see
     # https://appdb.winehq.org/appview.php?versionId=1449
@@ -16854,17 +16775,19 @@ load_wmp11()
     w_call gdiplus
 
     if [ "${W_ARCH}" = "win32" ]; then
-      # https://appdb.winehq.org/objectManager.php?sClass=version&iId=8150
-      w_download https://web.archive.org/web/20170628063001/http://download.microsoft.com/download/0/9/5/0953e553-3bb6-44b1-8973-106f1b7e5049/wmp11-windowsxp-x86-enu.exe ffd321a441a67001a893f3bde4bb1afba07d4d2c9659bfdb0fbb057e7945d970
-      installer_exe=wmp11-windowsxp-x86-enu.exe
-      wmf_exe=wmfdist11.exe
-      wmf_exe=wmp11.exe
+        # https://appdb.winehq.org/objectManager.php?sClass=version&iId=8150
+        w_download https://web.archive.org/web/20170628063001/http://download.microsoft.com/download/0/9/5/0953e553-3bb6-44b1-8973-106f1b7e5049/wmp11-windowsxp-x86-enu.exe ffd321a441a67001a893f3bde4bb1afba07d4d2c9659bfdb0fbb057e7945d970
+
+        installer_exe=wmp11-windowsxp-x86-enu.exe
+        wmf_exe=wmfdist11.exe
+        wmf_exe=wmp11.exe
     elif [ "${W_ARCH}" = "win64" ]; then
-      # https://appdb.winehq.org/objectManager.php?sClass=version&iId=32057
-      w_download https://web.archive.org/web/20190512112704/https://download.microsoft.com/download/3/0/8/3080C52C-2517-43DE-BDB4-B7EAFD88F084/wmp11-windowsxp-x64-enu.exe 5af407cf336849aff435044ec28f066dd523bbdc22d1ce7aaddb5263084f5526
-      installer_exe=wmp11-windowsxp-x64-enu.exe
-      wmf_exe=wmfdist11-64.exe
-      wmp_exe=wmp11-64.exe
+        # https://appdb.winehq.org/objectManager.php?sClass=version&iId=32057
+        w_download https://web.archive.org/web/20190512112704/https://download.microsoft.com/download/3/0/8/3080C52C-2517-43DE-BDB4-B7EAFD88F084/wmp11-windowsxp-x64-enu.exe 5af407cf336849aff435044ec28f066dd523bbdc22d1ce7aaddb5263084f5526
+
+        installer_exe=wmp11-windowsxp-x64-enu.exe
+        wmf_exe=wmfdist11-64.exe
+        wmp_exe=wmp11-64.exe
     fi
 
     w_set_winver winxp
@@ -18575,7 +18498,7 @@ load_deadspace2()
     # Install takes a long time, so offer a way to skip installation
     # and go straight to activation while debugging that
     if ! test -f "${W_PROGRAMS_X86_UNIX}/EA Games/Dead Space 2/deadspace2.exe"; then
-      w_ahk_do "
+        w_ahk_do "
         run easetup.exe
         if ( w_opt_unattended > 0 ) {
             SetTitleMatchMode, 2
@@ -21574,159 +21497,6 @@ load_wog()
         "
 }
 
-#----------------------------------------------------------------
-# Steam Games
-#----------------------------------------------------------------
-
-w_metadata alienswarm_steam games \
-    title="Alien Swarm (Steam)" \
-    publisher="Valve" \
-    year="2010" \
-    media="download" \
-    installed_exe1="${W_PROGRAMS_X86_WIN}/Steam/steamapps/common/alien swarm/swarm.exe"
-
-load_alienswarm_steam()
-{
-    w_steam_install_game 630 "Alien Swarm"
-}
-
-#----------------------------------------------------------------
-
-w_metadata bioshock2_steam games \
-    title="Bioshock 2 (Steam)" \
-    publisher="2k" \
-    year="2010" \
-    media="download" \
-    installed_exe1="${W_PROGRAMS_X86_WIN}/Steam/steamapps/common/bioshock2/blort.exe"
-
-load_bioshock2_steam()
-{
-    w_steam_install_game 8850 "BioShock 2"
-}
-
-#----------------------------------------------------------------
-
-w_metadata borderlands_steam games \
-    title="Borderlands (Steam, non-free)" \
-    publisher="2K Games" \
-    year="2009" \
-    media="download" \
-    installed_exe1="${W_PROGRAMS_X86_WIN}/Steam/steamapps/common/borderlands/Binaries/Borderlands.exe"
-
-load_borderlands_steam()
-{
-    w_steam_install_game 8980 "Borderlands"
-}
-
-#----------------------------------------------------------------
-
-w_metadata civ5_demo_steam games \
-    title="Civilization V Demo (Steam)" \
-    publisher="2K Games" \
-    year="2010" \
-    media="download" \
-    installed_exe1="${W_PROGRAMS_X86_WIN}/Steam/steamapps/common/sid meier's civilization v - demo/CivilizationV.exe"
-
-load_civ5_demo_steam()
-{
-    # Start AutoHotKey watching for DirectX 9 option in the background, and select it when it comes up
-    w_ahk_do  "
-        SetWinDelay 500
-        loop
-        {
-            ifWinExist, Sid Meier's Civilization V - Demo - Steam
-            {
-                winactivate
-                click 26,108    ; select directx9
-                sleep 500
-                click 200,150   ; Play
-            }
-            ifWinExist, Updating Sid Meier's Civilization V - Demo
-            {
-                break
-            }
-            sleep 1000
-        }
-    " &
-    _job=$!
-        # While that's running, install the game.
-        # You'll see *two* AutoHotKey icons until that first script
-        # finds the dialog it's looking for, clicks, and exits.
-        w_info "If you already own the full Civ 5 game on Steam, the installer won't even appear."
-    w_steam_install_game 65900 "Sid Meier's Civilization V - Demo"
-    kill -s HUP "${_job}"   # just in case
-}
-
-#----------------------------------------------------------------
-
-w_metadata ruse_demo_steam games \
-    title="Ruse Demo (Steam)" \
-    publisher="Ubisoft" \
-    year="2010" \
-    media="download" \
-    installed_exe1="${W_PROGRAMS_X86_WIN}/Steam/steamapps/common/r.u.s.e. demo/Ruse.exe"
-
-load_ruse_demo_steam()
-{
-    w_steam_install_game 33310 "R.U.S.E."
-}
-
-#----------------------------------------------------------------
-
-w_metadata supermeatboy_steam games \
-    title="Super Meat Boy (Steam, non-free)" \
-    publisher="Independent" \
-    year="2010" \
-    media="download" \
-    installed_exe1="${W_PROGRAMS_X86_WIN}/Steam/steamapps/common/super meat boy/SuperMeatBoy.exe"
-
-load_supermeatboy_steam()
-{
-    w_steam_install_game 40800 "Super Meat Boy"
-}
-
-#----------------------------------------------------------------
-
-w_metadata trine_steam games \
-    title="Trine (Steam)" \
-    publisher="Frozenbyte" \
-    year="2009" \
-    media="download" \
-    installed_exe1="${W_PROGRAMS_X86_WIN}/Steam/steamapps/common/trine/trine_launcher.exe"
-
-load_trine_steam()
-{
-    w_steam_install_game 35700 "Trine"
-}
-
-#----------------------------------------------------------------
-
-w_metadata trine_demo_steam games \
-    title="Trine Demo (Steam)" \
-    publisher="Frozenbyte" \
-    year="2009" \
-    media="download" \
-    installed_exe1="${W_PROGRAMS_X86_WIN}/Steam/steamapps/common/trine demo/trine_launcher.exe"
-
-load_trine_demo_steam()
-{
-    w_steam_install_game 35710 "Trine Demo"
-}
-
-#----------------------------------------------------------------
-
-w_metadata wormsreloaded_demo_steam games \
-    title="Worms Reloaded Demo (Steam)" \
-    publisher="Team17" \
-    year="2010" \
-    media="download" \
-    installed_exe1="${W_PROGRAMS_X86_WIN}/Steam/steamapps/common/worms reloaded/WormsReloaded.exe"
-
-load_wormsreloaded_demo_steam()
-{
-    w_steam_install_game 22690 "Worms Reloaded Demo"
-}
-
 #######################
 # settings
 #######################
@@ -22644,9 +22414,21 @@ load_native_mdac()
         w_override_dlls native,builtin msado15
     fi
 
+    # For a while, this wasn't set (i.e., it was set to `builtin`, not `native,builtin`)
+    # See:
     # https://github.com/Winetricks/winetricks/issues/1448
-    if w_wine_version_in ,4.22 ; then
-        w_override_dlls native,builtin odbccp32
+    # https://github.com/Winetricks/winetricks/issues/1737
+    # https://github.com/Winetricks/winetricks/issues/1841
+    #
+    # https://bugs.winehq.org/show_bug.cgi?id=3158
+    # https://bugs.winehq.org/show_bug.cgi?id=3161
+    # https://bugs.winehq.org/show_bug.cgi?id=50460
+    # et al..
+    w_override_dlls native,builtin odbccp32
+
+    # https://github.com/Winetricks/winetricks/issues/1839
+    if w_wine_version_in ,6.21 ; then
+        w_override_dlls native,builtin msdasql
     fi
 
     w_override_dlls native,builtin mtxdm odbc32 oledb32
@@ -22687,11 +22469,6 @@ load_remove_mono()
         # Bail out if mono isn't installed, so we don't break .Net setups
         w_warn "Mono does not appear to be installed."
         return
-    fi
-
-    # FIXME: verify on pristine Windows XP:
-    if w_workaround_wine_bug 34803; then
-        "${WINE_ARCH}" reg delete 'HKLM\\Software\\Microsoft\\.NETFramework\\v2.0.50727\\SBSDisabled' /f
     fi
 
     "${WINE_ARCH}" reg delete "HKLM\\Software\\Microsoft\\NET Framework Setup\\NDP\\v3.5" /f || true

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-##########################################___SCRIPTS_V353___############################################################
+##########################################___SCRIPTS_V354___############################################################
 
 import os
 import sys
@@ -902,10 +902,27 @@ def uninstaller():
     func_name = f"UNINSTALLER"
     echo_func_name(func_name)
 
+def get_pfx_path():
+
+    try:
+        dpath = Path(f"{sw_shortcuts}/" + get_arg(get_out()) + f".desktop")
+        pfx = dpath.read_text().split('\n')
+    except:
+        dpath = Path(f"{sw_path}/StartWine.desktop")
+        pfx = dpath.read_text().split('\n')
+
+    if str('Name_2=default') in pfx:
+        pfx_name = f"pfx_default"
+        pfx_path = f"{sw_pfx}/{pfx_name}"
+    else:
+        pfx_name = f"pfx_" + get_arg(get_out()).replace('StartWine', 'default').replace('default_', 'default')
+        pfx_path = f"{sw_pfx}/{pfx_name}"
+
+    return pfx_path
+
 def on_btn_winetricks(self):
 
-    pfx_name = f"pfx_" + get_arg(get_out()).replace('StartWine', 'default').replace('default_', 'default')
-    pfx_path = f"{sw_pfx}/{pfx_name}"
+    pfx_path = get_arg(get_pfx_path())
     f_dll = Path(f"{pfx_path}/dll.log")
     f_check = Path(f"{pfx_path}/check.log")
     f_btn = Path(f"{pfx_path}/btn.log")
@@ -996,8 +1013,7 @@ def search_changed(self):
 
 def on_btn_check_fonts(object):
 
-    pfx_name = f"pfx_" + get_arg(get_out()).replace('StartWine', 'default').replace('default_', 'default')
-    pfx_path = f"{sw_pfx}/{pfx_name}"
+    pfx_path = get_arg(get_pfx_path())
     f_dll = Path(f"{pfx_path}/dll.log")
     f_check = Path(f"{pfx_path}/check.log")
 
@@ -1019,8 +1035,7 @@ def on_btn_check_fonts(object):
 
 def on_btn_check_dll(object):
 
-    pfx_name = f"pfx_" + get_arg(get_out()).replace('StartWine', 'default').replace('default_', 'default')
-    pfx_path = f"{sw_pfx}/{pfx_name}"
+    pfx_path = get_arg(get_pfx_path())
     f_dll = Path(f"{pfx_path}/dll.log")
     f_check = Path(f"{pfx_path}/check.log")
 
@@ -1054,8 +1069,7 @@ def on_btn_install_dll(self):
 
 def install_dll():
 
-    pfx_name = f"pfx_" + get_arg(get_out()).replace('StartWine', 'default').replace('default_', 'default')
-    pfx_path = f"{sw_pfx}/{pfx_name}"
+    pfx_path = get_arg(get_pfx_path())
     f_dll = Path(f"{pfx_path}/dll.log")
 
     with open(f_dll, 'r') as f:

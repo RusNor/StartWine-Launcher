@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/bash
 
 cd "$(dirname "`readlink -f "$0"`")"
 export link="$(pwd)"
@@ -8,7 +8,7 @@ export START_WINE_PATH="$(pwd)"
 ###############################   TOOLS   ######################################
 
 export SW_NAME="StartWine-Launcher"
-export SW_VER=" v3.5.3"
+export SW_VER=" v3.5.4"
 export GE_VER="7-14"
 export SP_VER="7.0.1"
 export STAG_VER="7.6"
@@ -556,7 +556,8 @@ if [ "${SW_ENABLE_VKBASALT}" == 1 ]; then
     export ENABLE_VKBASALT=on
     export VKBASALT_CONFIG_FILE="${START_WINE_PATH}/data/vkBasalt.conf"
     export VKBASALT_SHADER_PATH="${START_WINE_PATH}/data/tools/vkBasalt/Shaders"
-    export VKBASALT_LOG_FILE="${START_WINE_PATH}/data/tmp/vkBasalt.log"
+    export VKBASALT_LOG_LEVEL="none"
+    export VKBASALT_LOG_FILE="${START_WINE_PATH}/data/tmp/log/vkBasalt.log"
     sed -i "s%nobody%${START_WINE_PATH}/data/tools%" "${START_WINE_PATH}/data/vkBasalt.conf"
     sed -ri "s/effects = .*/effects = ${VKBASALT_EFFECTS}/g" "${START_WINE_PATH}/data/vkBasalt.conf"
     sed -ri "s/casSharpness .*/casSharpness = ${VKBASALT_CAS}/g" "${START_WINE_PATH}/data/vkBasalt.conf"
@@ -979,21 +980,17 @@ CREATE_SHORTCUT () {
         crier=`$CRIER -q "Сreate a new prefix for this game ?"`
 
         if [ "$(echo $crier)" == "0" ]; then
-            export pfx="pfx_"
+            export pfx="pfx_${STARTWINE_NAME}"
         else
-            export pfx="default_"
+            export pfx="default"
         fi
-
-        STARTWINE_EXE="${GAME_EXE}"
-        STARTWINE_NAME="$(basename "${STARTWINE_EXE}" | sed 's/\.exe//gi' | sed 's/ /_/g')"
-        STARTWINE_PATH="$(cd "$(dirname "${STARTWINE_EXE}")" >/dev/null 2>&1 && pwd)"
 
         CREATE_ICON
 
         name_desktop="${STARTWINE_NAME}"
         echo "[Desktop Entry]" > "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop"
         echo "Name=${STARTWINE_NAME}" >> "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop"
-        echo "Name_2=${pfx}${STARTWINE_NAME}" >> "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop"
+        echo "Name_2=${pfx}" >> "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop"
         echo "Exec=env "\"${START_WINE_PATH}/data/scripts/start\" \"${STARTWINE_EXE}\"""\
         >> "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop"
         echo "Type=Application" >> "${START_WINE_PATH}/Shortcuts/${name_desktop}.desktop"
