@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-################################################___TRAY_354___##########################################################
+################################################___TRAY_355___##########################################################
 
 from gettext import gettext as _
 import os
@@ -13,15 +13,15 @@ from pathlib import Path
 import subprocess
 from subprocess import *
 import threading
-import traceback
-import logging
-import argparse
 
 link = f"{sys.argv[0]}/"
 path_link = Path(link).parent
 sw_scripts = f"{path_link}/"
 sw_path = Path(sw_scripts).parent.parent
 sw_shortcuts = Path(sw_path) / 'Shortcuts'
+sw_fsh = Path(f"{sw_scripts}sw_function.sh")
+sw_rsh = Path(f"{sw_scripts}sw_run.sh")
+sw_start = Path(f"{sw_scripts}sw_start")
 
 appind = 1
 
@@ -41,7 +41,7 @@ DIRPATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 if appind == 1:
     def main():
         menu = gtk.Menu()
-        indicator = appindicator.Indicator.new(APPINDICATOR_ID, DIRPATH+"/img/gui_icons/SW_Tray.png", appindicator.IndicatorCategory.APPLICATION_STATUS)
+        indicator = appindicator.Indicator.new(APPINDICATOR_ID, DIRPATH+"/img/gui_icons/SW_Tray.svg", appindicator.IndicatorCategory.APPLICATION_STATUS)
         indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
         indicator.set_menu(tray_menu())
         gtk.main()
@@ -52,7 +52,7 @@ else:
 
         def status_start_game(_):
 
-            cmd = f"{sw_scripts}run.sh"
+            cmd = f"{sw_scripts}sw_run.sh"
             subprocess.Popen(cmd, shell=True, start_new_session=True)
 
         def status_shortcuts(_):
@@ -62,27 +62,23 @@ else:
 
         def status_kill(_):
 
-            cmd = f"{sw_scripts}stop"
+            cmd = f"{sw_scripts}sw_stop"
             subprocess.call(cmd, shell=True)
 
         def status_quit(_):
 
             gtk.main_quit()
 
-        def game_name():
+        def get_app_name():
 
-            cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\.exe//gi' | tail -n1"
-            proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
-            out = str(proc.stdout[0:])
-            out_name = str(out).replace('b\'', 'Open ').strip('n\'').strip('\ ').replace('start', 'StartWine').replace('%F', '')
+            app_path = str(sw_rsh.read_text()).split('" ')[-1].replace('\n', '').replace('%F', '').replace(' ', '_')
+            app_name = app_path.split('/')[-1].split('.exe')[0]
 
-            print(out_name)
-
-            cmd_0 = gtk.MenuItem.new_with_label(str(out_name))
+            cmd_0 = gtk.MenuItem.new_with_label(str(app_name))
             cmd_0.connect('activate', status_start_game)
             menu.append(cmd_0)
 
-        game_name()
+        get_app_name()
 
         cmd_2 = gtk.MenuItem.new_with_label('Shortcuts')
         cmd_2.connect('activate', status_shortcuts)
@@ -100,40 +96,64 @@ else:
         return menu
 
     indicator = gtk.StatusIcon()
-    indicator.set_from_file(DIRPATH+"/img/gui_icons/SW_Tray.png")
+    indicator.set_from_file(DIRPATH+"/img/gui_icons/SW_Tray.svg")
     indicator.connect('popup-menu', on_popup)
     gtk.main()
 
 ##############################################___APPINDOCATOR3___:
 
+def get_app_path():
+    app_path = str(sw_rsh.read_text()).split('" ')[-1].replace('\n', '').replace('%F', '').replace(' ', '_').replace('sw_start"', 'StartWine')
+    return app_path
+
+def get_arg(arg):
+    return arg
+
 def tray_menu():
 
     menu = gtk.Menu()
 
-####################   GAME_NAME___:
+####################   APP_NAME___:
 
-    def game_name():
+    def get_app_name():
 
-        cmd = f"sed 's/\//\\n/g' {sw_scripts}run.sh | sed 's/\"//g' | sed 's/\.exe//gi' | tail -n1"
-        proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
-        out = str(proc.stdout[0:])
-        out_name = str(out).replace('b\'', 'Open ').strip('n\'').strip('\ ').replace('start', 'StartWine').replace('%F', '')
+        app_path = get_arg(get_app_path())
+        app_name = str('Open ') + app_path.split('/')[-1].split('.exe')[0]
 
-        print(out_name)
-
-        cmd_0 = gtk.MenuItem.new_with_label(str(out_name))
-        cmd_0.connect('activate', start_game)
+        cmd_0 = gtk.MenuItem.new_with_label(str(app_name))
+        cmd_0.connect('activate', start_app)
         menu.append(cmd_0)
 
-    game_name()
+    get_app_name()
+
+    def get_localapp_name():
+
+        app_path = get_arg(get_app_path())
+        out_run_name = str('Run ') + app_path.split('/')[-1].split('.exe')[0]
+        app_name = app_path.split('/')[-1].split('.exe')[0]
+        localapp = Path(f"{Path.home()}/.local/share/applications/{app_name}.desktop")
+
+        if localapp.exists():
+            if localapp != Path(f"{Path.home()}/.local/share/applications/StartWine.desktop"):
+                cmd_run = gtk.MenuItem.new_with_label(str(out_run_name))
+                cmd_run.connect('activate', start_app_local)
+                menu.append(cmd_run)
+            else:
+                return False
+
+    get_localapp_name()
 
     cmd_1 = gtk.MenuItem.new_with_label('Shortcuts')
     cmd_1.connect('activate', shortcuts)
     menu.append(cmd_1)
 
-    cmd_2 = gtk.MenuItem.new_with_label('Stop')
-    cmd_2.connect('activate', kill)
+    cmd_2 = gtk.MenuItem.new_with_label('Settings')
+    cmd_2.connect('activate', settings)
     menu.append(cmd_2)
+
+    cmd_3 = gtk.MenuItem.new_with_label('Stop')
+    cmd_3.connect('activate', kill)
+    menu.append(cmd_3)
 
     exittray = gtk.MenuItem.new_with_label('Exit')
     exittray.connect('activate', quit)
@@ -144,23 +164,47 @@ def tray_menu():
 
 ##################___START_GAME___:
 
-def start_game(_):
+def start_app(_):
 
-    cmd = f"{sw_scripts}run.sh"
+    cmd = f"{sw_scripts}sw_run.sh"
     subprocess.Popen(cmd, shell=True, start_new_session=True)
+
+def start_app_local(_):
+
+    app_path = get_arg(get_app_path())
+    app_name = app_path.split('/')[-1].split('.exe')[0]
+    cmd_run_localapp = f"{Path.home()}/.local/share/applications/{app_name}.desktop"
+    subprocess.Popen(cmd_run_localapp, shell=True, start_new_session=True)
 
 #################___SHORTCUTS___:
 
 def shortcuts(_):
 
-    cmd = f"xdg-open '{sw_shortcuts}'"
-    subprocess.Popen(cmd, shell=True)
+    app_path = get_arg(get_app_path())
+
+    if not str('.exe') in app_path:
+        app_path = []
+
+    cmd_shortcuts = f"{sw_start} {app_path} --shortcut"
+    subprocess.Popen(cmd_shortcuts, shell=True, start_new_session=True)
+
+################___SETTINGS___:
+
+def settings(_):
+
+    app_path = get_arg(get_app_path())
+
+    if not str('.exe') in app_path:
+        app_path = []
+
+    cmd_settings = f"{sw_start} {app_path} --settings"
+    subprocess.Popen(cmd_settings, shell=True, start_new_session=True)
 
 ############___STOP___:
 
 def kill(_):
 
-    cmd = f"{sw_scripts}stop"
+    cmd = f"{sw_scripts}sw_stop"
     subprocess.call(cmd, shell=True)
 
 ############___EXIT___:
@@ -174,5 +218,4 @@ try:
         main()
 except:
     print('___exit_tray___')
-
 

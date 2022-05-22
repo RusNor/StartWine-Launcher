@@ -435,6 +435,54 @@ WenQuanYi ZenHei font (wenq.org, 2009) </property>
             <property name="position">5</property>
           </packing>
         </child>
+        <child>
+          <object class="GtkButton" id="btn_remove2">
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+            <property name="relief">none</property>
+            <child>
+              <object class="GtkBox">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="spacing">4</property>
+                <child>
+                  <object class="GtkImage">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="pixbuf">../img/gui_icons/edit-delete-symbolic.svg</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="label" translatable="yes">REMOVE</property>
+                    <attributes>
+                      <attribute name="size" value="9216"/>
+                      <attribute name="absolute-size" value="12288"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">6</property>
+          </packing>
+        </child>
       </object>
     </child>
   </object>
@@ -736,6 +784,54 @@ WenQuanYi ZenHei font (wenq.org, 2009) </property>
             <property name="expand">False</property>
             <property name="fill">True</property>
             <property name="position">5</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="btn_remove">
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+            <property name="relief">none</property>
+            <child>
+              <object class="GtkBox">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="spacing">4</property>
+                <child>
+                  <object class="GtkImage">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="pixbuf">../img/gui_icons/edit-delete-symbolic.svg</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="label" translatable="yes">REMOVE</property>
+                    <attributes>
+                      <attribute name="size" value="9216"/>
+                      <attribute name="absolute-size" value="12288"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">6</property>
           </packing>
         </child>
       </object>
@@ -1797,7 +1893,6 @@ Xvid Video Codec (xvid.org, 2009)</property>
                             <property name="hexpand">True</property>
                             <property name="vexpand">True</property>
                             <property name="orientation">vertical</property>
-                            <property name="spacing">4</property>
                             <child>
                               <object class="GtkBox">
                                 <property name="visible">True</property>
@@ -2144,8 +2239,7 @@ Example: -d3d11</property>
                                                       <object class="GtkProgressBar" id="start_progress">
                                                         <property name="visible">True</property>
                                                         <property name="can-focus">False</property>
-                                                        <property name="text" translatable="yes">...</property>
-                                                        <property name="ellipsize">start</property>
+                                                        <property name="ellipsize">end</property>
                                                       </object>
                                                       <packing>
                                                         <property name="expand">False</property>
@@ -4090,7 +4184,7 @@ Example: -d3d11</property>
                                               <object class="GtkLabel">
                                                 <property name="visible">True</property>
                                                 <property name="can-focus">False</property>
-                                                <property name="label" translatable="yes">WINE GE</property>
+                                                <property name="label" translatable="yes">WINE LUTRIS GE</property>
                                                 <attributes>
                                                   <attribute name="size" value="11264"/>
                                                   <attribute name="absolute-size" value="14336"/>
@@ -5128,7 +5222,7 @@ Example: -d3d11</property>
                                     <property name="label" translatable="yes">
 StartWine
 
-3.5.4</property>
+3.5.5</property>
                                     <property name="justify">center</property>
                                     <attributes>
                                       <attribute name="underline" value="True"/>
@@ -12124,7 +12218,7 @@ VHSgunzo</property>
                                                       </packing>
                                                     </child>
                                                     <child>
-                                                      <object class="GtkCheckButton" id="_11">
+                                                      <object class="GtkCheckButton" id="_12">
                                                         <property name="visible">True</property>
                                                         <property name="can-focus">True</property>
                                                         <property name="receives-default">False</property>
@@ -12143,7 +12237,7 @@ VHSgunzo</property>
                                                       </packing>
                                                     </child>
                                                     <child>
-                                                      <object class="GtkCheckButton" id="_12">
+                                                      <object class="GtkCheckButton" id="_11">
                                                         <property name="visible">True</property>
                                                         <property name="can-focus">True</property>
                                                         <property name="receives-default">False</property>
@@ -12705,8 +12799,8 @@ VHSgunzo</property>
                                                     <property name="can-focus">True</property>
                                                     <property name="hexpand">True</property>
                                                     <property name="vexpand">True</property>
-                                                    <property name="pixels-above-lines">4</property>
-                                                    <property name="pixels-below-lines">4</property>
+                                                    <property name="pixels-above-lines">8</property>
+                                                    <property name="pixels-below-lines">8</property>
                                                     <property name="editable">False</property>
                                                     <property name="right-margin">32</property>
                                                     <property name="indent">16</property>
@@ -12723,8 +12817,8 @@ VHSgunzo</property>
                                                     <property name="can-focus">True</property>
                                                     <property name="hexpand">True</property>
                                                     <property name="vexpand">True</property>
-                                                    <property name="pixels-above-lines">4</property>
-                                                    <property name="pixels-below-lines">4</property>
+                                                    <property name="pixels-above-lines">8</property>
+                                                    <property name="pixels-below-lines">8</property>
                                                     <property name="editable">False</property>
                                                     <property name="buffer">fonts_buffer_2</property>
                                                   </object>

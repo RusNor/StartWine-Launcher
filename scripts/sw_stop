@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+. "$(dirname $(readlink -f "$0"))/sw_runlib"
+
+wine_pids="$(ls -l /proc/*/exe 2>/dev/null | grep -ie ${SW_NAME} | grep -E 'wine(64)?-preloader|wineserver' | awk -F/ '{print $3}')"
+if  ! [ -z "${wine_pids}" ]; then
+    kill -n 9 ${wine_pids}
+fi
+
+wine_pids="$(ls -l /proc/*/exe 2>/dev/null | grep -E 'wine(64)?-preloader|wineserver' | awk -F/ '{print $3}')"
+if  ! [ -z "${wine_pids}" ]; then
+    kill -n 9 ${wine_pids}
+fi
+
+notify-send "kill wine porocesses"
+
+exit

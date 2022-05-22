@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+
+###################################___APT___:
+
+if [ -x "$(command -v apt)" ]; then
+
+    sudo apt update -y 2>/dev/null || echo 'Pass' &&
+    sudo apt install software-properties-common -y 2>/dev/null || echo 'Pass' &&
+    sudo dpkg --add-architecture i386 2>/dev/null || echo 'Pass' &&
+    sudo apt update -y 2>/dev/null || echo 'Pass'
+
+    for deps in zstd gir1.2-appindicator3-0.1 gir1.2-ayatanaappindicator3-0.1 imagemagick \
+    gir1.2-vte-2.91 vulkan-tools wine ; do
+
+        if [ "`sudo apt list --installed $deps 2>/dev/null | cut -d '/' -f1 | tail -n1`" != "$deps" ]; then
+            sudo apt install $deps -y 2>/dev/null || echo "$deps __________Pass"
+        else
+            echo "$deps"
+            echo "_________________________________package is already installed"
+        fi
+
+    done
+
+#####################################___DNF___:
+
+elif [ -x "$(command -v dnf)" ]; then
+
+    sudo dnf update -y || echo 'Pass'
+
+    if [ "`sudo dnf list wine | grep @`" == "" ]; then
+        sudo dnf install wine -y || echo "$deps ___________________________Pass"
+    else
+        echo " wine________________________________package is already installed"
+    fi
+
+    for deps in zstd libappindicator-gtk3 libindicator-gtk3 ImageMagick \
+    vulkan-tools vte291 ibus-gtk2.i686 ; do
+
+        if [ "`sudo dnf list $deps | grep @`" == "" ]; then
+            sudo dnf install $deps -y || echo "$deps ______________________Pass"
+        else
+            echo "$deps"
+            echo "_________________________________package is already installed"
+        fi
+
+    done
+
+########################################___ZYPPER___:
+
+elif [ -x "$(command -v zypper)" ]; then
+
+    sudo zypper ref || echo 'Pass' &&
+
+    for deps in zstd libappindicator3-1 typelib-1_0-AppIndicator3-0_1 ImageMagick \
+    typelib-1_0-Vte-2.91 libvte-2_91-0 vulkan-tools wine ; do
+
+        if [ "`sudo zypper search -i $deps | grep $deps`" == "" ]; then
+            sudo zypper in --no-confirm $deps || echo "$deps ______________Pass"
+        else
+            echo "$deps"
+            echo "_________________________________package is already installed"
+        fi
+
+    done
+
+########################################___PACMAN___:
+
+elif [ -x "$(command -v pacman)" ]; then
+
+    sudo pacman -Sy -y || echo 'Pass'
+
+    for deps in zstd libappindicator-gtk3 libindicator-gtk3 imagemagick \
+    vte3 python-gobject vulkan-tools ; do
+
+        if [ "`pacman -Qs $deps | grep -w $deps | tail -n1`" == "" ]; then
+            sudo pacman -S $deps --noconfirm || echo "$deps _______________Pass"
+        else
+            echo "$deps"
+            echo "_________________________________package is already installed"
+        fi
+
+    done
+
+    if [ "`pacman -Qs wine-staging | grep -w wine-staging | tail -n1`" == "" ]; then
+        sudo pacman -S --needed wine --noconfirm || echo "$deps ___________Pass"
+    else
+        echo "wine-staging"
+        echo "_________________________________package is already installed"
+    fi
+
+else
+    echo "FAILED TO INSTALL: Package manager not found. You must manually install"
+fi
+
+exit 0
+
+################################################################################
