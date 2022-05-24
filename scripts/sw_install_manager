@@ -461,10 +461,13 @@ def install():
                         sysout.insert(iter_text, f'\n___Extraction_completed_sucsessfully___')
 
                         for child in proton_tmp_dir.iterdir():
-                            if f"version" in f"{child}":
-                                shutil.copy2(child, Path(f"{sw_wine}/wine_steam_proton/{child.stem}"))
-                            else:
+                            if child.stem != f"version":
                                 shutil.copytree(child , Path(f"{sw_wine}/wine_steam_proton/{child.stem}"))
+                            else:
+                                try:
+                                    shutil.copy2(child, Path(f"{sw_wine}/wine_steam_proton/{child.stem}"))
+                                except:
+                                    pass
                         try:
                             shutil.rmtree(Path(f"{sw_tmp}/steam-proton-{sp_ver}"))
                             Path(f"{sw_tmp}/steam-proton-{sp_ver}.tar.xz").unlink()
@@ -501,10 +504,13 @@ def install():
                             pass
                         else:
                             for child in proton_tmp_dir.iterdir():
-                                if f"version" in f"{child}":
-                                    shutil.copy2(child, Path(f"{sw_wine}/wine_steam_proton/{child.stem}"))
-                                else:
+                                if child.stem != f"version":
                                     shutil.copytree(child , Path(f"{sw_wine}/wine_steam_proton/{child.stem}"))
+                                else:
+                                    try:
+                                        shutil.copy2(child, Path(f"{sw_wine}/wine_steam_proton/{child.stem}"))
+                                    except:
+                                        pass
                             try:
                                 shutil.rmtree(Path(f"{sw_tmp}/steam-proton-{sp_ver}"))
                                 Path(f"{sw_tmp}/steam-proton-{sp_ver}.tar.xz").unlink()
