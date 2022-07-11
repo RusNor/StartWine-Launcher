@@ -62,15 +62,6 @@ def black_theme():
     app_name = get_arg(get_out())
 
     try:
-        gc = Path(f"{sw_app_config}/" + str(app_name))
-        theme = f"SW_THEME=black_theme"
-        gcread = gc.read_text().split('\n')
-        if theme in gcread:
-            sw_theme_name = str('SW_THEME=black_theme')
-            if str(sw_theme_name) == str('SW_THEME=black_theme'):
-                css_name = f"{sw_css_dark}black/gtk-3.0/gtk.css"
-                get_css(css_name)
-    except:
         gc = Path(f"{sw_app_config}/.default")
         theme = f"SW_THEME=black_theme"
         gcread = gc.read_text().split('\n')
@@ -79,6 +70,8 @@ def black_theme():
             if str(sw_theme_name) == str('SW_THEME=black_theme'):
                 css_name = f"{sw_css_dark}black/gtk-3.0/gtk.css"
                 get_css(css_name)
+    except:
+        pass
 
 black_theme()
 
@@ -87,15 +80,6 @@ def gray_theme():
     app_name = get_arg(get_out())
 
     try:
-        gc = Path(f"{sw_app_config}/" + str(app_name))
-        theme = f"SW_THEME=gray_theme"
-        gcread = gc.read_text().split('\n')
-        if theme in gcread:
-            sw_theme_name = str('SW_THEME=gray_theme')
-            if str(sw_theme_name) == str('SW_THEME=gray_theme'):
-                css_name = f"{sw_css_dark}grey/gtk-3.0/gtk.css"
-                get_css(css_name)
-    except:
         gc = Path(f"{sw_app_config}/.default")
         theme = f"SW_THEME=gray_theme"
         gcread = gc.read_text().split('\n')
@@ -104,6 +88,8 @@ def gray_theme():
             if str(sw_theme_name) == str('SW_THEME=gray_theme'):
                 css_name = f"{sw_css_dark}grey/gtk-3.0/gtk.css"
                 get_css(css_name)
+    except:
+        pass
 
 gray_theme()
 
@@ -112,15 +98,6 @@ def red_theme():
     app_name = get_arg(get_out())
 
     try:
-        gc = Path(f"{sw_app_config}/" + str(app_name))
-        theme = f"SW_THEME=red_theme"
-        gcread = gc.read_text().split('\n')
-        if theme in gcread:
-            sw_theme_name = str('SW_THEME=red_theme')
-            if str(sw_theme_name) == str('SW_THEME=red_theme'):
-                css_name = f"{sw_css_dark}red/gtk-3.0/gtk.css"
-                get_css(css_name)
-    except:
         gc = Path(f"{sw_app_config}/.default")
         theme = f"SW_THEME=red_theme"
         gcread = gc.read_text().split('\n')
@@ -129,6 +106,8 @@ def red_theme():
             if str(sw_theme_name) == str('SW_THEME=red_theme'):
                 css_name = f"{sw_css_dark}red/gtk-3.0/gtk.css"
                 get_css(css_name)
+    except:
+        pass
 
 red_theme()
 
@@ -137,15 +116,6 @@ def yellow_theme():
     app_name = get_arg(get_out())
 
     try:
-        gc = Path(f"{sw_app_config}/" + str(app_name))
-        theme = f"SW_THEME=yellow_theme"
-        gcread = gc.read_text().split('\n')
-        if theme in gcread:
-            sw_theme_name = str('SW_THEME=yellow_theme')
-            if str(sw_theme_name) == str('SW_THEME=yellow_theme'):
-                css_name = f"{sw_css_dark}yellow/gtk-3.0/gtk.css"
-                get_css(css_name)
-    except:
         gc = Path(f"{sw_app_config}/.default")
         theme = f"SW_THEME=yellow_theme"
         gcread = gc.read_text().split('\n')
@@ -154,6 +124,8 @@ def yellow_theme():
             if str(sw_theme_name) == str('SW_THEME=yellow_theme'):
                 css_name = f"{sw_css_dark}yellow/gtk-3.0/gtk.css"
                 get_css(css_name)
+    except:
+        pass
 
 yellow_theme()
 
@@ -162,15 +134,6 @@ def green_theme():
     app_name = get_arg(get_out())
 
     try:
-        gc = Path(f"{sw_app_config}/" + str(app_name))
-        theme = f"SW_THEME=green_theme"
-        gcread = gc.read_text().split('\n')
-        if theme in gcread:
-            sw_theme_name = str('SW_THEME=green_theme')
-            if str(sw_theme_name) == str('SW_THEME=green_theme'):
-                css_name = f"{sw_css_dark}green/gtk-3.0/gtk.css"
-                get_css(css_name)
-    except:
         gc = Path(f"{sw_app_config}/.default")
         theme = f"SW_THEME=green_theme"
         gcread = gc.read_text().split('\n')
@@ -179,6 +142,8 @@ def green_theme():
             if str(sw_theme_name) == str('SW_THEME=green_theme'):
                 css_name = f"{sw_css_dark}green/gtk-3.0/gtk.css"
                 get_css(css_name)
+    except:
+        pass
 
 green_theme()
 
@@ -187,15 +152,6 @@ def blue_theme():
     app_name = get_arg(get_out())
 
     try:
-        gc = Path(f"{sw_app_config}/" + str(app_name))
-        theme = f"SW_THEME=blue_theme"
-        gcread = gc.read_text().split('\n')
-        if theme in gcread:
-            sw_theme_name = str('SW_THEME=blue_theme')
-            if str(sw_theme_name) == str('SW_THEME=blue_theme'):
-                css_name = f"{sw_css_dark}blue/gtk-3.0/gtk.css"
-                get_css(css_name)
-    except:
         gc = Path(f"{sw_app_config}/.default")
         theme = f"SW_THEME=blue_theme"
         gcread = gc.read_text().split('\n')
@@ -204,6 +160,8 @@ def blue_theme():
             if str(sw_theme_name) == str('SW_THEME=blue_theme'):
                 css_name = f"{sw_css_dark}blue/gtk-3.0/gtk.css"
                 get_css(css_name)
+    except:
+        pass
 
 blue_theme()
 
@@ -212,15 +170,6 @@ def purple_theme():
     app_name = get_arg(get_out())
 
     try:
-        gc = Path(f"{sw_app_config}/" + str(app_name))
-        theme = f"SW_THEME=purple_theme"
-        gcread = gc.read_text().split('\n')
-        if theme in gcread:
-            sw_theme_name = str('SW_THEME=purple_theme')
-            if str(sw_theme_name) == str('SW_THEME=purple_theme'):
-                css_name = f"{sw_css_dark}purple/gtk-3.0/gtk.css"
-                get_css(css_name)
-    except:
         gc = Path(f"{sw_app_config}/.default")
         theme = f"SW_THEME=purple_theme"
         gcread = gc.read_text().split('\n')
@@ -229,6 +178,8 @@ def purple_theme():
             if str(sw_theme_name) == str('SW_THEME=purple_theme'):
                 css_name = f"{sw_css_dark}purple/gtk-3.0/gtk.css"
                 get_css(css_name)
+    except:
+        pass
 
 purple_theme()
 
@@ -237,15 +188,6 @@ def mix_theme():
     app_name = get_arg(get_out())
 
     try:
-        gc = Path(f"{sw_app_config}/" + str(app_name))
-        theme = f"SW_THEME=mix_theme"
-        gcread = gc.read_text().split('\n')
-        if theme in gcread:
-            sw_theme_name = str('SW_THEME=mix_theme')
-            if str(sw_theme_name) == str('SW_THEME=mix_theme'):
-                css_name = f"{sw_css_dark}brown/gtk-3.0/gtk.css"
-                get_css(css_name)
-    except:
         gc = Path(f"{sw_app_config}/.default")
         theme = f"SW_THEME=mix_theme"
         gcread = gc.read_text().split('\n')
@@ -254,6 +196,8 @@ def mix_theme():
             if str(sw_theme_name) == str('SW_THEME=mix_theme'):
                 css_name = f"{sw_css_dark}brown/gtk-3.0/gtk.css"
                 get_css(css_name)
+    except:
+        pass
 
 mix_theme()
 
@@ -262,15 +206,6 @@ def white_theme():
     app_name = get_arg(get_out())
 
     try:
-        gc = Path(f"{sw_app_config}/" + str(app_name))
-        theme = f"SW_THEME=white_theme"
-        gcread = gc.read_text().split('\n')
-        if theme in gcread:
-            sw_theme_name = str('SW_THEME=white_theme')
-            if str(sw_theme_name) == str('SW_THEME=white_theme'):
-                css_name = f"{sw_css_light}black/gtk-3.0/gtk.css"
-                get_css(css_name)
-    except:
         gc = Path(f"{sw_app_config}/.default")
         theme = f"SW_THEME=white_theme"
         gcread = gc.read_text().split('\n')
@@ -279,6 +214,8 @@ def white_theme():
             if str(sw_theme_name) == str('SW_THEME=white_theme'):
                 css_name = f"{sw_css_light}black/gtk-3.0/gtk.css"
                 get_css(css_name)
+    except:
+        pass
 
 white_theme()
 
@@ -527,6 +464,7 @@ class sw_crier():
                     nonlocal window, progressbar, label
                     window = Gtk.Window(default_height=80, default_width=320)
                     window.set_title(f"{crier_title}")
+                    window.set_role('task_dialog')
                     progressbar = Gtk.ProgressBar(show_text=True)
                     progressbar.set_hexpand(True)
                     label = Gtk.Label()
@@ -618,6 +556,7 @@ class sw_crier():
                     nonlocal window, progressbar, label
                     window = Gtk.Window(default_height=80, default_width=320)
                     window.set_title(f"{crier_title}")
+                    window.set_role('task_dialog')
                     progressbar = Gtk.ProgressBar(show_text=True)
                     progressbar.set_hexpand(True)
                     label = Gtk.Label()

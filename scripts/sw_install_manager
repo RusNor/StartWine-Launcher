@@ -12,7 +12,7 @@ from pathlib import Path
 import subprocess
 from subprocess import *
 import threading
-from threading import *
+from threading import Thread
 import shutil
 import fcntl
 import io
@@ -28,11 +28,14 @@ sw_crier = Path(f"{sw_scripts}/sw_crier")
 sw_fsh = Path(f"{sw_scripts}/sw_function.sh")
 sw_rsh = Path(f"{sw_scripts}/sw_run.sh")
 sw_start = Path(f"{sw_scripts}/sw_start")
+sw_main = Path(f"{sw_scripts}/sw_main")
 sw_runlib = Path(f"{sw_scripts}/sw_runlib")
+sw_localedir = Path(f"{sw_scripts}/locale")
 
 sw_path = Path(sw_scripts).parent.parent
 sw_data = Path(f"{sw_path}/data")
 sw_app_config = Path(f"{sw_data}/games_config")
+sw_default_config = Path(f"{sw_app_config}/.default")
 sw_icon = Path(f"{sw_data}/img")
 sw_pfx = Path(f"{sw_data}/pfx")
 sw_pfx_backup = Path(f"{sw_data}/pfx_backup")
@@ -55,17 +58,47 @@ mango64 = Path(f"{sw_tools}/utils/implicit_layer.d/MangoHud.x86_64.json")
 basalt32 = Path(f"{sw_tools}/utils/implicit_layer.d/vkBasalt32.json")
 basalt64 = Path(f"{sw_tools}/utils/implicit_layer.d/vkBasalt64.json")
 
+sw_defconf_read = sw_default_config.read_text().split('\n')
+
+###############################################___LANG___:
+
+import locale
+import gettext
+
+_ = gettext.gettext
+
+#domain = 'StartWine'
+#locale.textdomain(domain)
+#locale.bindtextdomain(domain, sw_localedir)
+
+#lang_en = gettext.translation(domain, localedir=sw_localedir, languages=['en:en'])
+#lang_ru = gettext.translation(domain, localedir=sw_localedir, languages=['ru:en'])
+
+#get_lang = [lang for lang in sw_defconf_read if 'lang_' in lang]
+
+#if get_lang == ['lang_ru']:
+#    print('___ru_language_is_set___')
+#    locale.setlocale(locale.LC_MESSAGES, ('ru_RU', 'UTF-8'))
+#    lang_ru.install
+#    _ = lang_ru.gettext
+
+#if get_lang == ['lang_en']:
+#    print('___en_language_is_set___')
+#    locale.setlocale(locale.LC_MESSAGES, ('en_US', 'UTF-8'))
+#    lang_en.install
+#    _ = lang_en.gettext
+
 ################___TOOL_VERSIONS___:
 
-sw_ver= f"v3.5.5"
-sp_ver = f"7.0.2"
-proton_ge_ver = f"7-18"
-stag_ver = f"7.9"
+sw_ver= f"v3.5.7"
+sp_ver = f"7.0.3"
+proton_ge_ver = f"7-20"
+stag_ver = f"7.11"
 lutris_ver = f"7.2"
-lutris_ge_ver = f"7-14"
+lutris_ge_ver = f"7-16"
 dxvk_ver = f"1.10.1"
 vkd3d_ver = f"2.6"
-utils_ver = f"v1.1"
+utils_ver = f"v1.2"
 anticheat_ver = f"v0.1"
 default_wine = f"wine_steam_proton"
 
@@ -91,16 +124,12 @@ telegram_url = f"https://t.me/StartWine"
 
 desktop_contents = '''[Desktop Entry]
 Name=StartWine
-Name_2=default
 Exec=env '''f"{sw_scripts}"'''/sw_start %F
 Comment=Launch Windows applications on Linux operating systems
 Type=Application
 MimeType=application/x-wine-extension-msp;application/x-msi;application/x-ms-dos-executable;
 Categories=Game
-StartupNotify=true
-Path='''f"{sw_scripts}"'''
 Icon='''f"{sw_icon}"'''/gui_icons/SW_Launcher_x256.png
-SW_USE='''f"{default_wine}"'''
 '''
 
 desktop_swim_contents = '''[Desktop Entry]
@@ -110,8 +139,6 @@ Comment=Installation manager for the StartWine-Launcher
 Type=Application
 MimeType=text/x-python3
 Categories=Game
-StartupNotify=true
-Path='''f"{sw_scripts}"'''
 Icon='''f"{sw_icon}"'''/gui_icons/SWIM.svg
 '''
 
@@ -183,7 +210,7 @@ def install():
         while proc_deps.poll() is None:
             pass
         else:
-            print('___dependency_installation_is_complete___')
+            print(_('___dependency_installation_is_complete___'))
 
             ###########___RUNTIME_DOWNLOAD___:
 
@@ -312,7 +339,7 @@ def install():
 
             ############___UTILS_DOWNLOAD___:
 
-            if not Path(f"{sw_tools}/utils/libs").exists():
+            if not Path(f"{sw_tools}/utils/bin").exists():
 
                 try:
                     shutil.rmtree(Path(f"{sw_tools}/utils"))
@@ -452,7 +479,9 @@ def install():
                     crier_d = f"{sw_crier} -d '{proton_url}' {proton_tmp_dir}.tar.xz"
                     proc_proton_dl = subprocess.run(crier_d, shell=True)
 
-                    if f'Debian' in Path(f'/etc/os-release').read_text():
+                    os_read = Path(f'/etc/os-release').read_text()
+
+                    if f'Debian' in os_read or f'neon' in os_read :
 
                         crier_tar = f"{sw_crier} -tar {proton_tmp_dir}.tar.xz {sw_tmp}"
                         proc_proton_ext = subprocess.run(crier_tar, shell=True)
@@ -746,8 +775,8 @@ def progress():
 
         def pulse_bar():
 
-            p_label.set_label('STARTWINE UPDATE, PLEASE WAIT...')
-            progressbar.set_text('UPDATE...')
+            p_label.set_label(_('STARTWINE UPDATE, PLEASE WAIT...'))
+            progressbar.set_text(_('UPDATE...'))
 
             try:
                 p = subprocess.Popen(['ps', '-AF'], stdout=subprocess.PIPE, encoding='UTF-8')
@@ -761,10 +790,10 @@ def progress():
                 else:
                     progressbar.set_fraction(0.0)
                     progressbar.set_text('...')
-                    p_label.set_label('UPDATE COMPLETED SUCCESSFULLY')
+                    p_label.set_label(_('UPDATE COMPLETED SUCCESSFULLY'))
 
             except (IndexError, OSError) as e:
-                print('___process_error___')
+                print(_('___process_error___'))
 
         GLib.timeout_add(200, pulse_bar)
 
@@ -772,7 +801,7 @@ def progress():
 
         def percent_bar():
 
-            p_label.set_label('STARTWINE INSTALLING, PLEASE WAIT...')
+            p_label.set_label(_('STARTWINE INSTALLING, PLEASE WAIT...'))
 
             sw_dir_size, numfile, iteration = sw_size(sw_path)
 
@@ -780,7 +809,7 @@ def progress():
             progressbar.set_fraction(percent)
 
             if percent >= 1:
-                p_label.set_label('INSTALLATION COMPLETED SUCCESSFULLY')
+                p_label.set_label(_('INSTALLATION COMPLETED SUCCESSFULLY'))
 
             return True
 
@@ -867,7 +896,7 @@ def on_btn_check(self):
 
 def on_remove(self):
 
-    q = f"Do you really want to remove the StartWine ?"
+    q = _(f"Do you really want to remove the StartWine ?")
 
     def on_question(q):
 
@@ -876,7 +905,7 @@ def on_remove(self):
             flags=0,
             message_type=Gtk.MessageType.QUESTION,
             buttons=Gtk.ButtonsType.YES_NO,
-            text=f"StartWine QUESTION",
+            text=_(f"StartWine QUESTION"),
         )
         dialog.format_secondary_text(
             text_quest
@@ -904,19 +933,19 @@ def on_remove(self):
 
                 def on_info():
 
-                    text_info = 'StartWine remove completed successfully'
+                    text_info = _('StartWine remove completed successfully')
                     dialog = Gtk.MessageDialog(
                         flags=0,
                         message_type=Gtk.MessageType.INFO,
                         buttons=Gtk.ButtonsType.OK,
-                        text=f"StartWine INFO",
+                        text=_(f"StartWine INFO"),
                     )
                     dialog.format_secondary_text(
                         text_info
                     )
                     dialog.set_default_size(320, 120)
                     dialog.run()
-                    print("INFO dialog closed")
+                    print(_("INFO dialog closed"))
 
                     dialog.destroy()
 
@@ -925,7 +954,7 @@ def on_remove(self):
                 on_info()
 
         elif response == Gtk.ResponseType.NO:
-            print("Cancel")
+            print(_("Cancel"))
 
         dialog.destroy()
     on_question(q)
@@ -1100,7 +1129,7 @@ setup_label = builder.get_object("setup_label")
 size, numfile, iteration = sw_size(sw_path)
 
 if int(size/1048576) >= 1600:
-    setup_label.set_label('UPDATE')
+    setup_label.set_label(_('UPDATE'))
 else:
     setup_label.set_label('INSTALL')
 

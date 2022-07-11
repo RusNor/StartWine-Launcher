@@ -3271,11 +3271,13 @@ winetricks_early_wine_arch()
 
 winetricks_detect_gui()
 {
-    if [ -n "$1" ]; then
-        if [ "$1" = "kdialog" ] && test -x "$(command -v kdialog 2>/dev/null)"; then
+    if [ "$1" != "--gui" ] ; then
+        if [ "$1" = "kdialog" ] ; then
+            test -x "$(command -v kdialog 2>/dev/null)" || w_die "--gui=kdialog was used, but kdialog is not installed"
             WINETRICKS_GUI=kdialog
             WINETRICKS_GUI_VERSION="$(kdialog --version)"
-        elif [ "$1" = "zenity" ] || [ "$1" = "--gui" ] && test -x "$(command -v zenity 2>/dev/null)"; then
+        elif [ "$1" = "zenity" ] ; then
+            test -x "$(command -v zenity 2>/dev/null)" || w_die "--gui=zenity was used, but zenity is not installed"
             WINETRICKS_GUI=zenity
             WINETRICKS_GUI_VERSION="$(zenity --version)"
             WINETRICKS_MENU_HEIGHT=500
@@ -5410,10 +5412,10 @@ winetricks_wine_setup()
     # wine-2.8
     _wine_version_stripped="$(echo "${WINETRICKS_WINE_VERSION}" | cut -d ' ' -f1 | sed -e 's/wine-//' -e 's/-rc.*//')"
 
-    # If WINE is < 5.0, warn user:
-    # 5.0 doesn't do what I thought it would
-    if w_wine_version_in ,4.99 ; then
-        w_warn "Your version of wine ${_wine_version_stripped} is no longer supported upstream. You should upgrade to 5.x"
+    # If WINE is < 6.0, warn user:
+    # 6.0 doesn't do what I thought it would
+    if w_wine_version_in ,5.99 ; then
+        w_warn "Your version of wine ${_wine_version_stripped} is no longer supported upstream. You should upgrade to 6.x"
     fi
 
     winetricks_set_wineprefix "$1"
@@ -6931,22 +6933,22 @@ load_dsdmo()
 
 #----------------------------------------------------------------
 
-w_metadata dxsdk_nov2006 apps \
-    title="MS DirectX SDK, November 2006 (developers only)" \
+w_metadata dxsdk_aug2006 apps \
+    title="MS DirectX SDK, August 2006 (developers only)" \
     publisher="Microsoft" \
     year="2006" \
     media="download" \
     file1="dxsdk_aug2006.exe" \
     installed_file1="${W_PROGRAMS_X86_WIN}/Microsoft DirectX SDK (August 2006)/Lib/x86/d3d10.lib"
 
-load_dxsdk_nov2006()
+load_dxsdk_aug2006()
 {
-    w_download https://download.microsoft.com/download/9/e/5/9e5bfc66-a621-4e0d-8bfe-6688058c3f00/dxsdk_aug2006.exe ab8d7d895089a88108d4148ef0f7e214b7a23c1ee9ba720feca78c7d4ca16c00
+    w_download https://archive.org/download/dxsdk_aug2006/dxsdk_aug2006.exe ab8d7d895089a88108d4148ef0f7e214b7a23c1ee9ba720feca78c7d4ca16c00
 
     # dxview.dll uses mfc42u while registering
     w_call mfc42
 
-    w_try_cabextract "${W_CACHE}"/dxsdk_nov2006/dxsdk_aug2006.exe
+    w_try_cabextract "${W_CACHE}/${W_PACKAGE}/${file1}"
     w_try_unzip "${W_TMP}" dxsdk.exe
     w_try_cd "${W_TMP}"
     w_try "${WINE}" msiexec /i Microsoft_DirectX_SDK.msi ${W_OPT_UNATTENDED:+/q}
@@ -8271,7 +8273,7 @@ helper_vkd3d_proton()
         w_try_unzip "${W_TMP}" "${W_CACHE}/${W_PACKAGE}/${_W_package_archive}"
     elif [ "${_W_package_archive##*.}" = "zst" ]; then
         w_try_cd "${W_TMP}"
-        w_try tar -I zstd -xvf "${W_CACHE}/${W_PACKAGE}/${_W_package_archive}"
+        w_try tar --use-compress-program=unzstd -xvf "${W_CACHE}/${W_PACKAGE}/${_W_package_archive}"
     else
         w_try_cd "${W_TMP}"
         w_try tar -zxf "${W_CACHE}/${W_PACKAGE}/${_W_package_archive}"
@@ -8596,7 +8598,7 @@ load_dotnet11sp1()
     # The installer itself doesn't support 64-bit
     w_package_unsupported_win64
 
-    w_download https://download.microsoft.com/download/8/b/4/8b4addd8-e957-4dea-bdb8-c4e00af5b94b/NDP1.1sp1-KB867460-X86.exe 2c0a35409ff0873cfa28b70b8224e9aca2362241c1f0ed6f622fef8d4722fd9a
+    w_download https://msassist.com/files/dotNETframework/NDP1.1sp1-KB867460-X86.exe 2c0a35409ff0873cfa28b70b8224e9aca2362241c1f0ed6f622fef8d4722fd9a
 
     w_call remove_mono
     w_call dotnet11
@@ -8701,7 +8703,7 @@ load_dotnet20()
         # This affects Victoria 2 demo, see https://forum.paradoxplaza.com/forum/showthread.php?p=11523967
         rm -f "${W_SYSTEM32_DLLS}"/msvc?80.dll
     elif [ "${W_ARCH}" = "win64" ]; then
-        w_download https://download.microsoft.com/download/a/3/f/a3f1bf98-18f3-4036-9b68-8e6de530ce0a/NetFx64.exe 7ea86dca8eeaedcaa4a17370547ca2cea9e9b6774972b8e03d2cb1fb0e798669
+        w_download https://web.archive.org/web/20060509045320/https://download.microsoft.com/download/a/3/f/a3f1bf98-18f3-4036-9b68-8e6de530ce0a/NetFx64.exe 7ea86dca8eeaedcaa4a17370547ca2cea9e9b6774972b8e03d2cb1fb0e798669
 
         # validates successfully in win7 mode wine-3.19, so not setting winversion
         w_try_cd "${W_CACHE}"/"${W_PACKAGE}"
@@ -8736,7 +8738,7 @@ load_dotnet20sdk()
     w_package_unsupported_win64
 
     # https://www.microsoft.com/en-us/download/details.aspx?id=19988
-    w_download https://download.microsoft.com/download/c/4/b/c4b15d7d-6f37-4d5a-b9c6-8f07e7d46635/setup.exe 1d7337bfbb2c65f43c82d188688ce152af403bcb67a2cc2a3cc68a580ecd8200
+    w_download https://web.archive.org/web/20111102051348/https://download.microsoft.com/download/c/4/b/c4b15d7d-6f37-4d5a-b9c6-8f07e7d46635/setup.exe 1d7337bfbb2c65f43c82d188688ce152af403bcb67a2cc2a3cc68a580ecd8200
 
     w_call remove_mono
 
@@ -15323,6 +15325,12 @@ _EOF_
         w_try_cp_dll "${W_PROGRAMS_UNIX}/Internet Explorer/ieproxy.dll" "${W_SYSTEM64_DLLS}"
     fi
 
+    if w_workaround_wine_bug 53103 "Running a no-op command so that ie8 finishes bootstrapping" 7.5; then
+        w_wineserver -w
+        w_try "${WINE}" xcopy /? > /dev/null
+        w_wineserver -w
+    fi
+
     # Seeing is believing
     case ${WINETRICKS_GUI} in
         none)
@@ -16356,7 +16364,9 @@ load_vc2005expresssp1()
     if w_workaround_wine_bug 37375; then
             w_warn "Installer currently fails"
     fi
-    w_download https://download.microsoft.com/download/7/7/3/7737290f-98e8-45bf-9075-85cc6ae34bf1/VS80sp1-KB926748-X86-INTL.exe a959d1ea52674b5338473be32a1370f9ec80df84629a2ed3471aa911b42d9e50
+
+    w_download https://web.archive.org/web/20110624054336/https://download.microsoft.com/download/7/7/3/7737290f-98e8-45bf-9075-85cc6ae34bf1/VS80sp1-KB926748-X86-INTL.exe a959d1ea52674b5338473be32a1370f9ec80df84629a2ed3471aa911b42d9e50
+
     w_try ${WINE} "${W_CACHE}"/vc2005expresssp1/VS80sp1-KB926748-X86-INTL.exe ${W_OPT_UNATTENDED:+/q}
 }
 
@@ -18630,26 +18640,6 @@ load_diablo2()
         ControlClick &Cancel, Diablo II"
     # Dagnabbit, the darn updater starts the game after it updates, no matter what I do?
     w_killall "Game.exe"
-}
-
-w_metadata digitanks_demo games \
-    title="Digitanks Demo" \
-    publisher="Lunar Workshop" \
-    year="2011" \
-    media="download" \
-    file1="digitanks.exe" \
-    installed_exe1="${W_PROGRAMS_X86_WIN}/Digitanks/digitanksdemo.exe" \
-    homepage="http://www.digitanks.com"
-
-load_digitanks_demo()
-{
-    # 2011/11/11: bc98de67680e907a30ee1ab5d062e098c07a87292e3fb82ae62ad2d7175e94ff
-    w_download "http://static.digitanks.com/files/digitanks.exe" bc98de67680e907a30ee1ab5d062e098c07a87292e3fb82ae62ad2d7175e94ff
-    w_try_cd "${W_CACHE}/${W_PACKAGE}"
-    w_try "${WINE}" "${file1}" ${W_OPT_UNATTENDED:+ /S}
-    if w_workaround_wine_bug 8060 "installing corefonts"; then
-        w_call corefonts
-    fi
 }
 
 w_metadata dirt2_demo games \
@@ -22947,6 +22937,8 @@ execute_command()
         dotnet2) w_warn "Calling dotnet2 is deprecated, please use dotnet20 instead" ; w_call dotnet20 ;;
         ddr=gdi) w_warn "Calling ddr=gdi is deprecated, please use renderer=gdi or renderer=no3d instead" ; w_call renderer=gdi ;;
         ddr=opengl) w_warn "Calling ddr=opengl is deprecated, please use renderer=gl instead" ; w_call renderer=gl ;;
+        dxsdk_nov2006) w_warn "Calling dxsdk_nov2006 is deprecated, please use dxsdk_aug2006 instead"; w_call dxsdk_aug2006 ;;
+
         dxvk054|dxvk54) w_warn "Calling $1 is deprecated, please use dxvk0054 instead" ; w_call dxvk0054 ;;
         dxvk060|dxvk60) w_warn "Calling $1 is deprecated, please use dxvk0060 instead" ; w_call dxvk0060 ;;
         dxvk061|dxvk61) w_warn "Calling $1 is deprecated, please use dxvk0061 instead" ; w_call dxvk0061 ;;
@@ -23093,7 +23085,7 @@ if ! test "${WINETRICKS_LIB}"; then
             # GUI case
             # No non-option arguments given, so read them from GUI, and loop until user quits
             if [ ${WINETRICKS_GUI} = "none" ]; then
-                winetricks_detect_gui
+                winetricks_detect_gui --gui
             fi
             winetricks_detect_sudo
             test -z "${WINETRICKS_ISO_MOUNT}" && winetricks_detect_iso_mount
