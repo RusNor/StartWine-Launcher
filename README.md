@@ -16,7 +16,6 @@
 
 
 ## Preparing for installation
-------------
 
 To get started, download SrartWine itself from the discord server in the sw_releases section or from the GitHub page ([Who is from Russia, you can read here](https://docs.google.com/document/d/1NQefmouUnpJd3hYWAYFdI_jEiaYup1rcbVoi2UH2JGY/edit?usp=drivesdk))
 
@@ -47,7 +46,6 @@ chmod -x StartWine-(version)
 
 
 ## Installation
-------------
 
 If you use a work environment [xfce](https://en.wikipedia.org/wiki/Xfce), then enter this command in the terminal (if suddenly the installer does not work):
 ```bash
@@ -68,7 +66,6 @@ After installation, the StartWine-install-Manager program will appear in your st
 
 
 ## Interface
-------------
 
 Now let 's briefly go through the menu of the StartWine
 
@@ -85,7 +82,6 @@ Now let 's briefly go through the menu of the StartWine
 
 
 ## Initial setup
-------------
 
 To get started, go to the Download wine item and download the following there (if you have previously installed wine from the list below in the installer, you can skip this item) :
 wine-staging,
@@ -98,7 +94,6 @@ There's nothing else to do :)
 
 
 ## How to run games and programs
-------------
 
 There are two ways to install the game in StartWine
 1. You can install your games using the launcher in the install launchers section.
@@ -152,7 +147,6 @@ Now you can start the game
 Have a nice game :)
 
 ## About
-------------
 
 Author of the manual: [Lintech](https://www.youtube.com/c/Lintech8)
 
@@ -167,7 +161,6 @@ Telegram channel: [StartWine](https://t.me/StartWine)
 
 
 ## License
-------------
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
