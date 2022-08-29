@@ -84,6 +84,20 @@ elif [ -x "$(command -v pacman)" ]; then
         echo "_________________________________package is already installed"
     fi
 
+########################################___XBPS___:
+
+elif [ -x "$(command -v xbps-install)" ]; then
+    sudo xbps-install -Su ||echo 'Pass' &&
+
+    for deps in zstd ImageMagick python-gobject Vulkan-Tools wine ; do
+
+        if [ "`xbps-query -l | awk '{ print $2 }' | xargs -n1 xbps-uhelper getpkgname | grep -w $deps`" = ""]; then
+            sudo xbps-install $deps || echo "$deps ___________Pass"
+        else
+            echo "$deps"
+            echo "_________________________________package is already installed"
+        fi
+    done
 else
     echo "FAILED TO INSTALL: Package manager not found. You must manually install"
 fi
