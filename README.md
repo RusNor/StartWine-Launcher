@@ -1,5 +1,5 @@
 
-![sw_image1](https://github.com/RusNor/StartWine-Launcher/blob/main/image/sw_image1.svg?style=centerme)
+[sw_image1](https://github.com/RusNor/StartWine-Launcher/blob/main/image/sw_image1.svg?style=centerme)
 
 > StartWine is a launcher that allows you to quickly and easily launch Windows applications on Linux operating systems
 
