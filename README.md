@@ -17,7 +17,8 @@
 
 ## Preparing for installation
 
-To get started, download SrartWine itself from the discord server in the sw_releases section or from the GitHub page ([Who is from Russia, you can read here](https://docs.google.com/document/d/1NQefmouUnpJd3hYWAYFdI_jEiaYup1rcbVoi2UH2JGY/edit?usp=drivesdk))
+
+To get started, download SrartWine itself from the discord server in the sw_releases section or from the GitHub page
 
 Discord: [Click](https://discord.gg/jjY3auVdfm)
 
@@ -25,7 +26,7 @@ GitHub: [Click](https://github.com/RusNor/StartWine-Launcher/releases)
 
 or the command:
 ```bash
-wget https://github.com/RusNor/StartWine-Launcher/releases/download/StartWine_v357/StartWine_v357 && chmod -R 775 "${HOME}/StartWine_v357" && ./StartWine_v357
+curl -s https://api.github.com/repos/RusNor/StartWine-Launcher/releases/latest | grep "StartWine_v" | cut -d : -f 2,3 | tr -d \" | wget -qi - && chmod +x StartWine_v* && sh StartWine_v*
 ```
 
 Oh yeah, don't forget to check if the **python-gobject** package is installed on your system.
@@ -33,7 +34,7 @@ example of installation:
 
 `sudo pacman -S python-gobject`
 
-If you downloaded and launched StartWine via the wget command, you can simply skip the item below
+If you downloaded and launched StartWine via the curl command, you can simply skip the item below
 
 Once you have downloaded the file, first of all right-click, properties, rights (or any other similar item in the properties), check the "Is executable" or "Allow to run as a program" box.
 
@@ -46,6 +47,7 @@ chmod -x StartWine-(version)
 
 
 ## Installation
+
 
 If you use a work environment [xfce](https://en.wikipedia.org/wiki/Xfce), then enter this command in the terminal (if suddenly the installer does not work):
 ```bash
@@ -67,6 +69,7 @@ After installation, the StartWine-install-Manager program will appear in your st
 
 ## Interface
 
+
 Now let 's briefly go through the menu of the StartWine
 
 ![sw_image6](https://github.com/RusNor/StartWine-Launcher/blob/main/image/sw_image6.png?)
@@ -83,6 +86,7 @@ Now let 's briefly go through the menu of the StartWine
 
 ## Initial setup
 
+
 To get started, go to the Download wine item and download the following there (if you have previously installed wine from the list below in the installer, you can skip this item) :
 wine-staging,
 wine-steam-proton,
@@ -94,6 +98,7 @@ There's nothing else to do :)
 
 
 ## How to run games and programs
+
 
 There are two ways to install the game in StartWine
 1. You can install your games using the launcher in the install launchers section.
@@ -148,12 +153,13 @@ Have a nice game :)
 
 ## About
 
+
 Author of the manual: [Lintech](https://www.youtube.com/c/Lintech8)
 
 The creators of StartWine: [Normatov R.R.](https://github.com/RusNor) and [Maslov N.G.](https://github.com/nix-on-nix) 
 
 Helpers in creating a manual:
-[Normatov R.R.](https://github.com/RusNor) [Maslov N.G.](https://github.com/nix-on-nix) Huskysoul#6112
+[Normatov R.R.](https://github.com/RusNor) [Maslov N.G.](https://github.com/nix-on-nix) [Norz3n](https://github.com/vellynproduction) Huskysoul#6112
 
 If you have any questions, go to the server: [Discord](https://discord.gg/jjY3auVdfm)
 
@@ -161,6 +167,7 @@ Telegram channel: [StartWine](https://t.me/StartWine)
 
 
 ## License
+
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
@@ -180,7 +187,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with StartWine-Launcher.  If not, see <http://www.gnu.org/licenses/>.
-___
+____
 
 
 
