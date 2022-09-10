@@ -1,0 +1,174 @@
+#!/usr/bin/env bash
+################################################################################
+export SW_USE_LAUNCH_PARAMETERS=""
+export SW_USE_WINEDLLOVERRIDES=""
+export SW_USE_WINEARCH="win64"
+export SW_USE_WINDOWS_VER="10"
+export SW_USE_REGEDIT_PATCH=""
+export SW_USE_DXVK_GE=0
+export SW_USE_VKD3D_GE=0
+export SW_USE_OPENGL=0
+export SW_USE_STRANGLE_FPS_LIMIT=0
+export SW_USE_MANGOHUD_DLSYM=0
+export SW_USE_MANGOHUD=1
+export SW_USE_GAMEMODE=1
+export SW_USE_RUNTIME=1
+export SW_USE_RESTORE_RESOLUTION=0
+export SW_USE_VIRTUAL_DESKTOP=0
+export SW_USE_FSYNC=0
+export SW_USE_ESYNC=0
+export SW_USE_OLD_GL_STRING=0
+export SW_USE_NVAPI_DISABLE=0
+export SW_USE_WINEDBG_DISABLE=1
+export SW_USE_LARGE_ADDRESS_AWARE=1
+export SW_USE_STAGING_WRITECOPY=0
+export SW_USE_STAGING_SHARED_MEMORY=1
+export SW_USE_DXVK_HUD=0
+export SW_USE_DXVK_ASYNC=1
+export SW_USE_ENABLE_VKBASALT=1
+export SW_USE_FSR=1
+export SW_USE_GSTREAMER=1
+export SW_USE_DRI_PRIME=0
+export SW_USE_WINE_MONO=1
+export SW_USE_BATTLEYE=0
+export SW_USE_EASYANTICHEAT=0
+export SW_USE_D3D_PLUGINS=0
+export SW_USE_VSYNC_DISABLE=0
+export SW_USE_HIDE_NVIDIA_GPU=0
+export SW_USE_LANG=ru
+export SW_USE_THEME=blue
+export SW_USE_VKBASALT_EFFECTS="cas:Tonemap:Colourfulness:"
+export SW_USE_VKBASALT_CAS="0.6"
+export SW_USE_HUD_POSITION="R"
+export SW_USE_FPS_LIMIT="0.0"
+export SW_USE_MANGOHUD_CONFIG=",core_load,gamemode,vkbasalt,resolution,wine,arch,version,time,vram,ram,gpu_core_clock,gpu_temp,cpu_mhz,cpu_temp,"
+export SW_USE_WINE="wine_proton_ge"
+export SW_USE_PFX="pfx_launcher"
+################################################################################
+
+check_deps() {
+
+    if [ -z "$(which xdelta3 2>/dev/null)" ]; then
+        crier=`$CRIER -e "xdelta3 not found in your system! Install xdelta3 in your system!    Arch-based: sudo pacman -S xdelta3"`
+        return 1
+    fi
+
+}
+
+check_gi_patch() {
+
+    DIR="${START_WINE_PATH}/data/pfx/pfx_launcher/drive_c/Program Files/gi_patch280"
+
+    if [ ! -d "$DIR" ]; then
+        export FTP_URL="https://github.com/VHSgunzo/gi_patch/releases/download/v2.8/gi_patch280.tar.gz"
+        crier=`$CRIER -d "${FTP_URL}" "$DIR.tar.gz"` &&
+        crier=`$CRIER -tar "$DIR.tar.gz" "${START_WINE_PATH}/data/pfx/pfx_launcher/drive_c/Program Files"` &&
+        try_remove_file "$DIR.tar.gz"
+        return 0
+    fi
+
+}
+
+launch_helper() {
+
+    DATADIR="${START_WINE_PATH}/data/pfx/pfx_launcher/drive_c/Program Files/Genshin Impact/Genshin Impact game/GenshinImpact_Data"
+    FILE="${START_WINE_PATH}/data/pfx/pfx_launcher/drive_c/Program Files/Genshin Impact/Genshin Impact game/UnityPlayer.dll"
+    CEXE1="$DATADIR/upload_crash.exe"
+    CEXE2="$DATADIR/Plugins/crashreport.exe"
+    sum=($(md5sum "$FILE"))
+    if [ "$sum" == "4fda0637c20bde7ee19a08494a43b9f4" ]; then
+        notify-send "Patch is already applied!"
+        echo "Patch is already applied!"
+    else
+        if [ "${sum}" == "630272a9dd85b7732576b09bae9b9c7b" ]; then
+            reltype="os"
+            notify-send "Applying patch for: International (OS) version"
+        else
+            crier=`$CRIER -e "Wrong file version md5sum: ${sum}"`
+            return 1
+        fi
+
+        crier=`$CRIER -q "Hereby you are violating the game's Terms of Service!    Do you accept the risk and possible consequences?"`
+
+        if [ "$(echo $crier)" == "0" ]; then
+            notify-send "Setting up blocked servers"
+            if [ -z "$(grep "Genshin logging servers" /etc/hosts)" ]; then
+                echo "Blocking logging servers in /etc/hosts 0.0.0.0 log-upload-os.hoyoverse.com 0.0.0.0 overseauspider.yuanshen.com"
+                pkexec sh -c 'echo -e "\n# Genshin logging servers (do not remove!)\n0.0.0.0 log-upload-os.hoyoverse.com\n0.0.0.0 overseauspider.yuanshen.com\n" >> /etc/hosts'
+            else
+                if [ ! -z "$(grep -A1 'Genshin logging servers' /etc/hosts|grep -o 'log-upload-os.mihoyo.com' /etc/hosts)" ]; then
+                    echo "Need to change logging server in /etc/hosts! log-upload-os.mihoyo.com to log-upload-os.hoyoverse.com"
+                    pkexec sh -c "sed -i 's/log-upload-os.mihoyo.com/log-upload-os.hoyoverse.com/g' /etc/hosts"
+                    notify-send "Logging server changed in /etc/hosts!"
+                else
+                    notify-send "Logging servers are already blocked. Skip."
+                fi
+            fi
+
+                if [ -z "$(grep "Optional Unity proxy" /etc/hosts)" ]; then
+                    crier=`$CRIER -q "Blocking common Unity proxy/cdn servers in /etc/hosts If issues arise in other games consider commenting a few lines to check what makes the difference.0.0.0.0 prd-lender.cdp.internal.unity3d.com 0.0.0.0 thind-prd-knob.data.ie.unity3d.com 0.0.0.0 thind-gke-usc.prd.data.corp.unity3d.com 0.0.0.0 cdp.cloud.unity3d.com 0.0.0.0 remote-config-proxy-prd.uca.cloud.unity3d.com Block Unity proxy/cdn servers?"`
+
+                        if [ "$(echo $crier)" == "0" ]; then
+                            pkexec sh -c 'echo -e "# Optional Unity proxy/cdn servers\n0.0.0.0 prd-lender.cdp.internal.unity3d.com\n0.0.0.0 thind-prd-knob.data.ie.unity3d.com\n0.0.0.0 thind-gke-usc.prd.data.corp.unity3d.com\n0.0.0.0 cdp.cloud.unity3d.com\n0.0.0.0 remote-config-proxy-prd.uca.cloud.unity3d.com\n" >> /etc/hosts'
+                        fi
+                else
+                    notify-send "Unity proxy/cdn servers are already blocked. Skip."
+                fi
+
+                notify-send "Renaming the crash reporter(s)"
+
+                if [[ -e "$CEXE1" ]]
+                    then
+                        mv "$CEXE1" "$CEXE1.bak"
+                fi
+
+                if [[ -e "$CEXE2" ]]
+                    then
+                        mv "$CEXE2" "$CEXE2.bak"
+                fi
+
+                try_copy_file "$DIR/mhyprot2_running.reg" ./
+                notify-send "Patching UnityPlayer"
+                mv "$FILE" "$FILE.bak"
+
+                if xdelta3 -d -s "$FILE.bak" "$DIR/unityplayer_patch_${reltype}.vcdiff" "$FILE" ; then
+                    notify-send "Patch applied! Enjoy the game."
+                else
+                    mv "$FILE.bak" "$FILE"
+                    echo "Patch not applied!"
+                    return 1
+                fi
+
+            else
+                return 1
+        fi
+
+    fi
+
+    if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_launcher/drive_c/users/$USER/Temp/mhyprot2.Sys" ]; then
+        try_copy_file "${START_WINE_PATH}/data/pfx/pfx_launcher/drive_c/Program Files/Genshin Impact/Genshin Impact game/mhyprot2.Sys" \
+        "${START_WINE_PATH}/data/pfx/pfx_launcher/drive_c/users/$USER/Temp"
+    fi
+
+}
+
+if [ -f "${START_WINE_PATH}/data/pfx/pfx_launcher/drive_c/Program Files/Genshin Impact/Genshin Impact game/GenshinImpact.exe" ]; then
+
+    if check_deps
+        then
+            if check_gi_patch
+                then
+                    if ! launch_helper
+                        then
+                            exit 1
+                    fi
+                else
+                    exit 1
+            fi
+        else
+            exit 1
+    fi
+
+fi
+
+################################################################################

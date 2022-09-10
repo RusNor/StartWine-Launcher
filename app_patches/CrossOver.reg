@@ -1,0 +1,8 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\Control Panel\Colors]
+"ActiveBorder"="228 228 228"
+"ButtonFace"="228 228 228"
+"ButtonLight"="228 228 228"
+"InactiveBorder"="228 228 228"
+"Menu"="228 228 228"
