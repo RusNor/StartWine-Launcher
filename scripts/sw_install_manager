@@ -1,0 +1,1244 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+import gi
+
+gi.require_version('Gtk', '3.0')
+gi.require_version('Gdk', '3.0')
+
+from gi.repository import Gdk, GdkPixbuf, Gio, GLib, Gtk
+from pathlib import Path
+import subprocess
+from subprocess import *
+import threading
+from threading import Thread
+import shutil
+import fcntl
+import io
+from io import StringIO
+
+################___SW_PATH___:
+
+link = f"{sys.argv[0]}"
+sw_path_link = Path(link).parent
+
+sw_scripts = Path(f"{sw_path_link}")
+sw_crier = Path(f"{sw_scripts}/sw_crier.py")
+sw_fsh = Path(f"{sw_scripts}/sw_function.sh")
+sw_rsh = Path(f"{sw_scripts}/sw_run.sh")
+sw_start = Path(f"{sw_scripts}/sw_start")
+sw_main = Path(f"{sw_scripts}/sw_main")
+sw_runlib = Path(f"{sw_scripts}/sw_runlib")
+sw_localedir = Path(f"{sw_scripts}/locale")
+
+sw_path = Path(sw_scripts).parent.parent
+sw_data = Path(f"{sw_path}/data")
+sw_app_config = Path(f"{sw_data}/app_config")
+sw_default_config = Path(f"{sw_app_config}/.default")
+sw_icon = Path(f"{sw_data}/img")
+sw_pfx = Path(f"{sw_data}/pfx")
+sw_pfx_backup = Path(f"{sw_data}/pfx_backup")
+sw_tmp = Path(f"{sw_data}/tmp")
+sw_tools = Path(f"{sw_data}/tools")
+sw_wine = Path(f"{sw_data}/wine")
+sw_wine_custom = Path(f"{sw_data}/wine/wine_custom")
+sw_games = Path(f"{sw_path}/Games")
+sw_desktop = Path(f"{sw_path}/StartWine.desktop")
+
+sw_local = Path(f"{Path.home()}/.local/share/applications")
+sw_desktop_local = Path(f"{sw_local}/StartWine.desktop")
+swim_desktop = Path(f"{sw_local}/StartWine-Install-Manager.desktop")
+
+sw_css = Path(f"{sw_icon}/sw_themes/css")
+
+mango32 = Path(f"{sw_tools}/utils/implicit_layer.d/MangoHud.x86.json")
+mango64 = Path(f"{sw_tools}/utils/implicit_layer.d/MangoHud.x86_64.json")
+basalt32 = Path(f"{sw_tools}/utils/implicit_layer.d/vkBasalt32.json")
+basalt64 = Path(f"{sw_tools}/utils/implicit_layer.d/vkBasalt64.json")
+
+sw_defconf_read = sw_default_config.read_text().split('\n')
+
+###############################################___LANG___:
+
+import locale
+import gettext
+
+_ = gettext.gettext
+
+domain = 'StartWine'
+locale.textdomain(domain)
+locale.bindtextdomain(domain, sw_localedir)
+
+lang_en = gettext.translation(domain, localedir=sw_localedir, languages=['en:en'])
+lang_ru = gettext.translation(domain, localedir=sw_localedir, languages=['ru:en'])
+
+get_lang = [lang for lang in sw_defconf_read if 'export SW_USE_LANG=' in lang]
+
+if get_lang == ['export SW_USE_LANG=ru']:
+
+    try:
+        locale.setlocale(locale.LC_MESSAGES, ('ru_RU', 'UTF-8'))
+        lang_ru.install
+        _ = lang_ru.gettext
+        print('___ru_locale_is_set___')
+
+    except:
+        print('___ru_locale_not_found___')
+        locale.setlocale(locale.LC_MESSAGES, ('en_US', 'UTF-8'))
+        lang_en.install
+        _ = lang_en.gettext
+        print('___en_locale_is_set___')
+        pass
+
+if get_lang == ['export SW_USE_LANG=en']:
+
+    try:
+        locale.setlocale(locale.LC_MESSAGES, ('en_US', 'UTF-8'))
+        lang_en.install
+        _ = lang_en.gettext
+        print('___en_locale_is_set___')
+
+    except:
+        print('___en_locale_not_found___')
+        pass
+
+################___TOOL_VERSIONS___:
+
+sw_ver= f"v3.6.0"
+sp_ver = f"7.0.4"
+proton_ge_ver = f"7-30"
+stag_ver = f"7.15"
+lutris_ver = f"7.2"
+lutris_ge_ver = f"7-26"
+dxvk_ver = f"1.10.3"
+vkd3d_ver = f"2.6"
+utils_ver = f"v1.6"
+anticheat_ver = f"v0.1"
+default_wine = f"wine_steam_proton"
+
+################___TOOL_URL___:
+
+runtime_url = f"https://repo.steampowered.com/steamrt-images-scout/snapshots/latest-steam-client-public-beta/steam-runtime.tar.xz"
+dxvk_url = f"https://github.com/doitsujin/dxvk/releases/download/v{dxvk_ver}/dxvk-{dxvk_ver}.tar.gz"
+vkd3d_url = f"https://github.com/HansKristian-Work/vkd3d-proton/releases/download/v{vkd3d_ver}/vkd3d-proton-{vkd3d_ver}.tar.zst"
+basalt_url = f"https://github.com/crosire/reshade-shaders/archive/master.zip"
+utils_url = f"https://github.com/RusNor/Utils-data/releases/download/utils-{utils_ver}/utils-{utils_ver}.tar.xz"
+anticheat_url= f"https://github.com/RusNor/AntiCheat-Runtime/releases/download/AntiCheat_Runtime-{anticheat_ver}/AntiCheat_Runtime-{anticheat_ver}.tar.xz"
+d3d_url = f"https://github.com/lutris/d3d_extras/releases/download/v2/v2.tar.xz"
+proton_url = f"https://github.com/RusNor/Wine-Steam-Proton/releases/download/steam-proton-{sp_ver}/steam-proton-{sp_ver}.tar.xz"
+proton_ge_url = f"https://github.com/GloriousEggroll/proton-ge-custom/releases/download/GE-Proton{proton_ge_ver}/GE-Proton{proton_ge_ver}.tar.gz"
+staging_url = f"https://github.com/Kron4ek/Wine-Builds/releases/download/{stag_ver}/wine-{stag_ver}-staging-amd64.tar.xz"
+lutris_url = f"https://github.com/lutris/wine/releases/download/lutris-wine-{lutris_ver}/wine-lutris-{lutris_ver}-x86_64.tar.xz"
+lutris_ge_url = f"https://github.com/GloriousEggroll/wine-ge-custom/releases/download/GE-Proton{lutris_ge_ver}/wine-lutris-GE-Proton{lutris_ge_ver}-x86_64.tar.xz"
+github_url = f"https://github.com/RusNor/StartWine-Launcher"
+discord_url = f"https://discord.gg/37FrGUpDEj"
+telegram_url = f"https://t.me/StartWine"
+
+#####################################___DATA___:
+
+desktop_contents = '''[Desktop Entry]
+Name=StartWine
+Exec=env '''f"{sw_scripts}"'''/sw_start %F
+Comment=Launch Windows applications on Linux operating systems
+Type=Application
+MimeType=application/x-wine-extension-msp;application/x-msi;application/x-ms-dos-executable;
+Categories=Game
+Icon='''f"{sw_icon}"'''/gui_icons/SW_Launcher_x256.png
+'''
+
+desktop_swim_contents = '''[Desktop Entry]
+Name=StartWine-Install-Manager
+Exec=env '''f"{sw_scripts}"'''/sw_install_manager %F
+Comment=Installation manager for the StartWine-Launcher
+Type=Application
+MimeType=text/x-python3
+Categories=Game
+Icon='''f"{sw_icon}"'''/gui_icons/SWIM.svg
+'''
+
+##########################___WINE_INF___:
+
+inf_app = '\AppDefaults\\'
+inf_hksu = 'HKCU,Software\\Valve\\'
+inf_hklm = 'HKLM,Software\\Wow6432Node\\Valve\\Steam'
+inf_hkcr = 'HKCR,steam\\'
+inf_lucas = 'HKLM,Software\\Wow6432Node\\lucasarts'
+
+inf_ge = Path(f"{sw_wine}/wine_proton_ge/share/wine/wine.inf")
+inf_lu = Path(f"{sw_wine}/wine_lutris/share/wine/wine.inf")
+inf_luge = Path(f"{sw_wine}/wine_lutris_ge/share/wine/wine.inf")
+
+SWIM = """
+
+"""
+
+def get_arg(arg):
+
+    return arg
+
+def on_install(self):
+
+    Thread(target=install).start()
+    Thread(target=progress).start()
+    Thread(target=next_page).start()
+
+def install():
+
+    deps_inst = f"pkexec {sw_scripts}/sw_deps"
+    proc_deps = subprocess.Popen(deps_inst, shell=True, stdout=PIPE)
+
+    if Path(f"{Path.home()}/Games_tmp").exists():
+        source = f"{Path.home()}/Games_tmp"
+        target = f"{Path.home()}/StartWine/Games"
+        Path(source).rename(target)
+
+    if Path(f"{Path.home()}/pfx_backup").exists():
+        source = f"{Path.home()}/pfx_backup"
+        target = f"{Path.home()}/StartWine/data/pfx_backup"
+        Path(source).rename(target)
+
+    if not sw_desktop.exists():
+        with open(sw_desktop, 'w') as d:
+            d.write(desktop_contents)
+
+        sw_desktop.chmod(0o755)
+
+    if not sw_local.exists():
+        sw_local.mkdir(parents=True, exist_ok=True)
+
+    if not sw_desktop_local.exists():
+        with open(sw_desktop_local, 'w') as dl:
+            dl.write(desktop_contents)
+
+        sw_desktop_local.chmod(0o755)
+
+    if not swim_desktop.exists():
+        with open(swim_desktop, 'w') as swim:
+            swim.write(desktop_swim_contents)
+
+        swim_desktop.chmod(0o755)
+
+    def wait_proc_deps():
+
+        while proc_deps.poll() is None:
+            pass
+        else:
+            print(_('___dependency_installation_is_complete___'))
+
+            ###########___RUNTIME_DOWNLOAD___:
+
+            if not Path(f"{sw_tools}/steam-runtime").exists():
+
+                crier_d = f"{sw_crier} -d '{runtime_url}' {sw_tmp}/steam-runtime.tar.xz"
+                proc_rt_dl = subprocess.run(crier_d, shell=True)
+
+                crier_tar = f"{sw_crier} -tar {sw_tmp}/steam-runtime.tar.xz {sw_tools}"
+                proc_rt_ext = subprocess.Popen(crier_tar, shell=True, start_new_session=True, stdout=PIPE)
+
+                def runtime_sysout():
+
+                    sysout.insert(sysout.get_end_iter(), non_block_read(proc_rt_ext.stdout), -1)
+                    return proc_rt_ext.poll() is None
+
+                GLib.timeout_add(10, runtime_sysout)
+
+                while proc_rt_ext.poll() is None:
+                    pass
+                else:
+                    rt_setup = f"{sw_tools}/steam-runtime/setup.sh --force"
+                    proc_rt_setup = subprocess.run(rt_setup, shell=True)
+
+                    if Path(f"{sw_tools}/steam-runtime").exists():
+                        Path(f"{sw_tmp}/steam-runtime.tar.xz").unlink()
+
+            ############___DXVK_DOWNLOAD___:
+
+            if not Path(f"{sw_tools}/vulkan/dxvk-{dxvk_ver}/x64").exists():
+
+                try:
+                    shutil.rmtree(Path(f"{sw_tools}/vulkan/dxvk-{dxvk_ver}"))
+                except:
+                    pass
+
+                crier_d = f"{sw_crier} -d '{dxvk_url}' {sw_tmp}/dxvk-{dxvk_ver}.tar.gz"
+                proc_dxvk_dl = subprocess.run(crier_d, shell=True)
+
+                crier_tar = f"{sw_crier} -tar {sw_tmp}/dxvk-{dxvk_ver}.tar.gz {sw_tools}/vulkan"
+                proc_dxvk_ext = subprocess.Popen(crier_tar, shell=True, start_new_session=True, stdout=PIPE)
+
+                def dxvk_sysout():
+
+                    sysout.insert(sysout.get_end_iter(), non_block_read(proc_dxvk_ext.stdout), -1)
+                    return proc_dxvk_ext.poll() is None
+
+                GLib.timeout_add(10, dxvk_sysout)
+
+                while proc_dxvk_ext.poll() is None:
+                    pass
+                else:
+                    if Path(f"{sw_tools}/vulkan/dxvk-{dxvk_ver}/x64").exists():
+                        Path(f"{sw_tmp}/dxvk-{dxvk_ver}.tar.gz").unlink()
+                        Path(f"{sw_tools}/vulkan/dxvk-{dxvk_ver}/setup_dxvk.sh").unlink()
+
+            ############___VKD3D_DOWNLOAD___:
+
+            if not Path(f"{sw_tools}/vulkan/vkd3d-proton-{vkd3d_ver}/x64").exists():
+
+                try:
+                    shutil.rmtree(Path(f"{sw_tools}/vulkan/vkd3d-proton-{vkd3d_ver}"))
+                except:
+                    pass
+
+                crier_d = f"{sw_crier} -d '{vkd3d_url}' {sw_tmp}/vkd3d-proton-{vkd3d_ver}.tar.zst"
+                proc_vkd3d_dl = subprocess.run(crier_d, shell=True)
+
+                unzstd = f"unzstd {sw_tmp}/vkd3d-proton-{vkd3d_ver}.tar.zst"
+                subprocess.run(unzstd, shell=True)
+
+                crier_tar = f"{sw_crier} -tar {sw_tmp}/vkd3d-proton-{vkd3d_ver}.tar {sw_tools}/vulkan"
+                proc_vkd3d_ext = subprocess.Popen(crier_tar, shell=True, start_new_session=True, stdout=PIPE)
+
+                def vkd3d_sysout():
+
+                    sysout.insert(sysout.get_end_iter(), non_block_read(proc_vkd3d_ext.stdout), -1)
+                    return proc_vkd3d_ext.poll() is None
+
+                GLib.timeout_add(10, vkd3d_sysout)
+
+                while proc_vkd3d_ext.poll() is None:
+                    pass
+                else:
+                    if Path(f"{sw_tools}/vulkan/vkd3d-proton-{vkd3d_ver}/x64").exists():
+                        Path(f"{sw_tmp}/vkd3d-proton-{vkd3d_ver}.tar.zst").unlink()
+                        Path(f"{sw_tmp}/vkd3d-proton-{vkd3d_ver}.tar").unlink()
+                        Path(f"{sw_tools}/vulkan/vkd3d-proton-{vkd3d_ver}/setup_vkd3d_proton.sh").unlink()
+
+            ############___VKBASALT_DOWNLOAD___:
+
+            if not Path(f"{sw_tools}/vkBasalt/Shaders").exists():
+
+                try:
+                    shutil.rmtree(Path(f"{sw_tools}/vkBasalt"))
+                except:
+                    pass
+
+                Path(f"{sw_tools}/vkBasalt").mkdir(parents=True, exist_ok=True)
+
+                crier_d = f"{sw_crier} -d '{basalt_url}' {sw_tmp}/master.zip"
+                proc_basalt_dl = subprocess.run(crier_d, shell=True)
+
+                crier_zip = f"{sw_crier} -zip {sw_tmp}/master.zip {sw_tmp}"
+                proc_basalt_ext = subprocess.Popen(crier_zip, shell=True, start_new_session=True, stdout=PIPE)
+
+                def basalt_sysout():
+
+                    sysout.insert(sysout.get_end_iter(), non_block_read(proc_basalt_ext.stdout), -1)
+                    return proc_basalt_ext.poll() is None
+
+                GLib.timeout_add(10, basalt_sysout)
+
+                while proc_basalt_ext.poll() is None:
+                    pass
+                else:
+                    shutil.copytree(Path(f"{sw_tmp}/reshade-shaders-master/Textures"), Path(f"{sw_tools}/vkBasalt/Textures"))
+                    shutil.copytree(Path(f"{sw_tmp}/reshade-shaders-master/Shaders"), Path(f"{sw_tools}/vkBasalt/Shaders"))
+
+                    Path(f"{sw_tmp}/master.zip").unlink()
+
+                    try:
+                        shutil.rmtree(Path(f"{sw_tmp}/reshade-shaders-master"))
+                    except:
+                        pass
+
+            ############___UTILS_DOWNLOAD___:
+
+            if not Path(f"{sw_tools}/utils/bin").exists():
+
+                try:
+                    shutil.rmtree(Path(f"{sw_tools}/utils"))
+                    Path(f"{sw_tmp}/utils-{utils_ver}.tar.xz").unlink()
+                except:
+                    pass
+
+                crier_d = f"{sw_crier} -d '{utils_url}' {sw_tmp}/utils-{utils_ver}.tar.xz"
+                proc_utils_dl = subprocess.run(crier_d, shell=True)
+
+                crier_tar = f"{sw_crier} -tar {sw_tmp}/utils-{utils_ver}.tar.xz {sw_tools}"
+                proc_utils_ext = subprocess.Popen(crier_tar, shell=True, start_new_session=True, stdout=PIPE)
+
+                def utils_sysout():
+
+                    sysout.insert(sysout.get_end_iter(), non_block_read(proc_utils_ext.stdout), -1)
+                    return proc_utils_ext.poll() is None
+
+                GLib.timeout_add(10, utils_sysout)
+
+                while proc_utils_ext.poll() is None:
+                    pass
+                else:
+                    Path(f"{sw_tmp}/utils-{utils_ver}.tar.xz").unlink()
+
+                    for line in mango32.read_text().split('\n'):
+                        if str('nobody') in line:
+                            mango32.write_text(mango32.read_text().replace(f"nobody", f"{sw_tools}"))
+
+                    for line in mango64.read_text().split('\n'):
+                        if str('nobody') in line:
+                            mango64.write_text(mango64.read_text().replace(f"nobody", f"{sw_tools}"))
+
+                    for line in basalt32.read_text().split('\n'):
+                        if str('nobody') in line:
+                            basalt32.write_text(basalt32.read_text().replace(f"nobody", f"{sw_tools}"))
+
+                    for line in basalt64.read_text().split('\n'):
+                        if str('nobody') in line:
+                            basalt64.write_text(basalt64.read_text().replace(f"nobody", f"{sw_tools}"))
+
+            ############___ANTICHEAT_RUNTIME_DOWNLOAD__:
+
+            if not Path(f"{sw_tools}/Proton_EasyAntiCheat_Runtime").exists():
+
+                try:
+                    Path(f"{sw_tmp}/AntiCheat_Runtime-{anticheat_ver}.tar.xz").unlink()
+                    shutil.rmtree(Path(f"{sw_tmp}/AntiCheat_Runtime-{anticheat_ver}"))
+                except:
+                    pass
+
+                crier_d = f"{sw_crier} -d '{anticheat_url}' {sw_tmp}/AntiCheat_Runtime-{anticheat_ver}.tar.xz"
+                proc_anticheat_dl = subprocess.run(crier_d, shell=True)
+
+                crier_tar = f"{sw_crier} -tar {sw_tmp}/AntiCheat_Runtime-{anticheat_ver}.tar.xz {sw_tmp}"
+                proc_anticheat_ext = subprocess.Popen(crier_tar, shell=True, start_new_session=True, stdout=PIPE)
+
+                def anticheat_sysout():
+
+                    sysout.insert(sysout.get_end_iter(), non_block_read(proc_anticheat_ext.stdout), -1)
+                    return proc_anticheat_ext.poll() is None
+
+                GLib.timeout_add(10, anticheat_sysout)
+
+                while proc_anticheat_ext.poll() is None:
+                    pass
+                else:
+                    be_source = Path(f"{sw_tmp}/AntiCheat_Runtime-{anticheat_ver}/Proton_BattlEye_Runtime")
+                    be_target = Path(f"{sw_tools}/Proton_BattlEye_Runtime")
+                    shutil.copytree(be_source, be_target)
+
+                    ea_source = Path(f"{sw_tmp}/AntiCheat_Runtime-{anticheat_ver}/Proton_EasyAntiCheat_Runtime")
+                    ea_target = Path(f"{sw_tools}/Proton_EasyAntiCheat_Runtime")
+                    shutil.copytree(ea_source, ea_target)
+
+                    try:
+                        Path(f"{sw_tmp}/AntiCheat_Runtime-{anticheat_ver}.tar.xz").unlink()
+                        shutil.rmtree(Path(f"{sw_tmp}/AntiCheat_Runtime-{anticheat_ver}"))
+                    except:
+                        pass
+
+            ############___D3D_EXTRAS_DOWNLOAD___:
+
+            if not Path(f"{sw_tools}/d3d_extras/x64").exists():
+
+                try:
+                    shutil.rmtree(Path(f"{sw_tools}/d3d_extras/x32"))
+                    shutil.rmtree(Path(f"{sw_tools}/d3d_extras/x64"))
+                    Path(f"{sw_tmp}/v2.tar.xz").unlink()
+                except:
+                    pass
+
+                crier_d = f"{sw_crier} -d '{d3d_url}' {sw_tmp}/v2.tar.xz"
+                proc_d3d_dl = subprocess.run(crier_d, shell=True)
+
+                crier_tar = f"{sw_crier} -tar {sw_tmp}/v2.tar.xz {sw_tmp}"
+                proc_d3d_ext = subprocess.Popen(crier_tar, shell=True, start_new_session=True, stdout=PIPE)
+
+                def d3d_sysout():
+
+                    sysout.insert(sysout.get_end_iter(), non_block_read(proc_d3d_ext.stdout), -1)
+                    return proc_d3d_ext.poll() is None
+
+                GLib.timeout_add(10, d3d_sysout)
+
+                while proc_d3d_ext.poll() is None:
+                    pass
+                else:
+                    v2x32_source = Path(f"{sw_tmp}/v2/x32")
+                    v2x32_target = Path(f"{sw_tools}/d3d_extras/x32")
+                    shutil.copytree(v2x32_source, v2x32_target)
+
+                    v2x64_source = Path(f"{sw_tmp}/v2/x64")
+                    v2x64_target = Path(f"{sw_tools}/d3d_extras/x64")
+                    shutil.copytree(v2x64_source, v2x64_target)
+
+                    try:
+                        shutil.rmtree(Path(f"{sw_tmp}/v2"))
+                        Path(f"{sw_tmp}/v2.tar.xz").unlink()
+                    except:
+                        pass
+
+            ############___STEAM_PROTON_DOWNLOAD___:
+
+            if btn_check_proton.get_active():
+
+                if not Path(f"{sw_wine}/wine_steam_proton/bin").exists():
+
+                    proton_tmp_dir = Path(f"{sw_tmp}/steam-proton-{sp_ver}")
+
+                    try:
+                        shutil.rmtree(Path(f"{proton_tmp_dir}"))
+                        Path(f"{proton_tmp_dir}.tar.xz").unlink()
+                    except:
+                        pass
+
+                    crier_d = f"{sw_crier} -d '{proton_url}' {proton_tmp_dir}.tar.xz"
+                    proc_proton_dl = subprocess.run(crier_d, shell=True)
+
+                    os_read = Path(f'/etc/os-release').read_text()
+
+                    if f'Debian' in os_read or f'neon' in os_read :
+
+                        crier_tar = f"{sw_crier} -tar {proton_tmp_dir}.tar.xz {sw_tmp}"
+                        proc_proton_ext = subprocess.run(crier_tar, shell=True)
+
+                        iter_text = sysout.get_end_iter()
+                        sysout.insert(iter_text, f'\n___Extraction_completed_sucsessfully___')
+
+                        for child in proton_tmp_dir.iterdir():
+                            if child.stem != f"version":
+                                shutil.copytree(child , Path(f"{sw_wine}/wine_steam_proton/{child.stem}"))
+                            else:
+                                try:
+                                    shutil.copy2(child, Path(f"{sw_wine}/wine_steam_proton/{child.stem}"))
+                                except:
+                                    pass
+                        try:
+                            shutil.rmtree(Path(f"{sw_tmp}/steam-proton-{sp_ver}"))
+                            Path(f"{sw_tmp}/steam-proton-{sp_ver}.tar.xz").unlink()
+                        except:
+                            pass
+
+                        Path(f"{sw_wine}/wine_steam_proton").chmod(0o755)
+
+                    else:
+
+                        crier_tar = f"{sw_crier} -tar {proton_tmp_dir}.tar.xz {sw_tmp}"
+                        proc_proton_ext = subprocess.Popen(crier_tar, shell=True, start_new_session=True, stdout=PIPE)
+
+                        def proton_sysout():
+
+                            proc_text = str(non_block_read(proc_proton_ext.stdout))
+                            iter_text = sysout.get_end_iter()
+                            sysout.insert(iter_text, proc_text)
+                            return proc_proton_ext.poll() is None
+
+#                        def proton_sysout():
+
+#                            proc_text = str(non_block_read(proc_proton_ext.stdout)).split('\n')
+
+#                            for line in proc_text:
+#                                if 'extracting' in line:
+#                                    iter_text = sysout.get_end_iter()
+#                                    sysout.insert(iter_text, line + f'\n')
+#                            return proc_proton_ext.poll() is None
+
+                        GLib.idle_add(proton_sysout)
+
+                        while proc_proton_ext.poll() is None:
+                            pass
+                        else:
+                            for child in proton_tmp_dir.iterdir():
+                                if child.stem != f"version":
+                                    shutil.copytree(child , Path(f"{sw_wine}/wine_steam_proton/{child.stem}"))
+                                else:
+                                    try:
+                                        shutil.copy2(child, Path(f"{sw_wine}/wine_steam_proton/{child.stem}"))
+                                    except:
+                                        pass
+                            try:
+                                shutil.rmtree(Path(f"{sw_tmp}/steam-proton-{sp_ver}"))
+                                Path(f"{sw_tmp}/steam-proton-{sp_ver}.tar.xz").unlink()
+                            except:
+                                pass
+
+                            Path(f"{sw_wine}/wine_steam_proton").chmod(0o755)
+
+            ############___WINE_STAGING_DOWNLOAD___:
+
+            if btn_check_staging.get_active():
+
+                if not Path(f"{sw_wine}/wine_staging/bin").exists():
+
+                    staging_tmp_dir = Path(f"{sw_tmp}/wine-{stag_ver}-staging-amd64")
+
+                    try:
+                        shutil.rmtree(Path(f"{staging_tmp_dir}"))
+                        Path(f"{staging_tmp_dir}.tar.xz").unlink()
+                    except:
+                        pass
+
+                    crier_d = f"{sw_crier} -d '{staging_url}' {staging_tmp_dir}.tar.xz"
+                    proc_staging_dl = subprocess.run(crier_d, shell=True)
+
+                    crier_tar = f"{sw_crier} -tar {staging_tmp_dir}.tar.xz {sw_tmp}"
+                    proc_staging_ext = subprocess.run(crier_tar, shell=True)
+
+                    for child in staging_tmp_dir.iterdir():
+                        shutil.copytree(child , Path(f"{sw_wine}/wine_staging/{child.stem}"))
+
+                    try:
+                        shutil.rmtree(Path(f"{staging_tmp_dir}"))
+                        Path(f"{staging_tmp_dir}.tar.xz").unlink()
+                    except:
+                        pass
+
+                    Path(f"{sw_wine}/wine_staging").chmod(0o755)
+
+            ########___PROTON_GE_DOWNLOAD___:
+
+            if btn_check_proton_ge.get_active():
+
+                if not Path(f"{sw_wine}/wine_proton_ge/bin").exists():
+
+                    proton_ge_tmp_dir = Path(f"{sw_tmp}/GE-Proton{proton_ge_ver}")
+
+                    try:
+                        shutil.rmtree(Path(f"{proton_ge_tmp_dir}"))
+                        Path(f"{proton_ge_tmp_dir}.tar.gz").unlink()
+                    except:
+                        pass
+
+                    crier_d = f"{sw_crier} -d '{proton_ge_url}' {proton_ge_tmp_dir}.tar.gz"
+                    proc_proton_ge_dl = subprocess.run(crier_d, shell=True)
+
+                    crier_tar = f"{sw_crier} -tar {proton_ge_tmp_dir}.tar.gz {sw_tmp}"
+                    proc_proton_ge_ext = subprocess.run(crier_tar, shell=True)
+
+                    for child in Path(f"{proton_ge_tmp_dir}/files").iterdir():
+                        shutil.copytree(child , Path(f"{sw_wine}/wine_proton_ge/{child.stem}"))
+
+                    for child in proton_ge_tmp_dir.iterdir():
+                        if f"version" in f"{child}":
+                            shutil.copy2(child, Path(f"{sw_wine}/wine_proton_ge/{child.stem}"))
+
+                    try:
+                        shutil.rmtree(Path(f"{proton_ge_tmp_dir}"))
+                        Path(f"{proton_ge_tmp_dir}.tar.gz").unlink()
+                    except:
+                        pass
+
+                    read_inf_ge = inf_ge.read_text().split('\n')
+
+                    for line in read_inf_ge:
+                        if inf_app in line:
+                            inf_ge.write_text(inf_ge.read_text().replace(line, ''))
+                        if inf_hksu in line:
+                            inf_ge.write_text(inf_ge.read_text().replace(line, ''))
+                        if inf_hklm in line:
+                            inf_ge.write_text(inf_ge.read_text().replace(line, ''))
+                        if inf_hkcr in line:
+                            inf_ge.write_text(inf_ge.read_text().replace(line, ''))
+                        if inf_lucas in line:
+                            inf_ge.write_text(inf_ge.read_text().replace(line, ''))
+
+                    winedir = Path(f"{sw_wine}/wine_proton_ge")
+                    winedir.chmod(0o755)
+
+                    steam_lib = [ lib for lib in Path(winedir).rglob('*steam*.so')]
+                    steam_exe = [ exe for exe in Path(winedir).rglob('*steam*.exe')]
+                    steam_dll = [ dll for dll in Path(winedir).rglob('*steam*.dll')]
+
+                    try:
+                        shutil.rmtree(Path(f"{winedir}/share/default_pfx"))
+                        steam_lib.unlink()
+                        steam_exe.unlink()
+                        steam_dll.unlink()
+                    except:
+                        pass
+
+            #########___WINE_LUTRIS_DOWNLOAD___:
+
+            if btn_check_lutris.get_active():
+
+                if not Path(f"{sw_wine}/wine_lutris/bin").exists():
+
+                    lutris_tmp_dir = Path(f"{sw_tmp}/lutris-{lutris_ver}-x86_64")
+                    lutris_tmp_tar = Path(f"{sw_tmp}/wine_lutris-{lutris_ver}-x86_64.tar.gz")
+
+                    try:
+                        shutil.rmtree(Path(f"{lutris_tmp_dir}"))
+                        Path(f"{lutris_tmp_tar}").unlink()
+                    except:
+                        pass
+
+                    crier_d = f"{sw_crier} -d '{lutris_url}' {lutris_tmp_tar}"
+                    proc_lutris_dl = subprocess.run(crier_d, shell=True)
+
+                    crier_tar = f"{sw_crier} -tar {lutris_tmp_tar} {sw_tmp}"
+                    proc_lutris_ext = subprocess.run(crier_tar, shell=True)
+
+                    for child in lutris_tmp_dir.iterdir():
+                        shutil.copytree(child , Path(f"{sw_wine}/wine_lutris/{child.stem}"))
+
+                    try:
+                        shutil.rmtree(Path(f"{lutris_tmp_dir}"))
+                        Path(f"{lutris_tmp_tar}").unlink()
+                    except:
+                        pass
+
+                    read_inf_lu = inf_lu.read_text().split('\n')
+
+                    for line in read_inf_lu:
+                        if inf_app in line:
+                            inf_lu.write_text(inf_lu.read_text().replace(line, ''))
+
+                    Path(f"{sw_wine}/wine_lutris").chmod(0o755)
+
+            ########___WINE_LUTRIS_GE_DOWNLOAD___:
+
+            if btn_check_wine_lutris_ge.get_active():
+
+                if not Path(f"{sw_wine}/wine_lutris_ge/bin").exists():
+
+                    lutris_ge_tmp_dir = Path(f"{sw_tmp}/lutris-GE-Proton{lutris_ge_ver}-x86_64")
+                    lutris_ge_tmp_tar = Path(f"{sw_tmp}/wine-lutris-GE-Proton{lutris_ge_ver}-x86_64")
+
+                    try:
+                        shutil.rmtree(Path(f"{lutris_ge_tmp_dir}"))
+                        Path(f"{lutris_ge_tmp_tar}").unlink()
+                    except:
+                        pass
+
+                    crier_d = f"{sw_crier} -d '{lutris_ge_url}' {lutris_ge_tmp_tar}"
+                    proc_wine_ge_dl = subprocess.run(crier_d, shell=True)
+
+                    crier_tar = f"{sw_crier} -tar {lutris_ge_tmp_tar} {sw_tmp}"
+                    proc_wine_ge_ext = subprocess.run(crier_tar, shell=True)
+
+                    for child in lutris_ge_tmp_dir.iterdir():
+                        shutil.copytree(child , Path(f"{sw_wine}/wine_lutris_ge/{child.stem}"))
+
+                    try:
+                        shutil.rmtree(Path(f"{lutris_ge_tmp_dir}"))
+                        Path(f"{lutris_ge_tmp_tar}").unlink()
+                    except:
+                        pass
+
+                    read_inf_luge = inf_luge.read_text().split('\n')
+
+                    for line in read_inf_luge:
+                        if inf_app in line:
+                            inf_luge.write_text(inf_luge.read_text().replace(line, ''))
+                        if inf_lucas in line:
+                            inf_luge.write_text(inf_luge.read_text().replace(line, ''))
+
+                    Path(f"{sw_wine}/wine_lutris_ge").chmod(0o755)
+
+            quit = GLib.timeout_add(3000, restart)
+
+    Thread(target=wait_proc_deps).start()
+
+    def non_block_read(output):
+
+        fd = output.fileno()
+        fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+        fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+
+        try:
+            return output.read().decode("UTF-8")
+        except:
+            return ''
+
+    def update_sysout():
+
+        sysout.insert_at_cursor(non_block_read(proc_deps.stdout))
+        return proc_deps.poll() is None
+
+    GLib.timeout_add(10, update_sysout)
+
+def progress():
+
+    progressbar.set_show_text(True)
+
+    sw_dir_size, numfile, iteration = sw_size(sw_path)
+    sw_games_size, numfile, iteration = sw_games_tmp_size(sw_games)
+    sw_backup_size, numfile, iteration = sw_pfx_backup_size(sw_pfx_backup)
+
+    if btn_check_wine_lutris_ge.get_active():
+        lutris_ge_size = 624
+    else:
+        lutris_ge_size = 0
+
+    if btn_check_lutris.get_active():
+        lutris_size = 637
+    else:
+        lutris_size = 0
+
+    if btn_check_proton_ge.get_active():
+        proton_ge_size = 1104
+    else:
+        proton_ge_size = 0
+
+    if btn_check_staging.get_active():
+        staging_size = 518
+    else:
+        staging_size = 0
+
+    fullsize = 1822 + int(sw_games_size/1048576) + int(sw_backup_size/1048576) + int(lutris_ge_size) + int(lutris_size) + int(proton_ge_size) + int(staging_size)
+
+    if int(sw_dir_size/1048576) >= fullsize:
+
+        def pulse_bar():
+
+            p_label.set_label(_('STARTWINE UPDATE, PLEASE WAIT...'))
+            progressbar.set_text(_('UPDATE...'))
+
+            try:
+                p = subprocess.Popen(['ps', '-AF'], stdout=subprocess.PIPE, encoding='UTF-8')
+                out, err = p.communicate()
+
+                for line in out.splitlines():
+                    if 'sw_deps' in line:
+                        pid = int(line.split()[1])
+                        progressbar.pulse()
+                        return True
+                else:
+                    progressbar.set_fraction(0.0)
+                    progressbar.set_text('...')
+                    p_label.set_label(_('UPDATE COMPLETED SUCCESSFULLY'))
+
+            except (IndexError, OSError) as e:
+                print(_('___process_error___'))
+
+        GLib.timeout_add(200, pulse_bar)
+
+    else:
+
+        def percent_bar():
+
+            p_label.set_label(_('STARTWINE INSTALLING, PLEASE WAIT...'))
+
+            sw_dir_size, numfile, iteration = sw_size(sw_path)
+
+            percent = int(sw_dir_size/1048576)/fullsize
+            progressbar.set_fraction(percent)
+
+            if percent >= 1:
+                p_label.set_label(_('INSTALLATION COMPLETED SUCCESSFULLY'))
+
+            return True
+
+        GLib.timeout_add(6000, percent_bar)
+
+def on_next(self):
+
+    set_next_page()
+
+def next_page():
+
+    GLib.timeout_add(6000, set_next_page)
+
+def set_next_page():
+
+    width, height, num_screen = get_arg(get_resolution())
+
+    if image_stack.get_visible_child_name() == str('page16'):
+        image_stack.set_visible_child_name('page0')
+
+    prev_page = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    next_page = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0]
+    theme = [
+        'red', 'yellow', 'brown', 'grey', 'black', 'black', 'red', 'blue',
+        'grey', 'blue', 'yellow', 'green', 'green', 'brown', 'purple', 'purple'
+        ]
+
+    for p, n, t in zip(prev_page, next_page, theme):
+
+        if image_stack.get_visible_child_name() == str('page{0}'.format(p)):
+
+            image_stack.set_visible_child_name('page{0}'.format(n))
+            color_num = str('{0}'.format(t))
+            img_path = f"{sw_icon}/sw_themes/4k/sw_bg_{color_num}"
+            image = builder.get_object("sw_bg")
+            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(width)/num_screen, int(height), preserve_aspect_ratio=True)
+            image.set_from_pixbuf(pixbuf)
+            return True
+
+def sw_size(sw_path):
+
+    fsize = 0
+    numfile = 0
+    iteration = 0
+
+    for file in Path(sw_path).rglob('*'):
+        if (os.path.isfile(file)):
+            fsize += os.path.getsize(file)
+            numfile +=1
+        iteration+=1
+    return fsize, numfile, iteration
+
+def sw_games_tmp_size(sw_games):
+
+    fsize = 0
+    numfile = 0
+    iteration = 0
+
+    for file in Path(sw_games).rglob('*'):
+        if (os.path.isfile(file)):
+            fsize += os.path.getsize(file)
+            numfile +=1
+        iteration+=1
+    return fsize, numfile, iteration
+
+def sw_pfx_backup_size(sw_pfx_backup):
+
+    fsize = 0
+    numfile = 0
+    iteration = 0
+
+    for file in Path(sw_pfx_backup).rglob('*'):
+        if (os.path.isfile(file)):
+            fsize += os.path.getsize(file)
+            numfile +=1
+        iteration+=1
+    return fsize, numfile, iteration
+
+def restart():
+
+    window.close()
+    cmd = f"{sw_start}"
+    subprocess.Popen(cmd, shell=True, start_new_session=True)
+
+def on_btn_advanced(self):
+    main_stack.set_visible_child_name('wine_grid')
+
+def on_btn_check(self):
+
+    pass
+
+def on_remove(self):
+
+    q = _(f"Do you really want to remove the StartWine ?")
+
+    def on_question(q):
+
+        text_quest = q
+        dialog = Gtk.MessageDialog(
+            flags=0,
+            message_type=Gtk.MessageType.QUESTION,
+            buttons=Gtk.ButtonsType.YES_NO,
+            text=_(f"StartWine QUESTION"),
+        )
+        dialog.format_secondary_text(
+            text_quest
+        )
+        dialog.set_default_size(320, 120)
+        response = dialog.run()
+
+        if response == Gtk.ResponseType.YES:
+
+            if sw_path.exists():
+
+                cmd_mv_games = f"mv {sw_path}/Games {Path.home()}/Games_tmp"
+                subprocess.run(cmd_mv_games, shell=True)
+
+                cmd_mv_pfx = f"mv {sw_path}/data/pfx_backup {Path.home()}/pfx_backup"
+                subprocess.run(cmd_mv_pfx, shell=True)
+
+                shutil.rmtree(sw_path)
+
+                try:
+                    sw_desktop_local.unlink()
+                    swim_desktop.unlink()
+                except:
+                    print('___StartWine_local_path_not_exists___')
+
+                def on_info():
+
+                    text_info = _('StartWine remove completed successfully')
+                    dialog = Gtk.MessageDialog(
+                        flags=0,
+                        message_type=Gtk.MessageType.INFO,
+                        buttons=Gtk.ButtonsType.OK,
+                        text=_(f"StartWine INFO"),
+                    )
+                    dialog.format_secondary_text(
+                        text_info
+                    )
+                    dialog.set_default_size(320, 120)
+                    dialog.run()
+                    print(_("INFO dialog closed"))
+
+                    dialog.destroy()
+
+                    GLib.timeout_add(1000, Gtk.main_quit)
+
+                on_info()
+
+        elif response == Gtk.ResponseType.NO:
+            print(_("Cancel"))
+
+        dialog.destroy()
+    on_question(q)
+
+def on_btn_main_back(self):
+
+    main_stack.set_visible_child_name("main_grid")
+
+def on_btn_sysout(self):
+
+    main_stack.set_visible_child_name("sysout_grid")
+
+def get_size(widget, event):
+
+    w = window.get_size().width
+    h = window.get_size().height
+
+    sw_scrolled.set_min_content_height(h)
+    sw_scrolled.set_min_content_width(w)
+
+    if w <= 800:
+        window.set_resizable(False)
+        window.resize(960, 540)
+
+def set_size():
+
+    width, height, num_screen = get_arg(get_resolution())
+
+    if width <= 1400:
+        window.set_resizable(True)
+        win_resize = window.resize(width/num_screen, height)
+
+        for logo in range(0, 17):
+
+            label = builder.get_object(f"label_{logo}")
+            label_path = f"{sw_icon}/sw_themes/logo/{logo}.svg"
+            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(label_path, width*0.4/num_screen, height*0.4, preserve_aspect_ratio=True)
+            label.set_from_pixbuf(pixbuf)
+            label.set_opacity(0.75)
+
+    if width > 1400 and width <= 1600:
+        window.set_resizable(True)
+        win_resize = window.resize(width*0.8/num_screen, height*0.8)
+
+        for logo in range(0, 17):
+
+            label = builder.get_object(f"label_{logo}")
+            label_path = f"{sw_icon}/sw_themes/logo/{logo}.svg"
+            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(label_path, width*0.4/num_screen, height*0.4, preserve_aspect_ratio=True)
+            label.set_from_pixbuf(pixbuf)
+            label.set_opacity(0.75)
+
+    if width > 1600 and width <= 1920:
+        window.set_resizable(True)
+        win_resize = window.resize(width*0.67/num_screen, height*0.67)
+
+        for logo in range(0, 17):
+
+            label = builder.get_object(f"label_{logo}")
+            label_path = f"{sw_icon}/sw_themes/logo/{logo}.svg"
+            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(label_path, width*0.35/num_screen, height*0.35, preserve_aspect_ratio=True)
+            label.set_from_pixbuf(pixbuf)
+            label.set_opacity(0.75)
+
+
+    if width > 1920 and width <= 2560:
+        window.set_resizable(True)
+        win_resize = window.resize(width*0.5/num_screen, height*0.5)
+
+        for logo in range(0, 17):
+
+            label = builder.get_object(f"label_{logo}")
+            label_path = f"{sw_icon}/sw_themes/logo/{logo}.svg"
+            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(label_path, width*0.25/num_screen, height*0.25, preserve_aspect_ratio=True)
+            label.set_from_pixbuf(pixbuf)
+            label.set_opacity(0.75)
+
+    if width > 2560:
+        window.set_resizable(True)
+        win_resize = window.resize(width*0.5/num_screen, height*0.5)
+
+        for logo in range(0, 17):
+
+            label = builder.get_object(f"label_{logo}")
+            label_path = f"{sw_icon}/sw_themes/logo/{logo}.svg"
+            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(label_path, width*0.2/num_screen, height*0.2, preserve_aspect_ratio=True)
+            label.set_from_pixbuf(pixbuf)
+            label.set_opacity(0.75)
+
+def on_sysout_view(self, widget):
+
+    adjustment = sysout_scrolled.get_vadjustment()
+    adjustment.set_value(adjustment.get_upper() - adjustment.get_page_size())
+
+#################################___BUILDER___:
+
+builder = Gtk.Builder()
+#builder.add_from_string(SWIM)
+builder.add_from_file(f"{sw_scripts}/sw_install_manager.glade")
+
+css_name = f"{sw_css}/blue/gtk-3.0/gtk.css"
+
+def get_resolution():
+
+    screen = Gdk.Display.get_default()
+    num_screen = screen.get_n_monitors()
+
+    w = 0
+    h = 0
+
+    for x in range(0, screen.get_n_monitors()):
+         w += screen.get_monitor(x).get_geometry().width
+         if ( h < screen.get_monitor(x).get_geometry().height ):
+              h = screen.get_monitor(x).get_geometry().height
+
+    width = w
+    height = h
+
+    return width, height, num_screen
+
+def set_css():
+
+    width, height, num_screen = get_arg(get_resolution())
+
+    def get_css(css_name):
+
+        css = css_name
+        screen = Gdk.Screen.get_default()
+        provider = Gtk.CssProvider()
+        style_context = Gtk.StyleContext()
+        style_context.add_provider_for_screen(
+            screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
+        provider.load_from_path(css)
+
+        img_path = f"{sw_icon}/sw_themes/4k/sw_bg_blue"
+        image = builder.get_object("sw_bg")
+        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(width)/num_screen, int(height), preserve_aspect_ratio=True)
+        image.set_from_pixbuf(pixbuf)
+
+    get_css(css_name)
+set_css()
+
+window = builder.get_object("sw_installer")
+window.connect("configure-event", get_size)
+
+main_stack = builder.get_object("main_stack")
+
+sw_scrolled = builder.get_object("sw_scrolled")
+image_stack = builder.get_object("image_stack")
+
+set_size()
+
+image_stack.set_visible_child_name('page16')
+
+sw_black = builder.get_object("sw_black")
+sw_black.set_from_file(f"{sw_icon}/gui_icons/sw_black_img")
+
+sysout_icon = builder.get_object("sysout_icon")
+sysout_icon.set_from_file(f"{sw_icon}/gui_icons/go-next-symbolic.svg")
+
+back_label = builder.get_object("back_label")
+back_label.set_from_file(f"{sw_icon}/gui_icons/go-previous-symbolic.svg")
+
+next_label = builder.get_object("next_label")
+next_label.set_from_file(f"{sw_icon}/gui_icons/go-next-symbolic.svg")
+
+p_label = builder.get_object("p_label")
+p_label.set_label("...")
+
+setup_label = builder.get_object("setup_label")
+size, numfile, iteration = sw_size(sw_path)
+
+if int(size/1048576) >= 1600:
+    setup_label.set_label(_('UPDATE'))
+else:
+    setup_label.set_label(_('INSTALL'))
+
+btn_next = builder.get_object("btn_next")
+btn_next.connect("clicked", on_next)
+
+btn_back = builder.get_object("btn_back")
+btn_back.connect("clicked", on_next)
+
+btn_setup = builder.get_object("btn_setup")
+btn_setup.connect("clicked", on_install)
+
+btn_advanced = builder.get_object("btn_advanced")
+btn_advanced.connect("clicked", on_btn_advanced)
+
+btn_remove = builder.get_object("btn_remove")
+btn_remove.connect("clicked", on_remove)
+
+winehq_icon = builder.get_object("winehq_icon")
+winehq_icon_path = f"{sw_icon}/sw_themes/logo/7.svg"
+pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(winehq_icon_path, 256, 256, preserve_aspect_ratio=True)
+winehq_icon.set_from_pixbuf(pixbuf)
+
+######################################___CHECK_BUTTON___:
+
+btn_check_proton = builder.get_object("btn_check_proton")
+btn_check_proton.connect('toggled', on_btn_check)
+
+btn_check_proton_ge = builder.get_object("btn_check_proton_ge")
+btn_check_proton_ge.connect('toggled', on_btn_check)
+
+btn_check_staging = builder.get_object("btn_check_staging")
+btn_check_staging.connect('toggled', on_btn_check)
+
+btn_check_lutris = builder.get_object("btn_check_lutris")
+btn_check_lutris.connect('toggled', on_btn_check)
+
+btn_check_wine_lutris_ge = builder.get_object("btn_check_wine_lutris_ge")
+btn_check_wine_lutris_ge.connect('toggled', on_btn_check)
+
+###########################___LINK_BUTTON___:
+
+btn_github = builder.get_object("btn_github")
+btn_github.set_uri(github_url)
+
+github_icon = builder.get_object("github_icon")
+github_icon.set_from_file(f"{sw_icon}/gui_icons/github.svg")
+
+btn_discord = builder.get_object("btn_discord")
+btn_discord.set_uri(discord_url)
+
+discord_icon = builder.get_object("discord_icon")
+discord_icon.set_from_file(f"{sw_icon}/gui_icons/discord.svg")
+
+btn_telegram = builder.get_object("btn_telegram")
+btn_telegram.set_uri(telegram_url)
+
+telegram_icon = builder.get_object("telegram_icon")
+telegram_icon.set_from_file(f"{sw_icon}/gui_icons/telegram.svg")
+
+##################################___BACK_BUTTON___:
+
+btn_main_back = builder.get_object("btn_main_back")
+btn_main_back.connect("clicked", on_btn_main_back)
+
+btn_main_back_2 = builder.get_object("btn_main_back_2")
+btn_main_back_2.connect("clicked", on_btn_main_back)
+
+############################___SYSOUT_GRID___:
+
+btn_sysout = builder.get_object("btn_sysout")
+btn_sysout.connect("clicked", on_btn_sysout)
+
+sysout = builder.get_object("sysout")
+sysout_scrolled = builder.get_object("sysout_scrolled")
+sysout_view = builder.get_object("sysout_view")
+sysout_view.connect( "size-allocate", on_sysout_view)
+
+#############################___PROGRESSBAR___:
+
+progressbar = builder.get_object("progressbar")
+progressbar.set_show_text(False)
+
+############################___WINDOW___:
+
+window.connect("destroy", Gtk.main_quit)
+window.show_all()
+
+Gtk.main()
+
+##########___END___

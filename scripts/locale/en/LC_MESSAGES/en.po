@@ -1,0 +1,1218 @@
+# English translations for PACKAGE package.
+# Copyright (C) 2022 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+#  <nixon@archlinux>, 2022.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-08-20 21:18+0300\n"
+"PO-Revision-Date: 2022-06-24 04:22+0300\n"
+"Last-Translator:  <nixon@archlinux>\n"
+"Language-Team: English\n"
+"Language: en_EN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"#-#-#-#-#  py_en.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"#-#-#-#-#  glade_en.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: sw_main:301
+msgid "___if you see this, you are half way___"
+msgstr "___if you see this, you are half way___"
+
+#: sw_main:542
+msgid "Do you really want to remove"
+msgstr "Do you really want to remove"
+
+#: sw_main:842 sw_main:2057
+msgid "Oops! Nothing to run..."
+msgstr ""
+
+#: sw_main:2801
+msgid "Do you really want reset settings ?"
+msgstr "Do you really want reset settings ?"
+
+#: sw_main:3225 sw_main:3235
+msgid "START MODE"
+msgstr "START MODE"
+
+#: sw_main:3227
+msgid ""
+"PREFIX:\n"
+"default"
+msgstr ""
+"PREFIX:\n"
+"default"
+
+#: sw_main:3237
+msgid "PREFIX:\n"
+msgstr "PREFIX:\n"
+
+#: sw_install_manager:212
+msgid "___dependency_installation_is_complete___"
+msgstr ""
+
+#: sw_install_manager:777
+msgid "STARTWINE UPDATE, PLEASE WAIT..."
+msgstr "STARTWINE UPDATE, PLEASE WAIT..."
+
+#: sw_install_manager:778
+msgid "UPDATE..."
+msgstr "UPDATE..."
+
+#: sw_install_manager:792
+msgid "UPDATE COMPLETED SUCCESSFULLY"
+msgstr "UPDATE COMPLETED SUCCESSFULLY"
+
+#: sw_install_manager:795
+msgid "___process_error___"
+msgstr ""
+
+#: sw_install_manager:803
+msgid "STARTWINE INSTALLING, PLEASE WAIT..."
+msgstr "STARTWINE INSTALLING, PLEASE WAIT..."
+
+#: sw_install_manager:811
+msgid "INSTALLATION COMPLETED SUCCESSFULLY"
+msgstr "INSTALLATION COMPLETED SUCCESSFULLY"
+
+#: sw_install_manager:901
+msgid "Do you really want to remove the StartWine ?"
+msgstr "Do you really want to remove the StartWine ?"
+
+#: sw_install_manager:910
+msgid "StartWine QUESTION"
+msgstr "StartWine QUESTION"
+
+#: sw_install_manager:938
+msgid "StartWine remove completed successfully"
+msgstr "StartWine remove completed successfully"
+
+#: sw_install_manager:943
+msgid "StartWine INFO"
+msgstr "StartWine INFO"
+
+#: sw_install_manager:950
+msgid "INFO dialog closed"
+msgstr "INFO dialog closed"
+
+#: sw_install_manager:959
+msgid "Cancel"
+msgstr "Cancel"
+
+#: sw_install_manager:1134
+msgid "UPDATE"
+msgstr "UPDATE"
+
+#: sw_install_manager:1136 sw_install_manager.glade:133
+msgid "INSTALL"
+msgstr "INSTALL"
+
+#: StartWine-Tray:119
+msgid "Open "
+msgstr "Open "
+
+#: StartWine-Tray:130
+msgid "Run "
+msgstr "Run "
+
+#: StartWine-Tray:144
+msgid "Shortcuts"
+msgstr "Shortcuts"
+
+#: StartWine-Tray:148
+msgid "Settings"
+msgstr "Settings"
+
+#: StartWine-Tray:152
+msgid "Stop"
+msgstr "Stop"
+
+#: StartWine-Tray:156
+msgid "Exit"
+msgstr "Exit"
+
+#: sw_runlib:228
+msgid "Error initializing the Wine prefix"
+msgstr "Error initializing the Wine prefix"
+
+#: sw_runlib:238
+#, sh-format
+msgid "Error installing libraries, try again"
+msgstr "Error installing libraries, try again"
+
+#: sw_runlib:810
+msgid "OpenGL mode"
+msgstr "OpenGL mode"
+
+#: sw_runlib:919
+#, sh-format
+msgid "VULKAN mode"
+msgstr "VULKAN mode"
+
+#: sw_runlib:965
+msgid "Create a new prefix for this application ?"
+msgstr "Create a new prefix for this application ?"
+
+#: sw_runlib:998 sw_runlib:1171
+#, sh-format
+msgid "Restore prefix from backup ?"
+msgstr "Restore prefix from backup ?"
+
+#: sw_runlib:1006 sw_runlib:1181
+#, sh-format
+msgid "Restore prefix completed successfully"
+msgstr "Restore prefix completed successfully"
+
+#: sw_runlib:1013
+#, sh-format
+msgid "To create a shortcut run StartWine from the exe file"
+msgstr "To create a shortcut run StartWine from the exe file"
+
+#: sw_runlib:1016
+#, sh-format
+msgid "Click the download wine button in the main menu and download Wine"
+msgstr "Click the download wine button in the main menu and download Wine"
+
+#: sw_runlib:1027
+#, sh-format
+msgid ""
+"You have a backup of the default prefix. Use it to create a new prefix ?"
+msgstr ""
+"You have a backup of the default prefix. Use it to create a new prefix ?"
+
+#: sw_runlib:1076
+#, sh-format
+msgid "Shortcut ${STARTWINE_NAME} created in system menu"
+msgstr "Shortcut ${STARTWINE_NAME} created in system menu"
+
+#: sw_runlib:1081
+#, sh-format
+msgid "Shortcut ${STARTWINE_NAME} removed from system menu"
+msgstr "Shortcut ${STARTWINE_NAME} removed from system menu"
+
+#: sw_runlib:1091
+#, sh-format
+msgid "Shortcut ${STARTWINE_NAME} created in desktop"
+msgstr "Shortcut ${STARTWINE_NAME} created in desktop"
+
+#: sw_runlib:1094
+#, sh-format
+msgid "Shortcut ${STARTWINE_NAME} removed from desktop"
+msgstr "Shortcut ${STARTWINE_NAME} removed from desktop"
+
+#: sw_runlib:1120
+msgid "Do you really want to remove the prefix ?"
+msgstr "Do you really want to remove the prefix ?"
+
+#: sw_runlib:1134 sw_runlib:1146
+#, sh-format
+msgid "Shortcut and prefix ${STARTWINE_NAME} removed"
+msgstr "Shortcut and prefix ${STARTWINE_NAME} removed"
+
+#: sw_runlib:1157 sw_runlib:1185
+#, sh-format
+msgid "Remove old prefix ?"
+msgstr "Remove old prefix ?"
+
+#: sw_runlib:1203
+msgid "Do you really want to backup the prefix ?"
+msgstr "Do you really want to backup the prefix ?"
+
+#: sw_runlib:1209 sw_runlib:1266
+#, sh-format
+msgid "Overwrite old backup ?"
+msgstr "Overwrite old backup ?"
+
+#: sw_runlib:1217 sw_runlib:1227
+#, sh-format
+msgid "Backup completed successfully"
+msgstr "Backup completed successfully"
+
+#: sw_runlib:1237
+msgid "Do you really want to restore the prefix ?"
+msgstr "Do you really want to restore the prefix ?"
+
+#: sw_runlib:1242 sw_runlib:1290
+#, sh-format
+msgid "You do not have a backup create it first"
+msgstr "You do not have a backup create it first"
+
+#: sw_runlib:1251
+#, sh-format
+msgid "Restore completed successfully"
+msgstr "Restore completed successfully"
+
+#: sw_runlib:1260
+msgid "Do you really want to backup all the prefixes ?"
+msgstr "Do you really want to backup all the prefixes ?"
+
+#: sw_runlib:1271 sw_runlib:1277
+#, sh-format
+msgid "Full backup completed successfully"
+msgstr "Full backup completed successfully"
+
+#: sw_runlib:1285
+msgid "Do you really want to restore all the prefixes ?"
+msgstr "Do you really want to restore all the prefixes ?"
+
+#: sw_runlib:1292
+#, sh-format
+msgid "Would you like to save the current game prefixes ?"
+msgstr "Would you like to save the current game prefixes ?"
+
+#: sw_runlib:1298 sw_runlib:1304
+#, sh-format
+msgid "Full Restore completed successfully"
+msgstr "Full Restore completed successfully"
+
+#: sw_runlib:1314
+msgid "Do you really want to clear the prefix ?"
+msgstr "Do you really want to clear the prefix ?"
+
+#: sw_runlib:1388 sw_runlib:1430 sw_runlib:1796 sw_runlib:1834 sw_runlib:1872
+#: sw_runlib:1910 sw_runlib:1947 sw_runlib:2001 sw_runlib:2039 sw_runlib:2077
+#: sw_runlib:2119 sw_runlib:2155 sw_runlib:2194 sw_runlib:2232 sw_runlib:2270
+#: sw_runlib:2353 sw_runlib:2391 sw_runlib:2429 sw_runlib:2553
+#, sh-format
+msgid "Application installed successfully"
+msgstr "Application installed successfully"
+
+#: sw_runlib:1390 sw_runlib:1432
+#, sh-format
+msgid "Libraries installed successfully"
+msgstr "Libraries installed successfully"
+
+#: sw_runlib:1397
+#, sh-format
+msgid "Install recommended libraries ?"
+msgstr "Install recommended libraries ?"
+
+#: sw_runlib:1504
+#, sh-format
+msgid "Please wait a while then press ok to open the log file"
+msgstr "Please wait a while then press ok to open the log file"
+
+#: sw_runlib:1537
+#, sh-format
+msgid "Downloading wine staging completed successfully"
+msgstr "Downloading wine staging completed successfully"
+
+#: sw_runlib:1539 sw_runlib:1571 sw_runlib:1610 sw_runlib:1644 sw_runlib:1678
+#, sh-format
+msgid "Download failed, try again"
+msgstr "Download failed, try again"
+
+#: sw_runlib:1569
+#, sh-format
+msgid "Downloading wine steam proton completed successfully"
+msgstr "Downloading wine steam proton completed successfully"
+
+#: sw_runlib:1608
+#, sh-format
+msgid "Downloading wine proton ge completed successfully"
+msgstr "Downloading wine proton ge completed successfully"
+
+#: sw_runlib:1642
+#, sh-format
+msgid "Downloading wine lutris completed successfully"
+msgstr "Downloading wine lutris completed successfully"
+
+#: sw_runlib:1676
+#, sh-format
+msgid "Downloading wine lutris ge completed successfully"
+msgstr "Downloading wine lutris ge completed successfully"
+
+#: sw_runlib:1692
+msgid "Do you really want to remove the wine staging ?"
+msgstr "Do you really want to remove the wine staging ?"
+
+#: sw_runlib:1703
+msgid "Do you really want to remove the wine steam proton ?"
+msgstr "Do you really want to remove the wine steam proton ?"
+
+#: sw_runlib:1714
+msgid "Do you really want to remove the wine proton ge ?"
+msgstr "Do you really want to remove the wine proton ge ?"
+
+#: sw_runlib:1725
+msgid "Do you really want to remove the wine lutris ?"
+msgstr "Do you really want to remove the wine lutris ?"
+
+#: sw_runlib:1736
+msgid "Do you really want to remove the wine lutris ge ?"
+msgstr "Do you really want to remove the wine lutris ge ?"
+
+#: sw_runlib:1759
+msgid "Kill wine porocesses"
+msgstr "kill all wine process"
+
+#: sw_runlib:1800 sw_runlib:1838 sw_runlib:1876 sw_runlib:1914 sw_runlib:1951
+#: sw_runlib:2005 sw_runlib:2043 sw_runlib:2081 sw_runlib:2123 sw_runlib:2159
+#: sw_runlib:2198 sw_runlib:2236 sw_runlib:2274 sw_runlib:2319 sw_runlib:2357
+#: sw_runlib:2395 sw_runlib:2433 sw_runlib:2474 sw_runlib:2517 sw_runlib:2557
+#, sh-format
+msgid "Application is installed"
+msgstr "Application is installed"
+
+#: sw_menu.glade:176 sw_menu.glade:671
+msgid "FILE MANAGER"
+msgstr "FILE MANAGER"
+
+#: sw_menu.glade:224 sw_menu.glade:719
+msgid "TEXT EDIT"
+msgstr "TEXT EDIT"
+
+#: sw_menu.glade:272 sw_menu.glade:767
+msgid "APP TO MENU"
+msgstr "APP TO MENU"
+
+#: sw_menu.glade:320 sw_menu.glade:815
+msgid "APP TO DESKTOP"
+msgstr "APP TO DESKTOP"
+
+#: sw_menu.glade:368 sw_menu.glade:863
+msgid "APP SETTINGS"
+msgstr "APP SETTINGS"
+
+#: sw_menu.glade:417 sw_menu.glade:912
+msgid "PROTONDB"
+msgstr "PROTONDB"
+
+#: sw_menu.glade:466 sw_menu.glade:961
+msgid "WINEHQ"
+msgstr "WINEHQ"
+
+#: sw_menu.glade:514 sw_menu.glade:1009 sw_install_manager.glade:110
+msgid "REMOVE"
+msgstr "REMOVE"
+
+#: sw_menu.glade:579
+msgid ""
+"Current CPU temperature\n"
+"CPU draw in watts\n"
+"Load & frequency per core\n"
+"Shows the CPUs current MHz\n"
+"GPU name from pci.ids\n"
+"Current GPU temperature\n"
+"GPU draw in watts\n"
+"GPU core frequency\n"
+"GPU memory frequency\n"
+"System RAM usage\n"
+"System VRAM usage\n"
+"Swap space usage next to system RAM usage\n"
+"Process resident memory usage\n"
+"Process shared memory usage\n"
+"Process  virtual memory usage\n"
+"Show non-cached IO read, in MiB/s\n"
+"Show non-cached IO write, in MiB/s\n"
+"Enables most of the toggleable parameters\n"
+"Use primary font size for smaller text like units\n"
+"Displays local time\n"
+"Show media player metadata\n"
+"Shows current mangohud version\n"
+"Show if the application is 32 or 64 bit\n"
+"Change fps graph to histogram\n"
+"Displays used vulkan driver\n"
+"OpenGL or vulkan-based render engine's version\n"
+"Shows current Wine or Proton version in use\n"
+"Frametime next to fps text\n"
+"Frame count\n"
+"Current resolution\n"
+"Current fps limit\n"
+"Shows if vkbasalt is on\n"
+"Shows if gamemode is on\n"
+"Current battery percent and energy consumption\n"
+"Battery icon instead of percent\n"
+"Battey of wireless gamepads (xone,xpadneo,ds4)\n"
+"Gamepad battery percent with icon. *enabled by default\n"
+"Show FPS only"
+msgstr ""
+"Current CPU temperature\n"
+"CPU draw in watts\n"
+"Load & frequency per core\n"
+"Shows the CPUs current MHz\n"
+"GPU name from pci.ids\n"
+"Current GPU temperature\n"
+"GPU draw in watts\n"
+"GPU core frequency\n"
+"GPU memory frequency\n"
+"System RAM usage\n"
+"System VRAM usage\n"
+"Swap space usage next to system RAM usage\n"
+"Process resident memory usage\n"
+"Process shared memory usage\n"
+"Process  virtual memory usage\n"
+"Show non-cached IO read, in MiB/s\n"
+"Show non-cached IO write, in MiB/s\n"
+"Enables most of the toggleable parameters\n"
+"Use primary font size for smaller text like units\n"
+"Displays local time\n"
+"Show media player metadata\n"
+"Shows current mangohud version\n"
+"Show if the application is 32 or 64 bit\n"
+"Change fps graph to histogram\n"
+"Displays used vulkan driver\n"
+"OpenGL or vulkan-based render engine's version\n"
+"Shows current Wine or Proton version in use\n"
+"Frametime next to fps text\n"
+"Frame count\n"
+"Current resolution\n"
+"Current fps limit\n"
+"Shows if vkbasalt is on\n"
+"Shows if gamemode is on\n"
+"Current battery percent and energy consumption\n"
+"Battery icon instead of percent\n"
+"Battey of wireless gamepads (xone,xpadneo,ds4)\n"
+"Gamepad battery percent with icon. *enabled by default\n"
+"Show FPS only"
+#: sw_menu.glade:1189
+msgid "yellow"
+msgstr ""
+
+#: sw_menu.glade:1230
+msgid "white"
+msgstr ""
+
+#: sw_menu.glade:1271
+msgid "grey"
+msgstr ""
+
+#: sw_menu.glade:1312
+msgid "black"
+msgstr ""
+
+#: sw_menu.glade:1353
+msgid "red"
+msgstr ""
+
+#: sw_menu.glade:1394
+msgid "green"
+msgstr ""
+
+#: sw_menu.glade:1435
+msgid "blue"
+msgstr ""
+
+#: sw_menu.glade:1476
+msgid "purple"
+msgstr ""
+
+#: sw_menu.glade:1517
+msgid "brown"
+msgstr ""
+
+#: sw_menu.glade:1574
+msgid ""
+"Set launch paremeters, example: -d3d9, -d3d11, -opengl\n"
+"Override dll in the current prefix, example: amd_ags_x64=b,n\n"
+"Set prefix architrcture, example: win64, win32\n"
+"Set windows version, example: xp,2003,2008,7,8,10\n"
+"Add registry patch\n"
+"Using custom dxvk version from wine-proton-ge\n"
+"Using custom vkd3d version from wine-proton-ge\n"
+"Force use opengl, for some applications that d'nt run in dxvk\n"
+"Enable fps limit in vkd3d or dxvk mode\n"
+"System monitoring in OpenGL\n"
+"System monitoring in dxvk and vkd3d\n"
+"Set of optimisations be temporarily applied a game process\n"
+"Steam runtime library\n"
+"Restore display resolution after game termination\n"
+"Enable windows desktop emulation\n"
+"Improving frame rates and responsiveness with scheduling policies\n"
+"Increase performance for some games, especially ones that rely heavily on "
+"the CPU\n"
+"For old games that crash on very long extension strings\n"
+"Disable direct gpu access for nvidia video cards\n"
+"Disable debug mode for wine\n"
+"Allocate to a 32-bit application more than 2 GB of RAM\n"
+"Helps circumvent some types of protection in old games\n"
+"Increases performance by 5-10%\n"
+"System monitoring in dxvk\n"
+"Async pipelines are written to the state cache\n"
+"vkBasalt is a Vulkan post processing layer to enhance the visual graphics of "
+"games\n"
+"AMD FidelityFX Super Resolution - advanced upscaling technologies for higher "
+"fps\n"
+"Includes Windows Media Foundation libraries for video playback in some "
+"games\n"
+"Used to manage hybrid graphics found on recent desktops and laptops\n"
+"Open-source and cross-platform implementation of the .NET Framework\n"
+"BattlEye anti-cheat service required to run online games that use this "
+"service\n"
+"EasyAntCheat service required to run online games that use this service\n"
+"Preload d3d libraries\n"
+"Solves performance problems in some applications\n"
+"Hides the definition of nvidia video cards. Required to run some applications"
+msgstr ""
+"Set launch paremeters, example: -d3d9, -d3d11, -opengl\n"
+"Override dll in the current prefix, example: amd_ags_x64=b,n\n"
+"Set prefix architrcture, example: win64, win32\n"
+"Set windows version, example: xp,2003,2008,7,8,10\n"
+"Add registry patch\n"
+"Using custom dxvk version from wine-proton-ge\n"
+"Using custom vkd3d version from wine-proton-ge\n"
+"Force use opengl, for some applications that d'nt run in dxvk\n"
+"Enable fps limit in vkd3d or dxvk mode\n"
+"System monitoring in OpenGL\n"
+"System monitoring in dxvk and vkd3d\n"
+"Set of optimisations be temporarily applied a game process\n"
+"Steam runtime library\n"
+"Restore display resolution after game termination\n"
+"Enable windows desktop emulation\n"
+"Improving frame rates and responsiveness with scheduling policies\n"
+"Increase performance for some games, especially ones that rely heavily on "
+"the CPU\n"
+"For old games that crash on very long extension strings\n"
+"Disable direct gpu access for nvidia video cards\n"
+"Disable debug mode for wine\n"
+"Allocate to a 32-bit application more than 2 GB of RAM\n"
+"Helps circumvent some types of protection in old games\n"
+"Increases performance by 5-10%\n"
+"System monitoring in dxvk\n"
+"Async pipelines are written to the state cache\n"
+"vkBasalt is a Vulkan post processing layer to enhance the visual graphics of "
+"games\n"
+"AMD FidelityFX Super Resolution - advanced upscaling technologies for higher "
+"fps\n"
+"Includes Windows Media Foundation libraries for video playback in some "
+"games\n"
+"Used to manage hybrid graphics found on recent desktops and laptops\n"
+"Open-source and cross-platform implementation of the .NET Framework\n"
+"BattlEye anti-cheat service required to run online games that use this "
+"service\n"
+"EasyAntCheat service required to run online games that use this service\n"
+"Preload d3d libraries\n"
+"Solves performance problems in some applications\n"
+"Hides the definition of nvidia video cards. Required to run some applications"
+#: sw_menu.glade:2297
+msgid "StartWine"
+msgstr "StartWine"
+
+#: sw_menu.glade:2401
+msgid "RESIZE"
+msgstr "RESIZE"
+
+#: sw_menu.glade:2480 sw_menu.glade:6015
+msgid "ABOUT"
+msgstr "ABOUT"
+
+#: sw_menu.glade:2532
+msgid "EXIT"
+msgstr "EXIT"
+
+#: sw_menu.glade:2597
+msgid ""
+"Launch parameters\n"
+"Example: -d3d11"
+msgstr ""
+"Launch parameters\n"
+"Example: -d3d11"
+
+#: sw_menu.glade:2606 sw_menu.glade:2607
+msgid "Launch parameters"
+msgstr "Launch parameters"
+
+#: sw_menu.glade:2681
+msgid "START"
+msgstr "START"
+
+#: sw_menu.glade:2959
+msgid "open your games and applications"
+msgstr "open your games and applications"
+
+#: sw_menu.glade:2974
+msgid "SHORTCUTS"
+msgstr "SHORTCUTS"
+
+#: sw_menu.glade:3043
+msgid "create a new shortcut and prefix for the game or application"
+msgstr "create a new shortcut and prefix for the game or application"
+
+#: sw_menu.glade:3057
+msgid "CREATE SHORTCUT"
+msgstr "CREATE SHORTCUT"
+
+#: sw_menu.glade:3126
+msgid "remove or reinstall the current prefix"
+msgstr "remove or reinstall the current prefix"
+
+#: sw_menu.glade:3140 sw_menu.glade:5229
+msgid "PREFIX TOOLS"
+msgstr "PREFIX TOOLS"
+
+#: sw_menu.glade:3209
+msgid "install the required libraries and dependencies to the current prefix"
+msgstr "install the required libraries and dependencies to the current prefix"
+
+#: sw_menu.glade:3223 sw_menu.glade:5662
+msgid "WINE TOOLS"
+msgstr "WINE TOOLS"
+
+#: sw_menu.glade:3292
+msgid "translates Windows API calls into POSIX calls on-the-fly"
+msgstr "translates Windows API calls into POSIX calls on-the-fly"
+
+#: sw_menu.glade:3306
+msgid "DOWNLOAD WINE"
+msgstr "DOWNLOAD WINE"
+
+#: sw_menu.glade:3385
+msgid "INSTALL LAUNCHERS"
+msgstr "INSTALL LAUNCHERS"
+
+#: sw_menu.glade:3454
+msgid "tools for increase perfomance, system monitoring, post processing"
+msgstr "tools for increase perfomance, system monitoring, post processing"
+
+#: sw_menu.glade:3468
+msgid "SETTINGS"
+msgstr "SETTINGS"
+
+#: sw_menu.glade:3537
+msgid "run debug and logging mode in dxvk vkd3d or opengl mode"
+msgstr "run debug and logging mode in dxvk vkd3d or opengl mode"
+
+#: sw_menu.glade:3551
+msgid "DEBUG"
+msgstr "DEBUG"
+
+#: sw_menu.glade:3606
+msgid "kill all wine process"
+msgstr "kill all wine process"
+
+#: sw_menu.glade:3621
+msgid "STOP"
+msgstr "STOP"
+
+#: sw_menu.glade:3746 sw_menu.glade:4157 sw_menu.glade:4713
+#: sw_install_manager.glade:942
+msgid "WINE STAGING"
+msgstr "WINE STAGING"
+
+#: sw_menu.glade:3795 sw_menu.glade:4206
+msgid "WINE STEAM PROTON"
+msgstr "WINE STEAM PROTON"
+
+#: sw_menu.glade:3844 sw_menu.glade:4255 sw_menu.glade:4615
+#: sw_install_manager.glade:1014
+msgid "WINE PROTON GE"
+msgstr "WINE PROTON GE"
+
+#: sw_menu.glade:3893 sw_menu.glade:4304 sw_menu.glade:4762
+#: sw_install_manager.glade:978
+msgid "WINE LUTRIS"
+msgstr "WINE LUTRIS"
+
+#: sw_menu.glade:3942 sw_menu.glade:4353 sw_menu.glade:4664
+#: sw_install_manager.glade:906
+msgid "WINE LUTRIS GE"
+msgstr "WINE LUTRIS GE"
+
+#: sw_menu.glade:3996 sw_menu.glade:4402
+msgid "WINE CUSTOM"
+msgstr "WINE CUSTOM"
+
+#: sw_menu.glade:4036
+msgid "CREATE SHORTCUT WITH"
+msgstr "CREATE SHORTCUT WITH"
+
+#: sw_menu.glade:4552
+msgid "DOWNLOAD LIST"
+msgstr "DOWNLOAD LIST"
+
+#: sw_menu.glade:4789
+msgid "CUSTOM SOURCE LIST"
+msgstr "CUSTOM SOURCE LIST"
+
+#: sw_menu.glade:4901
+msgid "REMOVE CURRENT PREFIX"
+msgstr "REMOVE CURRENT PREFIX"
+
+#: sw_menu.glade:4949
+msgid "CLEAR CURRENT PREFIX"
+msgstr "CLEAR CURRENT PREFIX"
+
+#: sw_menu.glade:4997
+msgid "REINSTALL CURRENT PREFIX"
+msgstr "REINSTALL CURRENT PREFIX"
+
+#: sw_menu.glade:5045
+msgid "PREFIX BACKUP"
+msgstr "PREFIX BACKUP"
+
+#: sw_menu.glade:5093
+msgid "PREFIX RECOVERY"
+msgstr "PREFIX RECOVERY"
+
+#: sw_menu.glade:5141
+msgid "BACKUP ALL PREFIXES"
+msgstr "BACKUP ALL PREFIXES"
+
+#: sw_menu.glade:5189
+msgid "RECOVERY ALL PREFIXES"
+msgstr "RECOVERY ALL PREFIXES"
+
+#: sw_menu.glade:5334
+msgid "WINE SETTINGS"
+msgstr "WINE SETTINGS"
+
+#: sw_menu.glade:5382
+msgid "WINE CONSOLE"
+msgstr "WINE CONSOLE"
+
+#: sw_menu.glade:5430
+msgid "REGEDIT"
+msgstr "REGEDIT"
+
+#: sw_menu.glade:5478
+msgid "FILE EXPLORER"
+msgstr "FILE EXPLORER"
+
+#: sw_menu.glade:5526
+msgid "UNINSTALLER"
+msgstr "UNINSTALLER"
+
+#: sw_menu.glade:5574
+msgid "WINETRICKS"
+msgstr "WINETRICKS"
+
+#: sw_menu.glade:5622
+msgid "RECOMENDED LIBS"
+msgstr "RECOMENDED LIBS"
+
+#: sw_menu.glade:5749
+msgid ""
+"\n"
+"StartWine\n"
+"3.5.7"
+msgstr ""
+"\n"
+"StartWine\n"
+"3.5.7"
+
+#: sw_menu.glade:5769
+msgid ""
+"StartWine is a launcher that allows you \n"
+"to quickly and easily launch Windows \n"
+"applications on Linux operating systems."
+msgstr ""
+"StartWine is a launcher that allows you \n"
+"to quickly and easily launch Windows \n"
+"applications on Linux operating systems."
+
+#: sw_menu.glade:5820
+msgid "GITHUB SOURCE"
+msgstr "GITHUB SOURCE"
+
+#: sw_menu.glade:5895
+msgid "DISCORD SERVER"
+msgstr "DISCORD SERVER"
+
+#: sw_menu.glade:5970 sw_install_manager.glade:618
+msgid "TELEGRAM"
+msgstr "TELEGRAM"
+
+#: sw_menu.glade:6055
+msgid ""
+"StartWine is free software;\n"
+"you can redistribute it and/or\n"
+"modify it under the terms of \n"
+"the GNU General Public License \n"
+"as published by the Free Software \n"
+"Foundation;\n"
+"either version 3 of the License,\n"
+"or (at your option) any later version.\n"
+"\n"
+"StartWine is distributed in the \n"
+"hope that it will be useful, but\n"
+"WITHOUT ANY WARRANTY; \n"
+"without even the implied\n"
+"warranty of MERCHANTABILITY\n"
+"or FITNESS FOR A PARTICULAR \n"
+"PURPOSE.\n"
+"See the GNU General Public\n"
+"License for more details."
+msgstr ""
+"StartWine is free software;\n"
+"you can redistribute it and/or\n"
+"modify it under the terms of \n"
+"the GNU General Public License \n"
+"as published by the Free Software \n"
+"Foundation;\n"
+"either version 3 of the License,\n"
+"or (at your option) any later version.\n"
+"\n"
+"StartWine is distributed in the \n"
+"hope that it will be useful, but\n"
+"WITHOUT ANY WARRANTY; \n"
+"without even the implied\n"
+"warranty of MERCHANTABILITY\n"
+"or FITNESS FOR A PARTICULAR \n"
+"PURPOSE.\n"
+"See the GNU General Public\n"
+"License for more details."
+
+#: sw_menu.glade:6101 sw_menu.glade:6131
+msgid "LICENSE"
+msgstr "LICENSE"
+
+#: sw_menu.glade:6155
+msgid "Authors:"
+msgstr "Authors:"
+
+#: sw_menu.glade:6172
+msgid ""
+"Normatov R.R.\n"
+"Maslov N.G."
+msgstr ""
+"Normatov R.R.\n"
+"Maslov N.G."
+
+#: sw_menu.glade:6185
+msgid "Acknowlegment:"
+msgstr "Acknowlegment:"
+
+#: sw_menu.glade:6202
+msgid ""
+"Huskysoul\n"
+"Lintech\n"
+"Lex\n"
+"VHSgunzo"
+msgstr ""
+"Huskysoul\n"
+"Lintech\n"
+"Lex\n"
+"VHSgunzo"
+
+#: sw_menu.glade:6231
+msgid "DONATION"
+msgstr "DONATION"
+
+#: sw_menu.glade:6287
+msgid "AUTHORS"
+msgstr "AUTHORS"
+
+#: sw_menu.glade:6383
+msgid "CONFIRM INSTALL"
+msgstr "CONFIRM INSTALL"
+
+#: sw_menu.glade:12580
+msgid "DLL LIST"
+msgstr "DLL LIST"
+
+#: sw_menu.glade:13447
+msgid "FONTS LIST"
+msgstr "FONTS LIST"
+
+#: sw_menu.glade:14300 sw_menu.glade:14311 sw_menu.glade:14322
+#: sw_menu.glade:14333 sw_menu.glade:14344 sw_menu.glade:14355
+#: sw_menu.glade:14366 sw_menu.glade:14377 sw_menu.glade:14388
+#: sw_menu.glade:14399 sw_menu.glade:14410 sw_menu.glade:14421
+#: sw_menu.glade:14432 sw_menu.glade:14443 sw_menu.glade:14454
+#: sw_menu.glade:14465 sw_menu.glade:14476 sw_menu.glade:14487
+#: sw_menu.glade:14498 sw_menu.glade:14509 sw_menu.glade:14520
+#: sw_menu.glade:14531 sw_menu.glade:14542 sw_menu.glade:14553
+#: sw_menu.glade:14564 sw_menu.glade:14575 sw_menu.glade:14586
+#: sw_menu.glade:14597 sw_menu.glade:14608 sw_menu.glade:14619
+#: sw_menu.glade:14630 sw_menu.glade:14641 sw_menu.glade:14652
+#: sw_menu.glade:14663 sw_menu.glade:14674 sw_menu.glade:14689
+#: sw_menu.glade:14704 sw_menu.glade:14719 sw_menu.glade:14734
+#: sw_menu.glade:14749 sw_menu.glade:14764 sw_menu.glade:14779
+#: sw_menu.glade:14794 sw_menu.glade:14809 sw_menu.glade:14824
+#: sw_menu.glade:14839 sw_menu.glade:14854 sw_menu.glade:14869
+#: sw_menu.glade:14884 sw_menu.glade:14899 sw_menu.glade:14914
+#: sw_menu.glade:14929 sw_menu.glade:14944 sw_menu.glade:14959
+#: sw_menu.glade:14974 sw_menu.glade:14989 sw_menu.glade:15004
+#: sw_menu.glade:15019 sw_menu.glade:15034 sw_menu.glade:15049
+#: sw_menu.glade:15064 sw_menu.glade:15079 sw_menu.glade:15094
+#: sw_menu.glade:15122 sw_menu.glade:15137 sw_menu.glade:15332
+#: sw_menu.glade:15344 sw_menu.glade:15356 sw_menu.glade:15368
+#: sw_menu.glade:15380 sw_menu.glade:15392 sw_menu.glade:15404
+#: sw_menu.glade:15416 sw_menu.glade:15428 sw_menu.glade:15440
+#: sw_menu.glade:15452 sw_menu.glade:15464 sw_menu.glade:15476
+#: sw_menu.glade:15488 sw_menu.glade:15500 sw_menu.glade:15512
+#: sw_menu.glade:15524 sw_menu.glade:15536 sw_menu.glade:15548
+#: sw_menu.glade:15560 sw_menu.glade:15572 sw_menu.glade:15584
+#: sw_menu.glade:15596 sw_menu.glade:15608 sw_menu.glade:15620
+#: sw_menu.glade:15632 sw_menu.glade:15644 sw_menu.glade:15656
+#: sw_menu.glade:15668 sw_menu.glade:15680 sw_menu.glade:15692
+#: sw_menu.glade:15704 sw_menu.glade:15716 sw_menu.glade:15728
+#: sw_menu.glade:15740 sw_menu.glade:15752 sw_menu.glade:15764
+#: sw_menu.glade:15776 sw_menu.glade:16573 sw_menu.glade:16584
+#: sw_menu.glade:16595 sw_menu.glade:16606 sw_menu.glade:16617
+#: sw_menu.glade:16628 sw_menu.glade:16639 sw_menu.glade:16650
+#: sw_menu.glade:16661 sw_menu.glade:16672 sw_menu.glade:16683
+#: sw_menu.glade:16694 sw_menu.glade:16705 sw_menu.glade:16716
+msgid "label"
+msgstr ""
+
+#: sw_menu.glade:15265
+msgid "LAUNCH SETTINGS"
+msgstr "LAUNCH SETTINGS"
+
+#: sw_menu.glade:15316 sw_menu.glade:15786 sw_menu.glade:15800
+#: sw_menu.glade:15814 sw_menu.glade:15828 sw_menu.glade:15842
+#: sw_menu.glade:15856 sw_menu.glade:15870 sw_menu.glade:15884
+#: sw_menu.glade:15898 sw_menu.glade:15912 sw_menu.glade:15926
+#: sw_menu.glade:15940 sw_menu.glade:15954 sw_menu.glade:15968
+#: sw_menu.glade:15982 sw_menu.glade:15996 sw_menu.glade:16010
+#: sw_menu.glade:16024 sw_menu.glade:16038 sw_menu.glade:16052
+#: sw_menu.glade:16066 sw_menu.glade:16080 sw_menu.glade:16094
+#: sw_menu.glade:16108 sw_menu.glade:16122 sw_menu.glade:16136
+#: sw_menu.glade:16150 sw_menu.glade:16164 sw_menu.glade:16178
+#: sw_menu.glade:16192 sw_menu.glade:16206 sw_menu.glade:16220
+#: sw_menu.glade:16234 sw_menu.glade:16248 sw_menu.glade:16262
+#: sw_menu.glade:16276 sw_menu.glade:16290 sw_menu.glade:16940
+#: sw_menu.glade:16954 sw_menu.glade:16968 sw_menu.glade:16982
+#: sw_menu.glade:16996 sw_menu.glade:17010 sw_menu.glade:17024
+#: sw_menu.glade:17038 sw_menu.glade:17052 sw_menu.glade:17066
+#: sw_menu.glade:17080 sw_menu.glade:17094 sw_menu.glade:17108
+#: sw_menu.glade:17122 sw_menu.glade:17136 sw_menu.glade:17150
+#: sw_menu.glade:17164 sw_menu.glade:17178 sw_menu.glade:17192
+#: sw_menu.glade:17206 sw_menu.glade:17220 sw_menu.glade:17234
+#: sw_menu.glade:17248 sw_menu.glade:17262 sw_menu.glade:17276
+#: sw_menu.glade:17290 sw_menu.glade:17304 sw_menu.glade:17318
+#: sw_menu.glade:17332 sw_menu.glade:17346 sw_menu.glade:17360
+#: sw_menu.glade:17374 sw_menu.glade:17388 sw_menu.glade:17402
+#: sw_menu.glade:17416 sw_menu.glade:17430 sw_menu.glade:17444
+#: sw_menu.glade:17458 sw_menu.glade:17472 sw_menu.glade:17486
+#: sw_menu.glade:17500 sw_menu.glade:17514 sw_menu.glade:17528
+#: sw_menu.glade:17542 sw_menu.glade:17556 sw_menu.glade:17570
+#: sw_menu.glade:17584 sw_menu.glade:17598 sw_menu.glade:17612
+#: sw_menu.glade:17626 sw_menu.glade:17640 sw_menu.glade:17654
+#: sw_menu.glade:17668 sw_menu.glade:17682 sw_menu.glade:17696
+#: sw_menu.glade:17710 sw_menu.glade:17724 sw_menu.glade:17738
+#: sw_menu.glade:17752 sw_menu.glade:17766 sw_menu.glade:17780
+#: sw_menu.glade:17794 sw_menu.glade:17808 sw_menu.glade:17822
+#: sw_menu.glade:17836 sw_menu.glade:17850 sw_menu.glade:17864
+#: sw_menu.glade:17878 sw_menu.glade:17892 sw_menu.glade:17906
+#: sw_menu.glade:17920 sw_menu.glade:17934
+msgid "checkbutton"
+msgstr "checkbutton"
+
+#: sw_menu.glade:16318
+msgid "HUD_POSITION"
+msgstr "HUD_POSITION"
+
+#: sw_menu.glade:16349
+msgid "L"
+msgstr "L"
+
+#: sw_menu.glade:16375
+msgid "R"
+msgstr "R"
+
+#: sw_menu.glade:16412
+msgid "FPS_LIMIT"
+msgstr "FPS_LIMIT"
+
+#: sw_menu.glade:16459
+msgid "INDICATORS"
+msgstr ""
+
+#: sw_menu.glade:16813
+msgid "COLORS"
+msgstr ""
+
+#: sw_menu.glade:16840
+msgid "PREVIEW"
+msgstr ""
+
+#: sw_menu.glade:16851
+msgid "mangohud_notebook"
+msgstr ""
+
+#: sw_menu.glade:16897
+msgid "MANGOHUD SETTINGS"
+msgstr "MANGOHUD SETTINGS"
+
+#: sw_menu.glade:17980
+msgid "EFFECT DEPTH"
+msgstr "EFFECT DEPTH"
+
+#: sw_menu.glade:18035
+msgid "VKBASALT EFFECTS SETTINGS"
+msgstr "VKBASALT EFFECTS SETTINGS"
+
+#: sw_menu.glade:18064
+msgid "SET DEFAULT"
+msgstr "SET DEFAULT"
+
+#: sw_menu.glade:18096
+msgid "app_settings_notebook"
+msgstr ""
+
+#: sw_menu.glade:18172
+msgid "TERMINAL"
+msgstr "TERMINAL"
+
+#: sw_menu.glade:18217
+msgid "window"
+msgstr "window"
+
+#: sw_install_manager.glade:10
+msgid "StartWine-Install-Manager"
+msgstr "StartWine-Install-Manager"
+
+#: sw_install_manager.glade:210
+msgid "page0"
+msgstr "page0"
+
+#: sw_install_manager.glade:220
+msgid "page1"
+msgstr "page1"
+
+#: sw_install_manager.glade:231
+msgid "page2"
+msgstr "page2"
+
+#: sw_install_manager.glade:242
+msgid "page3"
+msgstr "page3"
+
+#: sw_install_manager.glade:253
+msgid "page4"
+msgstr "page4"
+
+#: sw_install_manager.glade:264
+msgid "page5"
+msgstr "page5"
+
+#: sw_install_manager.glade:275
+msgid "page6"
+msgstr "page6"
+
+#: sw_install_manager.glade:286
+msgid "page7"
+msgstr "page7"
+
+#: sw_install_manager.glade:297
+msgid "page8"
+msgstr "page8"
+
+#: sw_install_manager.glade:308
+msgid "page9"
+msgstr "page9"
+
+#: sw_install_manager.glade:319
+msgid "page10"
+msgstr "page10"
+
+#: sw_install_manager.glade:330
+msgid "page11"
+msgstr "page11"
+
+#: sw_install_manager.glade:341
+msgid "page12"
+msgstr "page12"
+
+#: sw_install_manager.glade:352
+msgid "page13"
+msgstr "page13"
+
+#: sw_install_manager.glade:363
+msgid "page14"
+msgstr "page14"
+
+#: sw_install_manager.glade:374
+msgid "page15"
+msgstr "page15"
+
+#: sw_install_manager.glade:385
+msgid "page16"
+msgstr "page16"
+
+#: sw_install_manager.glade:463
+msgid "SYSTEM OUTPUT"
+msgstr "SYSTEM OUTPUT"
+
+#: sw_install_manager.glade:522
+msgid "GITHUB"
+msgstr "GITHUB"
+
+#: sw_install_manager.glade:570
+msgid "DISCORD"
+msgstr "DISCORD"
+
+#: sw_install_manager.glade:650
+msgid "ADVANCED OPTIONS"
+msgstr "ADVANCED OPTIONS"
+
+#: sw_install_manager.glade:739 sw_install_manager.glade:830
+msgid "BACK"
+msgstr "BACK"
+
+#: sw_install_manager.glade:869
+msgid "SELECT AN ADDITIONAL WINE TO INSTALL"
+msgstr "SELECT AN ADDITIONAL WINE TO INSTALL"
+
+#: sw_install_manager.glade:1052
+msgid "WINE STEAM PROTON ( DEFAULT )"
+msgstr "WINE STEAM PROTON ( DEFAULT )"
+
+#: sw_install_manager.glade:1077
+msgid ""
+"Fork of Wine developed by Valve. It is a collection of software and "
+"libraries combined with a patched version of Wine. Proton incorporates "
+"several libraries that improve 3D performance."
+msgstr ""
+"Fork of Wine developed by Valve. It is a collection of software and "
+"libraries combined with a patched version of Wine. Proton incorporates "
+"several libraries that improve 3D performance."
+
+#: sw_install_manager.glade:1097
+msgid ""
+"Custom build of Proton with the most recent bleeding-edge proton "
+"experimental Wine. Includes some patches: DXVK patched with Async, media "
+"foundation patches, AMD FSR patches, Nvidia CUDA support for phsyx, nvapi "
+"and others."
+msgstr ""
+"Custom build of Proton with the most recent bleeding-edge proton "
+"experimental Wine. Includes some patches: DXVK patched with Async, media "
+"foundation patches, AMD FSR patches, Nvidia CUDA support for phsyx, nvapi "
+"and others."
+
+#: sw_install_manager.glade:1117
+msgid ""
+"Wine Staging is the testing area of winehq.org. It contains bug fixes and "
+"features, which have not been integrated into the development branch yet."
+msgstr ""
+"Wine Staging is the testing area of winehq.org. It contains bug fixes and "
+"features, which have not been integrated into the development branch yet."
+
+#: sw_install_manager.glade:1137
+msgid ""
+"Custom build of Wine based on/forked from the most recent bleeding-edge "
+"proton experimental Wine repo."
+msgstr ""
+"Custom build of Wine based on/forked from the most recent bleeding-edge "
+"proton experimental Wine repo."
+
+#: sw_install_manager.glade:1157
+msgid "Fork of Wine developed by Lutris progect."
+msgstr "Fork of Wine developed by Lutris progect."
+
+#: sw_install_manager.glade:1225 sw_install_manager.glade:1272
+msgid ""
+"Wine (originally an acronym for \"Wine Is Not an Emulator\") is a "
+"compatibility layer capable of running Windows applications on several POSIX-"
+"compliant operating systems, such as Linux, macOS, & BSD. Instead of "
+"simulating internal Windows logic like a virtual machine or emulator, Wine "
+"translates Windows API calls into POSIX calls on-the-fly, eliminating the "
+"performance and memory penalties of other methods and allowing you to "
+"cleanly integrate Windows applications into your desktop."
+msgstr ""
+"Wine (originally an acronym for \"Wine Is Not an Emulator\") is a "
+"compatibility layer capable of running Windows applications on several POSIX-"
+"compliant operating systems, such as Linux, macOS, & BSD. Instead of "
+"simulating internal Windows logic like a virtual machine or emulator, Wine "
+"translates Windows API calls into POSIX calls on-the-fly, eliminating the "
+"performance and memory penalties of other methods and allowing you to "
+"cleanly integrate Windows applications into your desktop."
+

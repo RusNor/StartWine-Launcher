@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+
+"""
+Preloading environment variables
+"""
+
+import os
+import sys
+from pathlib import Path
+import subprocess
+from subprocess import Popen, run
+import platform
+
+#######################___PATHS__:
+
+link = f"{sys.argv[0]}"
+sw_scripts = Path(link).parent
+sw_path = sw_scripts.parent.parent
+sw_tools = Path(f"{sw_path}/data/tools")
+sw_main = Path(f"{sw_scripts}/sw_main")
+sw_im = Path(f"{sw_scripts}/sw_install_manager")
+sw_crier = Path(f"{sw_scripts}/sw_crier.py")
+
+ld_path_x86_64 = f"{sw_tools}/utils/libs/x86-64"
+ld_path_i386 = f"{sw_tools}/utils/libs/i386"
+gi_path = f"{sw_tools}/utils/libs/x86-64/gi_typelib"
+python_modules_3_10 = f"{sw_tools}/utils/libs/python3.10/site-packages"
+python_modules_3_9 = f"{sw_tools}/utils/libs/python3.9/site-packages"
+
+os.environ["LD_LIBRARY_PATH"] = os.pathsep + ld_path_i386 + os.pathsep + ld_path_x86_64
+os.environ["GI_TYPELIB_PATH"] = os.pathsep + gi_path
+
+################################___START___:
+
+def start():
+
+    try:
+        arg = sys.argv[1]
+
+        if str('--install') in arg:
+            run(f"{sw_im}", shell=True)
+        else:
+            run(f"{sw_main} \"{arg}\"", shell=True)
+
+    except IndexError as e:
+        print('___set_default_sys_arg___')
+        run(f"{sw_main}", shell=True)
+
+try:
+    py_ver = str(platform.python_version())
+
+    if str('3.10') in py_ver:
+        print('___python_version___' + py_ver)
+        os.environ["PYTHONPATH"] = os.pathsep + python_modules_3_10
+        start()
+
+    elif str('3.9') in py_ver:
+        print('___python_version___' + py_ver)
+        os.environ["PYTHONPATH"] = os.pathsep + python_modules_3_9
+        start()
+
+    else:
+        info_text = f"Requires python version 3.9 and higher"
+        run(f"{sw_crier} -i {info_text}")
+
+except IOError as e:
+    run(f"{sw_crier} -e {e}", shell=True)
+
+

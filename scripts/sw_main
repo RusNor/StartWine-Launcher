@@ -1,0 +1,3647 @@
+#!/usr/bin/env python3
+
+################################___SCRIPTS_V360___:
+
+import os
+import sys
+from pathlib import Path
+import subprocess
+from subprocess import *
+
+import gi
+gi.require_version('Gtk', '3.0')
+gi.require_version('Gdk', '3.0')
+gi.require_version('Vte', '2.91')
+from gi.repository import Gtk, GObject, Gdk, GdkPixbuf, Gio, GLib, Pango, Vte
+
+import threading
+from threading import Thread, Timer
+
+import urllib.request
+import time
+import re
+import shutil
+
+try:
+    from PIL import Image, ImageColor
+
+except:
+    pass
+
+from sw_crier import sw_crier
+
+################################___PATHS___:
+
+link = f"{sys.argv[0]}"
+sw_link = Path(link).parent
+
+sw_bin = f"{sw_link.parent.parent}/data/tools/utils/bin"
+sw_ld_lib = f"{sw_link.parent.parent}/data/tools/utils/libs/x86-64"
+sw_gi_typelib = f"{sw_link.parent.parent}/data/tools/utils/libs/x86-64/gi_typelib"
+
+os.environ["LD_LIBRARY_PATH"] = os.pathsep + sw_ld_lib
+os.environ["GI_TYPELIB_PATH"] = os.pathsep + sw_gi_typelib
+
+sw_scripts = f"{sw_link}"
+sw_crier_path = Path(f"{sw_scripts}/sw_crier.py")
+sw_fsh = Path(f"{sw_scripts}/sw_function.sh")
+sw_rsh = Path(f"{sw_scripts}/sw_run.sh")
+sw_start = Path(f"{sw_scripts}/sw_start")
+sw_main = Path(f"{sw_scripts}/sw_main")
+sw_runlib = Path(f"{sw_scripts}/sw_runlib")
+sw_localedir = Path(f"{sw_scripts}/locale")
+
+sw_path = Path(sw_scripts).parent.parent
+sw_data = Path(f"{sw_path}/data")
+sw_app_config = Path(f"{sw_data}/app_config")
+sw_app_patches = Path(f"{sw_data}/app_patches")
+sw_default_config = Path(f"{sw_app_config}/.default")
+sw_icon = Path(f"{sw_data}/img")
+sw_pfx = Path(f"{sw_data}/pfx")
+sw_pfx_default = Path(f"{sw_pfx}/pfx_default")
+sw_pfx_backup = Path(f"{sw_data}/pfx_backup")
+sw_tmp = Path(f"{sw_data}/tmp")
+sw_tools = Path(f"{sw_data}/tools")
+sw_wine = Path(f"{sw_data}/wine")
+sw_wine_custom = Path(f"{sw_data}/wine/wine_custom")
+sw_games = Path(f"{sw_path}/Games")
+sw_shortcuts = Path(f"{sw_path}/Shortcuts")
+sw_desktop = Path(f"{sw_path}/StartWine.desktop")
+sw_css = Path(f"{sw_icon}/sw_themes/css")
+sw_local = Path(f"{Path.home()}/.local/share/applications")
+sw_desktop_local = Path(f"{sw_local}/StartWine.desktop")
+swim_desktop = Path(f"{sw_local}/StartWine-Install-Manager.desktop")
+
+################################___DATA_READ___:
+
+fshread = sw_fsh.read_text().split('\n')
+rshread = sw_rsh.read_text().split('\n')
+sw_defconf_read = sw_default_config.read_text().split('\n')
+
+rlibs = [
+    'd3dcompiler_42', 'd3dcompiler_43', 'd3dcompiler_47', 'd3dx10', 'd3dx10_43',
+    'd3dx11_42', 'd3dx11_43', 'd3dx9', 'mfc120', 'mfc42', 'msvcirt', 'physx',
+    'vcrun2010', 'vcrun2012', 'vcrun2013', 'vcrun2019', 'vcrun6', 'vcrun6sp6'
+    ]
+
+themes = [
+    'black','grey','white', 'blue','purple','red','green','yellow','brown'
+    ]
+
+backgrounds = [
+    'sw_bg_black','sw_bg_grey','sw_bg_white','sw_bg_blue', 'sw_bg_purple',
+    'sw_bg_red','sw_bg_green','sw_bg_yellow','sw_bg_brown'
+    ]
+
+launchers_data = [
+    f"{sw_pfx}/pfx_Ankama_Launcher/drive_c/Program Files/Ankama/Ankama Launcher/Ankama Launcher.exe",
+    f"{sw_pfx}/pfx_Battle.net/drive_c/Program Files (x86)/Battle.net/Battle.net.exe",
+    f"{sw_pfx}/pfx_BethesdaNetLauncher/drive_c/Program Files (x86)/Bethesda.net Launcher/BethesdaNetLauncher.exe",
+    f"{sw_pfx}/pfx_BsgLauncher/drive_c/Battlestate Games/BsgLauncher/BsgLauncher.exe",
+    f"{sw_pfx}/pfx_EpicGamesLauncher/drive_c/Program Files (x86)/Epic Games/Launcher/Portal/Binaries/Win32/EpicGamesLauncher.exe",
+    f"{sw_pfx}/pfx_evelauncher/drive_c/EVE/Launcher/evelauncher.exe",
+    f"{sw_pfx}/pfx_GalaxyClient/drive_c/Program Files (x86)/GOG Galaxy/GalaxyClient.exe",
+    f"{sw_pfx}/pfx_GameCenter/drive_c/users/steamuser/AppData/Local/GameCenter/GameCenter.exe",
+    f"{sw_pfx}/pfx_launcher/drive_c/Program Files/Genshin Impact/launcher.exe",
+    f"{sw_pfx}/pfx_gfclient/drive_c/Program Files (x86)/GameforgeClient/gfclient.exe",
+    f"{sw_pfx}/pfx_itch/drive_c/users/steamuser/AppData/Local/itch/app-25.5.1/itch.exe",
+    f"{sw_pfx}/pfx_Origin/drive_c/Program Files (x86)/Origin/Origin.exe",
+    f"{sw_pfx}/pfx_osu!/drive_c/users/steamuser/AppData/Local/osu!/osu!.exe",
+    f"{sw_pfx}/pfx_RiotClientServices/drive_c/Riot Games/Riot Client/RiotClientServices.exe",
+    f"{sw_pfx}/pfx_Launcher/drive_c/Program Files/Rockstar Games/Launcher/Launcher.exe",
+    f"{sw_pfx}/pfx_steam/drive_c/Program Files (x86)/Steam/steam.exe",
+    f"{sw_pfx}/pfx_UbisoftConnect/drive_c/Program Files (x86)/Ubisoft/Ubisoft Game Launcher/UbisoftConnect.exe",
+    f"{sw_pfx}/pfx_wgc_api/drive_c/ProgramData/Wargaming.net/GameCenter/wgc_api/wgc_api.exe",
+    f"{sw_pfx}/pfx_WorldOfSeaBattleClient/drive_c/Games/World Of Sea Battle/WorldOfSeaBattleClient.exe",
+    f"{sw_pfx}/pfx_Zona/drive_c/Program Files (x86)/Zona/Zona.exe"
+    ]
+
+winarch = [
+    '64 bit architecture', '32 bit architecture'
+    ]
+
+arch_index = [
+    'win64', 'win32'
+    ]
+
+winver = [
+    'windows 10', 'windows 8.1', 'window 8', 'windows 2008 R2', 'windows 7',
+    'windows 2008', 'windows vista' , 'windows 2003', 'windows xp'
+    ]
+
+ver_index = [
+    '10', '8.1', '8', '2008 R2', '7','2008', 'vista', '2003', 'xp'
+    ]
+
+reg_patches = [''] + [
+    str(reg.stem) + str(reg.suffix) for reg in Path(sw_app_patches).iterdir()
+    ]
+
+################################___LANG___:
+
+import locale
+import gettext
+
+_ = gettext.gettext
+
+domain = 'StartWine'
+locale.textdomain(domain)
+locale.bindtextdomain(domain, sw_localedir)
+
+lang_en = gettext.translation(domain, localedir=sw_localedir, languages=['en:en'])
+lang_ru = gettext.translation(domain, localedir=sw_localedir, languages=['ru:en'])
+
+get_lang = [lang for lang in sw_defconf_read if 'export SW_USE_LANG=' in lang]
+
+if get_lang == ['export SW_USE_LANG=ru']:
+
+    try:
+        locale.setlocale(locale.LC_MESSAGES, ('ru_RU', 'UTF-8'))
+        lang_ru.install
+        _ = lang_ru.gettext
+        print('___ru_locale_is_set___')
+
+    except:
+        print('___ru_locale_not_found___')
+        locale.setlocale(locale.LC_MESSAGES, ('en_US', 'UTF-8'))
+        lang_en.install
+        _ = lang_en.gettext
+        print('___en_locale_is_set___')
+        pass
+
+if get_lang == ['export SW_USE_LANG=en']:
+
+    try:
+        locale.setlocale(locale.LC_MESSAGES, ('en_US', 'UTF-8'))
+        lang_en.install
+        _ = lang_en.gettext
+        print('___en_locale_is_set___')
+
+    except:
+        print('___en_locale_not_found___')
+        pass
+
+################################___SYS_ARG___:
+
+try:
+    cmd_file = f'file \"{sys.argv[1]}\"'
+    file_type = run(cmd_file, stdout=subprocess.PIPE, shell=True, encoding='UTF-8')
+    ftype = file_type.stdout[0:]
+
+    if str('Windows') in str(ftype):
+        sw_exe_path = sys.argv[1]
+    else:
+        sw_exe_path = 'StartWine'
+except:
+    print('___exe_not_found___')
+    sw_exe_path = 'StartWine'
+
+################################___PRELOAD_FUNCTION___:
+
+if not sw_pfx_default.exists():
+    sw_pfx_default.mkdir(parents=True, exist_ok=True)
+
+def echo_run():
+
+    if sw_exe_path == 'StartWine':
+        sw_rsh.write_text(f"env \"{sw_start}\"")
+    else:
+        sw_rsh.write_text(f"env \"{sw_start}\" \"{sw_exe_path}\"")
+
+echo_run()
+
+################################___PATH_APP___:
+
+def get_app_path():
+
+    app_default = f'env \"{sw_start}\" '
+    app_path = str(sw_rsh.read_text()).replace(app_default, '')
+
+    if not Path(app_path).suffix:
+        app_path = f'StartWine'
+
+    return app_path
+
+def get_arg(arg):
+
+    return arg
+
+app_path = get_arg(get_app_path())
+print('PATH:\n' + app_path + '\n')
+
+################################___SW_TRAY___:
+
+def start_tray():
+
+    app_path = get_arg(get_app_path())
+    p = Popen(['ps', '-AF'], stdout=subprocess.PIPE, encoding='UTF-8')
+    out, err = p.communicate()
+
+    for line in out.splitlines():
+        if str('StartWine-Tray') in line:
+            pid = int(line.split()[1])
+            print(line)
+            os.kill(pid, 9)
+
+    for line in out.splitlines():
+        if f"{sw_rsh}" in line:
+            pid = int(line.split()[1])
+            print(line + '\n')
+            os.kill(pid, 9)
+
+    try:
+        tray = f"{sw_scripts}/StartWine-Tray {app_path}"
+        Popen(tray, shell=True, start_new_session=True)
+    except OSError as e:
+        print('___strart_tray_failed___')
+
+start_tray()
+
+################################___GET_APP_NAME_FUNC___:
+
+def get_out():
+
+    app_path = get_arg(get_app_path())
+
+    if app_path == str('StartWine'):
+        app_name = app_path
+    else:
+        app_name = str(Path(app_path).stem).strip('"').replace(' ', '_')
+
+    return app_name
+
+def get_suffix():
+
+    app_path = get_arg(get_app_path())
+
+    app_suffix = str(Path(app_path).suffix).strip('"')
+    return app_suffix
+
+################################___PREFIX_PATH___:
+
+pfx_name = f"pfx_" + get_arg(get_out()).replace('StartWine', 'default').replace('default_', 'default')
+pfx_path = f"{sw_pfx}/{pfx_name}"
+f_dll = Path(f"{pfx_path}/dll.log")
+f_check = Path(f"{pfx_path}/check.log")
+f_btn = Path(f"{pfx_path}/btn.log")
+
+################################___APP_CONFIG_PATH___:
+
+app_name = get_arg(get_out())
+app_conf = Path(f"{sw_app_config}/" + str(app_name))
+default = Path(f"{sw_app_config}/.default")
+
+if not app_conf.exists():
+    if sw_exe_path == 'StartWine':
+        app_conf = Path(f"{sw_app_config}/StartWine")
+        app_conf.write_text(default.read_text())
+        app_conf.chmod(0o755)
+    else:
+        app_conf.write_text(default.read_text())
+        app_conf.chmod(0o755)
+
+def preload_runlib():
+
+    app_name = get_arg(get_out())
+    cmd = f"{sw_scripts}/sw_runlib {app_name}"
+    run(cmd, shell=True)
+
+preload_runlib()
+
+################################___SW_MENU___:
+
+################################___TERMINAL___:
+
+def on_btn_back_terminal(self):
+
+    cmd_exit = f"q \n clear\n"
+    terminal.feed_child(cmd_exit.encode("UTF-8"))
+
+    cmd_clear = f"clear\n"
+    terminal.feed_child(cmd_clear.encode("UTF-8"))
+
+    main_stack.set_visible_child_name("vte_main_box")
+
+    try:
+        with open(f"/usr/bin/htop"):
+            Thread(target=run_htop).start()
+    except:
+        Thread(target=ASCII).start()
+
+def ASCII():
+
+    try:
+        with open(f"/usr/bin/jp2a"):
+            name_jpg = f"cd {sw_icon}/gui_icons && ls -1 | grep .jpg"
+            proc = run(name_jpg, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+            out_name = str(proc.stdout[0:]).replace('\n', '')
+            open(f"{sw_icon}/gui_icons/{out_name}")
+
+    except (IOError, OSError) as e:
+        cmd_info = f"'___if you see this, you are half way___'"
+        terminal.feed_child(cmd_info.encode("UTF-8"))
+        print(_('___if you see this, you are half way___'))
+
+    else:
+        name_jpg = f"cd {sw_icon}/gui_icons && ls -1 | grep .jpg"
+        proc = run(name_jpg, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+        out_name = str(proc.stdout[0:]).replace('\n', '')
+        print(out_name)
+        cmd_ascii = f"clear && jp2a --colors {sw_icon}/gui_icons/{out_name}\n"
+        terminal.feed_child(cmd_ascii.encode("UTF-8"))
+
+def run_htop():
+
+    cmd_htop = f"htop -F .exe\n"
+    terminal.feed_child(cmd_htop.encode("UTF-8"))
+
+################################___RESIZE___:
+
+def on_btn_set_size(self):
+
+    window.set_resizable(False)
+    window.resize(320, 660)
+    resize_btn_stack.set_visible_child_name("btn_get_size")
+
+def get_size(widget, event):
+
+    w = window.get_size().width
+    h = window.get_size().height
+
+    shortcut_scrolled.set_max_content_height(h*0.8)
+    settings_scrolled.set_min_content_height(h*0.8)
+    vkbasalt_scrolled.set_max_content_height(h*0.8)
+    mangohud_scrolled.set_max_content_height(h*0.8)
+    mangohud_scrolled1.set_max_content_height(h*0.8)
+    vte_scrolled.set_min_content_height(h*0.85)
+
+    if w > 360:
+        img_path = f"{sw_icon}/gui_icons/sw_top_header"
+        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, w-360, 32, preserve_aspect_ratio=False)
+        top_header.set_from_pixbuf(pixbuf)
+
+    if w <= 320:
+        window.set_resizable(False)
+        window.resize(320, 660)
+        resize_btn_stack.set_visible_child_name("btn_get_size")
+
+def on_btn_get_size(self):
+
+    set_size()
+
+def set_size():
+
+    screen = Gdk.Display.get_default()
+    num_screen = screen.get_n_monitors()
+#    monitor = screen.get_primary_monitor()
+#    scale_factor = monitor.get_scale_factor()
+    w = 0
+    h = 0
+
+    for x in range(0, num_screen):
+         w += screen.get_monitor(x).get_geometry().width
+         if ( h < screen.get_monitor(x).get_geometry().height ):
+              h = screen.get_monitor(x).get_geometry().height
+    x = w
+    # * scale_factor
+    y = h
+    # * scale_factor
+
+    resize_btn_stack.set_visible_child_name("btn_set_size")
+
+    if x <= 1600:
+        window.set_resizable(True)
+        win_resize = window.resize(x*0.85/num_screen, y*0.85)
+
+    if x > 1600 and x <= 1920:
+        window.set_resizable(True)
+        win_resize = window.resize(x*0.75/num_screen, y*0.75)
+
+    if x > 1920 and x <= 2560:
+        window.set_resizable(True)
+        win_resize = window.resize(x*0.70/num_screen, y*0.70)
+
+    if x > 2560:
+        window.set_resizable(True)
+        win_resize = window.resize(x*0.65/num_screen, y*0.65)
+
+    sc_flowbox.set_filter_func(shortcuts_filter, dict)
+
+################################___ECHO_FUNCTON___:
+
+def echo_func_name(func_name):
+
+    func = func_name + str(' \"$@\"')
+    app_path = get_arg(get_app_path())
+
+    g_log = f"{sw_path}/data/tmp/log/{app_name}.log"
+    sys.stderr = open(g_log, 'w')
+
+    count = 1
+
+    try:
+        for line in fshread:
+            count += 1
+            sw_fsh.write_text(sw_fsh.read_text().replace(fshread[count], ''))
+
+    except IndexError as e:
+
+        if str(func) == str("ADD_SHORTCUT_TO_MENU \"$@\"") or str(func) == str("ADD_SHORTCUT_TO_DESKTOP \"$@\""):
+            sw_fsh.write_text(fshread[0] + '\n' + fshread[1] + '\n' + func)
+            run(f"{sw_fsh} {app_path}", shell=True)
+            start_tray()
+
+        elif str(func) == str("TRY_REGEDIT_PATCH \"$@\""):
+
+            sw_fsh.write_text(fshread[0] + '\n' + fshread[1] + '\n' + func)
+            run(f"{sw_fsh} {app_path}", shell=True)
+
+        else:
+            sw_fsh.write_text(fshread[0] + '\n' + fshread[1] + '\n' + func)
+            Popen(f"{sw_fsh} {app_path}", shell=True, start_new_session=True, stderr=sys.stderr, encoding='UTF-8')
+
+################################___MENU_BUTTONS___:
+
+def on_btn_about(self):
+
+    sw_stack.set_visible_child_name("about_window")
+
+def on_btn_back_ab(self):
+
+    sw_stack.set_visible_child_name("page0")
+
+def on_btn_hide(self):
+
+    window.close()
+
+def on_btn_file_manager(self):
+
+    cmd = f"xdg-open {sw_path}"
+    run(cmd, shell=True)
+    popover.hide()
+    g_popover1.hide()
+
+def on_btn_text_edit(self):
+
+    app_name = get_arg(get_out())
+
+    if app_name == str('StartWine'):
+        text_edit_name = f"{sw_path}/StartWine.desktop"
+
+    else:
+        text_edit_name = f"{sw_shortcuts}/" + str(app_name) + str(".desktop")
+
+    try:
+        xdg_open_cmd = f"xdg-open {text_edit_name}"
+        run(xdg_open_cmd, shell=True)
+
+    except IOError as e:
+        print('___unable_to_open_text_editor_shortcut not found___')
+
+    popover.hide()
+    g_popover1.hide()
+
+def on_btn_g_text_edit(self):
+
+    on_btn_text_edit(self)
+
+def on_btn_app_icon(self):
+
+    func_name = f"ADD_SHORTCUT_TO_MENU"
+    echo_func_name(func_name)
+    popover.hide()
+    g_popover1.hide()
+
+def on_btn_app_icon2(self):
+
+    on_btn_app_icon(self)
+
+def on_btn_app_icon_desktop(self):
+
+    func_name = f"ADD_SHORTCUT_TO_DESKTOP"
+    echo_func_name(func_name)
+    popover.hide()
+    g_popover1.hide()
+
+def on_btn_app_icon_desktop2(self):
+
+    on_btn_app_icon_desktop(self)
+
+def on_btn_protondb(self):
+
+    app_name = get_arg(get_out())
+    btn_protondb.set_uri("https://www.protondb.com/search?q=" + str(app_name))
+
+    popover.hide()
+    g_popover1.hide()
+
+def on_btn_protondb2(self):
+
+    app_name = get_arg(get_out())
+    btn_protondb2.set_uri("https://www.protondb.com/search?q=" + str(app_name))
+
+    popover.hide()
+    g_popover1.hide()
+
+def on_btn_winehq(self):
+
+    app_name = get_arg(get_out())
+    btn_winehq.set_uri(f"https://www.winehq.org/search?q={app_name}")
+
+    popover.hide()
+    g_popover1.hide()
+
+def on_btn_winehq2(self):
+
+    app_name = get_arg(get_out())
+    btn_winehq2.set_uri(f"https://www.winehq.org/search?q={app_name}")
+
+    popover.hide()
+    g_popover1.hide()
+
+def on_btn_remove(self):
+
+    app_name = get_arg(get_out())
+    app_desktop = Path(f"{sw_shortcuts}/{app_name}.desktop")
+
+    if Path(f"{Path.home()}/Desktop/{app_name}.desktop").exists():
+        app_work_desktop = Path(f"{Path.home()}/Desktop/{app_name}.desktop")
+
+    else:
+
+        if Path(f"{Path.home()}/Рабочий стол/{app_name}.desktop").exists():
+            app_work_desktop = Path(f"{Path.home()}/Рабочий стол/{app_name}.desktop")
+
+        else:
+            app_work_desktop = ""
+            print('___desktop_path_not_found___')
+
+    app_conf = Path(f"{sw_app_config}/{app_name}")
+    app_path = Path(f"{sw_pfx}/pfx_{app_name}")
+
+    if f'export SW_USE_PFX="pfx_default"' in app_conf.read_text().split('\n'):
+        app_path = Path(f"{sw_pfx}/pfx_default")
+
+    app_icon_96 = Path(f"{sw_icon}/" + str(app_name) + '_x96.png')
+    app_icon_256 = Path(f"{sw_icon}/" + str(app_name) + '_x256.png')
+
+    app_local = Path(f"{sw_local}/{app_name}.desktop")
+
+    q = _(f"Do you really want to remove") + f" {app_name} ?"
+
+    def on_question(q):
+
+        text_quest = q
+        dialog = Gtk.MessageDialog(
+            flags=0,
+            message_type=Gtk.MessageType.QUESTION,
+            buttons=Gtk.ButtonsType.YES_NO,
+            text=f"StartWine QUESTION",
+        )
+        dialog.format_secondary_text(
+            text_quest
+        )
+        dialog.set_default_size(320, 120)
+        response = dialog.run()
+
+        if response == Gtk.ResponseType.YES:
+
+            if app_path.exists():
+
+                if app_path != Path(f"{sw_pfx}/pfx_default"):
+                    shutil.rmtree(app_path)
+
+                try:
+                    app_desktop.unlink()
+
+                except:
+                    print('___app_desktop_path_not_exists___')
+
+                if str(app_work_desktop) != str(""):
+
+                    try:
+                        app_work_desktop.unlink()
+
+                    except:
+                        print('___app_desktop_path_not_exists___')
+
+                try:
+                    app_icon_96.unlink()
+                    app_icon_256.unlink()
+
+                except:
+                    print('___app_icon_path_not_exists___')
+
+                try:
+                    if app_name != 'StartWine':
+                        app_local.unlink()
+
+                except:
+                    print('___app_local_path_not_exists___')
+
+                notify = f"notify-send 'Shortcut and prefix {app_name} removed'"
+                run(notify, shell=True)
+
+                sw_rsh.write_text(f"env \"{sw_start}\"")
+                start_mode()
+                start_tray()
+                sc_flowbox.set_filter_func(shortcuts_filter, dict)
+                popover.hide()
+                g_popover1.hide()
+
+        elif response == Gtk.ResponseType.NO:
+            print('___Cancel___')
+            popover.hide()
+            g_popover1.hide()
+
+        dialog.destroy()
+    on_question(q)
+
+def on_btn_remove2(self):
+
+    on_btn_remove(self)
+
+def on_btn_lp_entry(self):
+
+    main_param_stack.set_visible_child_name("spin_main_param")
+    Thread(target=spin_main_param.start()).start()
+    Timer(1, lp_entry_save).start()
+
+def lp_entry_save():
+
+    app_name = get_arg(get_out())
+    app_conf = Path(f"{sw_app_config}/" + str(app_name))
+    get_lang = str([lang for lang in sw_defconf_read if 'export SW_USE_LANG=' in lang])[2:-2]
+
+    try:
+        get_text = lp_entry.get_text()
+
+        if f'en' in get_text:
+            sw_default_config.write_text(
+                sw_default_config.read_text().replace(get_lang, 'export SW_USE_LANG=en'))
+            locale.setlocale(locale.LC_MESSAGES, ('en_US', 'UTF-8'))
+            lang_en.install
+            _ = lang_en.gettext
+            restart()
+
+        elif f'ru' in get_text:
+            sw_default_config.write_text(
+                sw_default_config.read_text().replace(get_lang, 'export SW_USE_LANG=ru'))
+            locale.setlocale(locale.LC_MESSAGES, ('ru_RU', 'UTF-8'))
+            lang_ru.install
+            _ = lang_ru.gettext
+            restart()
+
+        else:
+            file = app_conf.read_text().split('\n')
+            text = file[2]
+            refind = str(re.findall(r'\W*\w* \w*="', text))[2:-3]
+            retext = str(text).replace(refind, '')
+            app_conf.write_text(
+                app_conf.read_text().replace(
+                    text, text.replace(retext, '"' + get_text + '"')))
+
+        main_param_stack.set_visible_child_name("btn_lp_entry")
+
+    except IOError as e:
+        print('___app_conf_not_found___')
+
+def on_btn_app_config(self):
+
+    app_name = get_arg(get_out())
+    app_conf = f"{sw_app_config}/" + str(app_name)
+
+    try:
+        xdg_open_cmd = f"xdg-open {app_conf}"
+        run(xdg_open_cmd, shell=True)
+
+    except IOError as e:
+        print('___app_conf_not_found___')
+
+    popover.hide()
+    g_popover1.hide()
+
+################################___START___:
+
+################################___PROGRESS_FUNCTIONS___:
+
+def progress():
+
+    app_name = get_arg(get_out())
+    app_suffix = get_arg(get_suffix())
+
+    if app_suffix.lower() == str('.msi'):
+        name = f'msiexec.exe'
+
+    else:
+        name = app_name + app_suffix
+        splitname = name.split(' ')
+
+    try:
+        cmd = f"pgrep -fl {app_suffix}"
+        pid = list(run(cmd, shell=True, start_new_session=True, stdout=subprocess.PIPE, encoding='UTF-8').stdout.split())
+
+        p1 = str(pid[-1])
+        p2 = str(pid[-2])
+        p3 = str(pid[-3])
+
+        if p3 not in name and p2 not in name and p1 not in name:
+            progressbar.pulse()
+            return True
+
+        else:
+            print(name)
+            GLib.timeout_add(200, set_text_done)
+            GLib.timeout_add(1000, set_text_empty)
+
+    except:
+        print('___oops!___')
+
+def set_text_done():
+
+    progressbar.set_text('LOADED SUCCESSFULLY')
+
+def set_text_empty():
+
+    progressbar.set_show_text(False)
+    progressbar.set_fraction(0.0)
+    progressbar_lock.release()
+    print('___done___')
+
+    if main_stack.get_visible_child_name() != str('vte_main_box'):
+        timeout = GLib.timeout_add(1000, Gtk.main_quit)
+
+def progress_on_bar(bar):
+
+    try:
+        p = Popen(['ps', '-AF'], stdout=subprocess.PIPE, encoding='UTF-8')
+        out, err = p.communicate()
+
+        for line in out.splitlines():
+
+            if 'sw_function.sh' in line:
+                pid = int(line.split()[1])
+                bar.pulse()
+                return True
+
+    except (IndexError, OSError) as e:
+        print('___process_error___')
+
+def pid_name_print_on_bar(bar):
+
+    app_suffix = get_arg(get_suffix())
+
+    try:
+        p = Popen(['ps', '-AF'], stdout=subprocess.PIPE, encoding='UTF-8')
+        out, err = p.communicate()
+
+        for line in out.splitlines():
+
+            if 'sw_function.sh' in line:
+                pid = str(line.split())[1]
+
+                if str(pid) != str(''):
+                    cmd_print = f"pgrep -fl {app_suffix}"
+                    pid_print = str(list(run(cmd_print, shell=True, stdout=subprocess.PIPE, encoding='UTF-8').stdout.split())[-3])
+                    bar.set_show_text(True)
+                    bar.set_text(pid_print)
+                    return True
+
+    except (IndexError, OSError) as e:
+        print('___all_process_is_done___')
+
+def get_pid_name_on_bar(bar):
+
+    try:
+        p = Popen(['ps', '-AF'], stdout=subprocess.PIPE, encoding='UTF-8')
+        out, err = p.communicate()
+
+        for line in out.splitlines():
+
+            if 'sw_function.sh' in line:
+                pid = int(line.split()[1])
+                return pid
+        else:
+            bar.set_fraction(0.0)
+            progressbar_lock.release()
+            Thread(target=time.sleep(1)).start()
+            bar.set_text('')
+
+            if bar is progressbar_cs:
+                start_mode()
+                sc_flowbox.set_filter_func(shortcuts_filter, dict)
+                sw_stack.set_visible_child_name("page0")
+                return False
+
+            if bar is progressbar_pt:
+                start_mode()
+                sc_flowbox.set_filter_func(shortcuts_filter, dict)
+                return False
+
+            if bar is progressbar_inst:
+
+                launcher_label.set_label('')
+                start_mode()
+                start_tray()
+                window.close()
+                app_path = get_arg(get_app_path())
+                cmd = f"{sw_start} {app_path}"
+                Popen(cmd, shell=True)
+
+    except (IndexError, OSError) as e:
+        print('___process_error___')
+
+def pid_iso():
+
+    try:
+        p = Popen(['ps', '-AF'], stdout=subprocess.PIPE, encoding='UTF-8')
+        out, err = p.communicate()
+
+        for line in out.splitlines():
+
+            if 'sw_function.sh' in line:
+                pid = str(line.split())[1]
+
+                if str(pid) != str(''):
+                    progressbar_pt.set_show_text(True)
+                    progressbar_pt.set_text('squashfs...')
+                    return True
+
+    except (IndexError, OSError) as e:
+        print('___all_process_is_done___')
+
+def pid_name_print_all(bar):
+
+    app_suffix = get_arg(get_suffix())
+
+    try:
+        query = f"{app_suffix}"
+        ps_process = Popen(["ps", "-A"], stdout=PIPE, encoding='UTF-8')
+        grep_process = Popen(["grep", query], stdin=ps_process.stdout, stdout=PIPE, encoding='UTF-8')
+        ps_process.stdout.close()
+        pid = str(grep_process.communicate()[0])
+
+        bar.set_show_text(True)
+        bar.set_text(pid)
+        return True
+
+    except (IndexError, OSError) as e:
+        print('___process_error___')
+
+################################___RUN_APPLICATION___:
+
+def on_btn_start(self):
+
+    app_name = get_arg(get_out())
+
+    if app_name == 'StartWine':
+        i = _("Oops! Nothing to run...")
+        sw_crier.on_info(i)
+
+    else:
+        ver = f"vulkaninfo | grep driverName | cut -d '=' -f2 | head -n1"
+        ver2 = f"vulkaninfo | grep driverName | cut -d '=' -f2 | tail -n1"
+
+        proc = run(
+            ver, shell=True, stderr=subprocess.DEVNULL,
+                stdout=subprocess.PIPE, encoding='UTF-8')
+
+        vulkan_dri = str(proc.stdout[0:]).replace('\n', '').replace(' ', '')
+
+        proc2 = run(
+            ver2, shell=True, stderr=subprocess.DEVNULL,
+                stdout=subprocess.PIPE, encoding='UTF-8')
+
+        vulkan_dri2 = str(proc2.stdout[0:]).replace('\n', '').replace(' ', '')
+
+        progressbar.set_show_text(True)
+        progressbar.set_text('THE APP IS LOADING...')
+
+        if str(vulkan_dri) == str('') and str(vulkan_dri2) == str(''):
+
+            Thread(target=run_opengl).start()
+
+            if progressbar_lock.acquire(False):
+                GLib.timeout_add(60, progress)
+
+        else:
+            if str(vulkan_dri) == str('llvmpipe') and str(vulkan_dri2) == str('llvmpipe'):
+                Thread(target=run_opengl).start()
+
+                if progressbar_lock.acquire(False):
+                    GLib.timeout_add(60, progress)
+
+            else:
+                Thread(target=run_vulkan).start()
+
+                if progressbar_lock.acquire(False):
+                    GLib.timeout_add(60, progress)
+
+def run_vulkan():
+
+    g_log = f"{sw_path}/data/tmp/log/{app_name}.log"
+    sys.stderr = open(g_log, 'w')
+
+    func_name = f"RUN_VULKAN"
+    echo_func_name(func_name)
+
+def run_opengl():
+
+    g_log = f"{sw_path}/data/tmp/log/{app_name}.log"
+    sys.stderr = open(g_log, 'w')
+
+    func_name = f"SW_USE_OPENGL='1' RUN_VULKAN"
+    echo_func_name(func_name)
+
+def run_gamemode():
+
+    gmod_log = f"{sw_path}/data/tmp/log/gamemoded.log"
+    sys.stderr = open(gmod_log, 'w')
+
+    cmd_gmod = f"{sw_path}/data/tools/utils/bin/gamemoded"
+    proc = Popen(
+                cmd_gmod, shell=True, start_new_session=True,
+                stderr=subprocess.STDOUT, stdout=sys.stderr, encoding='UTF-8')
+
+################################___SHORTCUTS___:
+
+def on_btn_shortcuts(self):
+
+    on_btn_get_size(self)
+    main_stack.set_visible_child_name("shortcut_main_box")
+    sc_flowbox.set_filter_func(shortcuts_filter, dict)
+
+def get_exe_icon():
+
+    func = f"CREATE_ICON \"$@\""
+    app_path = get_arg(get_app_path())
+    app_suffix = get_arg(get_suffix())
+
+    if app_suffix:
+        count = 1
+
+        try:
+            for line in fshread:
+                count += 1
+                sw_fsh.write_text(sw_fsh.read_text().replace(fshread[count], ''))
+
+        except IndexError as e:
+            sw_fsh.write_text(fshread[0] + '\n' + fshread[1] + '\n' + func)
+            run(f"{sw_fsh} {app_path}", shell=True)
+
+    else:
+        pass
+
+get_exe_icon()
+
+def write_shortcut_path(shortcut_path):
+
+    run_sh = Path(f"{sw_rsh}")
+    s_path = shortcut_path.read_text().split('\n')[2].split('=')[1]
+    run_sh.write_text(s_path)
+    start_mode()
+    start_tray()
+    return True
+
+################################___SHORTCUTS_FLOWBOX_EVENT___:
+
+def shortcuts():
+
+    paths = Path(f"{sw_shortcuts}")
+
+    child_exe = get_arg(get_app_path())
+
+    sc_name_exe = get_arg(get_out())
+    path_exe = Path(f"{sw_shortcuts}/{sc_name_exe}.desktop")
+    path_exe.touch()
+
+    count = 0
+
+    for child in sorted(paths.iterdir()):
+        count += 1
+
+        def on_flow_btn_event(widget, event):
+
+            w_name = widget.get_name()
+            if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+                g_popover1.set_relative_to(widget)
+                g_popover1.show_all()
+
+            shortcut_path = Path(f"{w_name}")
+            write_shortcut_path(shortcut_path)
+
+            app_name = get_arg(get_out())
+            app_conf = Path(f"{sw_app_config}/" + str(app_name))
+            default = Path(f"{sw_app_config}/.default")
+
+            if not app_conf.exists():
+                app_conf.write_text(default.read_text())
+                app_conf.chmod(0o755)
+
+        sc_name = str(child.stem)
+        fb_child = Gtk.FlowBoxChild()
+        fb_child.set_name(f"{child}")
+        fb_btn = Gtk.Button()
+        fb_btn.set_name(f"{child}")
+        fb_btn.set_relief(Gtk.ReliefStyle.NONE)
+        fb_btn.connect('button-press-event', on_flow_btn_event)
+        fb_label = Gtk.Label()
+        fb_label.set_label(sc_name)
+        fb_icon = Gtk.Image()
+        fb_icon.set_from_file(f"{sw_icon}/{sc_name}_x96.png")
+        fb_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        fb_box.pack_start(fb_icon, False, True, 0)
+        fb_box.pack_start(fb_label, False, True, 0)
+        fb_btn.add(fb_box)
+        fb_child.add(fb_btn)
+        sc_flowbox.insert(fb_child, position=count)
+        sc_flowbox.show_all()
+
+    try:
+        path_exe.read_text().split('\n')[4]
+
+    except IndexError as e:
+        path_exe.unlink()
+
+def shortcuts_filter(fb_child, dict):
+
+    paths = Path(f"{sw_shortcuts}")
+    child_exe = get_arg(get_app_path())
+    sc_name_exe = get_arg(get_out())
+    path_exe = Path(f"{sw_shortcuts}/{sc_name_exe}.desktop")
+    dict = [str(child.stem) for child in paths.iterdir()]
+    d = str(dict)
+    c = str(Path(fb_child.get_name()).stem)
+
+    for i in d:
+
+        if c in d:
+            return True
+
+        if path_exe in paths.iterdir():
+            return True
+
+        else:
+            return False
+
+################################___CREATE_SHORTCUT___:
+
+def on_btn_create_shortcut(self):
+
+    sw_stack.set_visible_child_name("create_shortcut_window")
+
+def echo_cs_name(wine_name):
+
+    wine_ver = wine_name
+    app_path = get_arg(get_app_path())
+    func = f"CREATE_SHORTCUT \"$@\""
+
+    count = 1
+
+    try:
+        for line in fshread:
+            count += 1
+            sw_fsh.write_text(
+                sw_fsh.read_text().replace(fshread[count], ''))
+
+    except IndexError as e:
+        sw_fsh.write_text(
+            fshread[0] + '\n' + fshread[1] + '\n' + func)
+        Popen(
+            f"{sw_fsh} {app_path}", shell=True, start_new_session=True)
+
+def on_btn_cs_staging(self):
+
+    bar = progressbar_cs
+
+    Thread(target=cs_staging).start()
+    Thread(target=time.sleep(.5)).start()
+
+    GLib.timeout_add(500, get_pid_name_on_bar, bar)
+
+    if progressbar_lock.acquire(False):
+        GLib.timeout_add(60, progress_on_bar, bar)
+        GLib.timeout_add(1000, pid_name_print_on_bar, bar)
+
+def cs_staging():
+
+    app_name = get_arg(get_out())
+    app_conf = Path(f"{sw_app_config}/{app_name}")
+
+    try:
+        for line in app_conf.read_text().split('\n'):
+
+            if f"SW_USE_WINE=" in line:
+                app_conf.write_text(
+                    app_conf.read_text().replace(
+                        line, 'export SW_USE_WINE="wine_staging"'))
+
+            if f"SW_USE_PFX" in line:
+                if app_name == 'StartWine':
+                    app_conf.write_text(
+                        app_conf.read_text().replace(
+                            line, f'export SW_USE_PFX="pfx_default"'))
+
+                else:
+                    app_conf.write_text(
+                        app_conf.read_text().replace(
+                            line, f'export SW_USE_PFX="pfx_{app_name}"'))
+
+    except:
+        print('___app_conf_not_found___')
+        pass
+
+    wine_name = f"wine_staging"
+    echo_cs_name(wine_name)
+
+def on_btn_cs_steam(self):
+
+    bar = progressbar_cs
+
+    Thread(target=cs_steam).start()
+    Thread(target=time.sleep(.5)).start()
+
+    GLib.timeout_add(500, get_pid_name_on_bar, bar)
+
+    if progressbar_lock.acquire(False):
+        GLib.timeout_add(60, progress_on_bar, bar)
+        GLib.timeout_add(1000, pid_name_print_on_bar, bar)
+
+def cs_steam():
+
+    app_name = get_arg(get_out())
+    app_conf = Path(f"{sw_app_config}/" + str(app_name))
+
+    try:
+        for line in app_conf.read_text().split('\n'):
+
+            if f"SW_USE_WINE=" in line:
+                app_conf.write_text(
+                    app_conf.read_text().replace(
+                        line, 'export SW_USE_WINE="wine_steam_proton"'))
+
+            if f"SW_USE_PFX" in line:
+
+                if app_name == 'StartWine':
+                    app_conf.write_text(
+                        app_conf.read_text().replace(
+                            line, f'export SW_USE_PFX="pfx_default"'))
+
+                else:
+                    app_conf.write_text(
+                        app_conf.read_text().replace(
+                            line, f'export SW_USE_PFX="pfx_{app_name}"'))
+
+    except:
+        print('___app_conf_not_found___')
+        pass
+
+    wine_name = f"wine_steam_proton"
+    echo_cs_name(wine_name)
+
+def on_btn_cs_ge(self):
+
+    bar = progressbar_cs
+
+    Thread(target=cs_ge).start()
+    Thread(target=time.sleep(.5)).start()
+
+    GLib.timeout_add(500, get_pid_name_on_bar, bar)
+
+    if progressbar_lock.acquire(False):
+        GLib.timeout_add(60, progress_on_bar, bar)
+        GLib.timeout_add(1000, pid_name_print_on_bar, bar)
+
+def cs_ge():
+
+    app_name = get_arg(get_out())
+    app_conf = Path(f"{sw_app_config}/" + str(app_name))
+
+    try:
+        for line in app_conf.read_text().split('\n'):
+            if f"SW_USE_WINE=" in line:
+                app_conf.write_text(
+                    app_conf.read_text().replace(
+                        line, 'export SW_USE_WINE="wine_proton_ge"'))
+
+            if f"SW_USE_PFX" in line:
+                if app_name == 'StartWine':
+                    app_conf.write_text(
+                        app_conf.read_text().replace(
+                            line, f'export SW_USE_PFX="pfx_default"'))
+                else:
+                    app_conf.write_text(
+                        app_conf.read_text().replace(
+                            line, f'export SW_USE_PFX="pfx_{app_name}"'))
+
+    except:
+        print('___app_conf_not_found___')
+        pass
+
+    wine_name = f"wine_proton_ge"
+    echo_cs_name(wine_name)
+
+def on_btn_cs_lutris(self):
+
+    bar = progressbar_cs
+
+    Thread(target=cs_lutris).start()
+    Thread(target=time.sleep(.5)).start()
+
+    GLib.timeout_add(500, get_pid_name_on_bar, bar)
+
+    if progressbar_lock.acquire(False):
+        GLib.timeout_add(60, progress_on_bar, bar)
+        GLib.timeout_add(1000, pid_name_print_on_bar, bar)
+
+def cs_lutris():
+
+    app_name = get_arg(get_out())
+    app_conf = Path(f"{sw_app_config}/" + str(app_name))
+
+    try:
+        for line in app_conf.read_text().split('\n'):
+
+            if f"SW_USE_WINE=" in line:
+                app_conf.write_text(
+                    app_conf.read_text().replace(
+                        line, 'export SW_USE_WINE="wine_lutris"'))
+
+            if f"SW_USE_PFX" in line:
+                if app_name == 'StartWine':
+                    app_conf.write_text(
+                        app_conf.read_text().replace(
+                            line, f'export SW_USE_PFX="pfx_default"'))
+                else:
+                    app_conf.write_text(
+                        app_conf.read_text().replace(
+                            line, f'export SW_USE_PFX="pfx_{app_name}"'))
+
+    except:
+        print('___app_conf_not_found___')
+        pass
+
+    wine_name = f"wine_lutris"
+    echo_cs_name(wine_name)
+
+def on_btn_cs_lutris_ge(self):
+
+    bar = progressbar_cs
+
+    Thread(target=cs_lutris_ge).start()
+    Thread(target=time.sleep(.5)).start()
+
+    GLib.timeout_add(500, get_pid_name_on_bar, bar)
+
+    if progressbar_lock.acquire(False):
+        GLib.timeout_add(60, progress_on_bar, bar)
+        GLib.timeout_add(1000, pid_name_print_on_bar, bar)
+
+def cs_lutris_ge():
+
+    app_name = get_arg(get_out())
+    app_conf = Path(f"{sw_app_config}/" + str(app_name))
+
+    try:
+        for line in app_conf.read_text().split('\n'):
+
+            if f"SW_USE_WINE=" in line:
+                app_conf.write_text(
+                    app_conf.read_text().replace(
+                        line, 'export SW_USE_WINE="wine_lutris_ge"'))
+
+            if f"SW_USE_PFX" in line:
+                if app_name == 'StartWine':
+                    app_conf.write_text(
+                        app_conf.read_text().replace(
+                            line, f'export SW_USE_PFX="pfx_default"'))
+
+                else:
+                    app_conf.write_text(
+                        app_conf.read_text().replace(
+                            line, f'export SW_USE_PFX="pfx_{app_name}"'))
+
+    except:
+        print('___app_conf_not_found___')
+        pass
+
+    wine_name = f"wine_lutris_ge"
+    echo_cs_name(wine_name)
+
+def on_btn_cs_custom(self):
+
+    def name_cs_custom_1():
+
+        cmd = f"cd {sw_wine_custom} && echo `ls -1 | tail -n1 | head -n1`"
+        out_name = str(run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8').stdout[0:]).replace('\n', '')
+        btn_cs_custom_1.set_label(label = str(out_name))
+
+    name_cs_custom_1()
+
+    def name_cs_custom_2():
+
+        cmd = f"cd {sw_wine_custom} && echo `ls -1 | tail -n2 | head -n1`"
+        out_name = str(run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8').stdout[0:]).replace('\n', '')
+        btn_cs_custom_2.set_label(label = str(out_name))
+
+    name_cs_custom_2()
+
+    def name_cs_custom_3():
+
+        cmd = f"cd {sw_wine_custom} && echo `ls -1 | tail -n3 | head -n1`"
+        out_name = str(run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8').stdout[0:]).replace('\n', '')
+        btn_cs_custom_3.set_label(label = str(out_name))
+
+    name_cs_custom_3()
+
+    def name_cs_custom_4():
+
+        cmd = f"cd {sw_wine_custom} && echo `ls -1 | tail -n4 | head -n1`"
+        out_name = str(run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8').stdout[0:]).replace('\n', '')
+        btn_cs_custom_4.set_label(label = str(out_name))
+
+    name_cs_custom_4()
+
+    def name_cs_custom_5():
+
+        cmd = f"cd {sw_wine_custom} && echo `ls -1 | tail -n5 | head -n1`"
+        out_name = str(run(cmd, shell=True, stdout=subprocess.PIPE, encoding='UTF-8').stdout[0:]).replace('\n', '')
+        btn_cs_custom_5.set_label(label = str(out_name))
+
+    name_cs_custom_5()
+
+def on_btn_cs_custom_1(self):
+
+    bar = progressbar_cs
+
+    Thread(target=cs_custom_1).start()
+    Thread(target=time.sleep(.5)).start()
+
+    GLib.timeout_add(500, get_pid_name_on_bar, bar)
+
+    if progressbar_lock.acquire(False):
+        GLib.timeout_add(60, progress_on_bar, bar)
+        GLib.timeout_add(1000, pid_name_print_on_bar, bar)
+
+    popover2.hide()
+
+def cs_custom_1():
+
+    cmd_ls = f"cd {sw_wine_custom} && echo `ls -1 | tail -n1 | head -n1`"
+    proc = run(cmd_ls, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+
+    app_name = get_arg(get_out())
+    app_conf = Path(f"{sw_app_config}/" + str(app_name))
+
+    wine_name = str(proc.stdout[0:]).replace('\n', '')
+
+    try:
+        for line in app_conf.read_text().split('\n'):
+
+            if f"SW_USE_WINE=" in line:
+                app_conf.write_text(
+                    app_conf.read_text().replace(
+                        line, f'export SW_USE_WINE="wine_custom/{wine_name}"'))
+
+            if f"SW_USE_PFX" in line:
+                if app_name == 'StartWine':
+                    app_conf.write_text(
+                        app_conf.read_text().replace(
+                            line, f'export SW_USE_PFX="pfx_default"'))
+
+                else:
+                    app_conf.write_text(
+                        app_conf.read_text().replace(
+                            line, f'export SW_USE_PFX="pfx_{app_name}"'))
+
+    except:
+        print('___app_conf_not_found___')
+        pass
+
+    echo_cs_name(wine_name)
+
+def on_btn_cs_custom_2(self):
+
+    bar = progressbar_cs
+
+    Thread(target=cs_custom_2).start()
+    Thread(target=time.sleep(.5)).start()
+
+    GLib.timeout_add(500, get_pid_name_on_bar, bar)
+
+    if progressbar_lock.acquire(False):
+        GLib.timeout_add(60, progress_on_bar, bar)
+        GLib.timeout_add(1000, pid_name_print_on_bar, bar)
+
+    popover2.hide()
+
+def cs_custom_2():
+
+    cmd_ls = f"cd {sw_wine_custom} && echo `ls -1 | tail -n2 | head -n1`"
+    proc = run(cmd_ls, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+
+    app_name = get_arg(get_out())
+    app_conf = Path(f"{sw_app_config}/" + str(app_name))
+
+    wine_name = str(proc.stdout[0:]).replace('\n', '')
+
+    try:
+        for line in app_conf.read_text().split('\n'):
+
+            if f"SW_USE_WINE=" in line:
+                app_conf.write_text(
+                    app_conf.read_text().replace(
+                        line, f'export SW_USE_WINE="wine_custom/{wine_name}"'))
+
+            if f"SW_USE_PFX" in line:
+                if app_name == 'StartWine':
+                    app_conf.write_text(
+                        app_conf.read_text().replace(
+                            line, f'export SW_USE_PFX="pfx_default"'))
+
+                else:
+                    app_conf.write_text(
+                        app_conf.read_text().replace(
+                            line, f'export SW_USE_PFX="pfx_{app_name}"'))
+
+    except:
+        print('___app_conf_not_found___')
+        pass
+
+    echo_cs_name(wine_name)
+
+def on_btn_cs_custom_3(self):
+
+    bar = progressbar_cs
+
+    Thread(target=cs_custom_3).start()
+    Thread(target=time.sleep(.5)).start()
+
+    GLib.timeout_add(500, get_pid_name_on_bar, bar)
+
+    if progressbar_lock.acquire(False):
+        GLib.timeout_add(60, progress_on_bar, bar)
+        GLib.timeout_add(1000, pid_name_print_on_bar, bar)
+
+    popover2.hide()
+
+def cs_custom_3():
+
+    cmd_ls = f"cd {sw_wine_custom} && echo `ls -1 | tail -n3 | head -n1`"
+    proc = run(cmd_ls, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+
+    app_name = get_arg(get_out())
+    app_conf = Path(f"{sw_app_config}/" + str(app_name))
+
+    wine_name = str(proc.stdout[0:]).replace('\n', '')
+
+    try:
+        for line in app_conf.read_text().split('\n'):
+
+            if f"SW_USE_WINE=" in line:
+                app_conf.write_text(
+                    app_conf.read_text().replace(
+                        line, f'export SW_USE_WINE="wine_custom/{wine_name}"'))
+
+            if f"SW_USE_PFX" in line:
+                if app_name == 'StartWine':
+                    app_conf.write_text(
+                        app_conf.read_text().replace(
+                            line, f'export SW_USE_PFX="pfx_default"'))
+
+                else:
+                    app_conf.write_text(
+                        app_conf.read_text().replace(
+                            line, f'export SW_USE_PFX="pfx_{app_name}"'))
+
+    except:
+        print('___app_conf_not_found___')
+        pass
+
+    echo_cs_name(wine_name)
+
+def on_btn_cs_custom_4(self):
+
+    bar = progressbar_cs
+
+    Thread(target=cs_custom_4).start()
+    Thread(target=time.sleep(.5)).start()
+
+    GLib.timeout_add(500, get_pid_name_on_bar, bar)
+
+    if progressbar_lock.acquire(False):
+        GLib.timeout_add(60, progress_on_bar, bar)
+        GLib.timeout_add(1000, pid_name_print_on_bar, bar)
+
+    popover2.hide()
+
+def cs_custom_4():
+
+    cmd_ls = f"cd {sw_wine_custom} && echo `ls -1 | tail -n4 | head -n1`"
+    proc = run(cmd_ls, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+
+    app_name = get_arg(get_out())
+    app_conf = Path(f"{sw_app_config}/" + str(app_name))
+
+    wine_name = str(proc.stdout[0:]).replace('\n', '')
+
+    try:
+        for line in app_conf.read_text().split('\n'):
+
+            if f"SW_USE_WINE=" in line:
+                app_conf.write_text(
+                    app_conf.read_text().replace(
+                        line, f'export SW_USE_WINE="wine_custom/{wine_name}"'))
+
+            if f"SW_USE_PFX" in line:
+                if app_name == 'StartWine':
+                    app_conf.write_text(
+                        app_conf.read_text().replace(
+                            line, f'export SW_USE_PFX="pfx_default"'))
+
+                else:
+                    app_conf.write_text(
+                        app_conf.read_text().replace(
+                            line, f'export SW_USE_PFX="pfx_{app_name}"'))
+
+    except:
+        print('___app_conf_not_found___')
+        pass
+
+    echo_cs_name(wine_name)
+
+def on_btn_cs_custom_5(self):
+
+    bar = progressbar_cs
+
+    Thread(target=cs_custom_5).start()
+    Thread(target=time.sleep(.5)).start()
+
+    GLib.timeout_add(500, get_pid_name_on_bar, bar)
+
+    if progressbar_lock.acquire(False):
+        GLib.timeout_add(60, progress_on_bar, bar)
+        GLib.timeout_add(1000, pid_name_print_on_bar, bar)
+
+    popover2.hide()
+
+def cs_custom_5():
+
+    cmd_ls = f"cd {sw_wine_custom} && echo `ls -1 | tail -n5 | head -n1`"
+    proc = run(cmd_ls, shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+
+    app_name = get_arg(get_out())
+    app_conf = Path(f"{sw_app_config}/" + str(app_name))
+
+    wine_name = str(proc.stdout[0:]).replace('\n', '')
+
+    try:
+        for line in app_conf.read_text().split('\n'):
+
+            if f"SW_USE_WINE=" in line:
+                app_conf.write_text(
+                    app_conf.read_text().replace(
+                        line, f'export SW_USE_WINE="wine_custom/{wine_name}"'))
+
+            if f"SW_USE_PFX" in line:
+                if app_name == 'StartWine':
+                    app_conf.write_text(
+                        app_conf.read_text().replace(
+                            line, f'export SW_USE_PFX="pfx_default"'))
+
+                else:
+                    app_conf.write_text(
+                        app_conf.read_text().replace(
+                            line, f'export SW_USE_PFX="pfx_{app_name}"'))
+
+    except:
+        print('___app_conf_not_found___')
+        pass
+
+    echo_cs_name(wine_name)
+
+def on_btn_back_cs(self):
+
+    sw_stack.set_visible_child_name("page0")
+
+################################___WINE_TOOLS___:
+
+def on_btn_winetools(self):
+
+    sw_stack.set_visible_child_name("winetools_window")
+
+def on_btn_winecfg(self):
+
+    bar = progressbar_wt
+    Thread(target=winecfg).start()
+    GLib.timeout_add(500, get_pid_name_on_bar, bar)
+
+    if progressbar_lock.acquire(False):
+        GLib.timeout_add(60, progress_on_bar, bar)
+
+def winecfg():
+
+    func_name = f"WINECFG"
+    echo_func_name(func_name)
+
+def on_btn_wineconsole(self):
+
+    bar = progressbar_wt
+    Thread(target=wineconsole).start()
+    GLib.timeout_add(500, get_pid_name_on_bar, bar)
+
+    if progressbar_lock.acquire(False):
+        GLib.timeout_add(60, progress_on_bar, bar)
+
+def wineconsole():
+
+    func_name = f"WINECONSOLE"
+    echo_func_name(func_name)
+
+def on_btn_regedit(self):
+
+    bar = progressbar_wt
+    Thread(target=regedit).start()
+    GLib.timeout_add(500, get_pid_name_on_bar, bar)
+
+    if progressbar_lock.acquire(False):
+        GLib.timeout_add(60, progress_on_bar, bar)
+
+def regedit():
+
+    func_name = f"REGEDIT"
+    echo_func_name(func_name)
+
+def on_btn_file_explorer(self):
+
+    bar = progressbar_wt
+    Thread(target=explorer).start()
+    GLib.timeout_add(500, get_pid_name_on_bar, bar)
+
+    if progressbar_lock.acquire(False):
+        GLib.timeout_add(60, progress_on_bar, bar)
+
+def explorer():
+
+    func_name = f"WINEFILE"
+    echo_func_name(func_name)
+
+def on_btn_uninstaller(self):
+
+    bar = progressbar_wt
+    Thread(target=uninstaller).start()
+    GLib.timeout_add(500, get_pid_name_on_bar, bar)
+
+    if progressbar_lock.acquire(False):
+        GLib.timeout_add(60, progress_on_bar, bar)
+
+def uninstaller():
+
+    func_name = f"UNINSTALLER"
+    echo_func_name(func_name)
+
+def get_pfx_path():
+
+    try:
+        dpath = Path(f"{sw_app_config}/" + get_arg(get_out()))
+        pfx = dpath.read_text().split('\n')
+    except:
+        dpath = Path(f"{sw_app_config}/StartWine")
+        pfx = dpath.read_text().split('\n')
+
+    if str('export SW_USE_PFX="pfx_default"') in pfx:
+        pfx_name = f"pfx_default"
+        pfx_path = f"{sw_pfx}/{pfx_name}"
+    else:
+        pfx_name = f"pfx_" + get_arg(get_out()).replace('StartWine', 'default').replace('default_', 'default')
+        pfx_path = f"{sw_pfx}/{pfx_name}"
+
+    return pfx_path
+
+def on_btn_winetricks(self):
+
+    pfx_path = get_arg(get_pfx_path())
+
+    f_dll = Path(f"{pfx_path}/dll.log")
+    f_check = Path(f"{pfx_path}/check.log")
+    f_btn = Path(f"{pfx_path}/btn.log")
+
+    sw_stack.set_visible_child_name("winetricks_window")
+
+    window.set_resizable(True)
+    window.resize(1280, 720)
+    winetricks_scrolled.set_min_content_width(1280)
+    winetricks_scrolled.set_min_content_height(500)
+    window.set_resizable(False)
+
+    pfx_label.set_label(pfx_path)
+
+    def set_btn_active():
+
+        with open(f_btn, 'r') as f:
+            l = f.readlines()
+            count = 0
+            for line in l:
+                count += 1
+                btn_num = "{}".format(line.strip())
+                btn_num = builder.get_object(btn_num)
+                btn_num.set_active(True)
+
+        try:
+            f_check.unlink()
+            f_dll.unlink()
+
+        except IOError as e:
+            print('___check_log_not_created_set_to_default___')
+
+    if f_dll.exists() and f_check.exists():
+        if f_btn.exists():
+            f_btn.write_text(f_btn.read_text() + f_check.read_text())
+
+        else:
+            f_btn.write_text(f_check.read_text())
+        set_btn_active()
+
+    else:
+        if f_btn.exists():
+            set_btn_active()
+
+def key_event(widget, event):
+
+    if event.keyval == Gdk.KEY_Return or event.keyval == Gdk.KEY_KP_Enter:
+        get_text = se.get_text()
+        count = -1
+
+        for line in data_content:
+            count +=1
+
+            if get_text in line:
+                b = builder.get_object(str(count))
+                b.set_active(True)
+                se.set_text("")
+
+def get_selected(self, view, store):
+
+    find = se.get_text()
+    file = data_content
+
+    found = [line for line in file if find in line]
+    num = view.to_string()
+    f_num = found[int(num)]
+    se.set_text(f_num)
+
+    get_text = se.get_text()
+    count = -1
+
+    for line in data_content:
+        count +=1
+
+        if get_text in line:
+            b = builder.get_object(str(count))
+            b.set_active(True)
+            se.set_text("")
+
+def search_changed(self):
+
+    find = se.get_text()
+    file = data_content
+
+    if find == str(""):
+        se_stack.set_visible_child_name("winetricks_notebook")
+
+    else:
+        se_stack.set_visible_child_name("se_view")
+
+    found = [line for line in file if find in line]
+    store.clear()
+    count = 0
+
+    for line in found:
+        count +=1
+        fline = "{}".format(line.strip())
+        store.append([fline])
+
+def on_btn_check_fonts(object):
+
+    pfx_path = get_arg(get_pfx_path())
+    f_dll = Path(f"{pfx_path}/dll.log")
+    f_check = Path(f"{pfx_path}/check.log")
+    f_btn = Path(f"{pfx_path}/btn.log")
+
+    font_num = Gtk.Buildable.get_name(object)
+    buffer = fonts_view.get_buffer()
+    startIter, endIter = buffer.get_bounds()
+    bgt = buffer.get_text(startIter, endIter, False)
+    font = str(bgt.split()[int(font_num.replace('_', ''))])
+    btn_font = builder.get_object(font_num)
+
+    if btn_font.get_active():
+
+        try:
+            with open(f_dll, 'a') as f:
+                f.write(font + " ")
+
+            with open(f_check, 'a') as f:
+                f.write(font_num + "\n")
+
+        except:
+            pass
+
+    else:
+        f_dll.write_text(f_dll.read_text().replace(font + ' ', ''))
+        f_check.write_text(f_check.read_text().replace(font_num + '\n', ''))
+
+def on_btn_check_dll(object):
+
+    pfx_path = get_arg(get_pfx_path())
+    f_dll = Path(f"{pfx_path}/dll.log")
+    f_check = Path(f"{pfx_path}/check.log")
+    f_btn = Path(f"{pfx_path}/btn.log")
+
+    num = Gtk.Buildable.get_name(object)
+    buffer = winetricks_text_view.get_buffer()
+    startIter, endIter = buffer.get_bounds()
+    bgt = buffer.get_text(startIter, endIter, False)
+    dll = str(bgt.split()[int(num)])
+    btn_dll = builder.get_object(num)
+
+    if btn_dll.get_active():
+
+        try:
+            with open(f_dll, 'a') as f:
+                f.write(dll + " ")
+
+            with open(f_check, 'a') as f:
+                f.write(num + "\n")
+
+        except:
+            pass
+
+    else:
+        f_dll.write_text(f_dll.read_text().replace(dll + ' ', ''))
+        f_check.write_text(f_check.read_text().replace(num + '\n', ''))
+
+def on_btn_install_dll(self):
+
+    bar = progressbar_dll
+
+    Thread(target=install_dll).start()
+    Thread(target=time.sleep(.5)).start()
+
+    GLib.timeout_add(500, get_pid_name_on_bar, bar)
+
+    if progressbar_lock.acquire(False):
+        GLib.timeout_add(60, progress_on_bar, bar)
+        GLib.timeout_add(1000, pid_name_print_on_bar, bar)
+
+def install_dll():
+
+    pfx_path = get_arg(get_pfx_path())
+    f_dll = Path(f"{pfx_path}/dll.log")
+    f_check = Path(f"{pfx_path}/check.log")
+    f_btn = Path(f"{pfx_path}/btn.log")
+
+    with open(f_dll, 'r') as f:
+        app_path = get_arg(get_app_path())
+        dll_name = f.read()
+        func_name = f"SW_WINETRICKS \"$@\""
+        dll = f"export DLL=\"{dll_name}\""
+        count = 1
+
+        try:
+            for line in fshread:
+                count += 1
+                sw_fsh.write_text(sw_fsh.read_text().replace(fshread[count], ''))
+
+        except IndexError as e:
+            sw_fsh.write_text(fshread[0] + '\n' + fshread[1] + '\n' + dll + '\n' + func_name)
+            run(f"{sw_fsh} {app_path}", shell=True)
+
+def on_btn_back_winetricks(self):
+
+    window.set_resizable(True)
+    window.resize(320, 660)
+    sw_stack.set_visible_child_name("winetools_window")
+    winetricks_scrolled.set_min_content_width(-1)
+    winetricks_scrolled.set_min_content_height(-1)
+    pfx_label.set_label("")
+    window.set_resizable(False)
+
+def on_btn_install_rl(self):
+
+    bar = progressbar_wt
+
+    Thread(target=install_rl).start()
+    Thread(target=time.sleep(.5)).start()
+
+    GLib.timeout_add(500, get_pid_name_on_bar, bar)
+
+    if progressbar_lock.acquire(False):
+        GLib.timeout_add(60, progress_on_bar, bar)
+        GLib.timeout_add(1000, pid_name_print_on_bar, bar)
+
+def install_rl():
+
+    pfx_path = get_arg(get_pfx_path())
+    f_btn = Path(f"{pfx_path}/btn.log")
+
+    func_name = f"INSTALL_RL"
+    echo_func_name(func_name)
+
+    startIter, endIter = wt_buffer.get_bounds()
+    buffer = wt_buffer.get_text(startIter, endIter, False).split('\n')
+
+    count = -1
+
+    for line in buffer:
+        count +=1
+
+        if line in rlibs:
+            if f_btn.exists():
+                f_btn.write_text(f_btn.read_text() + str(count) + '\n')
+
+            else:
+                f_btn.write_text(str(count) + '\n')
+
+def on_btn_back_wt(self):
+
+    sw_stack.set_visible_child_name("page0")
+
+################################___PREFIX_TOOLS___:
+
+def on_btn_prefix_tools(self):
+
+    sw_stack.set_visible_child_name("prefix_tools_window")
+
+def on_btn_remove_prefix(self):
+
+    bar = progressbar_pt
+
+    Thread(target=remove_prefix).start()
+    Thread(target=time.sleep(.5)).start()
+
+    GLib.timeout_add(500, get_pid_name_on_bar, bar)
+
+    if progressbar_lock.acquire(False):
+        GLib.timeout_add(60, progress_on_bar, bar)
+        GLib.timeout_add(1000, pid_name_print_on_bar, bar)
+
+def remove_prefix():
+
+    func_name = f"REMOVE_PFX"
+    echo_func_name(func_name)
+
+def on_btn_reinstall_prefix(self):
+
+    bar = progressbar_pt
+
+    Thread(target=reinstall_prefix).start()
+    Thread(target=time.sleep(.5)).start()
+
+    GLib.timeout_add(500, get_pid_name_on_bar, bar)
+
+    if progressbar_lock.acquire(False):
+        GLib.timeout_add(60, progress_on_bar, bar)
+        GLib.timeout_add(1000, pid_name_print_on_bar, bar)
+
+def reinstall_prefix():
+
+    func_name = f"REINSTALL_PFX"
+    echo_func_name(func_name)
+
+def on_btn_pfx_backup(self):
+
+    bar = progressbar_pt
+
+    Thread(target=pfx_backup).start()
+    Thread(target=time.sleep(.5)).start()
+
+    GLib.timeout_add(500, get_pid_name_on_bar, bar)
+
+    if progressbar_lock.acquire(False):
+        GLib.timeout_add(60, progress_on_bar, bar)
+        GLib.timeout_add(2000, pid_iso)
+
+def pfx_backup():
+
+    func_name = f"SW_PFX_BACKUP"
+    echo_func_name(func_name)
+
+def on_btn_pfx_restore(self):
+
+    bar = progressbar_pt
+
+    Thread(target=pfx_restore).start()
+    Thread(target=time.sleep(.5)).start()
+
+    GLib.timeout_add(500, get_pid_name_on_bar, bar)
+
+    if progressbar_lock.acquire(False):
+        GLib.timeout_add(60, progress_on_bar, bar)
+        GLib.timeout_add(2000, pid_iso)
+
+def pfx_restore():
+
+    func_name = f"SW_PFX_RESTORE"
+    echo_func_name(func_name)
+
+def on_btn_pfx_full_backup(self):
+
+    bar = progressbar_pt
+
+    Thread(target=pfx_full_backup).start()
+    Thread(target=time.sleep(.5)).start()
+
+    GLib.timeout_add(500, get_pid_name_on_bar, bar)
+
+    if progressbar_lock.acquire(False):
+        GLib.timeout_add(60, progress_on_bar, bar)
+        GLib.timeout_add(2000, pid_iso)
+
+def pfx_full_backup():
+
+    func_name = f"SW_PFX_FULL_BACKUP"
+    echo_func_name(func_name)
+
+def on_btn_pfx_full_restore(self):
+
+    bar = progressbar_pt
+
+    Thread(target=pfx_full_restore).start()
+    Thread(target=time.sleep(.5)).start()
+
+    GLib.timeout_add(500, get_pid_name_on_bar, bar)
+
+    if progressbar_lock.acquire(False):
+        GLib.timeout_add(60, progress_on_bar, bar)
+        GLib.timeout_add(2000, pid_iso)
+
+def pfx_full_restore():
+
+    func_name = f"SW_PFX_FULL_RESTORE"
+    echo_func_name(func_name)
+
+def on_btn_pfx_clear(self):
+
+    bar = progressbar_pt
+
+    Thread(target=pfx_clear).start()
+    Thread(target=time.sleep(.5)).start()
+
+    GLib.timeout_add(500, get_pid_name_on_bar, bar)
+
+    if progressbar_lock.acquire(False):
+        GLib.timeout_add(60, progress_on_bar, bar)
+        GLib.timeout_add(1000, pid_name_print_on_bar, bar)
+
+def pfx_clear():
+
+    func_name = f"SW_CLEAR_PFX"
+    echo_func_name(func_name)
+
+def on_btn_back_pt(self):
+
+    sw_stack.set_visible_child_name("page0")
+
+################################___DEBUG___:
+
+def on_btn_debug(self):
+
+    app_name = get_arg(get_out())
+
+    if app_name == 'StartWine':
+        i = _("Oops! Nothing to run...")
+        sw_crier.on_info(i)
+    else:
+        ver = f"vulkaninfo | grep driverName | cut -d '=' -f2 | head -n1"
+        ver2 = f"vulkaninfo | grep driverName | cut -d '=' -f2 | tail -n1"
+
+        proc = run(
+            ver, shell=True, stderr=subprocess.DEVNULL,
+                    stdout=subprocess.PIPE, encoding='UTF-8')
+
+        vulkan_dri = str(proc.stdout[0:]).replace('\n', '').replace(' ', '')
+
+        proc = run(
+            ver2, shell=True, stderr=subprocess.DEVNULL,
+                stdout=subprocess.PIPE, encoding='UTF-8')
+
+        vulkan_dri2 = str(proc.stdout[0:]).replace('\n', '').replace(' ', '')
+
+        if str(vulkan_dri) == str('') and str(vulkan_dri2) == str(''):
+
+            Thread(target=debug_opengl).start()
+
+        else:
+            if str(vulkan_dri) == str('llvmpipe') and str(vulkan_dri2) == str('llvmpipe'):
+
+                Thread(target=debug_opengl).start()
+
+            else:
+                Thread(target=debug_vulkan).start()
+
+def debug_vulkan():
+
+    func_name = f"DEBUG_VULKAN"
+    echo_func_name(func_name)
+
+def debug_opengl():
+
+    func_name = f"SW_USE_OPENGL='1' DEBUG_VULKAN"
+    echo_func_name(func_name)
+
+################################___DOWNLOAD_WINE___:
+
+def on_btn_dw(self):
+
+    sw_stack.set_visible_child_name("download_wine_window")
+
+def echo_wine(wine_name):
+
+    wine_num = wine_name + str(' \"$@\"')
+    count = 1
+
+    try:
+        for line in fshread:
+            count += 1
+            sw_fsh.write_text(sw_fsh.read_text().replace(fshread[count], ''))
+
+    except IndexError as e:
+        sw_fsh.write_text(fshread[0] + '\n' + fshread[1] + '\n' + wine_num)
+        Popen(f"{sw_fsh} {app_path}", shell=True, start_new_session=True)
+
+def on_btn_wine_1(self):
+
+    wine_name = f"WINE_1"
+    echo_wine(wine_name)
+
+def on_btn_rm_staging(self):
+
+    wine_name = f"RM_WINE_1"
+    echo_wine(wine_name)
+
+def on_btn_wine_2(self):
+
+    wine_name = f"WINE_2"
+    echo_wine(wine_name)
+
+def on_btn_rm_proton(self):
+
+    wine_name = f"RM_WINE_2"
+    echo_wine(wine_name)
+
+def on_btn_wine_3(self):
+
+    wine_name = f"WINE_3"
+    echo_wine(wine_name)
+
+def on_btn_rm_ge(self):
+
+    wine_name = f"RM_WINE_3"
+    echo_wine(wine_name)
+
+def on_btn_wine_4(self):
+
+    wine_name = f"WINE_4"
+    echo_wine(wine_name)
+
+def on_btn_rm_lutris(self):
+
+    wine_name = f"RM_WINE_4"
+    echo_wine(wine_name)
+
+def on_btn_wine_5(self):
+
+    wine_name = f"WINE_5"
+    echo_wine(wine_name)
+
+def on_btn_rm_lutris_ge(self):
+
+    wine_name = f"RM_WINE_5"
+    echo_wine(wine_name)
+
+def on_btn_wine_6(self):
+
+    cmd = f"xdg-open {sw_path}/data/wine/wine_custom"
+    Popen(cmd, shell=True)
+
+def on_btn_back_dw(self):
+
+    sw_stack.set_visible_child_name("page0")
+
+################################___INSTALL_LAUNCHERS___:
+
+def on_btn_inst_launchers(self):
+
+    on_btn_get_size(self)
+    main_stack.set_visible_child_name("install_launchers")
+    sc_flowbox.set_filter_func(launchers_filter, dict)
+
+def inst_launchers(func):
+
+    bar = progressbar_inst
+
+    Thread(target=echo_func_launchers(func)).start()
+    Thread(target=time.sleep(0.5)).start()
+
+    GLib.timeout_add(500, get_pid_name_on_bar, bar)
+
+    if progressbar_lock.acquire(False):
+        GLib.timeout_add(60, progress_on_bar, bar)
+        GLib.timeout_add(1000, pid_name_print_on_bar, bar)
+
+def echo_func_launchers(func):
+
+    app_path = get_arg(get_app_path())
+    func = func + str(' \"$@\"')
+
+    count = 1
+
+    try:
+        for line in fshread:
+            count += 1
+            sw_fsh.write_text(sw_fsh.read_text().replace(fshread[count], ''))
+
+    except IndexError as e:
+        sw_fsh.write_text(fshread[0] + '\n' + fshread[1] + '\n' + func)
+        Popen(f"{sw_fsh} {app_path}", shell=True, start_new_session=True, encoding='UTF-8')
+
+def launchers():
+
+    paths = Path(f"{sw_icon}/launcher_icons")
+
+    count = 0
+
+    for child in sorted(paths.iterdir()):
+
+        count += 1
+
+        def on_flow_btn_event(widget, event):
+
+            w_name = widget.get_name()
+            l_name = str(Path(w_name).stem).upper()
+            launchers_icon_data = ([str(child) for child in paths.iterdir()])
+            icon_data = sorted(launchers_icon_data)
+
+            for i_data, l_data in zip(icon_data, launchers_data):
+
+                if w_name == str('{0}'.format(i_data)):
+                    func = f"INSTALL_" + str(l_name.upper())
+                    lapath = str('{0}'.format(l_data))
+                    sw_rsh.write_text(f"env \"{sw_start}\" \"{lapath}\"")
+                    launcher_label.set_label(func)
+                    inst_launchers(func)
+
+        sc_name = str(child.stem)
+        inst_child = Gtk.FlowBoxChild()
+        inst_child.set_name(f"{child}")
+        inst_btn = Gtk.Button()
+        inst_btn.set_name(f"{child}")
+        inst_btn.set_relief(Gtk.ReliefStyle.NONE)
+        inst_btn.connect('button-press-event', on_flow_btn_event)
+        inst_label = Gtk.Label()
+        inst_label.set_label(sc_name)
+        inst_icon = Gtk.Image()
+        inst_icon.set_from_file(f"{sw_icon}/launcher_icons/{sc_name}.png")
+        inst_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        inst_box.pack_start(inst_icon, False, True, 0)
+        inst_box.pack_start(inst_label, False, True, 0)
+        inst_btn.add(inst_box)
+        inst_child.add(inst_btn)
+        inst_flowbox.insert(inst_child, position=count)
+        inst_flowbox.show_all()
+
+def launchers_filter(inst_child, dict):
+
+    paths = Path(f"{sw_icon}/launcher_icons")
+    dict = [str(child.stem) for child in paths.iterdir()]
+    d = str(dict)
+    c = str(Path(inst_child.get_name()).stem)
+
+    for i in d:
+
+        if c in d:
+            return True
+
+        else:
+            return False
+
+################################___LAUNCH_SETTINGS___:
+
+def on_btn_settings(self):
+
+    on_btn_get_size(self)
+    main_stack.set_visible_child_name("app_settings_notebook")
+    app_conf_activate()
+
+def app_conf_activate():
+
+    app_name = get_arg(get_out())
+    app_conf = Path(f"{sw_app_config}/" + str(app_name))
+    default = Path(f"{sw_app_config}/.default")
+    acread = app_conf.read_text().split('\n')
+
+################################___entry_check___:
+
+    for i in range(0, 2):
+
+        app_conf_entry = builder.get_object(str('e') + str(i))
+        btn_enrty_save = builder.get_object(str('b') + str(i))
+        app_conf_entry.connect("activate", on_btn_entry_save)
+        btn_enrty_save.connect('clicked', on_btn_entry_save)
+
+        text = acread[int(i) + 2]
+        retext = str(re.findall(r'\w* \w*="', text))[2:-3]
+        t = str(text).replace(retext, '')[1:-1]
+
+        if str(retext) != str(''):
+            app_conf_entry.set_text(t)
+
+################################___combo_check___:
+
+    for i in acread:
+
+        value_arch = f"export SW_USE_WINEARCH="
+        value_ver = f"export SW_USE_WINDOWS_VER="
+        value_reg = f"export SW_USE_REGEDIT_PATCH="
+
+        if value_arch in i:
+            revalue = i.replace(value_arch, '').replace('"', '')
+
+            for i_arch, arch in zip(arch_index, winarch):
+
+                if revalue in str('{0}'.format(i_arch)):
+                    text = str('{0}'.format(arch))
+                    combo_winarch.append_text(text)
+
+        if value_ver in i:
+            revalue = i.replace(value_ver, '').replace('"', '')
+
+            for i_ver, ver in zip(ver_index, winver):
+
+                if revalue in str('{0}'.format(i_ver)):
+                    text = str('{0}'.format(ver))
+                    combo_winver.append_text(text)
+
+    for i_arch, arch in zip(arch_index, winarch):
+
+        combo_winarch.append_text(arch)
+        combo_winarch.set_active(0)
+
+    for i_ver, ver in zip(ver_index, winver):
+        combo_winver.append_text(ver)
+        combo_winver.set_active(0)
+
+    for reg in reg_patches:
+        combo_regedit.append_text(reg)
+        combo_regedit.set_active(0)
+
+################################___switch_check___:
+
+    for i in range(5, 35):
+
+        btn_switch = builder.get_object(f's{i}')
+        btn_switch.connect("notify::active", on_btn_switch_activate)
+        btn_switch_label = builder.get_object(f'sl_{i}')
+        btn_switch.set_sensitive(True)
+
+        startIter, endIter = settings_buffer.get_bounds()
+        settings_data = settings_buffer.get_text(startIter, endIter, False).split('\n')
+        data = settings_data[i]
+
+        btn_switch_label.set_label(data)
+        btn_switch_label.set_xalign(0)
+
+        for line in acread:
+
+            if data in line:
+                config = acread[int(i) + 2]
+                reconfig = re.findall(r'=\w+', config)
+
+                if str(reconfig) == str(['=1']):
+                    btn_switch.set_active(True)
+
+                else:
+                    btn_switch.set_active(False)
+
+################################___description_label___:
+
+    for i in range(0, 35):
+
+        desc_label = builder.get_object(f'sd_{i}')
+        startIter, endIter = settings_desc_buffer.get_bounds()
+        settings_desc_data = settings_desc_buffer.get_text(startIter, endIter, False).split('\n')
+        data_desc = settings_desc_data[i]
+
+        desc_label.set_label(data_desc)
+        desc_label.set_xalign(0)
+
+################################___mangohud_check___:
+
+    startIter, endIter = mh_buffer_1.get_bounds()
+    mh_data_1 = mh_buffer_1.get_text(startIter, endIter, False).split('\n')
+
+    startIter, endIter = mh_buffer_2.get_bounds()
+    mh_data_2 = mh_buffer_2.get_text(startIter, endIter, False).split('\n')
+
+    for i in range(0,38):
+
+        data_1 = mh_data_1[i]
+        data_2 = mh_data_2[i]
+        mh_check = builder.get_object(str('mh') + str(i))
+        mh_label = builder.get_object(str('mhl') + str(i))
+        mh_check.set_name(data_1)
+        mh_name = mh_check.get_name()
+        mh_check.set_label(data_1)
+        mh_label.set_label(data_2)
+        mh_set = mh_check.get_label()
+        l = str(',' + mh_set + ',')
+        mh_check.set_active(False)
+
+        for x in acread:
+
+            if l in x:
+                mh_check.set_active(True)
+
+################################___hud_position_check___:
+
+    reline = f"export SW_USE_HUD_POSITION="
+
+    for line in acread:
+
+        if reline in line:
+            position = str(line).replace(reline, '')
+
+            if position == str('"R"'):
+                hud_posL.set_active(False)
+                hud_posR.set_active(True)
+
+            else:
+                hud_posL.set_active(True)
+                hud_posR.set_active(False)
+
+################################___fps_scale_check___:
+
+    reline = f"export SW_USE_FPS_LIMIT="
+
+    for line in acread:
+
+        if reline in line:
+            fps_value = str(line).replace(reline, '')
+            fps_scale.set_value(float(fps_value[1:-1]))
+
+################################___mangohud_colors___:
+
+    for i in range(0, 14):
+
+        mh_color = builder.get_object(f'mh_color_{i}')
+        mh_color.connect("color-set", on_mh_color_set)
+        mhc_label = builder.get_object(f'mhc_{i}')
+
+        startIter, endIter = mh_colors_buffer.get_bounds()
+        mh_data_colors = mh_colors_buffer.get_text(startIter, endIter, False).split('\n')
+        data_colors = mh_data_colors[i]
+
+        mhc_label.set_label(data_colors)
+        mhc_label.set_xalign(0)
+
+        for x in acread:
+            refind = str(re.findall(r'=\w*,', x))[1:-1].split("'")
+
+            for reline in refind:
+
+                if len(reline) > 1:
+                    line = str(',' + data_colors + reline)
+
+                    if line in x:
+                        get_hex = str(reline.replace('=', '#')).strip(',')
+                        get_rgb = ImageColor.getrgb(get_hex)
+                        rgb = str([i/256 for i in get_rgb])[1:-1].split(',')
+
+                        rcolor = str([rc for rc in str(rgb[0]).split('\n')])[2:-2]
+                        gcolor = str([gc for gc in str(rgb[1]).split('\n')])[2:-2]
+                        bcolor = str([bc for bc in str(rgb[2]).split('\n')])[2:-2]
+
+                        mh_color.set_rgba(
+                            Gdk.RGBA(
+                                red=float(rcolor), green=float(gcolor), blue=float(bcolor), alpha=1.0))
+
+################################___vkbasalt_check___:
+
+    startIter, endIter = vk_buffer.get_bounds()
+    vk_data = vk_buffer.get_text(startIter, endIter, False).split('\n')
+
+    for i in range(0,72):
+
+        data = vk_data[i]
+        vk_check = builder.get_object(str('vk') + str(i))
+        vk_check.set_name(data)
+        vk_name = vk_check.get_name()
+        vk_check.set_label(data)
+        vk_set = vk_check.get_label()
+        l = str(':' + vk_set + ':')
+        vk_check.set_active(False)
+
+        for x in acread:
+
+            if l in x:
+                vk_check.set_active(True)
+
+################################___effect_scale_check___:
+
+    reline = str('export SW_USE_VKBASALT_CAS=')
+
+    for line in acread:
+
+        if reline in line:
+            effect_value = str(line).replace(reline, '')
+            effect_scale.set_value(float(effect_value[1:-1])*100)
+
+################################___ENTRY_FUNCTIONS___:
+
+def on_btn_entry_save(self):
+
+    btn_name = str(Gtk.Buildable.get_name(self))
+
+    def entry_save():
+
+        app_name = get_arg(get_out())
+        app_conf = Path(f"{sw_app_config}/" + str(app_name))
+        acread = app_conf.read_text().split('\n')
+
+        btn_num = btn_name.replace('b', '')
+        entry = builder.get_object(str('e') + str(btn_num))
+        get_text = entry.get_text()
+        text = acread[int(btn_num) + 2]
+        refind = str(re.findall(r'\w* \w*="', text))[2:-3]
+        retext = str(text).replace(refind, '')
+
+        app_conf.write_text(
+            app_conf.read_text().replace(
+                text, text.replace(retext, '"' + get_text + '"')))
+
+        param_stack.set_visible_child_name("b0")
+        override_stack.set_visible_child_name("b1")
+
+    if btn_name == str('b0'):
+        param_stack.set_visible_child_name("spin_param")
+        Thread(target=spin_param.start()).start()
+        Timer(1, entry_save).start()
+    else:
+        override_stack.set_visible_child_name("spin_override")
+        Thread(target=spin_override.start()).start()
+        Timer(1, entry_save).start()
+
+################################___COMBO_FUNCTIONS___:
+
+def on_btn_reg_patch(self):
+
+    reg_stack.set_visible_child_name("spin_reg")
+
+    Thread(target=spin_reg.start()).start()
+    Thread(target=reg_patch).start()
+    Timer(3, reg_patch_set_cfg).start()
+
+def reg_patch():
+
+    func_name = "TRY_REGEDIT_PATCH"
+    echo_func_name(func_name)
+
+def reg_patch_set_cfg():
+
+    app_name = get_arg(get_out())
+    app_conf = Path(f"{sw_app_config}/" + str(app_name))
+    acread = app_conf.read_text().split('\n')
+
+    value_reg = f"export SW_USE_REGEDIT_PATCH="
+
+    for i in acread:
+        if value_reg in i:
+            app_conf.write_text(
+                app_conf.read_text().replace(
+                    i, value_reg + '""'))
+
+    reg_stack.set_visible_child_name("btn_reg")
+
+def on_combo_changed(combo):
+
+    app_name = get_arg(get_out())
+    app_conf = Path(f"{sw_app_config}/" + str(app_name))
+    acread = app_conf.read_text().split('\n')
+
+    value_arch = f"export SW_USE_WINEARCH="
+    value_ver = f"export SW_USE_WINDOWS_VER="
+    value_reg = f"export SW_USE_REGEDIT_PATCH="
+
+    for i_arch, arch in zip(arch_index, winarch):
+
+        if combo_winarch.get_active_text() == str('{0}'.format(arch)):
+            get_arch = str('{0}'.format(i_arch))
+
+            for i in acread:
+
+                if value_arch in i:
+                    revalue = i.replace(value_arch, '')
+                    app_conf.write_text(
+                        app_conf.read_text().replace(
+                            revalue, '"' + get_arch + '"'))
+
+    for i_ver, ver in zip(ver_index, winver):
+
+        if combo_winver.get_active_text() == str('{0}'.format(ver)):
+            get_ver = str('{0}'.format(i_ver))
+
+            for i in acread:
+
+                if value_ver in i:
+                    revalue = i.replace(value_ver, '')
+                    app_conf.write_text(
+                        app_conf.read_text().replace(
+                            revalue, '"' + get_ver + '"'))
+
+    for reg in reg_patches:
+
+        if not combo_regedit.get_active_text() is None:
+            get_reg = combo_regedit.get_active_text() 
+
+            for i in acread:
+
+                if value_reg in i:
+                    revalue = i.replace(value_reg, '')
+
+                    app_conf.write_text(
+                        app_conf.read_text().replace(
+                            i, value_reg + '"' + get_reg + '"'))
+
+################################___SWITCH_FUNCTIONS___:
+
+def on_btn_switch_activate(btn_switch, gparam):
+
+    app_name = get_arg(get_out())
+    app_conf = Path(f"{sw_app_config}/" + str(app_name))
+    default = Path(f"{sw_app_config}/.default")
+    acread = app_conf.read_text().split('\n')
+
+    btn_switch_num = str(Gtk.Buildable.get_name(btn_switch)).replace('s', '')
+    btn_switch_name = builder.get_object(Gtk.Buildable.get_name(btn_switch))
+
+    if btn_switch.get_active():
+        config = acread[int(btn_switch_num) + 2]
+        app_conf.write_text(
+            app_conf.read_text().replace(
+                config, config.replace('=0', '=1')))
+
+    else:
+        file = app_conf.read_text().split('\n')
+        config = file[int(btn_switch_num) + 2]
+        app_conf.write_text(
+            app_conf.read_text().replace(
+                config, config.replace('=1', '=0')))
+
+################################___MANGOHUD_FUNCTIONS___:
+
+def on_reload_cfg(key_reload):
+
+    def kDown():
+        Popen(f"{sw_bin}/xdotool keydown {key_reload}", shell=True)
+
+    def kUp():
+        Popen(f"{sw_bin}/xdotool keyup {key_reload}", shell=True)
+
+    Timer(0.01, kDown).start()
+    Timer(0.2, kUp,).start()
+
+def on_btn_preview(self):
+
+    os.environ["SW_MANGOHUD_DLSYM"] = '1'
+    os.environ["sw_mangohud"] = f"{sw_tools}/utils/bin/mangohud"
+    os.environ["MANGOHUD_LOG_LEVEL"] = 'off'
+
+    get_mhud_cfg()
+    on_reload_cfg(key_reload)
+
+    Popen(f"$sw_mangohud {sw_scripts}/sw_cube.py", shell=True)
+
+def get_mhud_cfg():
+
+    global gl_x, gl_y, mh_config, key_reload
+
+    key_reload = 'r'
+    gl_x = '0'
+    gl_y = '0'
+
+    app_name = get_arg(get_out())
+    app_conf = Path(f"{sw_app_config}/" + str(app_name))
+    acread = app_conf.read_text().split('\n')
+
+    for line in acread:
+
+        if 'MANGOHUD_CONFIG' in line:
+            mh_config = str(line.split('"')[1])
+
+    for x in mh_config.split(','):
+
+        if 'reload_cfg' in x:
+            mh_config = mh_config.replace(x + ',', '')
+            key_reload = 'r'
+
+    mhud_conf = f'font_size=19,reload_cfg={key_reload},offset_x={gl_x},offset_y={gl_y},{mh_config}'
+    os.environ["MANGOHUD_CONFIG"] = os.pathsep + mhud_conf
+
+def on_mh_check_conf(object):
+
+    app_name = get_arg(get_out())
+    app_conf = Path(f"{sw_app_config}/" + str(app_name))
+
+    startIter, endIter = mh_buffer_1.get_bounds()
+    mh_data = mh_buffer_1.get_text(startIter, endIter, False).split('\n')
+    mh_num = str(Gtk.Buildable.get_name(object)).replace('mh', '')
+    mh_check = builder.get_object(Gtk.Buildable.get_name(object))
+
+    if mh_check.get_active():
+        acread = app_conf.read_text().split('\n')
+        mhd = mh_data[int(mh_num)]
+        l = str(',' + mhd + ',')
+
+        for x in acread:
+
+            if l in x:
+                app_conf.write_text(
+                    app_conf.read_text().replace(',' + mhd + ',', ','))
+
+        app_conf.write_text(
+            app_conf.read_text().replace(
+                'MANGOHUD_CONFIG=",', 'MANGOHUD_CONFIG=",' + mhd + ','))
+
+    else:
+        mhd = mh_data[int(mh_num)]
+        app_conf.write_text(
+            app_conf.read_text().replace(',' + mhd + ',', ','))
+
+def on_hud_activated(self):
+
+    app_name = get_arg(get_out())
+    app_conf = Path(f"{sw_app_config}/" + str(app_name))
+
+    if hud_posR.get_active():
+        hud_posL.set_active(False)
+
+        acread = app_conf.read_text().split('\n')
+        reline = f"export SW_USE_HUD_POSITION="
+
+        for line in acread:
+
+            if reline in line:
+                position = str(line).replace(reline, '')
+                app_conf.write_text(
+                    app_conf.read_text().replace(
+                        position, position.replace(str('"L"'), str('"R"'))))
+
+    else:
+        hud_posL.set_active(True)
+        acread = app_conf.read_text().split('\n')
+        reline = f"export SW_USE_HUD_POSITION="
+
+        for line in acread:
+
+            if reline in line:
+                position = str(line).replace(reline, '')
+                app_conf.write_text(
+                    app_conf.read_text().replace(
+                        position, position.replace(str('"R"'), str('"L"'))))
+
+def on_fps_scale(fps_scale):
+
+    app_name = get_arg(get_out())
+    app_conf = Path(f"{sw_app_config}/" + str(app_name))
+    acread = app_conf.read_text().split('\n')
+
+    get_depth = str(fps_scale.get_value())
+    value = str('export SW_USE_FPS_LIMIT=')
+
+    for i in acread:
+
+        if value in i:
+            revalue = i.replace(value, '')
+            app_conf.write_text(
+                app_conf.read_text().replace(
+                    revalue, '"' + get_depth + '"'))
+
+def on_mh_color_set(self):
+
+    app_name = get_arg(get_out())
+    app_conf = Path(f"{sw_app_config}/" + str(app_name))
+    acread = app_conf.read_text().split('\n')
+
+    get_rgb = self.get_rgba().to_string().replace('rgb', '')[1:-1].split(',')
+    r = int(get_rgb[0])
+    g = int(get_rgb[1])
+    b = int(get_rgb[2])
+    hex_color = f"={r:02x}{g:02x}{b:02x}"
+
+    startIter, endIter = mh_colors_buffer.get_bounds()
+    mh_data_colors = mh_colors_buffer.get_text(startIter, endIter, False).split('\n')
+    mh_num = str(Gtk.Buildable.get_name(self)).replace('mh_color_', '')
+    mh_check = builder.get_object(Gtk.Buildable.get_name(self))
+
+    mhd = mh_data_colors[int(mh_num)]
+
+    for x in acread:
+
+        refind = str(re.findall(r'=\w*,', x))[1:-1].split("'")
+
+        for line in refind:
+
+            if len(line) > 1:
+                reline = str(',' + mhd + line)
+
+                if reline in x:
+                    app_conf.write_text(
+                        app_conf.read_text().replace(reline, ','))
+
+    else:
+        app_conf.write_text(
+            app_conf.read_text().replace(
+                'MANGOHUD_CONFIG=",', 'MANGOHUD_CONFIG=",' + mhd + hex_color + ','))
+
+################################___VKBASALT_FUNCTIONS___:
+
+def on_vk_check_conf(object):
+
+    app_name = get_arg(get_out())
+    app_conf = Path(f"{sw_app_config}/" + str(app_name))
+
+    startIter, endIter = vk_buffer.get_bounds()
+    vk_data = vk_buffer.get_text(startIter, endIter, False).split('\n')
+    vk_num = str(Gtk.Buildable.get_name(object)).replace('vk', '')
+    vk_check = builder.get_object(Gtk.Buildable.get_name(object))
+
+    if vk_check.get_active():
+        acread = app_conf.read_text().split('\n')
+        vkd = vk_data[int(vk_num)]
+        l = str(':' + vkd + ':')
+
+        for x in acread:
+
+            if l in x:
+                app_conf.write_text(
+                    app_conf.read_text().replace(':' + vkd + ':', ':'))
+
+        app_conf.write_text(
+            app_conf.read_text().replace('cas:', 'cas:' + vkd + ':'))
+
+    else:
+        vkd = vk_data[int(vk_num)]
+        app_conf.write_text(
+            app_conf.read_text().replace(':' + vkd + ':', ':'))
+
+def on_effect_scale(effect_scale):
+
+    app_name = get_arg(get_out())
+    app_conf = Path(f"{sw_app_config}/" + str(app_name))
+    acread = app_conf.read_text().split('\n')
+
+    get_depth = str(effect_scale.get_value()/100)
+    value = str('export SW_USE_VKBASALT_CAS=')
+
+    for i in acread:
+
+        if value in i:
+            revalue = i.replace(value, '')
+            app_conf.write_text(
+                app_conf.read_text().replace(
+                    revalue, '"' + get_depth + '"'))
+
+################################___DEFAULT_SETTINGS___:
+
+def on_btn_app_conf_default(self):
+
+    q = _('Do you really want reset settings ?')
+    request = get_arg(sw_crier.on_question(q))
+    app_conf_default(request)
+
+def app_conf_default(request):
+
+    if request == "0":
+        app_name = get_arg(get_out())
+        app_conf = Path(f"{sw_app_config}/" + str(app_name))
+        ac_default = Path(f"{sw_app_config}/.default")
+
+        try:
+            app_conf.write_text(ac_default.read_text())
+            app_conf_activate()
+
+        except IOError as e:
+            print('___app_conf_not_found___')
+
+        else:
+            app_conf.write_text(ac_default.read_text())
+            app_conf_activate()
+
+################################___KILL_PROCESS___:
+
+def on_btn_stop(self):
+
+    try:
+        p = Popen(['ps', '-AF'], stdout=subprocess.PIPE, encoding='UTF-8')
+        out, err = p.communicate()
+
+        for line in out.splitlines():
+
+            if 'sw_function.sh' in line:
+                pid = int(line.split()[1])
+                print(line)
+                os.kill(pid, 9)
+
+    except:
+        pass
+
+    cmd = f"{sw_scripts}/sw_stop"
+    run(cmd, shell=True)
+
+################################___BUILDER_GET_SW_WINDOW___:
+
+builder = Gtk.Builder()
+builder.add_from_file(f"{sw_scripts}/sw_menu.glade")
+
+window = builder.get_object("StartWine")
+
+sw_stack = builder.get_object("sw_stack")
+sw_stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
+
+################################___BUILDER_SW_BUTTONS___:
+
+resize_btn_stack = builder.get_object("resize_btn_stack")
+
+btn_get_size = builder.get_object("btn_get_size")
+btn_get_size.connect("clicked", on_btn_get_size)
+
+btn_set_size = builder.get_object("btn_set_size")
+btn_set_size.connect("clicked", on_btn_set_size)
+
+btn_about = builder.get_object("btn_about")
+btn_about.connect("clicked", on_btn_about)
+
+about = builder.get_object("about_window")
+
+btn_hide = builder.get_object("btn_hide")
+btn_hide.connect("clicked", on_btn_hide)
+
+################################___BUILDER_POPOVER___:
+
+popover = builder.get_object("popover")
+popover2 = builder.get_object("popover2")
+g_popover1 = builder.get_object("g_popover1")
+
+btn_file_manager = builder.get_object("btn_file_manager")
+btn_file_manager.connect("clicked", on_btn_file_manager)
+
+btn_file_manager2 = builder.get_object("btn_file_manager2")
+btn_file_manager2.connect("clicked", on_btn_file_manager)
+
+btn_text_edit = builder.get_object("btn_text_edit")
+btn_text_edit.connect("clicked", on_btn_text_edit)
+
+btn_g_text_edit = builder.get_object("btn_g_text_edit")
+btn_g_text_edit.connect("clicked", on_btn_g_text_edit)
+
+btn_app_icon = builder.get_object("btn_app_icon")
+btn_app_icon.connect("clicked", on_btn_app_icon)
+
+btn_app_icon2 = builder.get_object("btn_app_icon2")
+btn_app_icon2.connect("clicked", on_btn_app_icon)
+
+btn_app_icon_desktop = builder.get_object("btn_app_icon_desktop")
+btn_app_icon_desktop.connect("clicked", on_btn_app_icon_desktop)
+
+btn_app_icon_desktop2 = builder.get_object("btn_app_icon_desktop2")
+btn_app_icon_desktop2.connect("clicked", on_btn_app_icon_desktop2)
+
+btn_app_config = builder.get_object("btn_app_config")
+btn_app_config.connect("clicked", on_btn_app_config)
+
+btn_app_config2 = builder.get_object("btn_app_config2")
+btn_app_config2.connect("clicked", on_btn_app_config)
+
+btn_protondb = builder.get_object("btn_protondb")
+btn_protondb.connect("activate-link", on_btn_protondb)
+
+btn_protondb2 = builder.get_object("btn_protondb2")
+btn_protondb2.connect("activate-link", on_btn_protondb2)
+
+btn_winehq = builder.get_object("btn_winehq")
+btn_winehq.connect("activate-link", on_btn_winehq)
+
+btn_winehq2 = builder.get_object("btn_winehq2")
+btn_winehq2.connect("activate-link", on_btn_winehq2)
+
+btn_remove = builder.get_object("btn_remove")
+btn_remove.connect("clicked", on_btn_remove)
+
+btn_remove2 = builder.get_object("btn_remove2")
+btn_remove2.connect("clicked", on_btn_remove2)
+
+################################___BUILDER_ENTRY___:
+
+lp_entry = builder.get_object("lp_entry")
+lp_entry.set_activates_default(True)
+lp_entry.connect("activate", on_btn_lp_entry)
+
+lp_icon = f"{sw_icon}/gui_icons/regedit.svg"
+lp_pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(lp_icon, 16, 16, preserve_aspect_ratio=True)
+
+lp_entry.set_icon_activatable(0, True)
+lp_entry.set_icon_sensitive(0, True)
+
+btn_lp_entry = builder.get_object("btn_lp_entry")
+btn_lp_entry.connect("clicked", on_btn_lp_entry)
+
+################################___BACKGROUND_RESOLUTION___:
+
+def restart():
+
+    window.close()
+    app_path = get_arg(get_app_path())
+    cmd = f"{sw_start} {app_path}"
+    Popen(cmd, shell=True)
+
+def get_resolution():
+
+    screen = Gdk.Display.get_default()
+#    monitor = screen.get_primary_monitor()
+#    scale_factor = monitor.get_scale_factor()
+    w = 0
+    h = 0
+
+    for x in range(0, screen.get_n_monitors()):
+
+         w += screen.get_monitor(x).get_geometry().width
+
+         if ( h < screen.get_monitor(x).get_geometry().height ):
+              h = screen.get_monitor(x).get_geometry().height
+
+    width = w
+    # * scale_factor
+    height = h
+    # * scale_factor
+    print(f"RESOLUTION:\n{width}*{height}\n")
+
+    def get_css(css_name):
+
+        css = css_name
+        screen = Gdk.Screen.get_default()
+        provider = Gtk.CssProvider()
+        style_context = Gtk.StyleContext()
+        style_context.add_provider_for_screen(
+            screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
+        provider.load_from_path(css)
+
+    def on_theme():
+
+        try:
+            gc = Path(f"{sw_app_config}/.default")
+            gcread = gc.read_text().split('\n')
+
+            for line in gcread:
+
+                sw_theme = line.replace('export SW_USE_THEME=', '')
+
+                if sw_theme in themes:
+                    css_name = f"{sw_css}/{sw_theme}/gtk-3.0/gtk.css"
+                    get_css(css_name)
+
+                    for t, b in zip(themes, backgrounds):
+
+                        if sw_theme == str('{0}'.format(t)):
+                            color = str('{0}'.format(b))
+                            img_path = f"{sw_icon}/sw_themes/4k/{color}"
+
+                            if color == 'sw_bg_white':
+                                image = builder.get_object("sw_bgrw")
+
+                            else:
+                                image = builder.get_object("sw_bgr")
+
+                            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
+                                img_path, int(width), int(height), preserve_aspect_ratio=False)
+
+                            image.set_from_pixbuf(pixbuf)
+                            print(f'___THEME___:\n___{sw_theme}_theme_ACTIVE___\n')
+
+        except:
+            pass
+
+    on_theme()
+
+    def on_btn_theme(self):
+
+        app_conf = Path(f"{sw_app_config}/.default")
+        acread = app_conf.read_text().split('\n')
+        wg_name = self.get_name()
+        print(wg_name)
+
+        if self.get_active():
+
+            for line in acread:
+
+                if str('export SW_USE_THEME=') in line:
+                    app_conf.write_text(app_conf.read_text().replace(line, f"export SW_USE_THEME={wg_name}"))
+
+            restart()
+
+    btn_black_theme = builder.get_object("btn_black_theme")
+    btn_black_theme.connect("toggled", on_btn_theme)
+    btn_black_theme.set_name('black')
+
+    btn_grey_theme = builder.get_object("btn_grey_theme")
+    btn_grey_theme.connect("toggled", on_btn_theme)
+    btn_grey_theme.set_name('grey')
+
+    btn_red_theme = builder.get_object("btn_red_theme")
+    btn_red_theme.connect("toggled", on_btn_theme)
+    btn_red_theme.set_name('red')
+
+    btn_yellow_theme = builder.get_object("btn_yellow_theme")
+    btn_yellow_theme.connect("toggled", on_btn_theme)
+    btn_yellow_theme.set_name('yellow')
+
+    btn_green_theme = builder.get_object("btn_green_theme")
+    btn_green_theme.connect("toggled", on_btn_theme)
+    btn_green_theme.set_name('green')
+
+    btn_blue_theme = builder.get_object("btn_blue_theme")
+    btn_blue_theme.connect("toggled", on_btn_theme)
+    btn_blue_theme.set_name('blue')
+
+    btn_purple_theme = builder.get_object("btn_purple_theme")
+    btn_purple_theme.connect("toggled", on_btn_theme)
+    btn_purple_theme.set_name('purple')
+
+    btn_brown_theme = builder.get_object("btn_brown_theme")
+    btn_brown_theme.connect("toggled", on_btn_theme)
+    btn_brown_theme.set_name('brown')
+
+    btn_white_theme = builder.get_object("btn_white_theme")
+    btn_white_theme.connect("toggled", on_btn_theme)
+    btn_white_theme.set_name('white')
+
+get_resolution()
+
+################################___START_MODE_PARSE___:
+
+def start_mode():
+
+    app_name = get_arg(get_out())
+
+    print(f'___APPLICATION_NAME___:\n___{app_name}___\n')
+
+    def desktop_wine():
+
+        desktop_name = Path(f"{sw_app_config}/" + str(app_name))
+        desktop_sw = Path(f"{sw_app_config}/StartWine")
+
+        try:
+            data = desktop_name.read_text().split('\n')
+            reline = str('export SW_USE_WINE="wine_')
+
+            for line in data:
+
+                if reline in line:
+                    ls_wine = line.replace(reline, 'WINE:\n').strip('"')
+                    print(f'___{ls_wine}___\n')
+
+        except IOError as e:
+            print('___desktop_not_found_set_default_value___')
+            data = desktop_sw.read_text().split('\n')
+            reline = str('export SW_USE_WINE="wine_')
+
+            for line in data:
+
+                if reline in line:
+                    ls_wine = line.replace(reline, 'WINE:\n').strip('"')
+                    print(f'___{ls_wine}___\n')
+
+        def desktop_icon():
+
+            try:
+                icon_path = open(f"{sw_icon}/" + str(app_name) + '_x96.png')
+
+            except IOError as e:
+                print('___icon_not_found_set_default_icon___')
+                icon_path = f"{sw_icon}/gui_icons/SW_Launcher_x96.png"
+
+            else:
+                icon_path = f"{sw_icon}/" + str(app_name) + '_x96.png'
+
+            def desktop_pfx():
+
+                file_name = f"{sw_app_config}/" + str(app_name)
+                try:
+                    data = desktop_name.read_text().split('\n')
+                    reline = str('export SW_USE_PFX="pfx_')
+
+                    for line in data:
+
+                        if reline in line:
+                            pfx = line.replace(reline, '').strip('"')
+                            print(f'___PREFIX___:\n___{pfx}___\n')
+
+                except IOError as e:
+
+                    print('___desktop_not_found_set_default_value___')
+                    app_icon = builder.get_object("app_icon")
+                    app_icon.set_from_file(icon_path)
+                    app_label1 = builder.get_object("app_label1")
+                    app_label1.set_label(_('START MODE'))
+                    app_label2 = builder.get_object("app_label2")
+                    app_label2.set_label(_("PREFIX:\ndefault"))
+                    app_label3 = builder.get_object("app_label3")
+                    app_label3.set_label(str(ls_wine))
+
+                else:
+                    app_icon = builder.get_object("app_icon")
+                    app_icon.set_from_file(icon_path)
+                    app_label1 = builder.get_object("app_label1")
+                    app_label1.set_label(_('START MODE'))
+                    app_label2 = builder.get_object("app_label2")
+                    app_label2.set_label(_('PREFIX:\n') + str(pfx))
+                    app_label3 = builder.get_object("app_label3")
+                    app_label3.set_label(str(ls_wine))
+
+            desktop_pfx()
+        desktop_icon()
+    desktop_wine()
+start_mode()
+
+btn_start = builder.get_object("btn_start")
+btn_start.connect("clicked", on_btn_start)
+
+btn_shortcuts = builder.get_object("btn_shortcuts")
+btn_shortcuts.connect("clicked", on_btn_shortcuts)
+
+################################___BUILDER_SHORTCUTS___:
+
+main_stack = builder.get_object("main_stack")
+sc_flowbox = builder.get_object("sc_flowbox")
+
+shortcut_scrolled = builder.get_object("shortcut_scrolled")
+shortcut_main_box = builder.get_object("shortcut_main_box")
+
+top_header = builder.get_object("sw_top_header")
+window.connect("configure-event", get_size)
+
+shortcuts()
+
+################################___BUILDER_CREATE_SHORTCUT___:
+
+btn_create_shortcut = builder.get_object("btn_create_shortcut")
+btn_create_shortcut.connect("clicked", on_btn_create_shortcut)
+
+btn_cs_staging = builder.get_object("btn_cs_staging")
+btn_cs_staging.connect("clicked", on_btn_cs_staging)
+
+btn_cs_steam = builder.get_object("btn_cs_steam")
+btn_cs_steam.connect("clicked", on_btn_cs_steam)
+
+btn_cs_ge = builder.get_object("btn_cs_ge")
+btn_cs_ge.connect("clicked", on_btn_cs_ge)
+
+btn_cs_lutris = builder.get_object("btn_cs_lutris")
+btn_cs_lutris.connect("clicked", on_btn_cs_lutris)
+
+btn_cs_lutris_ge = builder.get_object("btn_cs_lutris_ge")
+btn_cs_lutris_ge.connect("clicked", on_btn_cs_lutris_ge)
+
+btn_cs_custom = builder.get_object("btn_cs_custom")
+btn_cs_custom.connect("clicked", on_btn_cs_custom)
+
+btn_cs_custom_1 = builder.get_object("btn_cs_custom_1")
+btn_cs_custom_1.connect("clicked", on_btn_cs_custom_1)
+
+btn_cs_custom_2 = builder.get_object("btn_cs_custom_2")
+btn_cs_custom_2.connect("clicked", on_btn_cs_custom_2)
+
+btn_cs_custom_3 = builder.get_object("btn_cs_custom_3")
+btn_cs_custom_3.connect("clicked", on_btn_cs_custom_3)
+
+btn_cs_custom_4 = builder.get_object("btn_cs_custom_4")
+btn_cs_custom_4.connect("clicked", on_btn_cs_custom_4)
+
+btn_cs_custom_5 = builder.get_object("btn_cs_custom_5")
+btn_cs_custom_5.connect("clicked", on_btn_cs_custom_5)
+
+################################___BUILDER_PREFIX_TOOLS___:
+
+btn_prefix_tools = builder.get_object("btn_prefix_tools")
+btn_prefix_tools.connect("clicked", on_btn_prefix_tools)
+
+btn_remove_prefix = builder.get_object("btn_remove_prefix")
+btn_remove_prefix.connect("clicked", on_btn_remove_prefix)
+
+btn_reinstall_prefix = builder.get_object("btn_reinstall_prefix")
+btn_reinstall_prefix.connect("clicked", on_btn_reinstall_prefix)
+
+btn_pfx_backup = builder.get_object("btn_pfx_backup")
+btn_pfx_backup.connect("clicked", on_btn_pfx_backup)
+
+btn_pfx_restore = builder.get_object("btn_pfx_restore")
+btn_pfx_restore.connect("clicked", on_btn_pfx_restore)
+
+btn_pfx_full_backup = builder.get_object("btn_pfx_full_backup")
+btn_pfx_full_backup.connect("clicked", on_btn_pfx_full_backup)
+
+btn_pfx_full_restore = builder.get_object("btn_pfx_full_restore")
+btn_pfx_full_restore.connect("clicked", on_btn_pfx_full_restore)
+
+btn_pfx_clear = builder.get_object("btn_pfx_clear")
+btn_pfx_clear.connect("clicked", on_btn_pfx_clear)
+
+################################___BUILDER_WINE_TOOLS___:
+
+btn_winetools = builder.get_object("btn_winetools")
+btn_winetools.connect("clicked", on_btn_winetools)
+
+btn_winecfg = builder.get_object("btn_winecfg")
+btn_winecfg.connect("clicked", on_btn_winecfg)
+
+btn_wineconsole = builder.get_object("btn_wineconsole")
+btn_wineconsole.connect("clicked", on_btn_wineconsole)
+
+btn_regedit = builder.get_object("btn_regedit")
+btn_regedit.connect("clicked", on_btn_regedit)
+
+btn_file_explorer = builder.get_object("btn_file_explorer")
+btn_file_explorer.connect("clicked", on_btn_file_explorer)
+
+btn_uninstaller = builder.get_object("btn_uninstaller")
+btn_uninstaller.connect("clicked", on_btn_uninstaller)
+
+################################___BUILDER_WINETRICKS___:
+
+se_stack = builder.get_object("se_stack")
+se = builder.get_object("se")
+view = builder.get_object("se_view")
+
+winetricks_scrolled = builder.get_object("winetricks_scrolled")
+winetricks_notebook = builder.get_object("winetricks_notebook")
+pfx_label = builder.get_object("pfx_label")
+
+btn_winetricks = builder.get_object("btn_winetricks")
+btn_winetricks.connect("clicked", on_btn_winetricks)
+
+btn_install_dll = builder.get_object("btn_install_dll")
+btn_install_dll.connect("clicked", on_btn_install_dll)
+
+winetricks_text_view = builder.get_object("winetricks_text_view")
+wt_buffer = builder.get_object("winetricks_text_buffer")
+
+fonts_scrolled = builder.get_object("winetricks_scrolled")
+fonts_view = builder.get_object("fonts_view")
+fonts_buffer = builder.get_object("fonts_buffer")
+
+builder.connect_signals({'on_btn_check_dll': (on_btn_check_dll),
+                        'on_btn_check_fonts': (on_btn_check_fonts),
+                        'on_vk_check_conf': (on_vk_check_conf),
+                        'on_mh_check_conf': (on_mh_check_conf),
+                        })
+
+btn_install_rl = builder.get_object("btn_install_rl")
+btn_install_rl.connect("clicked", on_btn_install_rl)
+
+se.connect("search_changed", search_changed)
+se.connect("key-press-event", key_event)
+view.connect("row-activated", get_selected)
+
+startIter, endIter = wt_buffer.get_bounds()
+data_content = wt_buffer.get_text(startIter, endIter, False).split('\n')
+count = 0
+data_0 = ['']
+store = Gtk.ListStore(str)
+treeiter = store.append(data_0)
+view.set_model(store)
+renderer = Gtk.CellRendererText()
+column = view.insert_column_with_attributes(0 , "List" , renderer, text=0)
+
+################################___BUILDER_DEBUG___:
+
+btn_debug = builder.get_object("btn_debug")
+btn_debug.connect("clicked", on_btn_debug)
+
+################################___BUILDER_DOWNLOAD_WINE___:
+
+btn_dw = builder.get_object("btn_dw")
+btn_dw.connect("clicked", on_btn_dw)
+
+btn_wine_1 = builder.get_object("btn_staging")
+btn_wine_1.connect("clicked", on_btn_wine_1)
+
+btn_rm_staging = builder.get_object("btn_rm_staging")
+btn_rm_staging.connect("clicked", on_btn_rm_staging)
+
+btn_wine_2 = builder.get_object("btn_steam")
+btn_wine_2.connect("clicked", on_btn_wine_2)
+
+btn_rm_proton = builder.get_object("btn_rm_proton")
+btn_rm_proton.connect("clicked", on_btn_rm_proton)
+
+btn_wine_3 = builder.get_object("btn_ge")
+btn_wine_3.connect("clicked", on_btn_wine_3)
+
+btn_rm_ge = builder.get_object("btn_rm_ge")
+btn_rm_ge.connect("clicked", on_btn_rm_ge)
+
+btn_wine_4 = builder.get_object("btn_lutris")
+btn_wine_4.connect("clicked", on_btn_wine_4)
+
+btn_rm_lutris = builder.get_object("btn_rm_lutris")
+btn_rm_lutris.connect("clicked", on_btn_rm_lutris)
+
+btn_wine_5 = builder.get_object("btn_lutris_ge")
+btn_wine_5.connect("clicked", on_btn_wine_5)
+
+btn_rm_lutris_ge = builder.get_object("btn_rm_lutris_ge")
+btn_rm_lutris_ge.connect("clicked", on_btn_rm_lutris_ge)
+
+btn_wine_6 = builder.get_object("btn_custom")
+btn_wine_6.connect("clicked", on_btn_wine_6)
+
+################################___BUILDER_LAUNCHERS___:
+
+inst_flowbox = builder.get_object("inst_flowbox")
+btn_inst_launchers = builder.get_object("btn_inst_launchers")
+btn_inst_launchers.connect("clicked", on_btn_inst_launchers)
+launcher_label = builder.get_object("launcher_label")
+launchers()
+
+################################___BUILDER_BUTTON_BACK___:
+
+btn_back_ab = builder.get_object("btn_back_ab")
+btn_back_ab.connect("clicked", on_btn_back_ab)
+
+btn_settings = builder.get_object("btn_settings")
+btn_settings.connect("clicked", on_btn_settings)
+
+btn_stop = builder.get_object("btn_stop")
+btn_stop.connect("clicked", on_btn_stop)
+
+btn_back_cs = builder.get_object("btn_back_cs")
+btn_back_cs.connect("clicked", on_btn_back_cs)
+
+btn_back_pt = builder.get_object("btn_back_pt")
+btn_back_pt.connect("clicked", on_btn_back_pt)
+
+btn_back_wt = builder.get_object("btn_back_wt")
+btn_back_wt.connect("clicked", on_btn_back_wt)
+
+btn_back_dw = builder.get_object("btn_back_dw")
+btn_back_dw.connect("clicked", on_btn_back_dw)
+
+btn_back_winetricks = builder.get_object("btn_back_winetricks")
+btn_back_winetricks.connect("clicked", on_btn_back_winetricks)
+
+################################___BUILDER_SETTINGS___:
+
+settings_stack = builder.get_object("settings_stack")
+
+settings_scrolled = builder.get_object("settings_scrolled")
+vkbasalt_scrolled = builder.get_object("vkbasalt_scrolled")
+
+combo_winarch = builder.get_object("combo_winarch")
+combo_winarch.set_entry_text_column(0)
+
+combo_winver = builder.get_object("combo_winver")
+combo_winver.set_entry_text_column(0)
+
+combo_regedit = builder.get_object("combo_regedit")
+combo_regedit.set_entry_text_column(0)
+
+combo_winarch.connect("changed", on_combo_changed)
+combo_winver.connect("changed", on_combo_changed)
+combo_regedit.connect("changed", on_combo_changed)
+
+main_param_stack = builder.get_object("main_param_stack")
+param_stack = builder.get_object("param_stack")
+override_stack = builder.get_object("override_stack")
+reg_stack = builder.get_object("reg_stack")
+
+btn_reg_patch = builder.get_object("btn_reg")
+btn_reg_patch.connect("clicked", on_btn_reg_patch)
+
+spin_main_param = builder.get_object("spin_main_param")
+spin_param = builder.get_object("spin_param")
+spin_override = builder.get_object("spin_override")
+spin_reg = builder.get_object("spin_reg")
+
+vk_btn_grid = builder.get_object("vk_btn_grid")
+vk_buffer = builder.get_object("vk_buffer")
+
+startIter, endIter = vk_buffer.get_bounds()
+vk_data = vk_buffer.get_text(startIter, endIter, False).split('\n')
+
+fps_scale = builder.get_object('fps_scale')
+fps_scale.connect("value-changed", on_fps_scale)
+
+effect_scale = builder.get_object("effect_scale")
+effect_scale.connect("value-changed", on_effect_scale)
+
+btn_app_conf_default = builder.get_object("btn_app_conf_default")
+btn_app_conf_default.connect("clicked", on_btn_app_conf_default)
+
+hud_posR = builder.get_object('btn_R')
+hud_posL = builder.get_object('btn_L')
+hud_posR.connect("toggled", on_hud_activated)
+hud_posL.connect("toggled", on_hud_activated)
+
+btn_preview = builder.get_object('btn_preview')
+btn_preview.connect("clicked", on_btn_preview)
+
+mh_buffer_1 = builder.get_object('mh_buffer_1')
+mh_buffer_2 = builder.get_object('mh_buffer_2')
+mh_colors_buffer = builder.get_object('mh_colors_buffer')
+
+settings_buffer = builder.get_object("settings_buffer")
+settings_desc_buffer = builder.get_object("settings_description_buffer")
+
+mangohud_scrolled = builder.get_object("mangohud_scrolled")
+mangohud_scrolled1 = builder.get_object("mangohud_scrolled1")
+
+################################___BUILDER_PROGRESSBAR___:
+
+progressbar = builder.get_object("start_progress")
+progressbar_wt = builder.get_object("progressbar_wt")
+progressbar_pt = builder.get_object("progressbar_pt")
+progressbar_cs = builder.get_object("progressbar_cs")
+progressbar_dll = builder.get_object("progressbar_dll")
+progressbar_inst = builder.get_object("progressbar_inst")
+
+progressbar_lock = threading.Lock()
+progress_lock_rl = threading.Lock()
+
+################################___GET_VTE___:
+
+terminal = Vte.Terminal()
+terminal.spawn_async(
+    Vte.PtyFlags.DEFAULT,
+    os.environ['HOME'],
+    ['/bin/bash'],
+    None,
+    GLib.SpawnFlags.DEFAULT,
+    None, None,
+    -1,
+    None,
+    None,
+    None,
+)
+spacer = Gtk.Label.new("               ")
+
+terminal.set_scrollback_lines(2048)
+term_font = Pango.FontDescription("Normal 11")
+terminal.set_font(term_font)
+terminal.set_clear_background(False)
+terminal.set_hexpand(True)
+terminal.set_vexpand(True)
+
+menu = builder.get_object("menu_grid")
+
+vte_main_box = builder.get_object("vte_main_box")
+vte_main_grid = builder.get_object("vte_main_grid")
+vte_main_grid.attach(terminal, 0, 0, 1, 1)
+
+vte_scrolled = builder.get_object("vte_scrolled")
+
+btn_back_terminal = builder.get_object("btn_back_terminal")
+btn_back_terminal.connect("clicked", on_btn_back_terminal)
+
+acread = default.read_text().split('\n')
+sw_theme = str('export SW_USE_THEME=white')
+
+if sw_theme in acread:
+    terminal.set_clear_background(True)
+
+try:
+    if str('--shortcut') in sys.argv[2]:
+        set_size()
+        main_stack.set_visible_child_name("shortcut_main_box")
+        sc_flowbox.set_filter_func(shortcuts_filter, dict)
+
+except IndexError as e:
+    print('___default_sys_arg___')
+
+try:
+    if str('--settings') in sys.argv[2]:
+        set_size()
+        main_stack.set_visible_child_name("app_settings_notebook")
+        app_conf_activate()
+
+except IndexError as e:
+    print('___default_sys_arg___')
+
+################################___GTK_MAIN___:
+
+window.connect("destroy", Gtk.main_quit)
+window.show_all()
+
+Gtk.main()
+
+################################################################################
