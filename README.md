@@ -32,7 +32,14 @@ curl -s https://api.github.com/repos/RusNor/StartWine-Launcher/releases/latest |
 Oh yeah, don't forget to check if the **python-gobject** package is installed on your system.
 example of installation:
 
-`sudo pacman -S python-gobject`
+For Arch Linux
+```bash 
+sudo pacman -S python-gobject
+```
+For Debian
+```bash
+sudo apt install python-gobject
+```
 
 If you downloaded and launched StartWine via the curl command, you can simply skip the item below
 
@@ -42,7 +49,7 @@ Once you have downloaded the file, first of all right-click, properties, rights 
 
 or you can enter the command in the terminal:
 ```bash
-chmod -x StartWine-(version) 
+chmod +x StartWine_v*
 ```
 
 
@@ -83,6 +90,20 @@ Now let 's briefly go through the menu of the StartWine
 * **Debug** - Launching a file with a prefix in debug mode.
 * **Stop** - Stopping processes wine.
 
+If you don't like the StartWine background theme you can change it by clicking on the icon shown in the screenshot below 
+
+![sw-image20](https://github.com/RusNor/StartWine-Launcher/blob/main/image/sw-image20.png?)
+
+Since version [3.6.0](https://github.com/RusNor/StartWine-Launcher/releases/tag/StartWine_v360), StartWine has added mangohud and vkbasalt settings  
+
+![sw-image17](https://github.com/RusNor/StartWine-Launcher/blob/main/image/sw-image17.png?)
+
+![sw-image18](https://github.com/RusNor/StartWine-Launcher/blob/main/image/sw-image18.png?)
+
+You can view changes to mangohud and vkbasalt settings by clicking on the preview button
+to exit the preview, press the Enter key
+
+![sw-image19](https://github.com/RusNor/StartWine-Launcher/blob/main/image/sw-image19.png?)
 
 ## Initial setup
 
