@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
+######################
 
 import os
 import sys
 from pathlib import Path
 import subprocess
-from subprocess import *
+from subprocess import run
 import threading
 from threading import Thread, Timer
 import time
@@ -13,19 +14,16 @@ gi.require_version('Gtk', '3.0')
 gi.require_version('Gdk', '3.0')
 from gi.repository import Gtk, GObject, Gdk, GdkPixbuf, Gio, GLib, Pango
 
+link = f"{sys.argv[0]}"
+sw_scripts = Path(link).parent
+sw_path = Path(sw_scripts).parent.parent
+sw_icon = Path(f"{sw_path}/data/img")
+
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 import numpy as np
 import pyrr
 from PIL import Image
-
-link = f"{sys.argv[0]}"
-sw_scripts = Path(link).parent
-sw_path = Path(sw_scripts).parent.parent
-sw_tools = Path(f"{sw_path}/data/tools")
-sw_icon = Path(sw_path) / 'data/img'
-sw_app_config = Path(sw_path) / 'data/games_config'
-sw_css = f"{sw_icon}/sw_themes/css"
 
 vertex_src = """
 # version 330
@@ -118,6 +116,7 @@ def gl_main():
 
         shader = compileProgram(compileShader(vertex_src, GL_VERTEX_SHADER), compileShader(fragment_src, GL_FRAGMENT_SHADER))
 
+        # Vertex Arrays Object
         VAO = glGenVertexArrays(1)
         glBindVertexArray(VAO)
 
@@ -140,6 +139,7 @@ def gl_main():
         glEnableVertexAttribArray(2)
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, vertices.itemsize * 8, ctypes.c_void_p(24))
 
+        # Generate Textures
         texture = glGenTextures(1)
         glBindTexture(GL_TEXTURE_2D, texture)
 
@@ -151,13 +151,14 @@ def gl_main():
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
 
-        # load image
+        # Load Image
         image = Image.open(f"{sw_icon}/gui_icons/cube.png")
-        image = image.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
+#        image = image.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
         img_data = image.convert("RGBA").tobytes()
         # img_data = np.array(image.getdata(), np.uint8) # second way of getting the raw image data
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, img_data)
 
+        # Use Shader Program
         glUseProgram(shader)
         glClearColor(0.05, 0.05, 0.05, 1)
         glEnable(GL_DEPTH_TEST)
@@ -168,12 +169,12 @@ def gl_main():
 
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
 
+        # Rotation
         rot_x = pyrr.Matrix44.from_x_rotation(1.0 * time.time())
         rot_y = pyrr.Matrix44.from_y_rotation(1.0 * time.time())
         glUniformMatrix4fv(rotation_loc, 1, GL_FALSE, pyrr.matrix44.multiply(rot_x, rot_y))
 
         glDrawElements(GL_TRIANGLES, len(indices), GL_UNSIGNED_INT, None)
-#        gl_area.queue_draw()
 
     def on_window_redraw(widget, event):
         if gl_window.get_visible() is True:

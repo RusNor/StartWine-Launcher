@@ -136,8 +136,8 @@ msgid "Stop"
 msgstr "Остановить"
 
 #: StartWine-Tray:156
-msgid "Exit"
-msgstr "Выйти"
+msgid "Exit Tray"
+msgstr "Закрыть Трэй"
 
 #: sw_runlib:228
 #, sh-format
@@ -567,7 +567,10 @@ msgid ""
 "EasyAntCheat service required to run online games that use this service\n"
 "Preload d3d libraries\n"
 "Solves performance problems in some applications\n"
-"Hides the definition of nvidia video cards. Required to run some applications"
+"Hides the definition of nvidia video cards. Required to run some applications\n"
+"To run games using directx 8 and below, in dxvk mode\n"
+"Nvidia upscale data relay for FSR 2.0\n"
+"Nvidia DLSS advanced upscaling technologies for higher fps"
 msgstr ""
 "Установить параметры запуска, пример: -d3d9, -d3d11, -opengl\n"
 "Переопределить dll в текущем префиксе, например: amd_ags_x64=b,n\n"
@@ -609,8 +612,10 @@ msgstr ""
 "Предварительно загрузить библиотеки d3d\n"
 "Решает проблемы с производительностью и откликом в некоторых приложениях\n"
 "Скрывает определение видеокарт nvidia. Требуется для запуска некоторых "
-"приложений"
-
+"приложений\n"
+"Для запуска игр на основе directx 8 и ниже, в режиме dxvk\n"
+"Ретранслятор данных маcштабирования Nvidia DLSS для AMD FSR 2.0\n"
+"Nvidia DLSS передовые технологии апскейлинга для более высокой производительности"
 #: sw_menu.glade:2297
 msgid "StartWine"
 msgstr ""
@@ -1033,8 +1038,8 @@ msgid "INDICATORS"
 msgstr "ИНДИКАТОРЫ"
 
 #: sw_menu.glade:16813
-msgid "COLORS"
-msgstr "НАСТРОЙКИ ЦВЕТА"
+msgid "INDICATOR PARAMETERS"
+msgstr "ПАРАМЕТРЫ ИНДИКАТОРОВ"
 
 #: sw_menu.glade:16840
 msgid "PREVIEW"

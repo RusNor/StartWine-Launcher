@@ -24,8 +24,8 @@ sw_crier = Path(f"{sw_scripts}/sw_crier.py")
 ld_path_x86_64 = f"{sw_tools}/utils/libs/x86-64"
 ld_path_i386 = f"{sw_tools}/utils/libs/i386"
 gi_path = f"{sw_tools}/utils/libs/x86-64/gi_typelib"
-python_modules_3_10 = f"{sw_tools}/utils/libs/python3.10/site-packages"
-python_modules_3_9 = f"{sw_tools}/utils/libs/python3.9/site-packages"
+
+python_modules = f"{sw_tools}/utils/libs/python/site-packages"
 
 os.environ["LD_LIBRARY_PATH"] = os.pathsep + ld_path_i386 + os.pathsep + ld_path_x86_64
 os.environ["GI_TYPELIB_PATH"] = os.pathsep + gi_path
@@ -43,27 +43,18 @@ def start():
             run(f"{sw_main} \"{arg}\"", shell=True)
 
     except IndexError as e:
-        print('___set_default_sys_arg___')
+        print('<< start_sw_main_default >>')
         run(f"{sw_main}", shell=True)
 
 try:
     py_ver = str(platform.python_version())
+    print('\n-----------------< SW_START >-----------------\n')
+    print(f'<< python_version_{py_ver} >>')
 
-    if str('3.10') in py_ver:
-        print('___python_version___' + py_ver)
-        os.environ["PYTHONPATH"] = os.pathsep + python_modules_3_10
-        start()
-
-    elif str('3.9') in py_ver:
-        print('___python_version___' + py_ver)
-        os.environ["PYTHONPATH"] = os.pathsep + python_modules_3_9
-        start()
-
-    else:
-        info_text = f"Requires python version 3.9 and higher"
-        run(f"{sw_crier} -i {info_text}")
+    os.environ["PYTHONPATH"] = os.pathsep + python_modules
+    start()
 
 except IOError as e:
-    run(f"{sw_crier} -e {e}", shell=True)
-
+    info_text = f"{e}"
+    run(f'{sw_crier} -e {info_text}', shell=True)
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-################################___TRAY_360___:
+################################___TRAY___:
 
 import os
 import sys
@@ -59,14 +59,14 @@ if get_lang == ['export SW_USE_LANG=ru']:
         locale.setlocale(locale.LC_MESSAGES, ('ru_RU', 'UTF-8'))
         lang_ru.install
         _ = lang_ru.gettext
-        print('___ru_locale_is_set___')
+        print('<< sw_tray_ru_locale_is_set >>')
 
     except:
-        print('___ru_locale_not_found___')
+        print('<< sw_tray_ru_locale_not_found >>')
         locale.setlocale(locale.LC_MESSAGES, ('en_US', 'UTF-8'))
         lang_en.install
         _ = lang_en.gettext
-        print('___en_locale_is_set___')
+        print('<< sw_tray_en_locale_is_set >>')
         pass
 
 if get_lang == ['export SW_USE_LANG=en']:
@@ -75,10 +75,10 @@ if get_lang == ['export SW_USE_LANG=en']:
         locale.setlocale(locale.LC_MESSAGES, ('en_US', 'UTF-8'))
         lang_en.install
         _ = lang_en.gettext
-        print('___en_locale_is_set___')
+        print('<< sw_tray_en_locale_is_set >>')
 
     except:
-        print('___en_locale_not_found___')
+        print('<< sw_tray_en_locale_not_found >>')
         pass
 
 ################################___REQUIRE_VERSION___:
@@ -106,13 +106,13 @@ if appind == 1:
         indicator.set_menu(tray_menu())
         gtk.main()
 else:
-    print('___AppIndicator_not_found___')
+    print('<< AppIndicator_not_found >>')
 
 ################################___APPINDICATOR3___:
 
 def get_app_path():
 
-    app_default = f'env \"{sw_start}\" '
+    app_default = f'env \"{sw_main}\" '
     app_path = str(sw_rsh.read_text()).replace(app_default, '')
 
     if not Path(app_path).suffix:
@@ -169,7 +169,7 @@ def tray_menu():
     cmd_3.connect('activate', kill)
     menu.append(cmd_3)
 
-    exittray = gtk.MenuItem.new_with_label(_('Exit'))
+    exittray = gtk.MenuItem.new_with_label(_('Exit Tray'))
     exittray.connect('activate', quit)
     menu.append(exittray)
 
@@ -221,7 +221,6 @@ def kill(_):
 
             if 'sw_function.sh' in line:
                 pid = int(line.split()[1])
-                print(line)
                 os.kill(pid, 9)
 
     except:
@@ -240,5 +239,5 @@ try:
     if __name__ == "__main__":
         main()
 except:
-    print('___exit_tray___')
+    print('<< exit_tray >>')
 

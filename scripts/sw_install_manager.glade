@@ -22,32 +22,6 @@
         <property name="width">0</property>
         <property name="height">0</property>
         <child>
-          <object class="GtkImage" id="sw_black">
-            <property name="width-request">100</property>
-            <property name="height-request">80</property>
-            <property name="visible">True</property>
-            <property name="can-focus">False</property>
-          </object>
-        </child>
-        <child>
-          <object class="GtkImage" id="sw_bg">
-            <property name="width-request">100</property>
-            <property name="height-request">80</property>
-            <property name="visible">True</property>
-            <property name="can-focus">False</property>
-            <property name="opacity">0.25</property>
-          </object>
-        </child>
-        <child>
-          <object class="GtkImage" id="sw_bgw">
-            <property name="width-request">100</property>
-            <property name="height-request">80</property>
-            <property name="visible">True</property>
-            <property name="can-focus">False</property>
-            <property name="opacity">0.90</property>
-          </object>
-        </child>
-        <child>
           <object class="GtkScrolledWindow" id="sw_scrolled">
             <property name="width-request">100</property>
             <property name="height-request">80</property>

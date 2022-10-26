@@ -2,6 +2,7 @@
 
 import os
 import sys
+import platform
 import gi
 
 gi.require_version('Gtk', '3.0')
@@ -10,7 +11,7 @@ gi.require_version('Gdk', '3.0')
 from gi.repository import Gdk, GdkPixbuf, Gio, GLib, Gtk
 from pathlib import Path
 import subprocess
-from subprocess import *
+from subprocess import Popen, run, PIPE
 import threading
 from threading import Thread
 import shutil
@@ -44,11 +45,10 @@ sw_tools = Path(f"{sw_data}/tools")
 sw_wine = Path(f"{sw_data}/wine")
 sw_wine_custom = Path(f"{sw_data}/wine/wine_custom")
 sw_games = Path(f"{sw_path}/Games")
-sw_desktop = Path(f"{sw_path}/StartWine.desktop")
 
 sw_local = Path(f"{Path.home()}/.local/share/applications")
 sw_desktop_local = Path(f"{sw_local}/StartWine.desktop")
-swim_desktop = Path(f"{sw_local}/StartWine-Install-Manager.desktop")
+swim_desktop_local = Path(f"{sw_local}/StartWine-Install-Manager.desktop")
 
 sw_css = Path(f"{sw_icon}/sw_themes/css")
 
@@ -81,14 +81,14 @@ if get_lang == ['export SW_USE_LANG=ru']:
         locale.setlocale(locale.LC_MESSAGES, ('ru_RU', 'UTF-8'))
         lang_ru.install
         _ = lang_ru.gettext
-        print('___ru_locale_is_set___')
+        print('<< ru_locale_is_set >>')
 
     except:
-        print('___ru_locale_not_found___')
+        print('<< ru_locale_not_found >>')
         locale.setlocale(locale.LC_MESSAGES, ('en_US', 'UTF-8'))
         lang_en.install
         _ = lang_en.gettext
-        print('___en_locale_is_set___')
+        print('<< en_locale_is_set >>')
         pass
 
 if get_lang == ['export SW_USE_LANG=en']:
@@ -97,24 +97,25 @@ if get_lang == ['export SW_USE_LANG=en']:
         locale.setlocale(locale.LC_MESSAGES, ('en_US', 'UTF-8'))
         lang_en.install
         _ = lang_en.gettext
-        print('___en_locale_is_set___')
+        print('<< en_locale_is_set >>')
 
     except:
-        print('___en_locale_not_found___')
+        print('<< en_locale_not_found >>')
         pass
 
 ################___TOOL_VERSIONS___:
 
-sw_ver= f"v3.6.0"
+sw_ver= f"v3.6.2"
+proton_ge_ver = f"7-38"
 sp_ver = f"7.0.4"
-proton_ge_ver = f"7-30"
-stag_ver = f"7.15"
+stag_ver = f"7.19"
 lutris_ver = f"7.2"
-lutris_ge_ver = f"7-26"
+lutris_ge_ver = f"7-32"
 dxvk_ver = f"1.10.3"
 vkd3d_ver = f"2.6"
-utils_ver = f"v1.6"
+utils_ver = f"v1.8"
 anticheat_ver = f"v0.1"
+voodoo2_ver = f"2.79.1"
 default_wine = f"wine_steam_proton"
 
 ################___TOOL_URL___:
@@ -126,6 +127,7 @@ basalt_url = f"https://github.com/crosire/reshade-shaders/archive/master.zip"
 utils_url = f"https://github.com/RusNor/Utils-data/releases/download/utils-{utils_ver}/utils-{utils_ver}.tar.xz"
 anticheat_url= f"https://github.com/RusNor/AntiCheat-Runtime/releases/download/AntiCheat_Runtime-{anticheat_ver}/AntiCheat_Runtime-{anticheat_ver}.tar.xz"
 d3d_url = f"https://github.com/lutris/d3d_extras/releases/download/v2/v2.tar.xz"
+dgvoodoo2_url = f"https://github.com/lutris/dgvoodoo2/releases/download/v{voodoo2_ver}/dgvoodoo2-v{voodoo2_ver}.tar.xz"
 proton_url = f"https://github.com/RusNor/Wine-Steam-Proton/releases/download/steam-proton-{sp_ver}/steam-proton-{sp_ver}.tar.xz"
 proton_ge_url = f"https://github.com/GloriousEggroll/proton-ge-custom/releases/download/GE-Proton{proton_ge_ver}/GE-Proton{proton_ge_ver}.tar.gz"
 staging_url = f"https://github.com/Kron4ek/Wine-Builds/releases/download/{stag_ver}/wine-{stag_ver}-staging-amd64.tar.xz"
@@ -186,23 +188,17 @@ def on_install(self):
 def install():
 
     deps_inst = f"pkexec {sw_scripts}/sw_deps"
-    proc_deps = subprocess.Popen(deps_inst, shell=True, stdout=PIPE)
+    proc_deps = Popen(deps_inst, shell=True, stdout=PIPE)
 
     if Path(f"{Path.home()}/Games_tmp").exists():
         source = f"{Path.home()}/Games_tmp"
-        target = f"{Path.home()}/StartWine/Games"
+        target = f"{Path.home()}/.local/share/StartWine/Games"
         Path(source).rename(target)
 
     if Path(f"{Path.home()}/pfx_backup").exists():
         source = f"{Path.home()}/pfx_backup"
-        target = f"{Path.home()}/StartWine/data/pfx_backup"
+        target = f"{Path.home()}/.local/share/StartWine/data/pfx_backup"
         Path(source).rename(target)
-
-    if not sw_desktop.exists():
-        with open(sw_desktop, 'w') as d:
-            d.write(desktop_contents)
-
-        sw_desktop.chmod(0o755)
 
     if not sw_local.exists():
         sw_local.mkdir(parents=True, exist_ok=True)
@@ -213,28 +209,28 @@ def install():
 
         sw_desktop_local.chmod(0o755)
 
-    if not swim_desktop.exists():
-        with open(swim_desktop, 'w') as swim:
+    if not swim_desktop_local.exists():
+        with open(swim_desktop_local, 'w') as swim:
             swim.write(desktop_swim_contents)
 
-        swim_desktop.chmod(0o755)
+        swim_desktop_local.chmod(0o755)
 
     def wait_proc_deps():
 
         while proc_deps.poll() is None:
             pass
         else:
-            print(_('___dependency_installation_is_complete___'))
+            print('<< dependency_installation_is_complete >>')
 
             ###########___RUNTIME_DOWNLOAD___:
 
             if not Path(f"{sw_tools}/steam-runtime").exists():
 
                 crier_d = f"{sw_crier} -d '{runtime_url}' {sw_tmp}/steam-runtime.tar.xz"
-                proc_rt_dl = subprocess.run(crier_d, shell=True)
+                proc_rt_dl = run(crier_d, shell=True)
 
                 crier_tar = f"{sw_crier} -tar {sw_tmp}/steam-runtime.tar.xz {sw_tools}"
-                proc_rt_ext = subprocess.Popen(crier_tar, shell=True, start_new_session=True, stdout=PIPE)
+                proc_rt_ext = Popen(crier_tar, shell=True, start_new_session=True, stdout=PIPE)
 
                 def runtime_sysout():
 
@@ -247,7 +243,7 @@ def install():
                     pass
                 else:
                     rt_setup = f"{sw_tools}/steam-runtime/setup.sh --force"
-                    proc_rt_setup = subprocess.run(rt_setup, shell=True)
+                    proc_rt_setup = run(rt_setup, shell=True)
 
                     if Path(f"{sw_tools}/steam-runtime").exists():
                         Path(f"{sw_tmp}/steam-runtime.tar.xz").unlink()
@@ -262,10 +258,10 @@ def install():
                     pass
 
                 crier_d = f"{sw_crier} -d '{dxvk_url}' {sw_tmp}/dxvk-{dxvk_ver}.tar.gz"
-                proc_dxvk_dl = subprocess.run(crier_d, shell=True)
+                proc_dxvk_dl = run(crier_d, shell=True)
 
                 crier_tar = f"{sw_crier} -tar {sw_tmp}/dxvk-{dxvk_ver}.tar.gz {sw_tools}/vulkan"
-                proc_dxvk_ext = subprocess.Popen(crier_tar, shell=True, start_new_session=True, stdout=PIPE)
+                proc_dxvk_ext = Popen(crier_tar, shell=True, start_new_session=True, stdout=PIPE)
 
                 def dxvk_sysout():
 
@@ -291,13 +287,13 @@ def install():
                     pass
 
                 crier_d = f"{sw_crier} -d '{vkd3d_url}' {sw_tmp}/vkd3d-proton-{vkd3d_ver}.tar.zst"
-                proc_vkd3d_dl = subprocess.run(crier_d, shell=True)
+                proc_vkd3d_dl = run(crier_d, shell=True)
 
                 unzstd = f"unzstd {sw_tmp}/vkd3d-proton-{vkd3d_ver}.tar.zst"
-                subprocess.run(unzstd, shell=True)
+                run(unzstd, shell=True)
 
                 crier_tar = f"{sw_crier} -tar {sw_tmp}/vkd3d-proton-{vkd3d_ver}.tar {sw_tools}/vulkan"
-                proc_vkd3d_ext = subprocess.Popen(crier_tar, shell=True, start_new_session=True, stdout=PIPE)
+                proc_vkd3d_ext = Popen(crier_tar, shell=True, start_new_session=True, stdout=PIPE)
 
                 def vkd3d_sysout():
 
@@ -326,10 +322,10 @@ def install():
                 Path(f"{sw_tools}/vkBasalt").mkdir(parents=True, exist_ok=True)
 
                 crier_d = f"{sw_crier} -d '{basalt_url}' {sw_tmp}/master.zip"
-                proc_basalt_dl = subprocess.run(crier_d, shell=True)
+                proc_basalt_dl = run(crier_d, shell=True)
 
                 crier_zip = f"{sw_crier} -zip {sw_tmp}/master.zip {sw_tmp}"
-                proc_basalt_ext = subprocess.Popen(crier_zip, shell=True, start_new_session=True, stdout=PIPE)
+                proc_basalt_ext = Popen(crier_zip, shell=True, start_new_session=True, stdout=PIPE)
 
                 def basalt_sysout():
 
@@ -362,10 +358,10 @@ def install():
                     pass
 
                 crier_d = f"{sw_crier} -d '{utils_url}' {sw_tmp}/utils-{utils_ver}.tar.xz"
-                proc_utils_dl = subprocess.run(crier_d, shell=True)
+                proc_utils_dl = run(crier_d, shell=True)
 
                 crier_tar = f"{sw_crier} -tar {sw_tmp}/utils-{utils_ver}.tar.xz {sw_tools}"
-                proc_utils_ext = subprocess.Popen(crier_tar, shell=True, start_new_session=True, stdout=PIPE)
+                proc_utils_ext = Popen(crier_tar, shell=True, start_new_session=True, stdout=PIPE)
 
                 def utils_sysout():
 
@@ -378,6 +374,13 @@ def install():
                     pass
                 else:
                     Path(f"{sw_tmp}/utils-{utils_ver}.tar.xz").unlink()
+
+                    shutil.copytree(Path(f"{sw_tools}/utils/dlss_extras"), Path(f"{sw_tools}/dlss_extras"))
+
+                    try:
+                        shutil.rmtree(Path(f"{sw_tools}/utils/dlss_extras"))
+                    except:
+                        pass
 
                     for line in mango32.read_text().split('\n'):
                         if str('nobody') in line:
@@ -397,7 +400,7 @@ def install():
 
             ############___ANTICHEAT_RUNTIME_DOWNLOAD__:
 
-            if not Path(f"{sw_tools}/Proton_EasyAntiCheat_Runtime").exists():
+            if not Path(f"{sw_tools}/anticheat_runtime/Proton_EasyAntiCheat_Runtime").exists():
 
                 try:
                     Path(f"{sw_tmp}/AntiCheat_Runtime-{anticheat_ver}.tar.xz").unlink()
@@ -406,10 +409,10 @@ def install():
                     pass
 
                 crier_d = f"{sw_crier} -d '{anticheat_url}' {sw_tmp}/AntiCheat_Runtime-{anticheat_ver}.tar.xz"
-                proc_anticheat_dl = subprocess.run(crier_d, shell=True)
+                proc_anticheat_dl = run(crier_d, shell=True)
 
                 crier_tar = f"{sw_crier} -tar {sw_tmp}/AntiCheat_Runtime-{anticheat_ver}.tar.xz {sw_tmp}"
-                proc_anticheat_ext = subprocess.Popen(crier_tar, shell=True, start_new_session=True, stdout=PIPE)
+                proc_anticheat_ext = Popen(crier_tar, shell=True, start_new_session=True, stdout=PIPE)
 
                 def anticheat_sysout():
 
@@ -422,11 +425,11 @@ def install():
                     pass
                 else:
                     be_source = Path(f"{sw_tmp}/AntiCheat_Runtime-{anticheat_ver}/Proton_BattlEye_Runtime")
-                    be_target = Path(f"{sw_tools}/Proton_BattlEye_Runtime")
+                    be_target = Path(f"{sw_tools}/anticheat_runtime/Proton_BattlEye_Runtime")
                     shutil.copytree(be_source, be_target)
 
                     ea_source = Path(f"{sw_tmp}/AntiCheat_Runtime-{anticheat_ver}/Proton_EasyAntiCheat_Runtime")
-                    ea_target = Path(f"{sw_tools}/Proton_EasyAntiCheat_Runtime")
+                    ea_target = Path(f"{sw_tools}/anticheat_runtime/Proton_EasyAntiCheat_Runtime")
                     shutil.copytree(ea_source, ea_target)
 
                     try:
@@ -447,10 +450,10 @@ def install():
                     pass
 
                 crier_d = f"{sw_crier} -d '{d3d_url}' {sw_tmp}/v2.tar.xz"
-                proc_d3d_dl = subprocess.run(crier_d, shell=True)
+                proc_d3d_dl = run(crier_d, shell=True)
 
                 crier_tar = f"{sw_crier} -tar {sw_tmp}/v2.tar.xz {sw_tmp}"
-                proc_d3d_ext = subprocess.Popen(crier_tar, shell=True, start_new_session=True, stdout=PIPE)
+                proc_d3d_ext = Popen(crier_tar, shell=True, start_new_session=True, stdout=PIPE)
 
                 def d3d_sysout():
 
@@ -476,6 +479,46 @@ def install():
                     except:
                         pass
 
+            ############___DGVOODOO2_DOWNLOAD___:
+
+            if not Path(f"{sw_tools}/dgvoodoo2/x32").exists():
+
+                try:
+                    shutil.rmtree(Path(f"{sw_tools}/dgvoodoo2/x32"))
+                    Path(f"{sw_tmp}/dgvoodoo2-v{voodoo2_ver}.tar.xz").unlink()
+                except:
+                    pass
+
+                crier_d = f"{sw_crier} -d '{dgvoodoo2_url}' {sw_tmp}/dgvoodoo2-v{voodoo2_ver}.tar.xz"
+                proc_dgvoodoo2_dl = run(crier_d, shell=True)
+
+                crier_tar = f"{sw_crier} -tar {sw_tmp}/dgvoodoo2-v{voodoo2_ver}.tar.xz {sw_tmp}"
+                proc_dgvoodoo2_ext = Popen(crier_tar, shell=True, start_new_session=True, stdout=PIPE)
+
+                def dgvoodoo2_sysout():
+
+                    sysout.insert(sysout.get_end_iter(), non_block_read(proc_dgvoodoo2_ext.stdout), -1)
+                    return proc_dgvoodoo2_ext.poll() is None
+
+                GLib.timeout_add(10, dgvoodoo2_sysout)
+
+                while proc_dgvoodoo2_ext.poll() is None:
+                    pass
+                else:
+                    dgvoodoo2x32_source = Path(f"{sw_tmp}/dgvoodoo2-v{voodoo2_ver}/x32")
+                    dgvoodoo2x32_target = Path(f"{sw_tools}/dgvoodoo2/x32")
+                    shutil.copytree(dgvoodoo2x32_source, dgvoodoo2x32_target)
+
+                    dgvoodoo2_conf_source = Path(f"{sw_tmp}/dgvoodoo2-v{voodoo2_ver}/dgVoodoo.conf")
+                    dgvoodoo2_conf_target = Path(f"{sw_tools}/dgvoodoo2/dgVoodoo.conf")
+                    shutil.copy2(dgvoodoo2_conf_source, dgvoodoo2_conf_target)
+
+                    try:
+                        shutil.rmtree(Path(f"{sw_tmp}/dgvoodoo2-v{voodoo2_ver}"))
+                        Path(f"{sw_tmp}/dgvoodoo2-v{voodoo2_ver}.tar.xz").unlink()
+                    except:
+                        pass
+
             ############___STEAM_PROTON_DOWNLOAD___:
 
             if btn_check_proton.get_active():
@@ -491,17 +534,17 @@ def install():
                         pass
 
                     crier_d = f"{sw_crier} -d '{proton_url}' {proton_tmp_dir}.tar.xz"
-                    proc_proton_dl = subprocess.run(crier_d, shell=True)
+                    proc_proton_dl = run(crier_d, shell=True)
 
-                    os_read = Path(f'/etc/os-release').read_text()
+                    py_ver = str(platform.python_version())
 
-                    if f'Debian' in os_read or f'neon' in os_read :
+                    if f'3.8' in py_ver or f'3.9' in py_ver :
 
                         crier_tar = f"{sw_crier} -tar {proton_tmp_dir}.tar.xz {sw_tmp}"
-                        proc_proton_ext = subprocess.run(crier_tar, shell=True)
+                        proc_proton_ext = run(crier_tar, shell=True)
 
                         iter_text = sysout.get_end_iter()
-                        sysout.insert(iter_text, f'\n___Extraction_completed_sucsessfully___')
+                        sysout.insert(iter_text, f'\n___Extraction_completed_sucsessfully >>')
 
                         for child in proton_tmp_dir.iterdir():
                             if child.stem != f"version":
@@ -522,7 +565,7 @@ def install():
                     else:
 
                         crier_tar = f"{sw_crier} -tar {proton_tmp_dir}.tar.xz {sw_tmp}"
-                        proc_proton_ext = subprocess.Popen(crier_tar, shell=True, start_new_session=True, stdout=PIPE)
+                        proc_proton_ext = Popen(crier_tar, shell=True, start_new_session=True, stdout=PIPE)
 
                         def proton_sysout():
 
@@ -577,10 +620,10 @@ def install():
                         pass
 
                     crier_d = f"{sw_crier} -d '{staging_url}' {staging_tmp_dir}.tar.xz"
-                    proc_staging_dl = subprocess.run(crier_d, shell=True)
+                    proc_staging_dl = run(crier_d, shell=True)
 
                     crier_tar = f"{sw_crier} -tar {staging_tmp_dir}.tar.xz {sw_tmp}"
-                    proc_staging_ext = subprocess.run(crier_tar, shell=True)
+                    proc_staging_ext = run(crier_tar, shell=True)
 
                     for child in staging_tmp_dir.iterdir():
                         shutil.copytree(child , Path(f"{sw_wine}/wine_staging/{child.stem}"))
@@ -608,10 +651,10 @@ def install():
                         pass
 
                     crier_d = f"{sw_crier} -d '{proton_ge_url}' {proton_ge_tmp_dir}.tar.gz"
-                    proc_proton_ge_dl = subprocess.run(crier_d, shell=True)
+                    proc_proton_ge_dl = run(crier_d, shell=True)
 
                     crier_tar = f"{sw_crier} -tar {proton_ge_tmp_dir}.tar.gz {sw_tmp}"
-                    proc_proton_ge_ext = subprocess.run(crier_tar, shell=True)
+                    proc_proton_ge_ext = run(crier_tar, shell=True)
 
                     for child in Path(f"{proton_ge_tmp_dir}/files").iterdir():
                         shutil.copytree(child , Path(f"{sw_wine}/wine_proton_ge/{child.stem}"))
@@ -671,10 +714,10 @@ def install():
                         pass
 
                     crier_d = f"{sw_crier} -d '{lutris_url}' {lutris_tmp_tar}"
-                    proc_lutris_dl = subprocess.run(crier_d, shell=True)
+                    proc_lutris_dl = run(crier_d, shell=True)
 
                     crier_tar = f"{sw_crier} -tar {lutris_tmp_tar} {sw_tmp}"
-                    proc_lutris_ext = subprocess.run(crier_tar, shell=True)
+                    proc_lutris_ext = run(crier_tar, shell=True)
 
                     for child in lutris_tmp_dir.iterdir():
                         shutil.copytree(child , Path(f"{sw_wine}/wine_lutris/{child.stem}"))
@@ -709,10 +752,10 @@ def install():
                         pass
 
                     crier_d = f"{sw_crier} -d '{lutris_ge_url}' {lutris_ge_tmp_tar}"
-                    proc_wine_ge_dl = subprocess.run(crier_d, shell=True)
+                    proc_wine_ge_dl = run(crier_d, shell=True)
 
                     crier_tar = f"{sw_crier} -tar {lutris_ge_tmp_tar} {sw_tmp}"
-                    proc_wine_ge_ext = subprocess.run(crier_tar, shell=True)
+                    proc_wine_ge_ext = run(crier_tar, shell=True)
 
                     for child in lutris_ge_tmp_dir.iterdir():
                         shutil.copytree(child , Path(f"{sw_wine}/wine_lutris_ge/{child.stem}"))
@@ -783,7 +826,7 @@ def progress():
     else:
         staging_size = 0
 
-    fullsize = 1822 + int(sw_games_size/1048576) + int(sw_backup_size/1048576) + int(lutris_ge_size) + int(lutris_size) + int(proton_ge_size) + int(staging_size)
+    fullsize = 2197 + int(sw_games_size/1048576) + int(sw_backup_size/1048576) + int(lutris_ge_size) + int(lutris_size) + int(proton_ge_size) + int(staging_size)
 
     if int(sw_dir_size/1048576) >= fullsize:
 
@@ -793,7 +836,7 @@ def progress():
             progressbar.set_text(_('UPDATE...'))
 
             try:
-                p = subprocess.Popen(['ps', '-AF'], stdout=subprocess.PIPE, encoding='UTF-8')
+                p = Popen(['ps', '-AF'], stdout=PIPE, encoding='UTF-8')
                 out, err = p.communicate()
 
                 for line in out.splitlines():
@@ -807,7 +850,7 @@ def progress():
                     p_label.set_label(_('UPDATE COMPLETED SUCCESSFULLY'))
 
             except (IndexError, OSError) as e:
-                print(_('___process_error___'))
+                print('<< process_error >>')
 
         GLib.timeout_add(200, pulse_bar)
 
@@ -846,21 +889,19 @@ def set_next_page():
 
     prev_page = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
     next_page = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0]
-    theme = [
+    css_theme = [
         'red', 'yellow', 'brown', 'grey', 'black', 'black', 'red', 'blue',
         'grey', 'blue', 'yellow', 'green', 'green', 'brown', 'purple', 'purple'
         ]
 
-    for p, n, t in zip(prev_page, next_page, theme):
+    for p, n, t in zip(prev_page, next_page, css_theme):
 
         if image_stack.get_visible_child_name() == str('page{0}'.format(p)):
 
             image_stack.set_visible_child_name('page{0}'.format(n))
-            color_num = str('{0}'.format(t))
-            img_path = f"{sw_icon}/sw_themes/4k/sw_bg_{color_num}"
-            image = builder.get_object("sw_bg")
-            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(width)/num_screen, int(height), preserve_aspect_ratio=True)
-            image.set_from_pixbuf(pixbuf)
+            css_color = str('{0}'.format(t))
+            css_path= f"{sw_css}/{css_color}/gtk-3.0/gtk.css"
+            provider.load_from_path(css_path)
             return True
 
 def sw_size(sw_path):
@@ -905,8 +946,8 @@ def sw_pfx_backup_size(sw_pfx_backup):
 def restart():
 
     window.close()
-    cmd = f"{sw_start}"
-    subprocess.Popen(cmd, shell=True, start_new_session=True)
+    cmd = f"{sw_main}"
+    Popen(cmd, shell=True, start_new_session=True)
 
 def on_btn_advanced(self):
     main_stack.set_visible_child_name('wine_grid')
@@ -939,18 +980,18 @@ def on_remove(self):
             if sw_path.exists():
 
                 cmd_mv_games = f"mv {sw_path}/Games {Path.home()}/Games_tmp"
-                subprocess.run(cmd_mv_games, shell=True)
+                run(cmd_mv_games, shell=True)
 
                 cmd_mv_pfx = f"mv {sw_path}/data/pfx_backup {Path.home()}/pfx_backup"
-                subprocess.run(cmd_mv_pfx, shell=True)
+                run(cmd_mv_pfx, shell=True)
 
                 shutil.rmtree(sw_path)
 
                 try:
                     sw_desktop_local.unlink()
-                    swim_desktop.unlink()
+                    swim_desktop_local.unlink()
                 except:
-                    print('___StartWine_local_path_not_exists___')
+                    print('<< StartWine_local_path_not_exists >>')
 
                 def on_info():
 
@@ -966,7 +1007,7 @@ def on_remove(self):
                     )
                     dialog.set_default_size(320, 120)
                     dialog.run()
-                    print(_("INFO dialog closed"))
+                    print('<< INFO dialog closed >>')
 
                     dialog.destroy()
 
@@ -975,7 +1016,7 @@ def on_remove(self):
                 on_info()
 
         elif response == Gtk.ResponseType.NO:
-            print(_("Cancel"))
+            print('<< Cancel >>')
 
         dialog.destroy()
     on_question(q)
@@ -1077,6 +1118,12 @@ builder = Gtk.Builder()
 builder.add_from_file(f"{sw_scripts}/sw_install_manager.glade")
 
 css_name = f"{sw_css}/blue/gtk-3.0/gtk.css"
+screen = Gdk.Screen.get_default()
+provider = Gtk.CssProvider()
+style_context = Gtk.StyleContext()
+style_context.add_provider_for_screen(
+    screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+    )
 
 def get_resolution():
 
@@ -1103,18 +1150,7 @@ def set_css():
     def get_css(css_name):
 
         css = css_name
-        screen = Gdk.Screen.get_default()
-        provider = Gtk.CssProvider()
-        style_context = Gtk.StyleContext()
-        style_context.add_provider_for_screen(
-            screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-        )
         provider.load_from_path(css)
-
-        img_path = f"{sw_icon}/sw_themes/4k/sw_bg_blue"
-        image = builder.get_object("sw_bg")
-        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(width)/num_screen, int(height), preserve_aspect_ratio=True)
-        image.set_from_pixbuf(pixbuf)
 
     get_css(css_name)
 set_css()
@@ -1131,8 +1167,8 @@ set_size()
 
 image_stack.set_visible_child_name('page16')
 
-sw_black = builder.get_object("sw_black")
-sw_black.set_from_file(f"{sw_icon}/gui_icons/sw_black_img")
+#sw_black = builder.get_object("sw_black")
+#sw_black.set_from_file(f"{sw_icon}/gui_icons/sw_black_img")
 
 sysout_icon = builder.get_object("sysout_icon")
 sysout_icon.set_from_file(f"{sw_icon}/gui_icons/go-next-symbolic.svg")

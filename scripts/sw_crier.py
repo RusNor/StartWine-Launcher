@@ -5,10 +5,10 @@ import sys
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gdk', '3.0')
-from gi.repository import Gdk, GdkPixbuf, Gio, GLib, GObject, Gtk, Pango
+from gi.repository import Gdk, GdkPixbuf, Gio, GLib, GObject, Gtk
 from pathlib import Path
 import subprocess
-from subprocess import *
+from subprocess import run
 import threading
 from threading import Thread, Event
 import urllib.request
@@ -24,7 +24,6 @@ try:
     from OpenGL.GL import shaders
     import numpy as np
     from PIL import Image
-
 except:
     pass
 
@@ -39,14 +38,15 @@ crier_title = f"StartWine"
 
 themes = ['black','grey','white', 'blue','purple','red','green','yellow','brown']
 
-backgrounds = ['sw_bg_black','sw_bg_grey','sw_bg_white','sw_bg_blue',
-    'sw_bg_purple','sw_bg_red','sw_bg_green','sw_bg_yellow','sw_bg_brown'
-    ]
+window = None
+dialog = None
+view = None
+filechooser = None
 
 try:
     m = str(sys.argv[1])
 except IndexError as e:
-    print("___no_arguments_specified_set_argument_default___")
+    print('<< start_sw_crier_default >>')
     m = str("")
 
 def get_out():
@@ -70,6 +70,52 @@ def get_css(css_name):
     )
     provider.load_from_path(css)
 
+def get_gradient_css(window, dialog, view, filechooser):
+
+    proc_vga = run(f"lspci | grep VGA", shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
+    grep_vga = str(proc_vga.stdout[0:]).replace('\n', '')
+
+    if not str('NVIDIA') in grep_vga:
+
+        try:
+            gc = Path(f"{sw_app_config}/.default")
+            gcread = gc.read_text().split('\n')
+
+            for line in gcread:
+                sw_theme = line.replace('export SW_USE_THEME=', '')
+                if sw_theme in themes:
+                    css_name = f"{sw_css}/{sw_theme}/gtk-3.0/toggle.css"
+        except:
+            pass
+
+        if not window is None:
+            provider_window = Gtk.CssProvider()
+            provider_window.load_from_path(css_name)
+            window.get_style_context().add_provider(
+                provider_window, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+                )
+
+        if not view is None:
+            provider_view = Gtk.CssProvider()
+            provider_view.load_from_path(css_name)
+            view.get_style_context().add_provider(
+                provider_view, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+                )
+
+        if not dialog is None:
+            provider_dialog = Gtk.CssProvider()
+            provider_dialog.load_from_path(css_name)
+            dialog.get_style_context().add_provider(
+                provider_dialog, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+                )
+
+        if not filechooser is None:
+            provider_filechooser = Gtk.CssProvider()
+            provider_filechooser.load_from_path(css_name)
+            filechooser.get_style_context().add_provider(
+                provider_filechooser, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+                )
+
 def on_theme():
 
     try:
@@ -81,20 +127,6 @@ def on_theme():
             if sw_theme in themes:
                 css_name = f"{sw_css}/{sw_theme}/gtk-3.0/gtk.css"
                 get_css(css_name)
-
-                for t, b in zip(themes, backgrounds):
-                    if sw_theme == str('{0}'.format(t)):
-                        color = str('{0}'.format(b))
-                        img_path = f"{sw_icon}/sw_themes/4k/{color}"
-
-                        if color == 'sw_bg_white':
-                            image = builder.get_object("sw_bgrw")
-                        else:
-                            image = builder.get_object("sw_bgr")
-
-                        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(img_path, int(width), int(height), preserve_aspect_ratio=False)
-                        image.set_from_pixbuf(pixbuf)
-                        print(f'___THEME___:\n___{sw_theme}_theme_ACTIVE___\n')
     except:
         pass
 
@@ -113,12 +145,14 @@ class sw_crier():
             buttons=Gtk.ButtonsType.OK,
             text=f"{crier_title} INFO",
         )
+        get_gradient_css(window, dialog, view, filechooser)
+
         dialog.format_secondary_text(
             text_info
         )
         dialog.set_default_size(320, 120)
         dialog.run()
-        print("___INFO_dialog_closed___")
+        print('<< INFO_dialog_closed >>')
 
         dialog.destroy()
 
@@ -136,12 +170,14 @@ class sw_crier():
             buttons=Gtk.ButtonsType.CANCEL,
             text=f"{crier_title} ERROR",
         )
+        get_gradient_css(window, dialog, view, filechooser)
+
         dialog.format_secondary_text(
             text_error
         )
         dialog.set_default_size(320, 120)
         dialog.run()
-        print("___ERROR_dialog_closed___")
+        print('<< ERROR_dialog_closed >>')
 
         dialog.destroy()
 
@@ -159,6 +195,8 @@ class sw_crier():
             buttons=Gtk.ButtonsType.OK_CANCEL,
             text=f"{crier_title} WARNING",
         )
+        get_gradient_css(window, dialog, view, filechooser)
+
         dialog.format_secondary_text(
             text_warn
         )
@@ -188,6 +226,8 @@ class sw_crier():
             buttons=Gtk.ButtonsType.YES_NO,
             text=f"{crier_title} QUESTION",
         )
+        get_gradient_css(window, dialog, view, filechooser)
+
         dialog.format_secondary_text(
             text_quest
         )
@@ -213,23 +253,31 @@ class sw_crier():
 
 #######################___TEXT_INFO___:
 
-    def text_info(t):
+    def text_info(text_edit_name):
 
         def on_response(dialog, response):
+
             if response == Gtk.ResponseType.OK:
                 p = print("0")
-                Gtk.main_quit()
+                startIter, endIter = buffer.get_bounds()
+                get_text = buffer.get_text(startIter, endIter, False)
+                text_edit_name.write_text(get_text)
                 return p
             else:
-                print("___Dialog_closed___")
+                print('<< Text_Info_closed >>')
 
         dialog = Gtk.Dialog()
-        dialog.set_title("Dialog")
+        get_title = str(Path(text_edit_name.stem))
+        dialog.set_title(get_title)
         dialog.set_default_size(960, 540)
-        dialog.add_button("_OK", Gtk.ResponseType.OK)
+        dialog.add_button("_SAVE", Gtk.ResponseType.OK)
         dialog.connect("response", on_response)
         view = Gtk.TextView()
-        text = t
+        view.set_top_margin(16)
+        view.set_left_margin(16)
+        view.set_right_margin(16)
+        view.set_bottom_margin(16)
+        text = text_edit_name.read_text()
         buffer = view.get_buffer()
         buffer.set_text(text)
         view.set_vexpand(True)
@@ -239,11 +287,12 @@ class sw_crier():
         dialog.vbox.add(scrolled)
         dialog.connect("destroy", Gtk.main_quit)
         dialog.show_all()
+        get_gradient_css(window, dialog, view, filechooser)
         Gtk.main()
 
     if m == str("-t"):
-        t = str(sys.argv[2])
-        text_info(t)
+        text_edit_name = Path(sys.argv[2])
+        text_info(text_edit_name)
 
 ####################___FILE_CHOOSER_WINDOW___:
 
@@ -251,44 +300,58 @@ class sw_crier():
 
         path = fl
 
-        def add_filters(dialog):
+        def add_filters(filechooser):
+
+            filter_text = Gtk.FileFilter()
+            filter_text.set_name("Exe files")
+            filter_text.add_mime_type("application/x-ms-dos-executable")
+            filechooser.add_filter(filter_text)
+
             filter_text = Gtk.FileFilter()
             filter_text.set_name("Text files")
             filter_text.add_mime_type("text/plain")
-            dialog.add_filter(filter_text)
+            filechooser.add_filter(filter_text)
 
             filter_py = Gtk.FileFilter()
             filter_py.set_name("Python files")
             filter_py.add_mime_type("text/x-python")
-            dialog.add_filter(filter_py)
+            filechooser.add_filter(filter_py)
 
             filter_any = Gtk.FileFilter()
             filter_any.set_name("Any files")
             filter_any.add_pattern("*")
-            dialog.add_filter(filter_any)
+            filechooser.add_filter(filter_any)
 
-        dialog = Gtk.FileChooserDialog(
-            title="Please choose a file", action=Gtk.FileChooserAction.OPEN
-        )
-        dialog.add_buttons(
+        filechooser = Gtk.FileChooserDialog(
+            title = f"{crier_title}",
+            action=Gtk.FileChooserAction.OPEN
+            )
+        filechooser.add_buttons(
             Gtk.STOCK_CANCEL,
             Gtk.ResponseType.CANCEL,
             Gtk.STOCK_OPEN,
-            Gtk.ResponseType.OK,
-        )
+            Gtk.ResponseType.OK
+            )
 
-        add_filters(dialog)
-        dialog.set_current_folder(path)
+        get_gradient_css(window, dialog, view, filechooser)
 
-        response = dialog.run()
+        add_filters(filechooser)
+        filechooser.set_current_folder(path)
+        filechooser.set_default_size(960, 540)
+
+        response = filechooser.run()
 
         if response == Gtk.ResponseType.OK:
-            print("___Open_clicked___")
-            print(dialog.get_filename())
-        elif response == Gtk.ResponseType.CANCEL:
-            print("___Cancel_clicked___")
+            app_path = filechooser.get_filename()
+            filechooser.destroy()
+            return app_path
 
-        dialog.destroy()
+        elif response == Gtk.ResponseType.CANCEL:
+            app_path = None
+            filechooser.destroy()
+            return app_path
+
+        filechooser.destroy()
 
     if m == str("-fl"):
         fl = str(sys.argv[2])
@@ -298,40 +361,33 @@ class sw_crier():
 
         path = fd
 
-        def add_filters(dialog):
+        def add_filters(filechooser):
             filter_text = Gtk.FileFilter()
             filter_text.set_name("Any files")
             filter_text.add_mime_type("*")
-            dialog.add_filter(filter_text)
+            filechooser.add_filter(filter_text)
 
-            filter_py = Gtk.FileFilter()
-            filter_py.set_name("Python files")
-            filter_py.add_mime_type("text/x-python")
-            dialog.add_filter(filter_py)
-
-            filter_any = Gtk.FileFilter()
-            filter_any.set_name("Text files")
-            filter_any.add_pattern("text/plain")
-            dialog.add_filter(filter_any)
-
-        dialog = Gtk.FileChooserDialog(
-            title="Please choose a folder",
-            action=Gtk.FileChooserAction.SELECT_FOLDER,
-        )
-        dialog.add_buttons(
+        filechooser = Gtk.FileChooserDialog(
+            title = f"{crier_title}",
+            action=Gtk.FileChooserAction.SELECT_FOLDER
+            )
+        filechooser.add_buttons(
             Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, "Select", Gtk.ResponseType.OK
-        )
-        dialog.set_current_folder(path)
+            )
+        filechooser.set_current_folder(path)
 
-        response = dialog.run()
+        get_gradient_css(window, dialog, view, filechooser)
+
+        response = filechooser.run()
 
         if response == Gtk.ResponseType.OK:
-            print("___Select_clicked___")
-            print(dialog.get_filename())
+            app_folder = filechooser.get_filename()
+            filechooser.destroy()
+            return app_folder
         elif response == Gtk.ResponseType.CANCEL:
-            print("___Cancel_clicked___")
-
-        dialog.destroy()
+            app_folder = ''
+            filechooser.destroy()
+            return app_folder
 
     if m == str("-fd"):
         fd = str(sys.argv[2])
@@ -367,6 +423,7 @@ class sw_crier():
                     window.connect("destroy", Gtk.main_quit)
                     window.show_all()
                     event.set()
+                    get_gradient_css(window, dialog, view, filechooser)
                     Gtk.main()
                 Thread(target=guiloop).start()
             event.wait(1)
@@ -383,7 +440,7 @@ class sw_crier():
                         progressbar.set_fraction(percent)
                 GLib.timeout_add(50, bar)
             if percent >= 1:
-                print(f'___download_completed_successfully___')
+                print(f'<< download_completed_successfully >>')
                 quit = GLib.timeout_add(100, Gtk.main_quit)
 
         try:
@@ -397,7 +454,7 @@ class sw_crier():
 
             except HTTPError as e:
                 print(e)
-                print(f'___try_sending_a_request_with_headers___')
+                print(f'<< try_sending_a_request_with_headers >>')
 
                 url_rq = Request(url, headers={"User-Agent": "Mozilla/5.0"})
 
@@ -411,7 +468,7 @@ class sw_crier():
                     reporthook(blocknum, blocksize, totalsize)
                     shutil.copyfileobj(response, out_file)
 
-                    print(f'___download_completed_successfully___')
+                    print(f'<< download_completed_successfully >>')
 
                     quit = GLib.timeout_add(100, Gtk.main_quit)
 
@@ -458,6 +515,7 @@ class sw_crier():
                     window.add(grid)
                     window.connect("destroy", Gtk.main_quit)
                     window.show_all()
+                    get_gradient_css(window, dialog, view, filechooser)
                     event.set()
                     Gtk.main()
                 Thread(target=guiloop).start()
@@ -475,10 +533,10 @@ class sw_crier():
                     progressbar.set_show_text(True)
                     progressbar.set_text(filename)
                     for member_info in taro.getmembers():
-                        print("- extracting: " + member_info.name)
+                        print('<< extracting >>' + member_info.name)
                         taro.extract(member_info, path=path)
                     taro.close()
-                    print(f'___extraction_completed_successfully___')
+                    print(f'<< extraction_completed_successfully >>')
                     quit = GLib.timeout_add(100, Gtk.main_quit)
                 except:
                     quit = GLib.timeout_add(100, Gtk.main_quit)
@@ -521,6 +579,7 @@ class sw_crier():
                     window.add(grid)
                     window.connect("destroy", Gtk.main_quit)
                     window.show_all()
+                    get_gradient_css(window, dialog, view, filechooser)
                     event.set()
                     Gtk.main()
                 Thread(target=guiloop).start()
@@ -538,10 +597,10 @@ class sw_crier():
                     progressbar.set_show_text(True)
                     progressbar.set_text(filename)
                     for member_info in zipo.namelist():
-                        print("- extracting: " + member_info)
+                        print('<< extracting >>' + member_info)
                         zipo.extract(member_info, path=path)
                     zipo.close()
-                    print(f'___extraction_completed_successfully___')
+                    print(f'<< extraction_completed_successfully >>')
                     quit = GLib.timeout_add(100, Gtk.main_quit)
                 except:
                     quit = GLib.timeout_add(100, Gtk.main_quit)
@@ -609,8 +668,8 @@ class sw_crier():
 
             ctx = gl_area.get_context()
             gues = gl_area.get_use_es()
-            print("realized", ctx)
-            print("realized", gues)
+            print('realized', ctx)
+            print('realized', gues)
 
         def on_render(gl_area, ctx):
 
@@ -732,19 +791,25 @@ class sw_crier():
         Gtk.main()
 
     if m == str("-opengl"):
-        gl_main()
+        try:
+            from OpenGL.GL import shaders
+        except:
+            e = "python3 opengl, numpy, pillow packages required"
+            on_error(e)
+        else:
+            gl_main()
 
     def helper():
         print("-i    'text'                                   Info dialog window\n"
             "-e    'text'                                   Error dialog window\n"
             "-w    'text'                                   Warning dialog window\n"
             "-q    'text'                                   Question dialog window\n"
-            "-t    'text'                                   Text-info dialog window\n"
-            "-fl   'path'                                   File chooser dialog window\n"
-            "-fd   'path'                                   Directory chooser dialog window\n"
+            "-t    'path to text file'                      Text dialog window\n"
+            "-fl   'path to directory'                      File chooser dialog window\n"
+            "-fd   'path to directory'                      Directory chooser dialog window\n"
             "-d    'url' 'filename'                         Download progressbar window\n"
-            "-tar  'filename, path'                         Extraction tar archive progressbar window\n"
-            "-zip  'filename, path'                         Extraction zip archive progressbar window\n"
+            "-tar  'file name, path'                        Extraction tar archive progressbar window\n"
+            "-zip  'file name, path'                        Extraction zip archive progressbar window\n"
             "-opengl                                        Rotating cube in OpenGL window,\n"
             "                                               press (Ctrl_L + q) for exit or any key for hide"
             )

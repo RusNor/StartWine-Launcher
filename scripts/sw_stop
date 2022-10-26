@@ -12,6 +12,6 @@ if  ! [ -z "${wine_pids}" ]; then
     kill -n 9 ${wine_pids}
 fi
 
-notify-send "$(eval_gettext "Kill wine porocesses")"
+notify-send -a "StartWine" "$(eval_gettext "Kill wine porocesses")"
 
 exit
