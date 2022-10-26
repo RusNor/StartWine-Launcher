@@ -1,5 +1,4 @@
-
-![sw_image1](https://github.com/RusNor/StartWine-Launcher/blob/main/image/sw_image1.svg?style=centerme)
+![sw_image1](https://github.com/RusNor/StartWine-Launcher/blob/main/image/sw_image1.svg)
 
 > StartWine is a launcher that allows you to quickly and easily launch Windows applications on Linux operating systems
 
@@ -24,7 +23,7 @@ Discord: [Click](https://discord.gg/jjY3auVdfm)
 
 GitHub: [Click](https://github.com/RusNor/StartWine-Launcher/releases)
 
-or the command:
+or the command (This team is under development):
 ```bash
 curl -s https://api.github.com/repos/RusNor/StartWine-Launcher/releases/latest | grep "StartWine_v" | cut -d : -f 2,3 | tr -d \" | wget -qi - && chmod +x StartWine_v* && sh StartWine_v*
 ```
@@ -38,7 +37,7 @@ sudo pacman -S python-gobject
 ```
 For Debian
 ```bash
-sudo apt install python-gobject
+sudo apt install python3-gi
 ```
 
 If you downloaded and launched StartWine via the curl command, you can simply skip the item below
@@ -92,23 +91,23 @@ Now let 's briefly go through the menu of the StartWine
 
 If you don't like the StartWine background theme you can change it by clicking on the icon shown in the screenshot below 
 
-![sw-image20](https://github.com/RusNor/StartWine-Launcher/blob/main/image/sw-image20.png?)
+![sw_image20](https://github.com/RusNor/StartWine-Launcher/blob/main/image/sw-image20.png?)
 
 Since version [3.6.0](https://github.com/RusNor/StartWine-Launcher/releases/tag/StartWine_v360), StartWine has added mangohud and vkbasalt settings  
 
-![sw-image17](https://github.com/RusNor/StartWine-Launcher/blob/main/image/sw-image17.png?)
+![sw_image17](https://github.com/RusNor/StartWine-Launcher/blob/main/image/sw-image17.png?)
 
-![sw-image18](https://github.com/RusNor/StartWine-Launcher/blob/main/image/sw-image18.png?)
+![sw_image18](https://github.com/RusNor/StartWine-Launcher/blob/main/image/sw-image18.png?)
 
 You can view changes to mangohud and vkbasalt settings by clicking on the preview button
 to exit the preview, press the Enter key
 
-![sw-image19](https://github.com/RusNor/StartWine-Launcher/blob/main/image/sw-image19.png?)
+![sw_image19](https://github.com/RusNor/StartWine-Launcher/blob/main/image/sw-image19.png?)
 
 ## Initial setup
 
 
-To get started, go to the Download wine item and download the following there (if you have previously installed wine from the list below in the installer, you can skip this item) :
+To get started, go to the Download wine item and download the following there (if you have previously installed wine from the list below in the installer, you can skip this item):
 wine-staging,
 wine-steam-proton,
 wine-proton-ge.
@@ -126,7 +125,7 @@ There are two ways to install the game in StartWine
 
    ![sw_image8](https://github.com/RusNor/StartWine-Launcher/blob/main/image/sw_image8.png?)
 
-2. If you downloaded the game from other sources or somewhere else, then first you will need to install the game (I will show you the example of the game Yuppie Psycho).
+2. If you downloaded the game from other sources or somewhere else, then first you will need to install the game (I will show you the example of the game [Yuppie Psycho](https://store.steampowered.com/app/597760/Yuppie_Psycho_Executive_Edition/)).
 How to run the .exe file installer? yes, it's easy, we launch it in two clicks on the left mouse button or just on the right mouse button
 
    ![sw_image9](https://github.com/RusNor/StartWine-Launcher/blob/main/image/sw_image9.png?)
@@ -138,7 +137,7 @@ Next, select the language, and here we will stop a little, first select the inst
 
 If you did as it was written above, then you will be a good chef 👨‍🍳 (the last one is a joke)
 
-<span style="color: orange"> The Council! </span>
+The Council!
 
 * In some cases, it may turn out that the installation is going, but the percentages are not going, and the culprit is in my or maybe you have it [NTFS](https://en.wikipedia.org/wiki/NTFS) the partition of the disk from which you started the installer. The fact is that if you have a so-called [dualbut](https://en.wikipedia.org/wiki/Multi-booting) or multi-boot, call it as you like, then if you have not booted from Windows, then Windows will safely take away your rights to any actions on files.
 What should I do in this case?
@@ -209,7 +208,3 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with StartWine-Launcher.  If not, see <http://www.gnu.org/licenses/>.
 ____
-
-
-
-
