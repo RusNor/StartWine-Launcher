@@ -40,7 +40,7 @@ For Debian
 sudo apt install python3-gi
 ```
 
-If you downloaded and launched StartWine via the curl command, you can simply skip the item below
+If you downloaded and launched StartWine via the wget command, you can simply skip the item below
 
 Once you have downloaded the file, first of all right-click, properties, rights (or any other similar item in the properties), check the "Is executable" or "Allow to run as a program" box.
 
