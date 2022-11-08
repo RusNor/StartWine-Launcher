@@ -8,14 +8,14 @@ export START_WINE_PATH="$(pwd)"
 ###############################   TOOLS   ######################################
 
 export SW_NAME="StartWine-Launcher"
-export SW_VER=" v3.6.2"
+export SW_VER="363"
 export GE_VER="7-38"
 export SP_VER="7.0.4"
 export STAG_VER="7.19"
 export LUTRIS_VER="7.2"
-export LUTRIS_GE_VER="7-32"
+export LUTRIS_GE_VER="7-33"
 export DXVK_VER="1.10.3"
-export VKD3D_VER="2.6"
+export VKD3D_VER="2.7"
 export UTILS_VER="v1.8"
 export ANTICHEAT_VER="v0.1"
 export VOODOO2_VER="2.79.1"
@@ -451,6 +451,7 @@ export WINE_MONO_OVERRIDES="Microsoft.Xna.Framework.*,Gac=n"
 export __GL_SHADER_DISK_CACHE_PATH="${START_WINE_PATH}/data/tmp"
 export __GL_SHADER_DISK_CACHE_SIZE=1000000000
 export __GL_SHADER_DISK_CACHE=1
+export SW_DESKTOP_DIR="$(xdg-user-dir DESKTOP)"
 
 ###############################   AMD + INTEL   ################################
 
@@ -479,17 +480,15 @@ create_new_dir "${START_WINE_PATH}/data/wine/wine_lutris_ge"
 create_new_dir "${START_WINE_PATH}/data/wine/wine_steam_proton"
 create_new_dir "${START_WINE_PATH}/data/tools/anticheat_runtime"
 
+if [ ! -f "${START_WINE_PATH}/data/scripts/version" ]; then
+    echo "${SW_VER}" > "${START_WINE_PATH}/data/scripts/version"
+fi
+
 if [ ! -f "/usr/share/gamemode/gamemode.ini" ] && [ ! -f "/etc/gamemode.ini" ] && [ ! -f "$HOME/.config/gamemode.ini" ]; then
     try_copy_file "${START_WINE_PATH}/data/tools/utils/config/gamemode.ini" "$HOME/.config"
 fi
 
-if [ "${LANG}" == "ru_RU.UTF-8" ]; then
-    export SW_DESKTOP_DIR="$HOME/Рабочий стол"
-else
-    export SW_DESKTOP_DIR="$HOME/Desktop"
-fi
-
-if [ ! -f "${HOME}/.local/share/applications/StartWine.desktop" ]; then
+if [ ! -f "${HOME}/.local/share/applications/StartWine.desktop" ] && [ ! -f "/usr/share/applications/StartWine.desktop" ]; then
     name_desktop="StartWine"
     echo "[Desktop Entry]" > "${HOME}/.local/share/applications/${name_desktop}.desktop"
     echo "Name=${name_desktop}" >> "${HOME}/.local/share/applications/${name_desktop}.desktop"
@@ -541,7 +540,6 @@ if [ "${SW_USE_MANGOHUD}" == 1 ]; then
 else
     if [ "${SW_USE_STRANGLE_FPS_LIMIT}" == 1 ]; then
         export STRANGLE_FPS="${SW_USE_FPS_LIMIT}"
-        export STRANGLE_LIB_NAME="libstrangle_vk.so"
         export VK_INSTANCE_LAYERS="${VK_INSTANCE_LAYERS}:SW_VK_LAYER"
     fi
 fi
@@ -2017,24 +2015,21 @@ INSTALL_RIOTCLIENT () {
 
         chmod -R 775 "${START_WINE_PATH}/data/wine/wine_custom/lutris-ge-lol"
 
-        export FTP_URL="https://lol.secure.dyn.riotcdn.net/channels/public/x/installer/current/live.na.exe"
-        crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/live.na.exe"`
-
         export SW_USE_PFX="pfx_RiotClientServices"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
         export WINEDIR="${START_WINE_PATH}/data/wine/wine_custom/lutris-ge-lol"
         export WINELOADER=$WINEDIR/bin/wine
 
-        "${WINELOADER}" "${START_WINE_PATH}/data/tmp/live.na.exe" "$@"
+        "${WINELOADER}" wineboot || prefix_init_error
+        "${WINESERVER}" -w
 
-        while pgrep -fa 'live.na.exe' &>/dev/null ; do sleep 1 ; done
-
-        "${WINESERVER}" -k
+        export FTP_URL="https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/RiotGames_0.1/RiotGames_0.1.tar.xz"
+        crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/RiotGames_0.1.tar.xz"`
+        crier=`$CRIER -tar "${START_WINE_PATH}/data/tmp/RiotGames_0.1.tar.xz" "${WINEPREFIX}/drive_c"` &&
+        try_remove_file "${START_WINE_PATH}/data/tmp/RiotGames_0.1.tar.xz"
 
         SW_USE_EXE="drive_c/Riot Games/Riot Client/RiotClientServices.exe"
         SW_USE_WINE="wine_custom/lutris-ge-lol"
-
-        try_remove_file "${START_WINE_PATH}/data/tmp/live.na.exe"
 
         sw_shortcuts_autoinstall
 

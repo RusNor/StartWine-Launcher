@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.38.2 
+<!-- Generated with glade 3.40.0 
 
 Copyright (C) Maslov N.G. Normatov R.R.
 
@@ -5619,7 +5619,7 @@ Example: -d3d11</property>
                                     <property name="can-focus">False</property>
                                     <property name="label" translatable="yes">
 StartWine
-3.6.2</property>
+3.6.3</property>
                                     <property name="justify">center</property>
                                     <attributes>
                                       <attribute name="underline" value="True"/>
