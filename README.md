@@ -25,7 +25,7 @@ GitHub: [Click](https://github.com/RusNor/StartWine-Launcher/releases)
 
 or the command
 ```bash
-wget -c -t 5 -T 5 "https://github.com/RusNor/StartWine-Launcher/releases/download/StartWine_v362/StartWine_v362" --output-document="${HOME}/StartWine_v362" && chmod +x StartWine_v362 && ./StartWine_v362
+wget -c -t 5 -T 5 "https://github.com/RusNor/StartWine-Launcher/releases/download/StartWine_v363/StartWine_v363" --output-document="${HOME}/StartWine_v363" && chmod +x StartWine_v363 && ./StartWine_v363
 ```
 
 Oh yeah, don't forget to check if the **python-gobject** package is installed on your system.
