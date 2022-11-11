@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-################################___SCRIPTS_V363___:
+################################___SCRIPTS_V364___:
 
 import os
 import sys
@@ -107,16 +107,20 @@ launchers_data = [
     f"{sw_pfx}/pfx_Battle.net/drive_c/Program Files (x86)/Battle.net/Battle.net.exe",
     f"{sw_pfx}/pfx_BethesdaNetLauncher/drive_c/Program Files (x86)/Bethesda.net Launcher/BethesdaNetLauncher.exe",
     f"{sw_pfx}/pfx_BsgLauncher/drive_c/Battlestate Games/BsgLauncher/BsgLauncher.exe",
+    f"{sw_pfx}/pfx_Caliber/drive_c/Program Files (x86)/1C Game Studios/Caliber/Caliber.exe",
+    f"{sw_pfx}/pfx_CrossOut/drive_c/Crossout/CrossOut.exe",
     f"{sw_pfx}/pfx_EpicGamesLauncher/drive_c/Program Files (x86)/Epic Games/Launcher/Portal/Binaries/Win32/EpicGamesLauncher.exe",
     f"{sw_pfx}/pfx_evelauncher/drive_c/EVE/Launcher/evelauncher.exe",
     f"{sw_pfx}/pfx_GalaxyClient/drive_c/Program Files (x86)/GOG Galaxy/GalaxyClient.exe",
     f"{sw_pfx}/pfx_GameCenter/drive_c/GameCenter/GameCenter.exe",
     f"{sw_pfx}/pfx_gfclient/drive_c/Program Files (x86)/GameforgeClient/gfclient.exe",
     f"{sw_pfx}/pfx_itch/drive_c/users/steamuser/AppData/Local/itch/app-25.5.1/itch.exe",
+    f"{sw_pfx}/pfx_lgc_api/drive_c/ProgramData/Lesta/GameCenter/api/lgc_api.exe",
     f"{sw_pfx}/pfx_Origin/drive_c/Program Files (x86)/Origin/Origin.exe",
     f"{sw_pfx}/pfx_osu!/drive_c/osu!/osu!.exe",
     f"{sw_pfx}/pfx_RiotClientServices/drive_c/Riot Games/Riot Client/RiotClientServices.exe",
     f"{sw_pfx}/pfx_Launcher/drive_c/Program Files/Rockstar Games/Launcher/Launcher.exe",
+    f"{sw_pfx}/pfx_ExboLauncher/drive_c/EXBO/java/bin/ExboLauncher.exe",
     f"{sw_pfx}/pfx_steam/drive_c/Program Files (x86)/Steam/steam.exe",
     f"{sw_pfx}/pfx_UbisoftConnect/drive_c/Program Files (x86)/Ubisoft/Ubisoft Game Launcher/UbisoftConnect.exe",
     f"{sw_pfx}/pfx_wgc_api/drive_c/ProgramData/Wargaming.net/GameCenter/api/wgc_api.exe",

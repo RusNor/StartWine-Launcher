@@ -8,12 +8,12 @@ export START_WINE_PATH="$(pwd)"
 ###############################   TOOLS   ######################################
 
 export SW_NAME="StartWine-Launcher"
-export SW_VER="363"
-export GE_VER="7-38"
+export SW_VER="364"
+export GE_VER="7-41"
 export SP_VER="7.0.4"
-export STAG_VER="7.19"
+export STAG_VER="7.20"
 export LUTRIS_VER="7.2"
-export LUTRIS_GE_VER="7-33"
+export LUTRIS_GE_VER="7-34"
 export DXVK_VER="1.10.3"
 export VKD3D_VER="2.7"
 export UTILS_VER="v1.8"
@@ -693,6 +693,7 @@ fi
 if [ "${SW_USE_DLSS_TO_FSR}" == 1 ] && [ "${SW_USE_NVAPI_DISABLE}" == 0 ]; then
     try_copy_file "${START_WINE_PATH}/data/tools/dlss_extras/x64/nvngx.dll" "${WINEPREFIX}/drive_c/windows/system32"
     try_copy_file "${START_WINE_PATH}/data/tools/dlss_extras/x64/nvngx.ini" "${WINEPREFIX}/drive_c/windows/system32"
+#    try_copy_file "${START_WINE_PATH}/data/tools/dlss_extras/x64/winmm.dll" "${WINEPREFIX}/drive_c/windows/system32"
 
     grep '"{41FCC608-8496-4DEF-B43E-7D9BD675A6FF}"' "${WINEPREFIX}/system.reg"
     if [[ "$?" != "0" ]]; then
@@ -2555,6 +2556,165 @@ INSTALL_BSGLAUNCHER () {
         export INSTALL_OK=1
 
         SW_WINETRICKS
+
+    else
+
+        crier=`$CRIER -i "$(eval_gettext "Application is installed")"`
+
+    fi
+
+}
+
+INSTALL_CROSSOUT () {
+
+    if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_CrossOut/drive_c/Crossout/CrossOut.exe" ]; then
+
+        WINE_OK=1
+        WINE_3
+
+        export SW_USE_PFX="pfx_CrossOut"
+        export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
+        export WINEDIR="${START_WINE_PATH}/data/wine/wine_proton_ge"
+        export WINELOADER=$WINEDIR/bin/wine
+
+        "${WINELOADER}" wineboot || prefix_init_error
+        "${WINESERVER}" -w
+
+        export FTP_URL="https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/Crossout_0.1/Crossout_0.1.tar.xz"
+        crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/Crossout_0.1.tar.xz"`
+        crier=`$CRIER -tar "${START_WINE_PATH}/data/tmp/Crossout_0.1.tar.xz" "${WINEPREFIX}/drive_c"` &&
+        try_remove_file "${START_WINE_PATH}/data/tmp/Crossout_0.1.tar.xz"
+
+        SW_USE_EXE="drive_c/Crossout/CrossOut.exe"
+        SW_USE_WINE="wine_proton_ge"
+
+        sw_shortcuts_autoinstall
+
+        crier=`$CRIER -i "$(eval_gettext "Application installed successfully")"`
+
+    else
+
+        crier=`$CRIER -i "$(eval_gettext "Application is installed")"`
+
+    fi
+
+}
+
+INSTALL_CALIBER () {
+
+    if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_Caliber/drive_c/Program Files (x86)/1C Game Studios/Caliber/Caliber.exe" ]; then
+
+        try_remove_file "${START_WINE_PATH}/data/tmp/steam-proton-6.3.8.tar.xz" &&
+        try_remove_dir "${START_WINE_PATH}/data/tmp/steam-proton-6.3.8"
+
+        if [ ! -f "${START_WINE_PATH}/data/wine/wine_custom/wine_for_Caliber/bin/wine" ]; then
+            export FTP_URL="https://github.com/RusNor/Wine-Steam-Proton/releases/download/steam-proton-6.3.8/steam-proton-6.3.8.tar.xz"
+            crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/steam-proton-6.3.8.tar.xz"` &&
+            create_new_dir "${START_WINE_PATH}/data/wine/wine_custom/wine_for_Caliber"
+            crier=`$CRIER -tar "${START_WINE_PATH}/data/tmp/steam-proton-6.3.8.tar.xz" "${START_WINE_PATH}/data/tmp"` &&
+
+            for copy_dir in bin lib lib64 share ; do
+                try_copy_dir "${START_WINE_PATH}/data/tmp/steam-proton-6.3.8/${copy_dir}" "${START_WINE_PATH}/data/wine/wine_custom/wine_for_Caliber"
+            done
+
+            try_remove_file "${START_WINE_PATH}/data/tmp/steam-proton-6.3.8.tar.xz" &&
+            try_remove_dir "${START_WINE_PATH}/data/tmp/steam-proton-6.3.8"
+        fi
+
+        chmod -R 775 "${START_WINE_PATH}/data/wine/wine_custom/wine_for_Caliber"
+
+        export SW_USE_PFX="pfx_Caliber"
+        export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
+        export WINEDIR="${START_WINE_PATH}/data/wine/wine_custom/wine_for_Caliber"
+        export WINELOADER=$WINEDIR/bin/wine
+
+        "${WINELOADER}" wineboot || prefix_init_error
+        "${WINESERVER}" -w
+
+        export FTP_URL="https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/Caliber_0.1/Caliber_0.1.tar.xz"
+        crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/Caliber_0.1.tar.xz"`
+        crier=`$CRIER -tar "${START_WINE_PATH}/data/tmp/Caliber_0.1.tar.xz" "${WINEPREFIX}/drive_c/Program Files (x86)"` &&
+        try_remove_file "${START_WINE_PATH}/data/tmp/Caliber_0.1.tar.xz"
+
+        SW_USE_EXE="drive_c/Program Files (x86)/1C Game Studios/Caliber/Caliber.exe"
+        SW_USE_WINE="wine_custom/wine_for_Caliber"
+
+        sw_shortcuts_autoinstall
+
+        crier=`$CRIER -i "$(eval_gettext "Application installed successfully")"`
+
+    else
+
+        crier=`$CRIER -i "$(eval_gettext "Application is installed")"`
+
+    fi
+
+}
+
+INSTALL_LESTA_GAME () {
+
+    if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_lgc_api/drive_c/ProgramData/Lesta/GameCenter/api/lgc_api.exe" ]; then
+
+        WINE_OK=1
+        WINE_3
+
+        export FTP_URL="https://redirect.lesta.ru/LGC/Lesta_Game_Center_Install_RU.exe"
+        crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/lesta_game_center.exe"`
+
+        export SW_USE_PFX="pfx_lgc_api"
+        export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
+        export WINEDIR="${START_WINE_PATH}/data/wine/wine_proton_ge"
+        export WINELOADER=$WINEDIR/bin/wine
+
+        "${WINELOADER}" "${START_WINE_PATH}/data/tmp/lesta_game_center.exe" /VERYSILENT "$@"
+
+        while pgrep -fa 'lesta_game_cent' &>/dev/null ; do sleep 1 ; done
+
+        "${WINESERVER}" -k
+
+        SW_USE_EXE="drive_c/ProgramData/Lesta/GameCenter/api/lgc_api.exe"
+        SW_USE_WINE="wine_proton_ge"
+
+        try_remove_file "${START_WINE_PATH}/data/tmp/lesta_game_center.exe"
+
+        sw_shortcuts_autoinstall
+
+        crier=`$CRIER -i "$(eval_gettext "Application installed successfully")"`
+
+    else
+
+        crier=`$CRIER -i "$(eval_gettext "Application is installed")"`
+
+    fi
+
+}
+
+INSTALL_STALCRAFT_LAUNCHER () {
+
+    if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_ExboLauncher/drive_c/EXBO/java/bin/ExboLauncher.exe" ]; then
+
+        WINE_OK=1
+        WINE_3
+
+        export SW_USE_PFX="pfx_ExboLauncher"
+        export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
+        export WINEDIR="${START_WINE_PATH}/data/wine/wine_proton_ge"
+        export WINELOADER=$WINEDIR/bin/wine
+
+        "${WINELOADER}" wineboot || prefix_init_error
+        "${WINESERVER}" -w
+
+        export FTP_URL="https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/Stalcraft_0.1/Stalcraft_0.1.tar.xz"
+        crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/Stalcraft_0.1.tar.xz"`
+        crier=`$CRIER -tar "${START_WINE_PATH}/data/tmp/Stalcraft_0.1.tar.xz" "${WINEPREFIX}/drive_c"` &&
+        try_remove_file "${START_WINE_PATH}/data/tmp/Stalcraft_0.1.tar.xz"
+
+        SW_USE_EXE="drive_c/EXBO/java/bin/ExboLauncher.exe"
+        SW_USE_WINE="wine_proton_ge"
+
+        sw_shortcuts_autoinstall
+
+        crier=`$CRIER -i "$(eval_gettext "Application installed successfully")"`
 
     else
 

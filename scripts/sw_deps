@@ -6,15 +6,15 @@ echo "<< enter the user password to install the dependency for StartWine >>"
 
 if [ -x "$(command -v apt)" ]; then
 
-    sudo apt update -y 2>/dev/null || echo 'Pass' &&
+    sudo apt update -y 2>/dev/null || echo 'Passed' &&
     sudo apt install software-properties-common -y 2>/dev/null || echo 'Pass' &&
     sudo dpkg --add-architecture i386 2>/dev/null || echo 'Pass' &&
-    sudo apt update -y 2>/dev/null || echo 'Pass' &&
+    sudo apt update -y 2>/dev/null || echo 'Passed' &&
 
     for deps in zstd imagemagick vulkan-tools wine xdg-user-dirs python3-gi-cairo python3-opengl python3-numpy python3-pil python3-six ; do
 
         if [ "`sudo apt list --installed $deps 2>/dev/null | cut -d '/' -f1 | tail -n1`" != "$deps" ]; then
-            sudo apt install $deps -y 2>/dev/null || echo "$deps __________Pass"
+            sudo apt install $deps -y 2>/dev/null || echo "$deps __________Passed"
         else
             echo "$deps _________________________________package is already installed"
         fi
@@ -26,7 +26,7 @@ if [ -x "$(command -v apt)" ]; then
 elif [ -x "$(command -v dnf)" ]; then
 
     if [ "`sudo dnf list wine | grep @`" == "" ]; then
-        sudo dnf install wine -y || echo "$deps ___________________________Pass"
+        sudo dnf install wine -y || echo "$deps ___________________________Passed"
     else
         echo " wine ________________________________package is already installed"
     fi
@@ -34,7 +34,7 @@ elif [ -x "$(command -v dnf)" ]; then
     for deps in zstd ImageMagick vulkan-tools xdg-user-dirs ibus-gtk2.i686 python3-cairo python3-pyopengl python3-numpy python3-pillow python3-six ; do
 
         if [ "`sudo dnf list $deps | grep @`" == "" ]; then
-            sudo dnf install $deps -y || echo "$deps ______________________Pass"
+            sudo dnf install $deps -y || echo "$deps ______________________Passed"
         else
             echo "$deps _________________________________package is already installed"
         fi
@@ -45,12 +45,12 @@ elif [ -x "$(command -v dnf)" ]; then
 
 elif [ -x "$(command -v zypper)" ]; then
 
-    sudo zypper ref || echo 'Pass' &&
+    sudo zypper ref || echo 'Passed' &&
 
     for deps in zstd ImageMagick vulkan-tools xdg-user-dirs wine python310-gobject-cairo python310-opengl python310-numpy python310-Pillow python310-six ; do
 
         if [ "`sudo zypper search -i $deps | grep $deps`" == "" ]; then
-            sudo zypper in --no-confirm $deps || echo "$deps ______________Pass"
+            sudo zypper in --no-confirm $deps || echo "$deps ______________Passed"
         else
             echo "$deps _________________________________package is already installed"
         fi
@@ -61,12 +61,12 @@ elif [ -x "$(command -v zypper)" ]; then
 
 elif [ -x "$(command -v pacman)" ]; then
 
-    sudo pacman -Sy -y || echo 'Pass' &&
+    sudo pacman -Sy -y || echo 'Passed' &&
 
     for deps in zstd imagemagick vulkan-tools xdg-user-dirs python-gobject python-cairo python-opengl python-pillow python-numpy python-six ; do
 
         if [ "`pacman -Qs $deps | grep -w $deps | tail -n1`" == "" ]; then
-            sudo pacman -S $deps --noconfirm || echo "$deps _______________Pass"
+            sudo pacman -S $deps --noconfirm || echo "$deps _______________Passed"
         else
             echo "$deps _________________________________package is already installed"
         fi
@@ -74,7 +74,7 @@ elif [ -x "$(command -v pacman)" ]; then
     done
 
     if [ "`pacman -Qs wine-staging | grep -w wine-staging | tail -n1`" == "" ]; then
-        sudo pacman -S --needed wine --noconfirm || echo "$deps ___________Pass"
+        sudo pacman -S --needed wine --noconfirm || echo "$deps ___________Passed"
     else
         echo "wine-staging _________________________________package is already installed"
     fi
@@ -83,12 +83,29 @@ elif [ -x "$(command -v pacman)" ]; then
 
 elif [ -x "$(command -v xbps-install)" ]; then
 
-    sudo xbps-install -S || echo 'Pass' &&
+    sudo xbps-install -S || echo 'Passed' &&
 
     for deps in zstd ImageMagick Vulkan-Tools xdg-user-dirs wine wine-32bit python3-cairo python3-PyOpenGL python3-numpy python3-Pillow python3-six ; do
 
         if [ "`xbps-query -l | awk '{ print $2 }' | xargs -n1 xbps-uhelper getpkgname | grep -w $deps`" == "" ]; then
-            sudo xbps-install -y $deps || echo "$deps ______________Pass"
+            sudo xbps-install -y $deps || echo "$deps ______________Passed"
+        else
+            echo "$deps _________________________________package is already installed"
+        fi
+
+    done
+
+########################################___EMERGE___:
+
+elif [ -x "$(command -v emerge)" ]; then
+
+    sudo emerge --sync || echo 'Passed' &&
+
+    for deps in app-arch/zstd media-gfx/imagemagick dev-util/vulkan-tools app-emulation/wine-vanilla x11-misc/xdg-user-dirs dev-python/pyopengl gui-libs/vte \
+        dev-python/numpy dev-python/pycairo dev-python/pillow dev-python/six ; do
+
+        if [ "`qlist -I $deps | grep -w $deps | tail -n1`" == "" ]; then
+            sudo emerge --noreplace --with-bdeps=y --jobs=2 $deps || echo "$deps ______________Passed"
         else
             echo "$deps _________________________________package is already installed"
         fi
