@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 
-"""
-Preloading environment variables
-"""
-
 import os
 import sys
 from pathlib import Path
@@ -18,7 +14,6 @@ sw_scripts = Path(link).parent
 sw_path = sw_scripts.parent.parent
 sw_tools = Path(f"{sw_path}/data/tools")
 sw_main = Path(f"{sw_scripts}/sw_main")
-sw_im = Path(f"{sw_scripts}/sw_install_manager")
 sw_crier = Path(f"{sw_scripts}/sw_crier.py")
 
 ld_path_x86_64 = f"{sw_tools}/utils/libs/x86-64"
@@ -36,11 +31,7 @@ def start():
 
     try:
         arg = sys.argv[1]
-
-        if str('--install') in arg:
-            run(f"{sw_im}", shell=True)
-        else:
-            run(f"{sw_main} \"{arg}\"", shell=True)
+        run(f"{sw_main} \"{arg}\"", shell=True)
 
     except IndexError as e:
         print('<< start_sw_main_default >>')
@@ -58,3 +49,4 @@ except IOError as e:
     info_text = f"{e}"
     run(f'{sw_crier} -e {info_text}', shell=True)
 
+################################___THE END___:

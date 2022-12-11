@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-################################___SCRIPTS_V364___:
+################################___SCRIPTS_V365___:
 
 import os
 import sys
@@ -66,13 +66,8 @@ sw_wine = Path(f"{sw_data}/wine")
 sw_wine_custom = Path(f"{sw_data}/wine/wine_custom")
 sw_games = Path(f"{sw_path}/Games")
 sw_shortcuts = Path(f"{sw_path}/Shortcuts")
-sw_desktop = Path(f"{sw_path}/StartWine.desktop")
 sw_css = Path(f"{sw_icon}/sw_themes/css")
 sw_local = Path(f"{Path.home()}/.local/share/applications")
-sw_desktop_local = Path(f"{sw_local}/StartWine.desktop")
-swim_desktop = Path(f"{sw_local}/StartWine-Install-Manager.desktop")
-
-sw_runner = Path(f"{sw_scripts}/runner-latest-x86_64.AppImage")
 
 ################################___DATA_READ___:
 
@@ -83,7 +78,7 @@ sw_defconf_read = sw_default_config.read_text().split('\n')
 rlibs = [
     'd3dcompiler_42', 'd3dcompiler_43', 'd3dcompiler_47', 'd3dx10', 'd3dx10_43',
     'd3dx11_42', 'd3dx11_43', 'd3dx9', 'mfc120', 'mfc42', 'msvcirt', 'physx',
-    'vcrun2010', 'vcrun2012', 'vcrun2013', 'vcrun2017', 'vcrun6', 'vcrun6sp6'
+    'vcrun2010', 'vcrun2012', 'vcrun2013', 'vcrun2019', 'vcrun6', 'vcrun6sp6'
     ]
 
 themes = [
@@ -116,8 +111,10 @@ launchers_data = [
     f"{sw_pfx}/pfx_gfclient/drive_c/Program Files (x86)/GameforgeClient/gfclient.exe",
     f"{sw_pfx}/pfx_itch/drive_c/users/steamuser/AppData/Local/itch/app-25.5.1/itch.exe",
     f"{sw_pfx}/pfx_lgc_api/drive_c/ProgramData/Lesta/GameCenter/api/lgc_api.exe",
+    f"{sw_pfx}/pfx_Lineage/drive_c/GameCoast Games/launcher/Lineage.exe",
     f"{sw_pfx}/pfx_Origin/drive_c/Program Files (x86)/Origin/Origin.exe",
     f"{sw_pfx}/pfx_osu!/drive_c/osu!/osu!.exe",
+    f"{sw_pfx}/pfx_PlariumPlay/drive_c/users/steamuser/AppData/Local/PlariumPlay/PlariumPlay.exe",
     f"{sw_pfx}/pfx_RiotClientServices/drive_c/Riot Games/Riot Client/RiotClientServices.exe",
     f"{sw_pfx}/pfx_Launcher/drive_c/Program Files/Rockstar Games/Launcher/Launcher.exe",
     f"{sw_pfx}/pfx_ExboLauncher/drive_c/EXBO/java/bin/ExboLauncher.exe",
@@ -137,12 +134,11 @@ arch_index = [
     ]
 
 winver = [
-    'windows 10', 'windows 8.1', 'window 8', 'windows 2008 R2', 'windows 7',
-    'windows 2008', 'windows vista' , 'windows 2003', 'windows xp'
+    'Windows 10', 'Window 8.1', 'Window 8', 'Windows 7', 'Windows XP'
     ]
 
 ver_index = [
-    '10', '8.1', '8', '2008 R2', '7','2008', 'vista', '2003', 'xp'
+    '10', '81', '8', '7', 'xp'
     ]
 
 reg_patches = [''] + [
