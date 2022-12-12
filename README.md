@@ -7,11 +7,12 @@
 ## Review
 
 1. [Preparing for installation](#preparing-for-installation)
-2. [Installation](#installation)
-3. [Interface](#interface)
-4. [Initial setup](#initial-setup)
-5. [How to run games and programs](#how-to-run-games-and-programs)
-6. [About](#about)
+2. [Installation (new)](#installation-new)
+3. [Installation (old)](#installation-old)
+4. [Interface](#interface)
+5. [Initial setup](#initial-setup)
+6. [How to run games and programs](#how-to-run-games-and-programs)
+7. [About](#about)
 
 
 ## Preparing for installation
@@ -28,8 +29,7 @@ or the command
 wget -c -t 5 -T 5 "https://github.com/RusNor/StartWine-Launcher/releases/download/StartWine_v365/StartWine_v365" --output-document="${HOME}/StartWine_v365" && chmod +x StartWine_v365 && ./StartWine_v365
 ```
 
-Oh yeah, don't forget to check if the **python-gobject** package is installed on your system.
-example of installation:
+Also remember to check if the **python-gobject** package is installed on your system:
 
 For Arch Linux
 ```bash 
@@ -51,8 +51,17 @@ or you can enter the command in the terminal:
 chmod +x StartWine_v*
 ```
 
+## Installation (new)
+starting from version [3.6.4](https://github.com/RusNor/StartWine-Launcher/releases/tag/StartWine_v364) the graphic has been removed, so the installation has changed slightly
 
-## Installation
+now just drag the file from the folder where you downloaded StartWine into the terminal and press enter
+
+if you want to from the terminal:
+```bash
+./StartWine_v365
+```
+
+## Installation (old)
 
 
 If you use a work environment [xfce](https://en.wikipedia.org/wiki/Xfce), then enter this command in the terminal (if suddenly the installer does not work):
