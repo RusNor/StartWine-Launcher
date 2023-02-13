@@ -7,9 +7,7 @@ import sys
 from pathlib import Path
 import subprocess
 from subprocess import Popen, PIPE, run
-import threading
 from threading import Thread
-import shutil
 
 link = f"{sys.argv[0]}/"
 sw_path_link = Path(link).parent
@@ -17,7 +15,9 @@ sw_path_link = Path(link).parent
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk as gtk
-from gi.repository import Gdk, GdkPixbuf, Gio, GLib, GObject
+from gi.repository import Gio, GLib
+
+from sw_crier import sw_crier
 
 sw_scripts = f"{sw_path_link}"
 sw_path = Path(sw_scripts).parent.parent
@@ -28,7 +28,7 @@ sw_rsh = Path(f"{sw_scripts}/sw_run.sh")
 sw_run = Path(f"{sw_scripts}/sw_run")
 sw_start = Path(f"{sw_scripts}/sw_start")
 sw_main = Path(f"{sw_scripts}/sw_main")
-sw_crier = Path(f"{sw_scripts}/sw_crier.py")
+sw_crier_path = Path(f"{sw_scripts}/sw_crier.py")
 sw_localedir = Path(f"{sw_scripts}/locale")
 
 sw_data = Path(f"{sw_path}/data")
@@ -205,7 +205,7 @@ def tray_menu():
     def tray_info():
 
         i = _('Oops! Nothing to run...\nCreate a shortcut in the menu')
-        Popen(f'{sw_crier} -i "{i}"', shell=True)
+        sw_crier.on_info(i)
 
     def on_check_sc(_):
 
@@ -280,7 +280,7 @@ def tray_menu():
     cmd_2.connect('activate', settings)
     menu.append(cmd_2)
 
-    cmd_3 = gtk.MenuItem.new_with_label(_('Stop'))
+    cmd_3 = gtk.MenuItem.new_with_label(_('Stop processes'))
     cmd_3.connect('activate', kill)
     menu.append(cmd_3)
 

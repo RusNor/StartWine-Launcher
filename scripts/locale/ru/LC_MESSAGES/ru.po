@@ -23,6 +23,9 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
+msgid "You have a backup of the default prefix. Use it to recover prefix ?"
+msgstr "У вас есть резервная копия префикса по умолчанию. Использовать его для восстановления префикса ?"
+
 #: sw_main:301
 msgid "___if you see this, you are half way___"
 msgstr "___если ты видишь это, ты на половине пути___"
@@ -55,73 +58,13 @@ msgstr ""
 msgid "PREFIX:\n"
 msgstr "ПРЕФИКС:\n"
 
-#: sw_install_manager:212
-msgid "___dependency_installation_is_complete___"
-msgstr "___установка_зависимостей_завершена___"
-
-#: sw_install_manager:777
-msgid "STARTWINE UPDATE, PLEASE WAIT..."
-msgstr "ОБНОВЛЕНИЕ STARTWINE, ПОЖАЛУЙСТА ПОДОЖДИТЕ..."
-
-#: sw_install_manager:778
-msgid "UPDATE..."
-msgstr "ОБНОВЛЕНИЕ..."
-
-#: sw_install_manager:792
-msgid "UPDATE COMPLETED SUCCESSFULLY"
-msgstr "ОБНОВЛЕНИЕ ЗАВЕРШЕНО УСПЕШНО"
-
-#: sw_install_manager:795
-msgid "___process_error___"
-msgstr "___ошибка_процесса___"
-
-#: sw_install_manager:803
-msgid "STARTWINE INSTALLING, PLEASE WAIT..."
-msgstr "УСТАНОВКА STARTWINE, ПОЖАЛУЙСТА ПОДОЖДИТЕ..."
-
-#: sw_install_manager:811
-msgid "INSTALLATION COMPLETED SUCCESSFULLY"
-msgstr "УСТАНОВКА ЗАВЕРШЕНА УСПЕШНО"
-
-#: sw_install_manager:901
-msgid "Do you really want to remove the StartWine ?"
-msgstr "Вы действительно хотите удалить StartWine ?"
-
-#: sw_install_manager:910
-msgid "StartWine QUESTION"
-msgstr "StartWine ВОПРОС"
-
-#: sw_install_manager:938
-msgid "StartWine remove completed successfully"
-msgstr "Удаление StartWine завершено успешно"
-
-#: sw_install_manager:943
-msgid "StartWine INFO"
-msgstr "StartWine ИНФО"
-
-#: sw_install_manager:950
-msgid "INFO dialog closed"
-msgstr "Диалог ИНФО закрыт"
-
-#: sw_install_manager:959
-msgid "Cancel"
-msgstr "Отмена"
-
-#: sw_install_manager:1134
-msgid "UPDATE"
-msgstr "ОБНОВИТЬ"
-
-#: sw_install_manager:1136 sw_install_manager.glade:133
-msgid "INSTALL"
-msgstr "УСТАНОВИТЬ"
-
 #: StartWine-Tray:119
-msgid "Open "
-msgstr "Открыть "
+msgid "Open StartWine"
+msgstr "Открыть StartWine"
 
 #: StartWine-Tray:130
-msgid "Run "
-msgstr "Запустить "
+msgid "Fast run"
+msgstr "Быстрый запуск"
 
 #: StartWine-Tray:144
 msgid "Shortcuts"
@@ -132,8 +75,8 @@ msgid "Settings"
 msgstr "Настройки"
 
 #: StartWine-Tray:152
-msgid "Stop"
-msgstr "Остановить"
+msgid "Stop processes"
+msgstr "Остановить процессы"
 
 #: StartWine-Tray:156
 msgid "Exit Tray"
@@ -192,23 +135,23 @@ msgstr "У вас есть резервная копия дефолтного п
 
 #: sw_runlib:1076
 #, sh-format
-msgid "Shortcut ${STARTWINE_NAME} created in system menu"
-msgstr "Ярлык ${STARTWINE_NAME} создан в системном меню"
+msgid "Shortcut ${SW_GAME_NAME} created in system menu"
+msgstr "Ярлык ${SW_GAME_NAME} создан в системном меню"
 
 #: sw_runlib:1081
 #, sh-format
-msgid "Shortcut ${STARTWINE_NAME} removed from system menu"
-msgstr "Ярлык ${STARTWINE_NAME} удален из системного меню"
+msgid "Shortcut ${SW_GAME_NAME} removed from system menu"
+msgstr "Ярлык ${SW_GAME_NAME} удален из системного меню"
 
 #: sw_runlib:1091
 #, sh-format
-msgid "Shortcut ${STARTWINE_NAME} created in desktop"
-msgstr "Ярлык ${STARTWINE_NAME} создан на рабочем столе"
+msgid "Shortcut ${SW_GAME_NAME} created in desktop"
+msgstr "Ярлык ${SW_GAME_NAME} создан на рабочем столе"
 
 #: sw_runlib:1094
 #, sh-format
-msgid "Shortcut ${STARTWINE_NAME} removed from desktop"
-msgstr "Ярлык ${STARTWINE_NAME} удален с рабочего стола"
+msgid "Shortcut ${SW_GAME_NAME} removed from desktop"
+msgstr "Ярлык ${SW_GAME_NAME} удален с рабочего стола"
 
 #: sw_runlib:1120
 #, sh-format
@@ -217,8 +160,8 @@ msgstr "Вы действительно хотите удалить префик
 
 #: sw_runlib:1134 sw_runlib:1146
 #, sh-format
-msgid "Shortcut and prefix ${STARTWINE_NAME} removed"
-msgstr "Ярлык и префикс ${STARTWINE_NAME} удалены"
+msgid "Shortcut and prefix ${SW_GAME_NAME} removed"
+msgstr "Ярлык и префикс ${SW_GAME_NAME} удалены"
 
 #: sw_runlib:1157 sw_runlib:1185
 #, sh-format
@@ -285,9 +228,6 @@ msgstr "Полное восстановление успешно заверше�
 msgid "Do you really want to clear the prefix ?"
 msgstr "Вы действительно хотите очистить префикс ?"
 
-#: sw_runlib:1388 sw_runlib:1430 sw_runlib:1796 sw_runlib:1834 sw_runlib:1872
-#: sw_runlib:1910 sw_runlib:1947 sw_runlib:2001 sw_runlib:2039 sw_runlib:2077
-#: sw_runlib:2119 sw_runlib:2155 sw_runlib:2194 sw_runlib:2232 sw_runlib:2270
 #: sw_runlib:2353 sw_runlib:2391 sw_runlib:2429 sw_runlib:2553
 #, sh-format
 msgid "Application installed successfully"
@@ -370,9 +310,6 @@ msgstr "Вы действительно хотите удалить wine lutris 
 msgid "Kill wine porocesses"
 msgstr "Остановить все процессы wine"
 
-#: sw_runlib:1800 sw_runlib:1838 sw_runlib:1876 sw_runlib:1914 sw_runlib:1951
-#: sw_runlib:2005 sw_runlib:2043 sw_runlib:2081 sw_runlib:2123 sw_runlib:2159
-#: sw_runlib:2198 sw_runlib:2236 sw_runlib:2274 sw_runlib:2319 sw_runlib:2357
 #: sw_runlib:2395 sw_runlib:2433 sw_runlib:2474 sw_runlib:2517 sw_runlib:2557
 #, sh-format
 msgid "Application is installed"
@@ -406,7 +343,7 @@ msgstr ""
 msgid "WINEHQ"
 msgstr ""
 
-#: sw_menu.glade:514 sw_menu.glade:1009 sw_install_manager.glade:110
+#: sw_menu.glade:514 sw_menu.glade:1009
 msgid "REMOVE"
 msgstr "УДАЛИТЬ"
 
@@ -530,8 +467,8 @@ msgstr ""
 msgid ""
 "Set launch paremeters, example: -d3d9, -d3d11, -opengl\n"
 "Override dll in the current prefix, example: amd_ags_x64=b,n\n"
-"Set prefix architrcture, example: win64, win32\n"
-"Set windows version, example: xp,2003,2008,7,8,10\n"
+"Set prefix architrcture\n"
+"Set windows version\n"
 "Add registry patch\n"
 "Using custom dxvk version from wine-proton-ge\n"
 "Using custom vkd3d version from wine-proton-ge\n"
@@ -544,8 +481,7 @@ msgid ""
 "Restore display resolution after game termination\n"
 "Enable windows desktop emulation\n"
 "Improving frame rates and responsiveness with scheduling policies\n"
-"Increase performance for some games, especially ones that rely heavily on "
-"the CPU\n"
+"Increase performance for some games, especially ones that rely heavily on the CPU\n"
 "For old games that crash on very long extension strings\n"
 "Disable direct gpu access for nvidia video cards\n"
 "Disable debug mode for wine\n"
@@ -554,28 +490,26 @@ msgid ""
 "Increases performance by 5-10%\n"
 "System monitoring in dxvk\n"
 "Async pipelines are written to the state cache\n"
-"vkBasalt is a Vulkan post processing layer to enhance the visual graphics of "
-"games\n"
-"AMD FidelityFX Super Resolution - advanced upscaling technologies for higher "
-"fps\n"
-"Includes Windows Media Foundation libraries for video playback in some "
-"games\n"
+"vkBasalt is a Vulkan post processing layer to enhance the visual graphics of games\n"
+"AMD FidelityFX Super Resolution - advanced upscaling technologies for higher fps\n"
+"Includes Windows Media Foundation libraries for video playback in some games\n"
 "Used to manage hybrid graphics found on recent desktops and laptops\n"
 "Open-source and cross-platform implementation of the .NET Framework\n"
-"BattlEye anti-cheat service required to run online games that use this "
-"service\n"
+"BattlEye anti-cheat service required to run online games that use this service\n"
 "EasyAntCheat service required to run online games that use this service\n"
 "Preload d3d libraries\n"
 "Solves performance problems in some applications\n"
 "Hides the definition of nvidia video cards. Required to run some applications\n"
 "To run games using directx 8 and below, in dxvk mode\n"
-"Nvidia upscale data relay for FSR 2.0\n"
-"Nvidia DLSS advanced upscaling technologies for higher fps"
+"Nvidia DLSS with DLSS to FSR advanced upscaling technologies for higher fps\n"
+"Set dxvk version\n"
+"Set vkd3d version"
+
 msgstr ""
 "Установить параметры запуска, пример: -d3d9, -d3d11, -opengl\n"
 "Переопределить dll в текущем префиксе, например: amd_ags_x64=b,n\n"
-"Установить архитектуру префикса, пример: win64, win32\n"
-"Установить версию Windows, например: xp,2003,2008,7,8,10\n"
+"Установить архитектуру префикса\n"
+"Установить версию Windows\n"
 "Добавить исправление реестра\n"
 "Использование пользовательской версии dxvk из wine-proton-ge\n"
 "Использование кастомной версии vkd3d от wine-proton-ge\n"
@@ -614,8 +548,10 @@ msgstr ""
 "Скрывает определение видеокарт nvidia. Требуется для запуска некоторых "
 "приложений\n"
 "Для запуска игр на основе directx 8 и ниже, в режиме dxvk\n"
-"Ретранслятор данных маcштабирования Nvidia DLSS для AMD FSR 2.0\n"
-"Nvidia DLSS передовые технологии апскейлинга для более высокой производительности"
+"Aпскейлинг Nvidia c поддержкой FSR для более высокой производительности\n"
+"Выбрать версию dxvk\n"
+"Выбрать версию vkd3d"
+
 #: sw_menu.glade:2297
 msgid "StartWine"
 msgstr ""
@@ -720,7 +656,6 @@ msgid "STOP"
 msgstr "ОСТАНОВИТЬ"
 
 #: sw_menu.glade:3746 sw_menu.glade:4157 sw_menu.glade:4713
-#: sw_install_manager.glade:942
 msgid "WINE STAGING"
 msgstr ""
 
@@ -729,17 +664,14 @@ msgid "WINE STEAM PROTON"
 msgstr ""
 
 #: sw_menu.glade:3844 sw_menu.glade:4255 sw_menu.glade:4615
-#: sw_install_manager.glade:1014
 msgid "WINE PROTON GE"
 msgstr ""
 
 #: sw_menu.glade:3893 sw_menu.glade:4304 sw_menu.glade:4762
-#: sw_install_manager.glade:978
 msgid "WINE LUTRIS"
 msgstr ""
 
 #: sw_menu.glade:3942 sw_menu.glade:4353 sw_menu.glade:4664
-#: sw_install_manager.glade:906
 msgid "WINE LUTRIS GE"
 msgstr ""
 
@@ -841,10 +773,6 @@ msgstr "GITHUB ИСТОЧНИК"
 msgid "DISCORD SERVER"
 msgstr "DISCORD СЕРВЕР"
 
-#: sw_menu.glade:5970 sw_install_manager.glade:618
-msgid "TELEGRAM"
-msgstr ""
-
 #: sw_menu.glade:6055
 msgid ""
 "StartWine is free software;\n"
@@ -931,44 +859,6 @@ msgstr "СПИСОК DLL"
 msgid "FONTS LIST"
 msgstr "СПИСОК ШРИФТОВ"
 
-#: sw_menu.glade:14300 sw_menu.glade:14311 sw_menu.glade:14322
-#: sw_menu.glade:14333 sw_menu.glade:14344 sw_menu.glade:14355
-#: sw_menu.glade:14366 sw_menu.glade:14377 sw_menu.glade:14388
-#: sw_menu.glade:14399 sw_menu.glade:14410 sw_menu.glade:14421
-#: sw_menu.glade:14432 sw_menu.glade:14443 sw_menu.glade:14454
-#: sw_menu.glade:14465 sw_menu.glade:14476 sw_menu.glade:14487
-#: sw_menu.glade:14498 sw_menu.glade:14509 sw_menu.glade:14520
-#: sw_menu.glade:14531 sw_menu.glade:14542 sw_menu.glade:14553
-#: sw_menu.glade:14564 sw_menu.glade:14575 sw_menu.glade:14586
-#: sw_menu.glade:14597 sw_menu.glade:14608 sw_menu.glade:14619
-#: sw_menu.glade:14630 sw_menu.glade:14641 sw_menu.glade:14652
-#: sw_menu.glade:14663 sw_menu.glade:14674 sw_menu.glade:14689
-#: sw_menu.glade:14704 sw_menu.glade:14719 sw_menu.glade:14734
-#: sw_menu.glade:14749 sw_menu.glade:14764 sw_menu.glade:14779
-#: sw_menu.glade:14794 sw_menu.glade:14809 sw_menu.glade:14824
-#: sw_menu.glade:14839 sw_menu.glade:14854 sw_menu.glade:14869
-#: sw_menu.glade:14884 sw_menu.glade:14899 sw_menu.glade:14914
-#: sw_menu.glade:14929 sw_menu.glade:14944 sw_menu.glade:14959
-#: sw_menu.glade:14974 sw_menu.glade:14989 sw_menu.glade:15004
-#: sw_menu.glade:15019 sw_menu.glade:15034 sw_menu.glade:15049
-#: sw_menu.glade:15064 sw_menu.glade:15079 sw_menu.glade:15094
-#: sw_menu.glade:15122 sw_menu.glade:15137 sw_menu.glade:15332
-#: sw_menu.glade:15344 sw_menu.glade:15356 sw_menu.glade:15368
-#: sw_menu.glade:15380 sw_menu.glade:15392 sw_menu.glade:15404
-#: sw_menu.glade:15416 sw_menu.glade:15428 sw_menu.glade:15440
-#: sw_menu.glade:15452 sw_menu.glade:15464 sw_menu.glade:15476
-#: sw_menu.glade:15488 sw_menu.glade:15500 sw_menu.glade:15512
-#: sw_menu.glade:15524 sw_menu.glade:15536 sw_menu.glade:15548
-#: sw_menu.glade:15560 sw_menu.glade:15572 sw_menu.glade:15584
-#: sw_menu.glade:15596 sw_menu.glade:15608 sw_menu.glade:15620
-#: sw_menu.glade:15632 sw_menu.glade:15644 sw_menu.glade:15656
-#: sw_menu.glade:15668 sw_menu.glade:15680 sw_menu.glade:15692
-#: sw_menu.glade:15704 sw_menu.glade:15716 sw_menu.glade:15728
-#: sw_menu.glade:15740 sw_menu.glade:15752 sw_menu.glade:15764
-#: sw_menu.glade:15776 sw_menu.glade:16573 sw_menu.glade:16584
-#: sw_menu.glade:16595 sw_menu.glade:16606 sw_menu.glade:16617
-#: sw_menu.glade:16628 sw_menu.glade:16639 sw_menu.glade:16650
-#: sw_menu.glade:16661 sw_menu.glade:16672 sw_menu.glade:16683
 #: sw_menu.glade:16694 sw_menu.glade:16705 sw_menu.glade:16716
 msgid "label"
 msgstr ""
@@ -977,42 +867,6 @@ msgstr ""
 msgid "LAUNCH SETTINGS"
 msgstr "НАСТРОЙКИ ЗАПУСКА"
 
-#: sw_menu.glade:15316 sw_menu.glade:15786 sw_menu.glade:15800
-#: sw_menu.glade:15814 sw_menu.glade:15828 sw_menu.glade:15842
-#: sw_menu.glade:15856 sw_menu.glade:15870 sw_menu.glade:15884
-#: sw_menu.glade:15898 sw_menu.glade:15912 sw_menu.glade:15926
-#: sw_menu.glade:15940 sw_menu.glade:15954 sw_menu.glade:15968
-#: sw_menu.glade:15982 sw_menu.glade:15996 sw_menu.glade:16010
-#: sw_menu.glade:16024 sw_menu.glade:16038 sw_menu.glade:16052
-#: sw_menu.glade:16066 sw_menu.glade:16080 sw_menu.glade:16094
-#: sw_menu.glade:16108 sw_menu.glade:16122 sw_menu.glade:16136
-#: sw_menu.glade:16150 sw_menu.glade:16164 sw_menu.glade:16178
-#: sw_menu.glade:16192 sw_menu.glade:16206 sw_menu.glade:16220
-#: sw_menu.glade:16234 sw_menu.glade:16248 sw_menu.glade:16262
-#: sw_menu.glade:16276 sw_menu.glade:16290 sw_menu.glade:16940
-#: sw_menu.glade:16954 sw_menu.glade:16968 sw_menu.glade:16982
-#: sw_menu.glade:16996 sw_menu.glade:17010 sw_menu.glade:17024
-#: sw_menu.glade:17038 sw_menu.glade:17052 sw_menu.glade:17066
-#: sw_menu.glade:17080 sw_menu.glade:17094 sw_menu.glade:17108
-#: sw_menu.glade:17122 sw_menu.glade:17136 sw_menu.glade:17150
-#: sw_menu.glade:17164 sw_menu.glade:17178 sw_menu.glade:17192
-#: sw_menu.glade:17206 sw_menu.glade:17220 sw_menu.glade:17234
-#: sw_menu.glade:17248 sw_menu.glade:17262 sw_menu.glade:17276
-#: sw_menu.glade:17290 sw_menu.glade:17304 sw_menu.glade:17318
-#: sw_menu.glade:17332 sw_menu.glade:17346 sw_menu.glade:17360
-#: sw_menu.glade:17374 sw_menu.glade:17388 sw_menu.glade:17402
-#: sw_menu.glade:17416 sw_menu.glade:17430 sw_menu.glade:17444
-#: sw_menu.glade:17458 sw_menu.glade:17472 sw_menu.glade:17486
-#: sw_menu.glade:17500 sw_menu.glade:17514 sw_menu.glade:17528
-#: sw_menu.glade:17542 sw_menu.glade:17556 sw_menu.glade:17570
-#: sw_menu.glade:17584 sw_menu.glade:17598 sw_menu.glade:17612
-#: sw_menu.glade:17626 sw_menu.glade:17640 sw_menu.glade:17654
-#: sw_menu.glade:17668 sw_menu.glade:17682 sw_menu.glade:17696
-#: sw_menu.glade:17710 sw_menu.glade:17724 sw_menu.glade:17738
-#: sw_menu.glade:17752 sw_menu.glade:17766 sw_menu.glade:17780
-#: sw_menu.glade:17794 sw_menu.glade:17808 sw_menu.glade:17822
-#: sw_menu.glade:17836 sw_menu.glade:17850 sw_menu.glade:17864
-#: sw_menu.glade:17878 sw_menu.glade:17892 sw_menu.glade:17906
 #: sw_menu.glade:17920 sw_menu.glade:17934
 msgid "checkbutton"
 msgstr ""
@@ -1077,296 +931,3 @@ msgstr "ТЕРМИНАЛ"
 msgid "window"
 msgstr ""
 
-#: sw_install_manager.glade:10
-msgid "StartWine-Install-Manager"
-msgstr ""
-
-#: sw_install_manager.glade:210
-msgid "page0"
-msgstr ""
-
-#: sw_install_manager.glade:220
-msgid "page1"
-msgstr ""
-
-#: sw_install_manager.glade:231
-msgid "page2"
-msgstr ""
-
-#: sw_install_manager.glade:242
-msgid "page3"
-msgstr ""
-
-#: sw_install_manager.glade:253
-msgid "page4"
-msgstr ""
-
-#: sw_install_manager.glade:264
-msgid "page5"
-msgstr ""
-
-#: sw_install_manager.glade:275
-msgid "page6"
-msgstr ""
-
-#: sw_install_manager.glade:286
-msgid "page7"
-msgstr ""
-
-#: sw_install_manager.glade:297
-msgid "page8"
-msgstr ""
-
-#: sw_install_manager.glade:308
-msgid "page9"
-msgstr ""
-
-#: sw_install_manager.glade:319
-msgid "page10"
-msgstr ""
-
-#: sw_install_manager.glade:330
-msgid "page11"
-msgstr ""
-
-#: sw_install_manager.glade:341
-msgid "page12"
-msgstr ""
-
-#: sw_install_manager.glade:352
-msgid "page13"
-msgstr ""
-
-#: sw_install_manager.glade:363
-msgid "page14"
-msgstr ""
-
-#: sw_install_manager.glade:374
-msgid "page15"
-msgstr ""
-
-#: sw_install_manager.glade:385
-msgid "page16"
-msgstr ""
-
-#: sw_install_manager.glade:463
-msgid "SYSTEM OUTPUT"
-msgstr "СИСТЕМНЫЙ ВЫВОД"
-
-#: sw_install_manager.glade:522
-msgid "GITHUB"
-msgstr ""
-
-#: sw_install_manager.glade:570
-msgid "DISCORD"
-msgstr ""
-
-#: sw_install_manager.glade:650
-msgid "ADVANCED OPTIONS"
-msgstr "РАСШИРЕННЫЕ ОПЦИИ"
-
-#: sw_install_manager.glade:739 sw_install_manager.glade:830
-msgid "BACK"
-msgstr "НАЗАД"
-
-#: sw_install_manager.glade:869
-msgid "SELECT AN ADDITIONAL WINE TO INSTALL"
-msgstr "ВЫБЕРИТЕ ДОПОЛНИТЕЛЬНО WINE ДЛЯ УСТАНОВКИ"
-
-#: sw_install_manager.glade:1052
-msgid "WINE STEAM PROTON ( DEFAULT )"
-msgstr "WINE STEAM PROTON ( ПО УМОЛЧАНИЮ )"
-
-#: sw_install_manager.glade:1077
-msgid ""
-"Fork of Wine developed by Valve. It is a collection of software and "
-"libraries combined with a patched version of Wine. Proton incorporates "
-"several libraries that improve 3D performance."
-msgstr ""
-"Ответвление Wine разработанное Valve. Это набор программного обеспечения и "
-"библиотек в сочетании с исправленной версией Wine. Proton включает ряд "
-"библиотек, улучшающих производительность 3D приложений."
-
-#: sw_install_manager.glade:1097
-msgid ""
-"Custom build of Proton with the most recent bleeding-edge proton "
-"experimental Wine. Includes some patches: DXVK patched with Async, media "
-"foundation patches, AMD FSR patches, Nvidia CUDA support for phsyx, nvapi "
-"and others."
-msgstr ""
-"Индивидуальная сборка Proton с самым последним передовым протоном "
-"экспериментальнго Wine. Включает в себя несколько патчей: DXVK с патчем "
-"Async, исправления библиотек windows media foundation, исправления AMD FSR, "
-"поддержка Nvidia CUDA для phsyx, nvapi и другие."
-
-#: sw_install_manager.glade:1117
-msgid ""
-"Wine Staging is the testing area of winehq.org. It contains bug fixes and "
-"features, which have not been integrated into the development branch yet."
-msgstr ""
-"Wine Staging — это тестовая площадка на сайте winehq.org. Она содержит "
-"исправления ошибок и функции, которые еще не были интегрированы в основную "
-"ветку."
-
-#: sw_install_manager.glade:1137
-msgid ""
-"Custom build of Wine based on/forked from the most recent bleeding-edge "
-"proton experimental Wine repo."
-msgstr ""
-"Пользовательская сборка Wine основанная на ответвлении самого последнего "
-"передового экспериментального репозитория Proton."
-
-#: sw_install_manager.glade:1157
-msgid "Fork of Wine developed by Lutris progect."
-msgstr "Ответвление Wine, разрабатываемое проектом Lutris."
-
-#: sw_install_manager.glade:1225 sw_install_manager.glade:1272
-msgid ""
-"Wine (originally an acronym for \"Wine Is Not an Emulator\") is a "
-"compatibility layer capable of running Windows applications on several POSIX-"
-"compliant operating systems, such as Linux, macOS, & BSD. Instead of "
-"simulating internal Windows logic like a virtual machine or emulator, Wine "
-"translates Windows API calls into POSIX calls on-the-fly, eliminating the "
-"performance and memory penalties of other methods and allowing you to "
-"cleanly integrate Windows applications into your desktop."
-msgstr ""
-"Wine (первоначально аббревиатура от «Wine — это не эмулятор») — это "
-"прослойка совместимости, способная запускать приложения Windows на POSIX-"
-"совместимых операционных системах, таких как Linux, macOS и BSD. Вместо "
-"имитации внутренней логики Windows, такой как виртуальная машина или "
-"эмулятор, Wine на лету переводит вызовы Windows API в вызовы POSIX, устраняя "
-"ухудшение производительности и работы с памятью в сравнении с другими "
-"методами Это дает возможность чисто интегрировать приложения Windows в вашу "
-"систему."
-
-#~ msgid "System monitoring in OpenGL"
-#~ msgstr "Мониторинг системы в режиме OpenGL"
-
-#~ msgid "System monitoring in dxvk and vkd3d"
-#~ msgstr "Системный мониторинг в режимах dxvk и vkd3d"
-
-#~ msgid "Set of optimisations be temporarily applied a game process"
-#~ msgstr "Набор оптимизаций, временно применяемых к игровому процессу"
-
-#~ msgid "Steam runtime library"
-#~ msgstr "Набор библиотек Steam для запуска приложений"
-
-#~ msgid "Restore display resolution after game termination"
-#~ msgstr "Восстановить разрешение экрана после завершения игры"
-
-#~ msgid "Enable windows desktop emulation"
-#~ msgstr "Включить виртуальный рабочий стол Windows"
-
-#~ msgid "Improving frame rates and responsiveness with scheduling policies"
-#~ msgstr ""
-#~ "Повышает частоту кадров и скорость отклика с помощью политик планирования"
-
-#~ msgid ""
-#~ "Increase performance for some games, especially ones that rely heavily on "
-#~ "the CPU"
-#~ msgstr ""
-#~ "Увеличивает производительность в некоторых играх, которые сильно зависят "
-#~ "от CPU"
-
-#~ msgid "For old games that crash on very long extension strings"
-#~ msgstr ""
-#~ "Для старых игр, которые вылетают из-за очень длинных строк расширения"
-
-#~ msgid "Disable direct gpu access for nvidia video cards"
-#~ msgstr "Отключить прямой доступ к GPU для видеокарт Nvidia"
-
-#~ msgid "Disable debug mode for wine"
-#~ msgstr "Выключить режим отладки wine, для увеличения производительности"
-
-#~ msgid "Allocate to a 32-bit application more than 2 GB of RAM"
-#~ msgstr "Выделите 32-битному приложению более 2 ГБ ОЗУ"
-
-#~ msgid "Helps circumvent some types of protection in old games"
-#~ msgstr "Помогает обойти некоторые виды защиты в старых играх"
-
-#~ msgid "Increases performance by 5-10%"
-#~ msgstr "Повышает производительность на 5-10%"
-
-#~ msgid "System monitoring in dxvk"
-#~ msgstr "Системный мониторинг в режиме dxvk"
-
-#~ msgid "Async pipelines are written to the state cache"
-#~ msgstr "Запись асинхронных конвейеров в кэш"
-
-#~ msgid ""
-#~ "vkBasalt is a Vulkan post processing layer to enhance the visual graphics "
-#~ "of games"
-#~ msgstr ""
-#~ "vkBasalt — это слой постобработки Vulkan для улучшения визуальной графики "
-#~ "в играх"
-
-#~ msgid ""
-#~ "AMD FidelityFX Super Resolution - advanced upscaling technologies for "
-#~ "higher fps"
-#~ msgstr ""
-#~ "AMD FidelityFX Super Resolution — передовые технологии масштабирования, "
-#~ "для увелчения производительности"
-
-#~ msgid ""
-#~ "Includes Windows Media Foundation libraries for video playback in some "
-#~ "games"
-#~ msgstr ""
-#~ "Включает библиотеки Windows Media Foundation для воспроизведения видео в "
-#~ "некоторых играх"
-
-#~ msgid "Used to manage hybrid graphics found on recent desktops and laptops"
-#~ msgstr ""
-#~ "Используется для управления гибридной графикой на современных компьютерах "
-#~ "и ноутбуках"
-
-#~ msgid "Open-source and cross-platform implementation of the .NET Framework"
-#~ msgstr "Открытая и кроссплатформенная реализация .NET Framework"
-
-#~ msgid ""
-#~ "BattlEye anti-cheat service required to run online games that use this "
-#~ "service"
-#~ msgstr "Для запуска онлайн-игр, использующих античит-сервис BattlEye"
-
-#~ msgid ""
-#~ "EasyAntCheat service required to run online games that use this service"
-#~ msgstr "Для запуска онлайн-игр, использующих античит-сервис EasyAntiCheat"
-
-#~ msgid "Preload d3d libraries"
-#~ msgstr "Предзагрузка d3d библиотек"
-
-#~ msgid "Solves performance problems in some applications"
-#~ msgstr ""
-#~ "Решает проблемы с откликом и производительностью в некоторых приложениях"
-
-#~ msgid "Fps limit, value 0 disables frame limit"
-#~ msgstr "Ограничение частоты кадров, значение 0 отключает ограничение"
-
-#~ msgid "Using custom dxvk version from wine-proton-ge"
-#~ msgstr "Использование пользовательской версии dxvk из wine-proton-ge"
-
-#~ msgid "Using custom vkd3d version from wine-proton-ge"
-#~ msgstr "Использование пользовательской версии vkd3d из wine-proton-ge"
-
-#~ msgid "Force use opengl, for some applications that d'nt run in dxvk"
-#~ msgstr ""
-#~ "Принудительно использовать opengl для приложений, которые не запускаются "
-#~ "в dxvk"
-
-#~ msgid "Enable fps limit in vkd3d or dxvk mode"
-#~ msgstr "Включить ограничение частоты кадров в режиме vkd3d или dxvk"
-
-#~ msgid "Set windows version, example: xp,2003,2008,7,8,10"
-#~ msgstr "Установить версию Windows, например: xp,2003,2008,7,8,10"
-
-#~ msgid "Set prefix architrcture, example: win64, win32"
-#~ msgstr "Установить архитектуру префикса например: win64, win32"
-
-#~ msgid "Override dll in the current prefix, example: amd_ags_x64=b,n"
-#~ msgstr "Переопределить dll в текущем префиксе, например: amd_ags_x64=b,n"
-
-#~ msgid "Set launch paremeters, example: -d3d9, -d3d11, -opengl"
-#~ msgstr ""
-#~ "Установить параметры запуска, например: -d3d9 или -d3d11 или -opengl"
-
-#~ msgid "Set hud position right or left"
-#~ msgstr "Установите положение HUD мониторинга справа или слева"

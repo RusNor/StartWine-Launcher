@@ -11,7 +11,7 @@ if [ -x "$(command -v apt)" ]; then
     sudo dpkg --add-architecture i386 2>/dev/null || echo 'Pass' &&
     sudo apt update -y 2>/dev/null || echo 'Passed' &&
 
-    for deps in zstd imagemagick vulkan-tools wine xdg-user-dirs python3-gi-cairo python3-opengl python3-numpy python3-pil python3-six ; do
+    for deps in zstd imagemagick vulkan-tools wine xdg-user-dirs htop python3-gi-cairo python3-opengl python3-numpy python3-pil python3-six ; do
 
         if [ "`sudo apt list --installed $deps 2>/dev/null | cut -d '/' -f1 | tail -n1`" != "$deps" ]; then
             sudo apt install $deps -y 2>/dev/null || echo "$deps __________Passed"
@@ -31,7 +31,7 @@ elif [ -x "$(command -v dnf)" ]; then
         echo " wine ________________________________package is already installed"
     fi
 
-    for deps in zstd ImageMagick vulkan-tools xdg-user-dirs ibus-gtk2.i686 python3-cairo python3-pyopengl python3-numpy python3-pillow python3-six ; do
+    for deps in zstd ImageMagick vulkan-tools xdg-user-dirs ibus-gtk2.i686 htop python3-gobject rubygem-vte3 python3-cairo python3-pyopengl python3-numpy python3-pillow python3-six ; do
 
         if [ "`sudo dnf list $deps | grep @`" == "" ]; then
             sudo dnf install $deps -y || echo "$deps ______________________Passed"
@@ -63,7 +63,7 @@ elif [ -x "$(command -v pacman)" ]; then
 
     sudo pacman -Sy -y || echo 'Passed' &&
 
-    for deps in zstd imagemagick vulkan-tools xdg-user-dirs python-gobject python-cairo python-opengl python-pillow python-numpy python-six ; do
+    for deps in zstd imagemagick vulkan-tools xdg-user-dirs htop python-gobject python-cairo python-opengl python-pillow python-numpy python-six ; do
 
         if [ "`pacman -Qs $deps | grep -w $deps | tail -n1`" == "" ]; then
             sudo pacman -S $deps --noconfirm || echo "$deps _______________Passed"
@@ -85,7 +85,7 @@ elif [ -x "$(command -v xbps-install)" ]; then
 
     sudo xbps-install -S || echo 'Passed' &&
 
-    for deps in zstd ImageMagick Vulkan-Tools xdg-user-dirs wine wine-32bit python3-cairo python3-PyOpenGL python3-numpy python3-Pillow python3-six ; do
+    for deps in zstd ImageMagick Vulkan-Tools xdg-user-dirs wine wine-32bit htop python3-cairo python3-PyOpenGL python3-numpy python3-Pillow python3-six ; do
 
         if [ "`xbps-query -l | awk '{ print $2 }' | xargs -n1 xbps-uhelper getpkgname | grep -w $deps`" == "" ]; then
             sudo xbps-install -y $deps || echo "$deps ______________Passed"

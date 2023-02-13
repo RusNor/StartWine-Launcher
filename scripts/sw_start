@@ -31,11 +31,11 @@ def start():
 
     try:
         arg = sys.argv[1]
-        run(f"{sw_main} \"{arg}\"", shell=True)
+        Popen(f"{sw_main} \"{arg}\"", shell=True)
 
     except IndexError as e:
         print('<< start_sw_main_default >>')
-        run(f"{sw_main}", shell=True)
+        Popen(f"{sw_main}", shell=True)
 
 try:
     py_ver = str(platform.python_version())
@@ -47,6 +47,6 @@ try:
 
 except IOError as e:
     info_text = f"{e}"
-    run(f'{sw_crier} -e {info_text}', shell=True)
+    Popen(f'{sw_crier} -e {info_text}', shell=True)
 
 ################################___THE END___:

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-################################___SCRIPTS_V365___:
+################################___SCRIPTS_V366___:
 
 import os
 import sys
@@ -12,7 +12,7 @@ import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gdk', '3.0')
 gi.require_version('Vte', '2.91')
-from gi.repository import Gtk, GObject, Gdk, GdkPixbuf, Gio, GLib, Pango, Vte
+from gi.repository import Gtk, Gdk, GdkPixbuf, Gio, GLib, Pango, Vte
 
 import threading
 from threading import Thread, Timer
@@ -99,6 +99,7 @@ backgrounds = [
 
 launchers_data = [
     f"{sw_pfx}/pfx_Ankama_Launcher/drive_c/users/steamuser/AppData/Local/Programs/Ankama Launcher/Ankama Launcher.exe",
+    f"{sw_pfx}/pfx_Anomaly_Zone/drive_c/Cybertime Games/Anomaly-Zone/Anomaly Zone.exe",
     f"{sw_pfx}/pfx_Battle.net/drive_c/Program Files (x86)/Battle.net/Battle.net.exe",
     f"{sw_pfx}/pfx_BethesdaNetLauncher/drive_c/Program Files (x86)/Bethesda.net Launcher/BethesdaNetLauncher.exe",
     f"{sw_pfx}/pfx_BsgLauncher/drive_c/Battlestate Games/BsgLauncher/BsgLauncher.exe",
@@ -114,10 +115,12 @@ launchers_data = [
     f"{sw_pfx}/pfx_Lineage/drive_c/GameCoast Games/launcher/Lineage.exe",
     f"{sw_pfx}/pfx_Origin/drive_c/Program Files (x86)/Origin/Origin.exe",
     f"{sw_pfx}/pfx_osu!/drive_c/osu!/osu!.exe",
+    f"{sw_pfx}/pfx_PathOfExile/drive_c/Grinding Gear Games/Path of Exile/PathOfExile.exe",
     f"{sw_pfx}/pfx_PlariumPlay/drive_c/users/steamuser/AppData/Local/PlariumPlay/PlariumPlay.exe",
     f"{sw_pfx}/pfx_RiotClientServices/drive_c/Riot Games/Riot Client/RiotClientServices.exe",
     f"{sw_pfx}/pfx_Launcher/drive_c/Program Files/Rockstar Games/Launcher/Launcher.exe",
     f"{sw_pfx}/pfx_ExboLauncher/drive_c/EXBO/java/bin/ExboLauncher.exe",
+    f"{sw_pfx}/pfx_StalkerOnline_Launcher/drive_c/StalkerOnline/StalkerOnline Launcher.exe",
     f"{sw_pfx}/pfx_steam/drive_c/Program Files (x86)/Steam/steam.exe",
     f"{sw_pfx}/pfx_UbisoftConnect/drive_c/Program Files (x86)/Ubisoft/Ubisoft Game Launcher/UbisoftConnect.exe",
     f"{sw_pfx}/pfx_wgc_api/drive_c/ProgramData/Wargaming.net/GameCenter/api/wgc_api.exe",
@@ -143,6 +146,14 @@ ver_index = [
 
 reg_patches = [''] + [
     str(reg.stem) + str(reg.suffix) for reg in Path(sw_app_patches).iterdir()
+    ]
+
+dxvk_ver = [
+    '1.9', '1.9.1', '1.9.2', '1.9.3', '1.9.4', '1.10', '1.10.1', '1.10.2', '1.10.3', '2.0', '2.1'
+    ]
+
+vkd3d_ver = [
+    '2.0', '2.1', '2.2', '2.3', '2.3.1', '2.4', '2.5', '2.6', '2.7', '2.8'
     ]
 
 ################################___LANG___:
@@ -418,21 +429,21 @@ def set_size():
 
     resize_btn_stack.set_visible_child_name("btn_set_size")
 
-    if x <= 1600:
+    if y <= 900:
         window.set_resizable(True)
         win_resize = window.resize(x*0.95/num_screen, y*0.85)
 
-    if x > 1600 and x <= 1920:
+    if y > 900 and y <= 1080:
         window.set_resizable(True)
-        win_resize = window.resize(x*0.8/num_screen, y*0.75)
+        win_resize = window.resize(x*0.85/num_screen, y*0.75)
 
-    if x > 1920 and x <= 2560:
+    if y > 1080 and y <= 1440:
         window.set_resizable(True)
-        win_resize = window.resize(x*0.7/num_screen, y*0.70)
+        win_resize = window.resize(x*0.75/num_screen, y*0.70)
 
-    if x > 2560:
+    if y > 1440:
         window.set_resizable(True)
-        win_resize = window.resize(x*0.65/num_screen, y*0.65)
+        win_resize = window.resize(x*0.70/num_screen, y*0.65)
 
     sc_flowbox.set_filter_func(shortcuts_filter)
 
@@ -467,7 +478,7 @@ def echo_func_name(func_name):
 
         else:
             sw_fsh.write_text(fshread[0] + '\n' + fshread[1] + '\n' + func)
-            Popen(f"{sw_fsh} {app_path}", shell=True, start_new_session=True, stderr=sys.stderr, encoding='UTF-8')
+            proc_fsh = Popen(f"{sw_fsh} {app_path}", shell=True, start_new_session=True, stdout=PIPE, stderr=sys.stderr, encoding='UTF-8')
 
 ################################___MENU_BUTTONS___:
 
@@ -725,7 +736,7 @@ def on_btn_app_config(self):
 ################################___PROGRESS_FUNCTIONS___:
 
 def progress():
-
+    app_path = get_arg(get_app_path())
     app_name = get_arg(get_out())
     app_suffix = get_arg(get_suffix())
 
@@ -740,36 +751,46 @@ def progress():
         cmd = f"pgrep -fl {app_suffix}"
         pid = list(run(cmd, shell=True, start_new_session=True, stdout=subprocess.PIPE, encoding='UTF-8').stdout.split())
 
-        p1 = str(pid[-1])
-        p2 = str(pid[-2])
-        p3 = str(pid[-3])
+        #print(name)
 
-#        if not name in pid:
-        if p3 not in name and p2 not in name and p1 not in name:
-            progressbar.pulse()
-            return True
+        for p in pid:
+            if p.lower() in name.lower():
+                print(p)
+                print(name)
+                set_text_empty()
 
-        else:
-            print(name)
-            GLib.timeout_add(200, set_text_done)
-            GLib.timeout_add(1000, set_text_empty)
+#            pid_list.append(str(p))
+#            print(pid_list)
+            #print(p)
+        progressbar.pulse()
+        return True
 
-    except:
-        print('<< oops! >>')
+#        p1 = str(pid[-1])
+#        p2 = str(pid[-2])
+#        p3 = str(pid[-3])
 
-def set_text_done():
+#        if p3 not in name and p2 not in name and p1 not in name:
+#            progressbar.pulse()
+#            return True
 
-    progressbar.set_text('LOADED SUCCESSFULLY')
+#        else:
+#            print(name)
+#            GLib.timeout_add(50, set_text_done)
+#            GLib.timeout_add(250, set_text_empty)
+
+    except IOError as e:
+        print(f'<< {e} >>')
 
 def set_text_empty():
-
-    progressbar.set_show_text(False)
+    progressbar.set_text('LOADED SUCCESSFULLY')
+    #progressbar.set_show_text(False)
     progressbar.set_fraction(0.0)
     progressbar_lock.release()
     print('<< done >>')
 
     if main_stack.get_visible_child_name() != str('vte_main_box'):
-        timeout = GLib.timeout_add(1000, Gtk.main_quit)
+#        timeout = GLib.timeout_add(100, Gtk.main_quit)
+        window.close()
 
 def progress_on_bar(bar):
 
@@ -920,7 +941,8 @@ def on_btn_start(self):
 
         if str(vulkan_dri) == str('') and str(vulkan_dri2) == str(''):
 
-            Thread(target=run_opengl).start()
+            thread_opengl = Thread(target=run_opengl)
+            thread_opengl.start()
 
             if progressbar_lock.acquire(False):
                 GLib.timeout_add(60, progress)
@@ -933,7 +955,8 @@ def on_btn_start(self):
                     GLib.timeout_add(60, progress)
 
             else:
-                Thread(target=run_vulkan).start()
+                thread_vulkan = Thread(target=run_vulkan)
+                thread_vulkan.start()
 
                 if progressbar_lock.acquire(False):
                     GLib.timeout_add(60, progress)
@@ -970,7 +993,6 @@ def on_btn_shortcuts(self):
 
     on_btn_get_size(self)
     main_stack.set_visible_child_name("shortcut_main_box")
-#    sc_flowbox.set_filter_func(shortcuts_filter)
 
 def get_exe_icon():
 
@@ -1159,7 +1181,6 @@ def cs_path(func_wine):
         if func_wine == 'cs_custom_5':
             Thread(target=cs_custom_5).start()
 
-#        Thread(target=time.sleep(.5)).start()
         GLib.timeout_add(500, get_pid_name_on_bar, bar)
 
         if progressbar_lock.acquire(False):
@@ -2383,12 +2404,16 @@ def app_conf_activate():
     combo_regedit.remove_all()
     combo_winarch.remove_all()
     combo_winver.remove_all()
+    combo_dxvk_ver.remove_all()
+    combo_vkd3d_ver.remove_all()
 
     for i in acread:
 
         value_arch = f"export SW_USE_WINEARCH="
         value_ver = f"export SW_USE_WINDOWS_VER="
         value_reg = f"export SW_USE_REGEDIT_PATCH="
+        value_dxvk = f"export SW_USE_DXVK_VER="
+        value_vkd3d = f"export SW_USE_VKD3D_VER="
 
         if value_arch in i:
             revalue = i.replace(value_arch, '').replace('"', '')
@@ -2408,6 +2433,20 @@ def app_conf_activate():
                     text = str('{0}'.format(ver))
                     combo_winver.append_text(text)
 
+        if value_dxvk in i:
+            revalue = i.replace(value_dxvk, '').replace('"', '')
+
+            for ver in dxvk_ver:
+                if revalue in ver:
+                    combo_dxvk_ver.append_text(ver)
+
+        if value_vkd3d in i:
+            revalue = i.replace(value_vkd3d, '').replace('"', '')
+
+            for ver in vkd3d_ver:
+                if revalue in ver:
+                    combo_vkd3d_ver.append_text(ver)
+
     for i_arch, arch in zip(arch_index, winarch):
         combo_winarch.append_text(arch)
         combo_winarch.set_active(0)
@@ -2419,6 +2458,14 @@ def app_conf_activate():
     for reg in reg_patches:
         combo_regedit.append_text(reg)
         combo_regedit.set_active(0)
+
+    for dxv in dxvk_ver:
+        combo_dxvk_ver.append_text(dxv)
+        combo_dxvk_ver.set_active(0)
+
+    for vkdv in vkd3d_ver:
+        combo_vkd3d_ver.append_text(vkdv)
+        combo_vkd3d_ver.set_active(0)
 
 ################################___switch_check___:
 
@@ -2435,6 +2482,7 @@ def app_conf_activate():
 
         data = settings_data[i]
 
+        btn_switch.set_name(data)
         btn_switch_label.set_label(data)
         btn_switch_label.set_xalign(0)
 
@@ -2446,7 +2494,6 @@ def app_conf_activate():
 
                 if str(reconfig) == str(['=1']):
                     btn_switch.set_active(True)
-
                 else:
                     btn_switch.set_active(False)
 
@@ -2660,6 +2707,8 @@ def on_combo_changed(combo):
     value_arch = f"export SW_USE_WINEARCH="
     value_ver = f"export SW_USE_WINDOWS_VER="
     value_reg = f"export SW_USE_REGEDIT_PATCH="
+    value_dxvk = f"export SW_USE_DXVK_VER="
+    value_vkd3d = f"export SW_USE_VKD3D_VER="
 
     for i_arch, arch in zip(arch_index, winarch):
 
@@ -2690,7 +2739,7 @@ def on_combo_changed(combo):
     for reg in reg_patches:
 
         if not combo_regedit.get_active_text() is None:
-            get_reg = combo_regedit.get_active_text() 
+            get_reg = combo_regedit.get_active_text()
 
             for i in acread:
 
@@ -2700,6 +2749,34 @@ def on_combo_changed(combo):
                     app_conf.write_text(
                         app_conf.read_text().replace(
                             i, value_reg + '"' + get_reg + '"'))
+
+    for v in dxvk_ver:
+
+        if not combo_dxvk_ver.get_active_text() is None:
+            get_reg = combo_dxvk_ver.get_active_text()
+
+            for i in acread:
+
+                if value_dxvk in i:
+                    revalue = i.replace(value_dxvk, '')
+
+                    app_conf.write_text(
+                        app_conf.read_text().replace(
+                            i, value_dxvk + '"' + get_reg + '"'))
+
+    for v in vkd3d_ver:
+
+        if not combo_vkd3d_ver.get_active_text() is None:
+            get_reg = combo_vkd3d_ver.get_active_text()
+
+            for i in acread:
+
+                if value_vkd3d in i:
+                    revalue = i.replace(value_vkd3d, '')
+
+                    app_conf.write_text(
+                        app_conf.read_text().replace(
+                            i, value_vkd3d + '"' + get_reg + '"'))
 
 ################################___SWITCH_FUNCTIONS___:
 
@@ -3559,9 +3636,17 @@ combo_winver.set_entry_text_column(0)
 combo_regedit = builder.get_object("combo_regedit")
 combo_regedit.set_entry_text_column(0)
 
+combo_dxvk_ver = builder.get_object("combo_dxvk_ver")
+combo_dxvk_ver.set_entry_text_column(0)
+
+combo_vkd3d_ver = builder.get_object("combo_vkd3d_ver")
+combo_vkd3d_ver.set_entry_text_column(0)
+
 combo_winarch.connect("changed", on_combo_changed)
 combo_winver.connect("changed", on_combo_changed)
 combo_regedit.connect("changed", on_combo_changed)
+combo_dxvk_ver.connect("changed", on_combo_changed)
+combo_vkd3d_ver.connect("changed", on_combo_changed)
 
 main_param_stack = builder.get_object("main_param_stack")
 param_stack = builder.get_object("param_stack")

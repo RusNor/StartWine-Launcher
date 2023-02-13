@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.40.0 
+<!-- Generated with glade 3.38.2 
 
 Copyright (C) Maslov N.G. Normatov R.R.
 
@@ -1387,14 +1387,13 @@ D3D_PLUGINS
 VSYNC_DISABLE
 HIDE_NVIDIA_GPU
 DGVOODOO2
-DLSS_TO_FSR
-NVAPI_AND_DLSS</property>
+DLSS</property>
   </object>
   <object class="GtkTextBuffer" id="settings_description_buffer">
     <property name="text" translatable="yes">Set launch paremeters, example: -d3d9, -d3d11, -opengl
 Override dll in the current prefix, example: amd_ags_x64=b,n
-Set prefix architrcture, example: win64, win32
-Set windows version, example: xp,2003,2008,7,8,10
+Set prefix architrcture
+Set windows version
 Add registry patch
 Using custom dxvk version from wine-proton-ge
 Using custom vkd3d version from wine-proton-ge
@@ -1427,8 +1426,9 @@ Preload d3d libraries
 Solves performance problems in some applications
 Hides the definition of nvidia video cards. Required to run some applications
 To run games using directx 8 and below, in dxvk mode
-Nvidia upscale data relay for FSR 2.0
-Nvidia DLSS advanced upscaling technologies for higher fps</property>
+Nvidia DLSS with DLSS to FSR advanced upscaling technologies for higher fps
+Set dxvk version
+Set vkd3d version</property>
   </object>
   <object class="GtkTextBuffer" id="vk_buffer">
     <property name="text">3DFX
@@ -5619,7 +5619,7 @@ Example: -d3d11</property>
                                     <property name="can-focus">False</property>
                                     <property name="label" translatable="yes">
 StartWine
-3.6.5</property>
+3.6.6</property>
                                     <property name="justify">center</property>
                                     <attributes>
                                       <attribute name="underline" value="True"/>
@@ -13667,7 +13667,7 @@ VHSgunzo</property>
                                         <property name="visible">True</property>
                                         <property name="can-focus">False</property>
                                         <child>
-                                          <!-- n-columns=4 n-rows=38 -->
+                                          <!-- n-columns=4 n-rows=39 -->
                                           <object class="GtkGrid" id="settings_grid">
                                             <property name="visible">True</property>
                                             <property name="can-focus">False</property>
@@ -13689,7 +13689,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">9</property>
+                                                <property name="top-attach">11</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -13702,7 +13702,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">10</property>
+                                                <property name="top-attach">12</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -13715,7 +13715,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">11</property>
+                                                <property name="top-attach">13</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -13728,7 +13728,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">12</property>
+                                                <property name="top-attach">14</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -13741,7 +13741,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">13</property>
+                                                <property name="top-attach">15</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -13754,7 +13754,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">14</property>
+                                                <property name="top-attach">16</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -13767,7 +13767,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">15</property>
+                                                <property name="top-attach">17</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -13780,7 +13780,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">16</property>
+                                                <property name="top-attach">18</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -13793,7 +13793,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">17</property>
+                                                <property name="top-attach">19</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -13806,7 +13806,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">18</property>
+                                                <property name="top-attach">20</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -13819,7 +13819,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">19</property>
+                                                <property name="top-attach">21</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -13832,7 +13832,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">20</property>
+                                                <property name="top-attach">22</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -13845,7 +13845,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">21</property>
+                                                <property name="top-attach">23</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -13858,7 +13858,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">22</property>
+                                                <property name="top-attach">24</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -13871,7 +13871,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">23</property>
+                                                <property name="top-attach">25</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -13884,7 +13884,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">24</property>
+                                                <property name="top-attach">26</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -13897,7 +13897,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">25</property>
+                                                <property name="top-attach">27</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -13910,7 +13910,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">26</property>
+                                                <property name="top-attach">28</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -13923,7 +13923,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">27</property>
+                                                <property name="top-attach">29</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -13936,7 +13936,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">28</property>
+                                                <property name="top-attach">30</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -13949,7 +13949,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">29</property>
+                                                <property name="top-attach">31</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -13962,7 +13962,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">30</property>
+                                                <property name="top-attach">32</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -13975,7 +13975,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">31</property>
+                                                <property name="top-attach">33</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -13988,7 +13988,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">32</property>
+                                                <property name="top-attach">34</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14001,7 +14001,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">33</property>
+                                                <property name="top-attach">35</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14038,7 +14038,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">7</property>
+                                                <property name="top-attach">9</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14051,7 +14051,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">8</property>
+                                                <property name="top-attach">10</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14064,7 +14064,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">6</property>
+                                                <property name="top-attach">8</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14077,7 +14077,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">5</property>
+                                                <property name="top-attach">7</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14092,7 +14092,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">5</property>
+                                                <property name="top-attach">7</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14107,7 +14107,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">6</property>
+                                                <property name="top-attach">8</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14122,7 +14122,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">7</property>
+                                                <property name="top-attach">9</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14137,7 +14137,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">8</property>
+                                                <property name="top-attach">10</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14152,7 +14152,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">9</property>
+                                                <property name="top-attach">11</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14167,7 +14167,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">10</property>
+                                                <property name="top-attach">12</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14182,7 +14182,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">11</property>
+                                                <property name="top-attach">13</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14197,7 +14197,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">12</property>
+                                                <property name="top-attach">14</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14212,7 +14212,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">13</property>
+                                                <property name="top-attach">15</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14227,7 +14227,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">14</property>
+                                                <property name="top-attach">16</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14242,7 +14242,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">15</property>
+                                                <property name="top-attach">17</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14257,7 +14257,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">16</property>
+                                                <property name="top-attach">18</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14272,7 +14272,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">17</property>
+                                                <property name="top-attach">19</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14287,7 +14287,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">18</property>
+                                                <property name="top-attach">20</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14302,7 +14302,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">19</property>
+                                                <property name="top-attach">21</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14317,7 +14317,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">20</property>
+                                                <property name="top-attach">22</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14332,7 +14332,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">21</property>
+                                                <property name="top-attach">23</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14347,7 +14347,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">22</property>
+                                                <property name="top-attach">24</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14362,7 +14362,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">23</property>
+                                                <property name="top-attach">25</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14377,7 +14377,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">24</property>
+                                                <property name="top-attach">26</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14392,7 +14392,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">25</property>
+                                                <property name="top-attach">27</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14407,7 +14407,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">26</property>
+                                                <property name="top-attach">28</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14422,7 +14422,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">27</property>
+                                                <property name="top-attach">29</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14437,7 +14437,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">28</property>
+                                                <property name="top-attach">30</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14452,7 +14452,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">29</property>
+                                                <property name="top-attach">31</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14467,7 +14467,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">30</property>
+                                                <property name="top-attach">32</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14482,7 +14482,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">31</property>
+                                                <property name="top-attach">33</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14497,7 +14497,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">32</property>
+                                                <property name="top-attach">34</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14512,7 +14512,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">33</property>
+                                                <property name="top-attach">35</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14525,7 +14525,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">34</property>
+                                                <property name="top-attach">36</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14540,7 +14540,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">34</property>
+                                                <property name="top-attach">36</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14704,7 +14704,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">34</property>
+                                                <property name="top-attach">36</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14715,7 +14715,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">33</property>
+                                                <property name="top-attach">35</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14726,7 +14726,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">32</property>
+                                                <property name="top-attach">34</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14737,7 +14737,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">31</property>
+                                                <property name="top-attach">33</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14748,7 +14748,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">30</property>
+                                                <property name="top-attach">32</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14759,7 +14759,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">29</property>
+                                                <property name="top-attach">31</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14770,7 +14770,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">28</property>
+                                                <property name="top-attach">30</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14781,7 +14781,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">27</property>
+                                                <property name="top-attach">29</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14792,7 +14792,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">26</property>
+                                                <property name="top-attach">28</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14803,7 +14803,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">25</property>
+                                                <property name="top-attach">27</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14814,7 +14814,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">24</property>
+                                                <property name="top-attach">26</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14825,7 +14825,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">23</property>
+                                                <property name="top-attach">25</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14836,7 +14836,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">22</property>
+                                                <property name="top-attach">24</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14847,7 +14847,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">21</property>
+                                                <property name="top-attach">23</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14858,7 +14858,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">20</property>
+                                                <property name="top-attach">22</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14869,7 +14869,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">19</property>
+                                                <property name="top-attach">21</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14880,7 +14880,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">18</property>
+                                                <property name="top-attach">20</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14891,7 +14891,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">17</property>
+                                                <property name="top-attach">19</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14902,7 +14902,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">16</property>
+                                                <property name="top-attach">18</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14913,7 +14913,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">15</property>
+                                                <property name="top-attach">17</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14924,7 +14924,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">14</property>
+                                                <property name="top-attach">16</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14935,7 +14935,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">13</property>
+                                                <property name="top-attach">15</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14946,7 +14946,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">12</property>
+                                                <property name="top-attach">14</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14957,7 +14957,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">11</property>
+                                                <property name="top-attach">13</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14968,7 +14968,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">10</property>
+                                                <property name="top-attach">12</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14979,7 +14979,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">9</property>
+                                                <property name="top-attach">11</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -14990,7 +14990,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">8</property>
+                                                <property name="top-attach">10</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -15001,7 +15001,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">7</property>
+                                                <property name="top-attach">9</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -15012,7 +15012,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">6</property>
+                                                <property name="top-attach">8</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -15023,7 +15023,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">5</property>
+                                                <property name="top-attach">7</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -15091,7 +15091,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">35</property>
+                                                <property name="top-attach">37</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -15104,7 +15104,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">1</property>
-                                                <property name="top-attach">36</property>
+                                                <property name="top-attach">38</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -15119,7 +15119,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">35</property>
+                                                <property name="top-attach">37</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -15134,7 +15134,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">36</property>
+                                                <property name="top-attach">38</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -15145,7 +15145,7 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">35</property>
+                                                <property name="top-attach">37</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -15156,35 +15156,17 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">36</property>
+                                                <property name="top-attach">38</property>
                                               </packing>
                                             </child>
                                             <child>
-                                              <object class="GtkSwitch" id="s37">
-                                                <property name="visible">True</property>
-                                                <property name="sensitive">False</property>
-                                                <property name="can-focus">True</property>
-                                                <property name="halign">start</property>
-                                                <property name="valign">center</property>
-                                              </object>
-                                              <packing>
-                                                <property name="left-attach">1</property>
-                                                <property name="top-attach">37</property>
-                                              </packing>
-                                            </child>
-                                            <child>
-                                              <object class="GtkLabel" id="sl_37">
+                                              <object class="GtkComboBoxText" id="combo_dxvk_ver">
                                                 <property name="visible">True</property>
                                                 <property name="can-focus">False</property>
-                                                <property name="label" translatable="yes">label</property>
-                                                <attributes>
-                                                  <attribute name="size" value="11264"/>
-                                                  <attribute name="absolute-size" value="14336"/>
-                                                </attributes>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">2</property>
-                                                <property name="top-attach">37</property>
+                                                <property name="top-attach">5</property>
                                               </packing>
                                             </child>
                                             <child>
@@ -15195,8 +15177,38 @@ VHSgunzo</property>
                                               </object>
                                               <packing>
                                                 <property name="left-attach">3</property>
-                                                <property name="top-attach">37</property>
+                                                <property name="top-attach">5</property>
                                               </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkComboBoxText" id="combo_vkd3d_ver">
+                                                <property name="visible">True</property>
+                                                <property name="can-focus">False</property>
+                                              </object>
+                                              <packing>
+                                                <property name="left-attach">2</property>
+                                                <property name="top-attach">6</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkLabel" id="sd_38">
+                                                <property name="visible">True</property>
+                                                <property name="can-focus">False</property>
+                                                <property name="label" translatable="yes">label</property>
+                                              </object>
+                                              <packing>
+                                                <property name="left-attach">3</property>
+                                                <property name="top-attach">6</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <placeholder/>
+                                            </child>
+                                            <child>
+                                              <placeholder/>
+                                            </child>
+                                            <child>
+                                              <placeholder/>
                                             </child>
                                             <child>
                                               <placeholder/>

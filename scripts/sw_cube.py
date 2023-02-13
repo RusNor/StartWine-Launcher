@@ -1,18 +1,13 @@
 #!/usr/bin/env python3
 ######################
 
-import os
 import sys
 from pathlib import Path
-import subprocess
-from subprocess import run
-import threading
-from threading import Thread, Timer
 import time
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gdk', '3.0')
-from gi.repository import Gtk, GObject, Gdk, GdkPixbuf, Gio, GLib, Pango
+from gi.repository import Gtk, Gdk, GLib
 
 link = f"{sys.argv[0]}"
 sw_scripts = Path(link).parent
@@ -44,8 +39,6 @@ void main()
     v_texture = vec2(a_texture.s, 1 - a_texture.t);
 }
 """
-#    //v_texture = 1 - a_texture;                      // Flips the texture vertically and horizontally
-#    //v_texture = vec2(a_texture.s, 1 - a_texture.t); // Flips the texture vertically
 
 fragment_src = """
 # version 330
@@ -105,16 +98,29 @@ def gl_main():
     vertices = np.array(vertices, dtype=np.float32)
     indices = np.array(indices, dtype=np.uint32)
 
-    def on_realize(gl_area):
+    def on_create_context(gl_area):
 
         ctx = gl_area.get_context()
         gues = gl_area.get_use_es()
         print("Opengl Context:", ctx)
         print("OpenGL ES enable:", gues)
+        ctx.make_current()
+        error = gl_area.get_error()
+        if error != None:
+            print(error)
+            return
+
+        glBindRenderbuffer(GL_RENDERBUFFER, 0)
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+        ctx.clear_current()
 
     def on_render(gl_area, ctx):
 
-        shader = compileProgram(compileShader(vertex_src, GL_VERTEX_SHADER), compileShader(fragment_src, GL_FRAGMENT_SHADER))
+        # shader program
+        shader = compileProgram(
+                                compileShader(vertex_src, GL_VERTEX_SHADER),
+                                compileShader(fragment_src, GL_FRAGMENT_SHADER)
+                                )
 
         # Vertex Arrays Object
         VAO = glGenVertexArrays(1)
@@ -123,21 +129,53 @@ def gl_main():
         # Vertex Buffer Object
         VBO = glGenBuffers(1)
         glBindBuffer(GL_ARRAY_BUFFER, VBO)
-        glBufferData(GL_ARRAY_BUFFER, vertices.nbytes, vertices, GL_STATIC_DRAW)
+        glBufferData(
+                    GL_ARRAY_BUFFER,
+                    vertices.nbytes,
+                    vertices, GL_STATIC_DRAW
+                    )
 
         # Element Buffer Object
         EBO = glGenBuffers(1)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO)
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.nbytes, indices, GL_STATIC_DRAW)
+        glBufferData(
+                    GL_ELEMENT_ARRAY_BUFFER,
+                    indices.nbytes, indices,
+                    GL_STATIC_DRAW
+                    )
+
+        glVertexAttribPointer(
+                            0,
+                            3,
+                            GL_FLOAT,
+                            GL_FALSE,
+                            vertices.itemsize * 8,
+                            ctypes.c_void_p(0)
+                            )
 
         glEnableVertexAttribArray(0)
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, vertices.itemsize * 8, ctypes.c_void_p(0))
+
+        glVertexAttribPointer(
+                            1,
+                            3,
+                            GL_FLOAT,
+                            GL_FALSE,
+                            vertices.itemsize * 8,
+                            ctypes.c_void_p(12)
+                            )
 
         glEnableVertexAttribArray(1)
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, vertices.itemsize * 8, ctypes.c_void_p(12))
+
+        glVertexAttribPointer(
+                            2,
+                            2,
+                            GL_FLOAT,
+                            GL_FALSE,
+                            vertices.itemsize * 8,
+                            ctypes.c_void_p(24)
+                            )
 
         glEnableVertexAttribArray(2)
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, vertices.itemsize * 8, ctypes.c_void_p(24))
 
         # Generate Textures
         texture = glGenTextures(1)
@@ -153,28 +191,58 @@ def gl_main():
 
         # Load Image
         image = Image.open(f"{sw_icon}/gui_icons/cube.png")
-#        image = image.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
         img_data = image.convert("RGBA").tobytes()
-        # img_data = np.array(image.getdata(), np.uint8) # second way of getting the raw image data
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, img_data)
+        glTexImage2D(
+                    GL_TEXTURE_2D,
+                    0,
+                    GL_RGBA,
+                    image.width,
+                    image.height,
+                    0,
+                    GL_RGBA,
+                    GL_UNSIGNED_BYTE,
+                    img_data
+                    )
 
         # Use Shader Program
         glUseProgram(shader)
         glClearColor(0.05, 0.05, 0.05, 1)
+        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
-        rotation_loc = glGetUniformLocation(shader, "rotation")
-
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
-
         # Rotation
+        rotation_loc = glGetUniformLocation(shader, "rotation")
         rot_x = pyrr.Matrix44.from_x_rotation(1.0 * time.time())
         rot_y = pyrr.Matrix44.from_y_rotation(1.0 * time.time())
-        glUniformMatrix4fv(rotation_loc, 1, GL_FALSE, pyrr.matrix44.multiply(rot_x, rot_y))
+        glUniformMatrix4fv(
+                        rotation_loc,
+                        1,
+                        GL_FALSE,
+                        pyrr.matrix44.multiply(rot_x, rot_y)
+                        )
 
-        glDrawElements(GL_TRIANGLES, len(indices), GL_UNSIGNED_INT, None)
+        # Draw elements
+        glDrawElements(
+                    GL_TRIANGLES,
+                    len(indices),
+                    GL_UNSIGNED_INT,
+                    None
+                    )
+
+        # clear buffers
+        glBindVertexArray(0)
+        glDisableVertexAttribArray(0)
+        glDisableVertexAttribArray(1)
+        glDisableVertexAttribArray(2)
+        glDeleteBuffers(1, VBO)
+        glDeleteBuffers(1, EBO)
+        glDeleteVertexArrays(1, vertices)
+        glDeleteVertexArrays(1, VAO)
+        glDeleteTextures(1, texture)
+        glDeleteProgram(shader)
+        gl_window.queue_draw()
 
     def on_window_redraw(widget, event):
         if gl_window.get_visible() is True:
@@ -199,11 +267,11 @@ def gl_main():
     gl_area.set_hexpand(True)
     gl_area.set_vexpand(True)
     gl_area.connect("render", on_render)
-    gl_area.connect("realize", on_realize)
+    gl_area.connect("realize", on_create_context)
     gl_window.vbox.add(gl_area)
     gl_window.show_all()
     gl_window.connect("destroy", Gtk.main_quit)
-    gl_window.connect("draw", on_window_redraw)
+    #gl_window.connect("draw", on_window_redraw)
     gl_window.connect("event", on_window_btn_event)
     Gtk.main()
 
