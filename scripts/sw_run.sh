@@ -1,1 +1,1 @@
-env "/home/rus_nor/.local/share/StartWine/data/scripts/sw_main" "/home/rus_nor/.local/share/StartWine/data/pfx/pfx_lgc_api/drive_c/ProgramData/Lesta/GameCenter/api/lgc_api.exe"
+env "/home/$USER/.local/share/StartWine/data/scripts/sw_main"

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-################################___SCRIPTS_V366___:
+################################___SCRIPTS_V367___:
 
 import os
 import sys
@@ -113,14 +113,17 @@ launchers_data = [
     f"{sw_pfx}/pfx_itch/drive_c/users/steamuser/AppData/Local/itch/app-25.5.1/itch.exe",
     f"{sw_pfx}/pfx_lgc_api/drive_c/ProgramData/Lesta/GameCenter/api/lgc_api.exe",
     f"{sw_pfx}/pfx_Lineage/drive_c/GameCoast Games/launcher/Lineage.exe",
+    f"{sw_pfx}/pfx_yuzu/drive_c/yuzu/yuzu.exe",
     f"{sw_pfx}/pfx_Origin/drive_c/Program Files (x86)/Origin/Origin.exe",
     f"{sw_pfx}/pfx_osu!/drive_c/osu!/osu!.exe",
     f"{sw_pfx}/pfx_PathOfExile/drive_c/Grinding Gear Games/Path of Exile/PathOfExile.exe",
     f"{sw_pfx}/pfx_PlariumPlay/drive_c/users/steamuser/AppData/Local/PlariumPlay/PlariumPlay.exe",
+    f"{sw_pfx}/pfx_PopcoTime/drive_c/PopcoTime/PopcoTime.exe",
     f"{sw_pfx}/pfx_RiotClientServices/drive_c/Riot Games/Riot Client/RiotClientServices.exe",
     f"{sw_pfx}/pfx_Launcher/drive_c/Program Files/Rockstar Games/Launcher/Launcher.exe",
     f"{sw_pfx}/pfx_ExboLauncher/drive_c/EXBO/java/bin/ExboLauncher.exe",
     f"{sw_pfx}/pfx_StalkerOnline_Launcher/drive_c/StalkerOnline/StalkerOnline Launcher.exe",
+    f"{sw_pfx}/pfx_Star_Wars_TOR/drive_c/Electronic Arts/BioWare/Star Wars - The Old Republic/Star Wars TOR.exe",
     f"{sw_pfx}/pfx_steam/drive_c/Program Files (x86)/Steam/steam.exe",
     f"{sw_pfx}/pfx_UbisoftConnect/drive_c/Program Files (x86)/Ubisoft/Ubisoft Game Launcher/UbisoftConnect.exe",
     f"{sw_pfx}/pfx_wgc_api/drive_c/ProgramData/Wargaming.net/GameCenter/api/wgc_api.exe",
