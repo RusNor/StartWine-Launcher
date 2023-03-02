@@ -41,6 +41,11 @@ For Debian
 sudo apt install python3-gi
 ```
 
+For Rosa Linux
+```bash
+sudo dnf install lib64vte-gir2.91.x86_64 libvte-gir2.91.i686 vte291.x86_64 vte291.i686 python3-gobject
+```
+
 If you downloaded and launched StartWine via the wget command, you can simply skip the item below
 
 Once you have downloaded the file, first of all right-click, properties, rights (or any other similar item in the properties), check the "Is executable" or "Allow to run as a program" box.
