@@ -31,7 +31,8 @@ elif [ -x "$(command -v dnf)" ]; then
         echo " wine ________________________________package is already installed"
     fi
 
-    for deps in zstd ImageMagick vulkan-tools xdg-user-dirs ibus-gtk2.i686 htop python3-gobject rubygem-vte3 python3-cairo python3-pyopengl python3-numpy python3-pillow python3-six ; do
+    for deps in zstd ImageMagick vulkan-tools xdg-user-dirs ibus-gtk2.i686 htop python3-gobject rubygem-vte3 python3-cairo python3-pyopengl python3-numpy \
+        python3-pillow python3-six lib64vte-gir2.91.x86_64 libvte-gir2.91.i686 vte291.x86_64 vte291.i686 ; do
 
         if [ "`sudo dnf list $deps | grep @`" == "" ]; then
             sudo dnf install $deps -y || echo "$deps ______________________Passed"
@@ -102,7 +103,7 @@ elif [ -x "$(command -v emerge)" ]; then
     sudo emerge --sync || echo 'Passed' &&
 
     for deps in app-arch/zstd media-gfx/imagemagick dev-util/vulkan-tools app-emulation/wine-vanilla x11-misc/xdg-user-dirs dev-python/pyopengl gui-libs/vte \
-        dev-python/numpy dev-python/pycairo dev-python/pillow dev-python/six ; do
+        dev-python/numpy dev-python/pycairo dev-python/pillow dev-python/six app-arch/lz4 sys-fs/squashfs-tools sys-fs/squashfuse ; do
 
         if [ "`qlist -I $deps | grep -w $deps | tail -n1`" == "" ]; then
             sudo emerge --noreplace --with-bdeps=y --jobs=2 $deps || echo "$deps ______________Passed"
