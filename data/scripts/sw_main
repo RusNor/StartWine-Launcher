@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-################################___SCRIPTS_V367___:
+################################___SCRIPTS_V368___:
 
 import os
 import sys
@@ -109,6 +109,7 @@ launchers_data = [
     f"{sw_pfx}/pfx_evelauncher/drive_c/EVE/Launcher/evelauncher.exe",
     f"{sw_pfx}/pfx_GalaxyClient/drive_c/Program Files (x86)/GOG Galaxy/GalaxyClient.exe",
     f"{sw_pfx}/pfx_GameCenter/drive_c/GameCenter/GameCenter.exe",
+    f"{sw_pfx}/pfx_GameXP_Launcher/drive_c/Launcher/GameXP Launcher.exe",
     f"{sw_pfx}/pfx_gfclient/drive_c/Program Files (x86)/GameforgeClient/gfclient.exe",
     f"{sw_pfx}/pfx_itch/drive_c/users/steamuser/AppData/Local/itch/app-25.5.1/itch.exe",
     f"{sw_pfx}/pfx_lgc_api/drive_c/ProgramData/Lesta/GameCenter/api/lgc_api.exe",
