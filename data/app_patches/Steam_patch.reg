@@ -4,7 +4,7 @@ Windows Registry Editor Version 5.00
 "wineoss.drv"="N"
 
 [HKEY_CURRENT_USER\Software\Wine\AppDefaults\steam.exe]
-"Version"="win10"
+"Version"="win7"
 
 [HKEY_CURRENT_USER\Software\Valve\Steam]
 "DWriteEnable"="dword:00000000"
