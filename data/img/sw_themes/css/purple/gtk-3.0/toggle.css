@@ -1,0 +1,66 @@
+button.toggle{
+  background-image:
+  repeating-linear-gradient(35deg, rgba(0, 0, 0, 0.3),
+                                    rgba(20, 20, 40, 0.3) 1px),
+  repeating-linear-gradient(-35deg, rgba(0, 0, 0, 0.3),
+                                    rgba(20, 20, 40, 0.3) 1px),
+  repeating-linear-gradient(to bottom right, #202040, #302060, #702080);
+  color: rgba(255, 255, 255, 0.87);
+}
+
+.background {
+/*  background-color: rgba(12, 3, 18, 0.9);*/
+  background-image:
+  repeating-linear-gradient(35deg, rgba(0, 0, 0, 0.3),
+                                    rgba(20, 20, 40, 0.3) 1px),
+  repeating-linear-gradient(-35deg, rgba(0, 0, 0, 0.3),
+                                    rgba(20, 20, 40, 0.3) 1px),
+  repeating-linear-gradient(to bottom right, #202040, #302060, #702080);
+  color: rgba(255, 255, 255, 0.87);
+}
+
+textview text {
+  background-image:
+  repeating-linear-gradient(35deg, rgba(0, 0, 0, 0.3),
+                                    rgba(20, 20, 40, 0.3) 1px),
+  repeating-linear-gradient(-35deg, rgba(0, 0, 0, 0.3),
+                                    rgba(20, 20, 40, 0.3) 1px),
+  repeating-linear-gradient(to bottom right, #202040, #302060, #702080);
+  color: rgba(120, 80, 160, 0.99);
+  caret-color: #cd9ef7;
+}
+
+notebook > stack:not(:only-child) {
+  background-image:
+  repeating-linear-gradient(35deg, rgba(0, 0, 0, 0.3),
+                                    rgba(20, 20, 40, 0.3) 1px),
+  repeating-linear-gradient(-35deg, rgba(0, 0, 0, 0.3),
+                                    rgba(20, 20, 40, 0.3) 1px),
+  repeating-linear-gradient(to bottom right, #101020, #181030, #381040);
+  color: rgba(255, 255, 255, 0.87);
+}
+
+list {
+  border: 1px solid transparent;
+  border-color: #cd9ef7;
+  border-radius: 4px 4px 4px 4px;
+  box-shadow: 0 0 0 6px rgba(205,158,247,0.12), 0 2px 2px -2px rgba(0,0,0,0.3), 0 1px 2px -1px rgba(0,0,0,0.24), 0 1px 2px -0.6px rgba(0,0,0,0.17);
+  background-image:
+  repeating-linear-gradient(35deg, rgba(0, 0, 0, 0.3),
+                                    rgba(20, 20, 40, 0.3) 1px),
+  repeating-linear-gradient(-35deg, rgba(0, 0, 0, 0.3),
+                                    rgba(20, 20, 40, 0.3) 1px),
+  repeating-linear-gradient(to bottom right, #202040, #302060, #702080);
+  color: rgba(255, 255, 255, 0.87);
+}
+
+dialog .titlebar {
+  background-image:
+  repeating-linear-gradient(35deg, rgba(0, 0, 0, 0.3),
+                                    rgba(20, 20, 40, 0.3) 1px),
+  repeating-linear-gradient(-35deg, rgba(0, 0, 0, 0.3),
+                                    rgba(20, 20, 40, 0.3) 1px),
+  repeating-linear-gradient(45deg, #202040, #302060, #702080);
+  color: rgba(255, 255, 255, 0.87);
+}
+
