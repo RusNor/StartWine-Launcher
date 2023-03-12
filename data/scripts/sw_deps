@@ -64,7 +64,7 @@ elif [ -x "$(command -v pacman)" ]; then
 
     sudo pacman -Sy -y || echo 'Passed' &&
 
-    for deps in zstd imagemagick vulkan-tools xdg-user-dirs htop python-gobject python-cairo python-opengl python-pillow python-numpy python-six ; do
+    for deps in zstd imagemagick vulkan-tools xdg-user-dirs htop vte3 python-gobject python-cairo python-opengl python-pillow python-numpy python-six ; do
 
         if [ "`pacman -Qs $deps | grep -w $deps | tail -n1`" == "" ]; then
             sudo pacman -S $deps --noconfirm || echo "$deps _______________Passed"

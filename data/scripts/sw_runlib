@@ -8,7 +8,7 @@ export START_WINE_PATH="$(pwd)"
 ###############################   TOOLS   ######################################
 
 export SW_VER="368"
-export GE_VER="7-49"
+export GE_VER="7-50"
 export SP_VER="7.0.6"
 export STAG_VER="8.2"
 export LUTRIS_VER="7.2"
@@ -275,9 +275,9 @@ try_fix_pfx () {
         try_force_link_dir "${START_WINE_PATH}/Games" "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/drive_c/Games"
     fi
 
-    if [ "$(cat ${WINEPREFIX}/.update-timestamp)" != "disable" ]; then
-        echo disable > "${WINEPREFIX}/.update-timestamp"
-    fi
+#    if [ "$(cat ${WINEPREFIX}/.update-timestamp)" != "disable" ]; then
+#       echo disable > "${WINEPREFIX}/.update-timestamp"
+#    fi
 
     if [ ! -d "${WINEPREFIX}/drive_c/users/Public/Documents/Steam" ]; then
         create_new_dir "${WINEPREFIX}/drive_c/users/Public/Documents/Steam"
@@ -425,7 +425,6 @@ try_winedllpath_update "${WINEDIR}/lib64/wine/x86_64-windows"
 
 try_path_update "${WINEDIR}/bin"
 
-export LAUNCH_PARAMETERS="${SW_USE_LAUNCH_PARAMETERS}"
 export WINEARCH="${SW_USE_WINEARCH}"
 export WINELOADER="${WINEDIR}/bin/wine"
 export WINESERVER="${WINEDIR}/bin/wineserver"
@@ -472,6 +471,10 @@ create_new_dir "${START_WINE_PATH}/data/wine/wine_steam_proton"
 
 if [ ! -f "${START_WINE_PATH}/data/scripts/version" ]; then
     echo "${SW_VER}" > "${START_WINE_PATH}/data/scripts/version"
+fi
+
+if [ ! -d "${HOME}/StartWine" ]; then
+    try_force_link_dir "${HOME}/.local/share/StartWine" "${HOME}"
 fi
 
 if [ ! -f "/usr/share/gamemode/gamemode.ini" ] && [ ! -f "/etc/gamemode.ini" ] && [ ! -f "$HOME/.config/gamemode.ini" ]; then
@@ -766,16 +769,16 @@ fi
 
 ###############################   OVERRIDE DLL   ###############################
 
-try_winedlloverride_update "openvr_api_dxvk,dxvk_config,winemenubuilder.exe="
+try_winedlloverride_update "SteamAppId,SteamGameId,lsteamclient,winemenubuilder.exe="
 
 try_winedlloverride_update "steam_api,steam_api64,steamclient,steamclient64=n"
 
-#try_winedlloverride_update "lsteamclient,GameOverlayRenderer,GameOverlayRenderer64"
-
-try_winedlloverride_update "SteamAppId,SteamGameId="
-
 if [ "${SW_USE_WINEDLLOVERRIDES}" != "" ]; then
     try_winedlloverride_update "${SW_USE_WINEDLLOVERRIDES}"
+fi
+
+if [ "${SW_USE_LAUNCH_PARAMETERS}" != "" ]; then
+    export LAUNCH_PARAMETERS="${SW_USE_LAUNCH_PARAMETERS}"
 fi
 
 ##############################   RUNTIME DOWNLOAD   ############################
@@ -882,7 +885,9 @@ RUN_VULKAN () {
 
         fi
 
-        try_winedlloverride_update "d3d11,d3d10,d3d10core,d3d10_1,d3d9,dxgi=b;d3d12,libvkd3d-proton-utils-3="
+        try_winedlloverride_update "d3d11,d3d10,d3d10core,d3d10_1,d3d9,dxgi=b"
+
+        try_winedlloverride_update "d3d12,libvkd3d-proton-utils-3="
 
         echo "OpenGL mode"
 
