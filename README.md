@@ -30,22 +30,6 @@ or the command
 wget -c -t 5 -T 5 "https://github.com/RusNor/StartWine-Launcher/releases/download/StartWine_v368/StartWine_v368" --output-document="${HOME}/StartWine_v368" && chmod +x StartWine_v368 && ./StartWine_v368
 ```
 
-Also remember to check if the **python-gobject** package is installed on your system:
-
-For Arch Linux
-```bash 
-sudo pacman -S python-gobject
-```
-For Debian
-```bash
-sudo apt install python3-gi
-```
-
-For Rosa Linux
-```bash
-sudo dnf install lib64vte-gir2.91.x86_64 libvte-gir2.91.i686 vte291.x86_64 vte291.i686 python3-gobject
-```
-
 If you downloaded and launched StartWine via the wget command, you can simply skip the item below
 
 Once you have downloaded the file, first of all right-click, properties, rights (or any other similar item in the properties), check the "Is executable" or "Allow to run as a program" box.
