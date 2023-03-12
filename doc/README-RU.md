@@ -25,23 +25,7 @@ GitHub: [Click](https://github.com/RusNor/StartWine-Launcher/releases)
 
 Или командой 
 ```bash
-wget -c -t 5 -T 5 "https://github.com/RusNor/StartWine-Launcher/releases/download/StartWine_v367/StartWine_v367" --output-document="${HOME}/StartWine_v367" && chmod +x StartWine_v367 && ./StartWine_v367
-```
-
-Также не забудьте проверить, установлен ли в вашей системе пакет **python-gobject**:
-
-Arch Linux
-```bash 
-sudo pacman -S python-gobject
-```
-Debian
-```bash
-sudo apt install python3-gi
-```
-
-Rosa Linux 
-```bash
-sudo dnf install lib64vte-gir2.91.x86_64 libvte-gir2.91.i686 vte291.x86_64 vte291.i686 python3-gobject
+wget -c -t 5 -T 5 "https://github.com/RusNor/StartWine-Launcher/releases/download/StartWine_v368/StartWine_v368" --output-document="${HOME}/StartWine_v368" && chmod +x StartWine_v368 && ./StartWine_v368
 ```
 
 Если вы загрузили и запустили StartWine с помощью команды wget, вы можете просто пропустить пункт ниже
@@ -64,7 +48,7 @@ chmod +x StartWine_v*
 
 если командой хотите с терминала:
 ```bash
-./StartWine_v367
+./StartWine_v368
 ```
 
 ## Установка (старое)
