@@ -1,0 +1,1 @@
+env "data/scripts/sw_main"
