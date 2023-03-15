@@ -32,17 +32,16 @@ except:
 
 ################################___PATHS___:
 
-link = f"{sys.argv[0]}"
-sw_link = Path(link).parent
+sw_path = Path(os.path.dirname(os.path.abspath(__file__))).parent.parent
+sw_scripts = f"{sw_path}/data/scripts"
 
-sw_bin = f"{sw_link.parent.parent}/data/tools/utils/bin"
-sw_ld_lib = f"{sw_link.parent.parent}/data/tools/utils/libs/x86-64"
-sw_gi_typelib = f"{sw_link.parent.parent}/data/tools/utils/libs/x86-64/gi_typelib"
+sw_bin = f"{sw_path}/data/tools/utils/bin"
+sw_ld_lib = f"{sw_path}/data/tools/utils/libs/x86-64"
+sw_gi_typelib = f"{sw_path}/data/tools/utils/libs/x86-64/gi_typelib"
 
 os.environ["LD_LIBRARY_PATH"] = os.pathsep + sw_ld_lib
 os.environ["GI_TYPELIB_PATH"] = os.pathsep + sw_gi_typelib
 
-sw_scripts = f"{sw_link}"
 sw_crier_path = Path(f"{sw_scripts}/sw_crier.py")
 sw_fsh = Path(f"{sw_scripts}/sw_function.sh")
 sw_rsh = Path(f"{sw_scripts}/sw_run.sh")

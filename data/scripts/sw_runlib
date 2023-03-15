@@ -474,7 +474,7 @@ if [ ! -f "${START_WINE_PATH}/data/scripts/version" ]; then
 fi
 
 if [ ! -d "${HOME}/StartWine" ]; then
-    try_force_link_dir "${HOME}/.local/share/StartWine" "${HOME}"
+    try_force_link_dir "$START_WINE_PATH" "${HOME}/.local/share"
 fi
 
 if [ ! -f "/usr/share/gamemode/gamemode.ini" ] && [ ! -f "/etc/gamemode.ini" ] && [ ! -f "$HOME/.config/gamemode.ini" ]; then

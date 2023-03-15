@@ -19,9 +19,10 @@ from gi.repository import Gio, GLib
 
 from sw_crier import sw_crier
 
-sw_scripts = f"{sw_path_link}"
-sw_path = Path(sw_scripts).parent.parent
-sw_shortcuts = Path(sw_path) / 'Shortcuts'
+sw_path = Path(os.path.dirname(os.path.abspath(__file__))).parent.parent
+sw_scripts = f"{sw_path}/data/scripts"
+
+sw_shortcuts = f"{sw_path}/Shortcuts"
 
 sw_fsh = Path(f"{sw_scripts}/sw_function.sh")
 sw_rsh = Path(f"{sw_scripts}/sw_run.sh")
