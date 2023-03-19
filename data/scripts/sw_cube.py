@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 ######################
 
-import os
 import sys
 from pathlib import Path
 import time
@@ -10,9 +9,9 @@ gi.require_version('Gtk', '3.0')
 gi.require_version('Gdk', '3.0')
 from gi.repository import Gtk, Gdk, GLib
 
-sw_path = Path(os.path.dirname(os.path.abspath(__file__))).parent.parent
-sw_scripts = f"{sw_path}/data/scripts"
-
+link = f"{sys.argv[0]}"
+sw_scripts = Path(link).parent
+sw_path = Path(sw_scripts).parent.parent
 sw_icon = Path(f"{sw_path}/data/img")
 
 from OpenGL.GL import *

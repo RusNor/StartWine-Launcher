@@ -7,12 +7,12 @@ export START_WINE_PATH="$(pwd)"
 
 ###############################   TOOLS   ######################################
 
-export SW_VER="368"
-export GE_VER="7-50"
+export SW_VER="369"
+export GE_VER="7-51"
 export SP_VER="7.0.6"
-export STAG_VER="8.2"
-export LUTRIS_VER="7.2"
-export LUTRIS_GE_VER="7-37"
+export STAG_VER="8.3"
+export LUTRIS_VER="7.2-2"
+export LUTRIS_GE_VER="7-39"
 export UTILS_VER="v2.1"
 export SCRIPTS="${START_WINE_PATH}/data/scripts"
 export CRIER="${SCRIPTS}/sw_crier.py"
@@ -275,10 +275,6 @@ try_fix_pfx () {
         try_force_link_dir "${START_WINE_PATH}/Games" "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/drive_c/Games"
     fi
 
-#    if [ "$(cat ${WINEPREFIX}/.update-timestamp)" != "disable" ]; then
-#       echo disable > "${WINEPREFIX}/.update-timestamp"
-#    fi
-
     if [ ! -d "${WINEPREFIX}/drive_c/users/Public/Documents/Steam" ]; then
         create_new_dir "${WINEPREFIX}/drive_c/users/Public/Documents/Steam"
     fi
@@ -474,7 +470,7 @@ if [ ! -f "${START_WINE_PATH}/data/scripts/version" ]; then
 fi
 
 if [ ! -d "${HOME}/StartWine" ]; then
-    try_force_link_dir "$START_WINE_PATH" "${HOME}/.local/share"
+    try_force_link_dir "${START_WINE_PATH}" "${HOME}"
 fi
 
 if [ ! -f "/usr/share/gamemode/gamemode.ini" ] && [ ! -f "/etc/gamemode.ini" ] && [ ! -f "$HOME/.config/gamemode.ini" ]; then
@@ -837,6 +833,23 @@ fi
 if [ ! -f "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso" ]; then
     export FTP_URL="https://github.com/RusNor/pfx_backup/releases/download/pfx_default/pfx_default.iso"
     crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso"`
+fi
+
+#############################   STEAM_PROTON DOWNLOAD   ########################
+
+if [ ! -d "${START_WINE_PATH}/data/wine/wine_steam_proton/bin" ]; then
+    try_remove_file "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}".tar.xz" &&
+    try_remove_dir "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}""
+    export FTP_URL="https://github.com/RusNor/Wine-Steam-Proton/releases/download/steam-proton-"${SP_VER}"/steam-proton-"${SP_VER}".tar.xz"
+    crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}".tar.xz"` &&
+    crier=`$CRIER -tar "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}".tar.xz" "${START_WINE_PATH}/data/tmp"` &&
+    for copy_dir in bin lib lib64 share ; do
+        try_copy_dir "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}"/${copy_dir}" "${START_WINE_PATH}/data/wine/wine_steam_proton"
+    done
+    try_copy_file "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}"/version" "${START_WINE_PATH}/data/wine/wine_steam_proton" &&
+    try_remove_file "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}".tar.xz" &&
+    try_remove_dir "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}""
+    chmod -R 775 "${START_WINE_PATH}/data/wine/wine_steam_proton"
 fi
 
 ##############################   RUN VULKAN   ##################################
@@ -1357,9 +1370,7 @@ SW_CLEAR_PFX () {
     crier=`$CRIER -q "$(eval_gettext "Do you really want to clear the prefix ?")"`
 
     if [ "$(echo $crier)" == "0" ]; then
-
         try_clear_pfx
-
     fi
 
 }
@@ -1475,22 +1486,6 @@ INSTALL_RL () {
 
 }
 
-INSTALL_RL_DOT () {
-
-    export DLL="dotnet48 d3dcompiler_42 d3dcompiler_43 \
-    d3dcompiler_47 d3dx10 d3dx10_43 d3dx11_42 d3dx11_43 d3dx9 mfc120 mfc42 msvcirt \
-    physx vcrun2010 vcrun2012 vcrun2013 vcrun2019 vcrun6 vcrun6sp6"
-
-    SW_WINETRICKS
-
-    if [ ! -f "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/btn.log" ];then
-        for btn_log in 15 16 18 20 21 22 23 44 79 93 207 210 228 240 274 275 276 279 280 281 ; do
-            echo "${btn_log}" >> "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/btn.log"
-        done
-    fi
-
-}
-
 #################################   DEBUG   ####################################
 
 DEBUG_LOG () {
@@ -1558,6 +1553,10 @@ WINE_1 () {
         done
         try_remove_file "${START_WINE_PATH}/data/tmp/wine-"${STAG_VER}"-staging-amd64.tar.xz" &&
         try_remove_dir "${START_WINE_PATH}/data/tmp/wine-"${STAG_VER}"-staging-amd64"
+    fi
+
+    if [ ! -f "${START_WINE_PATH}/data/wine/wine_staging/version" ]; then
+        echo "wine-staging ${STAG_VER}" > "${START_WINE_PATH}/data/wine/wine_staging/version"
     fi
 
     chmod -R 775 "${START_WINE_PATH}/data/wine/wine_staging"
@@ -1665,6 +1664,10 @@ WINE_4 () {
     cd "${START_WINE_PATH}/data/wine/wine_lutris/share/wine"
     sed -i '/\AppDefaults\\/g' wine.inf
 
+    if [ ! -f "${START_WINE_PATH}/data/wine/wine_lutris/version" ]; then
+        echo "wine-lutris ${LUTRIS_VER}" > "${START_WINE_PATH}/data/wine/wine_lutris/version"
+    fi
+
     chmod -R 775 "${START_WINE_PATH}/data/wine/wine_lutris"
 
     if [ "${WINE_OK}" == 1 ]; then
@@ -1698,6 +1701,10 @@ WINE_5 () {
 
     cd "${START_WINE_PATH}/data/wine/wine_lutris_ge/share/wine"
     sed -i '/HKLM,Software\\Wow6432Node\\lucasarts/g; /\AppDefaults\\/g' wine.inf
+
+    if [ ! -f "${START_WINE_PATH}/data/wine/wine_lutris_ge/version" ]; then
+        echo "wine-lutris-ge ${LUTRIS_GE_VER}" > "${START_WINE_PATH}/data/wine/wine_lutris_ge/version"
+    fi
 
     chmod -R 775 "${START_WINE_PATH}/data/wine/wine_lutris_ge"
 
@@ -2654,7 +2661,10 @@ INSTALL_LESTA_GAME () {
 
         sw_shortcuts_autoinstall
 
-        crier=`$CRIER -i "$(eval_gettext "Application installed successfully")"`
+        export DLL="vcrun2019"
+        export INSTALL_OK=1
+
+        SW_WINETRICKS
 
     else
 
@@ -2959,44 +2969,6 @@ INSTALL_STARWARS_TOR () {
 
     fi
 
-
-}
-
-INSTALL_POPCOTIME () {
-
-    if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_PopcoTime/drive_c/PopcoTime/PopcoTime.exe" ]; then
-
-        WINE_OK=1
-        WINE_3
-
-        export SW_USE_PFX="pfx_PopcoTime"
-        export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
-        export WINEDIR="${START_WINE_PATH}/data/wine/wine_proton_ge"
-        export WINELOADER=$WINEDIR/bin/wine
-
-        "${WINELOADER}" wineboot || prefix_init_error
-        "${WINESERVER}" -w
-
-        export FTP_URL="https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/PopcoTime_0.1/PopcoTime_0.1.tar.xz"
-        crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/PopcoTime_0.1.tar.xz"`
-        crier=`$CRIER -tar "${START_WINE_PATH}/data/tmp/PopcoTime_0.1.tar.xz" "${WINEPREFIX}/drive_c"` &&
-        try_remove_file "${START_WINE_PATH}/data/tmp/PopcoTime_0.1.tar.xz"
-
-        SW_USE_EXE="drive_c/PopcoTime/PopcoTime.exe"
-        SW_USE_WINE="wine_proton_ge"
-
-        sw_shortcuts_autoinstall
-
-        export DLL="d3dcompiler_47 d3dx9 vcrun2019"
-        export INSTALL_OK=1
-
-        SW_WINETRICKS
-
-    else
-
-        crier=`$CRIER -i "$(eval_gettext "Application is installed")"`
-
-    fi
 
 }
 

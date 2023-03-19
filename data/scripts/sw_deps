@@ -11,7 +11,7 @@ if [ -x "$(command -v apt)" ]; then
     sudo dpkg --add-architecture i386 2>/dev/null || echo 'Pass' &&
     sudo apt update -y 2>/dev/null || echo 'Passed' &&
 
-    for deps in zstd imagemagick vulkan-tools wine xdg-user-dirs htop python3-gi-cairo python3-opengl python3-numpy python3-pil python3-six ; do
+    for deps in zstd imagemagick vulkan-tools wine xdg-user-dirs htop python3-gi python3-gi-cairo python3-opengl python3-numpy python3-pil python3-six ; do
 
         if [ "`sudo apt list --installed $deps 2>/dev/null | cut -d '/' -f1 | tail -n1`" != "$deps" ]; then
             sudo apt install $deps -y 2>/dev/null || echo "$deps __________Passed"

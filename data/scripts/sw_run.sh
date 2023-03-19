@@ -1,1 +1,1 @@
-env "/home/alexander/StartWine-Launcher/data/scripts/sw_main"
+env "/home/$USER/.local/share/StartWine/data/scripts/sw_main"

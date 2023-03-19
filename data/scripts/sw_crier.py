@@ -27,10 +27,11 @@ try:
 except:
     pass
 
-sw_path = Path(os.path.dirname(os.path.abspath(__file__))).parent.parent
-sw_scripts = f"{sw_path}/data/scripts"
-sw_icon = f"{sw_path}/data/img"
-sw_app_config = f"{sw_path}/data/app_config"
+link = f"{sys.argv[0]}/"
+sw_scripts = Path(link).parent
+sw_path = Path(sw_scripts).parent.parent
+sw_icon = Path(sw_path) / 'data/img'
+sw_app_config = Path(sw_path) / 'data/app_config'
 sw_css = f"{sw_icon}/sw_themes/css"
 sw_rsh = Path(f"{sw_scripts}/sw_run.sh")
 crier_title = f"StartWine"
