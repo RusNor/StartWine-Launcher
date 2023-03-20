@@ -25,7 +25,7 @@ GitHub: [Click](https://github.com/RusNor/StartWine-Launcher/releases)
 
 Или командой 
 ```bash
-wget -c -t 5 -T 5 "https://github.com/RusNor/StartWine-Launcher/releases/download/StartWine_v368/StartWine_v368" --output-document="${HOME}/StartWine_v368" && chmod +x StartWine_v368 && ./StartWine_v368
+wget -c -t 5 -T 5 "https://github.com/RusNor/StartWine-Launcher/releases/download/StartWine_v368/StartWine_v369" --output-document="${HOME}/StartWine_v369" && chmod +x StartWine_v369 && ./StartWine_v369
 ```
 
 Если вы загрузили и запустили StartWine с помощью команды wget, вы можете просто пропустить пункт ниже
@@ -48,7 +48,7 @@ chmod +x StartWine_v*
 
 если командой хотите с терминала:
 ```bash
-./StartWine_v368
+./StartWine_v369
 ```
 
 ## Установка (старое)
