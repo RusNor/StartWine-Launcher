@@ -11,7 +11,7 @@ if [ -x "$(command -v apt)" ]; then
     sudo dpkg --add-architecture i386 2>/dev/null || echo 'Pass' &&
     sudo apt update -y 2>/dev/null || echo 'Passed' &&
 
-    for deps in zstd imagemagick vulkan-tools wine xdg-user-dirs htop python3-gi python3-gi-cairo python3-opengl python3-numpy python3-pil python3-six ; do
+    for deps in zstd imagemagick vulkan-tools wine xdg-user-dirs gir1.2-vte-2.91 htop python3-gi-cairo python3-opengl python3-numpy python3-pil python3-six ; do
 
         if [ "`sudo apt list --installed $deps 2>/dev/null | cut -d '/' -f1 | tail -n1`" != "$deps" ]; then
             sudo apt install $deps -y 2>/dev/null || echo "$deps __________Passed"
@@ -48,7 +48,8 @@ elif [ -x "$(command -v zypper)" ]; then
 
     sudo zypper ref || echo 'Passed' &&
 
-    for deps in zstd ImageMagick vulkan-tools xdg-user-dirs wine python310-gobject-cairo python310-opengl python310-numpy python310-Pillow python310-six ; do
+    for deps in zstd ImageMagick vulkan-tools xdg-user-dirs wine typelib-1_0-Vte-2_91 vte-tools libvte-2_91-0 python310-gobject-Gdk python310-matplotlib-gtk3 \
+        python310-gobject-cairo python310-opengl python310-numpy python310-Pillow python310-six ; do
 
         if [ "`sudo zypper search -i $deps | grep $deps`" == "" ]; then
             sudo zypper in --no-confirm $deps || echo "$deps ______________Passed"

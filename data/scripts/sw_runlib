@@ -7,12 +7,12 @@ export START_WINE_PATH="$(pwd)"
 
 ###############################   TOOLS   ######################################
 
-export SW_VER="369"
-export GE_VER="7-51"
+export SW_VER="370"
+export GE_VER="7-53"
 export SP_VER="7.0.6"
-export STAG_VER="8.3"
+export STAG_VER="8.4"
 export LUTRIS_VER="7.2-2"
-export LUTRIS_GE_VER="7-39"
+export LUTRIS_GE_VER="7-41"
 export UTILS_VER="v2.1"
 export SCRIPTS="${START_WINE_PATH}/data/scripts"
 export CRIER="${SCRIPTS}/sw_crier.py"
@@ -3039,6 +3039,41 @@ INSTALL_GAMEXP () {
         export INSTALL_OK=1
 
         SW_WINETRICKS
+
+    else
+
+        crier=`$CRIER -i "$(eval_gettext "Application is installed")"`
+
+    fi
+
+}
+
+INSTALL_RPG_CLUB () {
+
+    if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_RPG_Club/drive_c/RPG-Club/RPG Club.exe" ]; then
+
+        WINE_OK=1
+        WINE_3
+
+        export SW_USE_PFX="pfx_RPG_Club"
+        export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
+        export WINEDIR="${START_WINE_PATH}/data/wine/wine_proton_ge"
+        export WINELOADER=$WINEDIR/bin/wine
+
+        "${WINELOADER}" wineboot || prefix_init_error
+        "${WINESERVER}" -w
+
+        export FTP_URL="https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/RPG-Club_0.1/RPG-Club_0.1.tar.xz"
+        crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/RPG-Club_0.1.tar.xz"`
+        crier=`$CRIER -tar "${START_WINE_PATH}/data/tmp/RPG-Club_0.1.tar.xz" "${WINEPREFIX}/drive_c"` &&
+        try_remove_file "${START_WINE_PATH}/data/tmp/RPG-Club_0.1.tar.xz"
+
+        SW_USE_EXE="drive_c/RPG-Club/RPG Club.exe"
+        SW_USE_WINE="wine_proton_ge"
+
+        sw_shortcuts_autoinstall
+
+        crier=`$CRIER -i "$(eval_gettext "Application installed successfully")"`
 
     else
 

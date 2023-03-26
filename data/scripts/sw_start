@@ -9,9 +9,8 @@ import platform
 
 #######################___PATHS__:
 
-link = f"{sys.argv[0]}"
-sw_scripts = Path(link).parent
-sw_path = sw_scripts.parent.parent
+sw_path = Path(os.path.dirname(os.path.abspath(__file__))).parent.parent
+sw_scripts = f"{sw_path}/data/scripts"
 sw_tools = Path(f"{sw_path}/data/tools")
 sw_main = Path(f"{sw_scripts}/sw_main")
 sw_crier = Path(f"{sw_scripts}/sw_crier.py")
