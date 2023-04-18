@@ -2,9 +2,28 @@
 
 echo "<< enter the user password to install the dependency for StartWine >>"
 
+###################################___NALA___:
+
+if [ -x "$(command -v nala)" ]; then
+
+    sudo nala update 2>/dev/null || echo 'Passed' &&
+    sudo nala install software-properties-common 2>/dev/null || echo 'Pass' &&
+    sudo dpkg --add-architecture i386 2>/dev/null || echo 'Pass' &&
+    sudo nala update 2>/dev/null || echo 'Passed' &&
+
+    for deps in zstd imagemagick vulkan-tools wine xdg-user-dirs gir1.2-vte-2.91 htop python3-gi-cairo python3-opengl python3-numpy python3-pil python3-six ; do
+
+        if [ "`sudo nala list --installed $deps 2>/dev/null | grep $deps`" == "" ]; then
+            sudo nala install $deps -y || echo "$deps __________Passed"
+        else
+            echo "$deps _________________________________package is already installed"
+        fi
+
+    done
+
 ###################################___APT___:
 
-if [ -x "$(command -v apt)" ]; then
+elif [ -x "$(command -v apt)" ]; then
 
     sudo apt update -y 2>/dev/null || echo 'Passed' &&
     sudo apt install software-properties-common -y 2>/dev/null || echo 'Pass' &&
@@ -15,6 +34,22 @@ if [ -x "$(command -v apt)" ]; then
 
         if [ "`sudo apt list --installed $deps 2>/dev/null | cut -d '/' -f1 | tail -n1`" != "$deps" ]; then
             sudo apt install $deps -y 2>/dev/null || echo "$deps __________Passed"
+        else
+            echo "$deps _________________________________package is already installed"
+        fi
+
+    done
+
+###################################___APT-GET___:
+
+elif [ -x "$(command -v apt-get)" ]; then
+
+    sudo apt-get update -y 2>/dev/null || echo 'Passed' &&
+
+    for deps in zstd ImageMagick vulkan-tools wine i586-wine xdg-user-dirs vte3 vte gem-vte3 libvte3 libvte3-gir gem-vte3-no-gi i586-gem-vte i586-libvte i586-libvte3 gnome-pty-helper libvte libvte-devel python-module-vte python-module-vte-devel i586-python-module-vte htop python3-module-cairocffi python3-module-OpenGL python3-module-numpy python3-module-Pillow python3-module-six python3-module-matplotlib-gtk3 python-module-vte ; do
+
+        if [ "`sudo apt-get list --installed $deps 2>/dev/null | cut -d '/' -f1 | tail -n1`" != "$deps" ]; then
+            sudo apt-get install $deps -y 2>/dev/null || echo "$deps __________Passed"
         else
             echo "$deps _________________________________package is already installed"
         fi

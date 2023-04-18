@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-################################___SCRIPTS_V370___:
+################################___SCRIPTS_V373___:
 
 import os
 import sys
@@ -36,8 +36,8 @@ sw_path = Path(os.path.dirname(os.path.abspath(__file__))).parent.parent
 sw_scripts = f"{sw_path}/data/scripts"
 
 sw_bin = f"{sw_path}/data/tools/utils/bin"
-sw_ld_lib = f"{sw_path}/data/tools/utils/libs/x86-64"
-sw_gi_typelib = f"{sw_path}/data/tools/utils/libs/x86-64/gi_typelib"
+sw_ld_lib = f"{sw_path}/data/tools/utils/libs/lib"
+sw_gi_typelib = f"{sw_path}/data/tools/utils/libs/lib/gi_typelib"
 
 os.environ["LD_LIBRARY_PATH"] = os.pathsep + sw_ld_lib
 os.environ["GI_TYPELIB_PATH"] = os.pathsep + sw_gi_typelib
@@ -104,17 +104,19 @@ launchers_data = [
     f"{sw_pfx}/pfx_BsgLauncher/drive_c/Battlestate Games/BsgLauncher/BsgLauncher.exe",
     f"{sw_pfx}/pfx_Caliber/drive_c/Program Files (x86)/1C Game Studios/Caliber/Caliber.exe",
     f"{sw_pfx}/pfx_CrossOut/drive_c/Crossout/CrossOut.exe",
+    f"{sw_pfx}/pfx_EALauncher/drive_c/Program Files/Electronic Arts/EA Desktop/EA Desktop/EALauncher.exe",
     f"{sw_pfx}/pfx_EpicGamesLauncher/drive_c/Program Files (x86)/Epic Games/Launcher/Portal/Binaries/Win32/EpicGamesLauncher.exe",
     f"{sw_pfx}/pfx_evelauncher/drive_c/EVE/Launcher/evelauncher.exe",
     f"{sw_pfx}/pfx_GalaxyClient/drive_c/Program Files (x86)/GOG Galaxy/GalaxyClient.exe",
     f"{sw_pfx}/pfx_GameCenter/drive_c/GameCenter/GameCenter.exe",
     f"{sw_pfx}/pfx_GameXP_Launcher/drive_c/Launcher/GameXP Launcher.exe",
+    f"{sw_pfx}/pfx_launcher/drive_c/Program Files/Genshin Impact/launcher.exe",
     f"{sw_pfx}/pfx_gfclient/drive_c/Program Files (x86)/GameforgeClient/gfclient.exe",
     f"{sw_pfx}/pfx_itch/drive_c/users/steamuser/AppData/Local/itch/app-25.5.1/itch.exe",
     f"{sw_pfx}/pfx_lgc_api/drive_c/ProgramData/Lesta/GameCenter/api/lgc_api.exe",
     f"{sw_pfx}/pfx_Lineage/drive_c/GameCoast Games/launcher/Lineage.exe",
+    f"{sw_pfx}/pfx_Lost_Light/drive_c/Program Files (x86)/LostLight/Lost Light.exe",
     f"{sw_pfx}/pfx_yuzu/drive_c/yuzu/yuzu.exe",
-    f"{sw_pfx}/pfx_Origin/drive_c/Program Files (x86)/Origin/Origin.exe",
     f"{sw_pfx}/pfx_osu!/drive_c/osu!/osu!.exe",
     f"{sw_pfx}/pfx_PathOfExile/drive_c/Grinding Gear Games/Path of Exile/PathOfExile.exe",
     f"{sw_pfx}/pfx_PlariumPlay/drive_c/users/steamuser/AppData/Local/PlariumPlay/PlariumPlay.exe",

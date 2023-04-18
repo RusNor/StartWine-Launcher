@@ -5619,7 +5619,7 @@ Example: -d3d11</property>
                                     <property name="can-focus">False</property>
                                     <property name="label" translatable="yes">
 StartWine
-3.7.0</property>
+3.7.3</property>
                                     <property name="justify">center</property>
                                     <attributes>
                                       <attribute name="underline" value="True"/>
@@ -6073,7 +6073,12 @@ Maslov N.G.</property>
                                     <property name="label" translatable="yes">Huskysoul
 Lintech
 Lex
-VHSgunzo</property>
+VHSgunzo
+Kot 41ru
+Sheridan
+3y6HuK
+Wik
+kazbek</property>
                                   </object>
                                   <packing>
                                     <property name="left-attach">0</property>

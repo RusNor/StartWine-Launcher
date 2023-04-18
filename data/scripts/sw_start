@@ -15,9 +15,9 @@ sw_tools = Path(f"{sw_path}/data/tools")
 sw_main = Path(f"{sw_scripts}/sw_main")
 sw_crier = Path(f"{sw_scripts}/sw_crier.py")
 
-ld_path_x86_64 = f"{sw_tools}/utils/libs/x86-64"
-ld_path_i386 = f"{sw_tools}/utils/libs/i386"
-gi_path = f"{sw_tools}/utils/libs/x86-64/gi_typelib"
+ld_path_x86_64 = f"{sw_tools}/utils/libs/lib"
+ld_path_i386 = f"{sw_tools}/utils/libs/lib32"
+gi_path = f"{sw_tools}/utils/libs/lib/gi_typelib"
 
 python_modules = f"{sw_tools}/utils/libs/python/site-packages"
 
