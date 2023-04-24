@@ -9,7 +9,7 @@ export SW_DEVELOPERS="Rus_Nor Nixon VHSgunzo"
 
 ###############################   TOOLS   ######################################
 
-export SW_VER="373"
+export SW_VER="374"
 export GE_VER="7-55"
 export SP_VER="8.0.1"
 export STAG_VER="8.6"
@@ -343,7 +343,7 @@ sw_shortcuts_autoinstall () {
 
     echo "[Desktop Entry]" > "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
     echo "Name=${SW_GAME_NAME}" >> "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
-    echo "Exec=env "\"${START_WINE_PATH}/data/scripts/sw_start\" "\"${SW_GAME_EXE}"\" >> "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
+    echo "Exec=env \"${START_WINE_PATH}/data/scripts/sw_start\" \"${SW_GAME_EXE}\"" >> "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
     echo "Type=Application" >> "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
     echo "Categories=Game" >> "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
     echo "Icon=${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x256.png" >> "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
@@ -419,6 +419,10 @@ try_path_update "${START_WINE_PATH}/data/tools/utils/bin"
 if [ "${SW_GAME_NAME}" == "" ]; then
     . "${START_WINE_PATH}/data/app_config/StartWine"
 else
+    if [ ! -f "${START_WINE_PATH}/data/app_config/${SW_GAME_NAME}" ]; then
+        cat "${START_WINE_PATH}/data/app_config/.default" > "${START_WINE_PATH}/data/app_config/${SW_GAME_NAME}"
+        chmod +x "${START_WINE_PATH}/data/app_config/${SW_GAME_NAME}"
+    fi
     . "${START_WINE_PATH}/data/app_config/${SW_GAME_NAME}"
 fi
 
@@ -441,6 +445,7 @@ export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
 
 ###############################   EXPORT   #####################################
 
+export SW_RUN_RUNIMAGE="${START_WINE_PATH}/data/runimage/sw_runtime"
 export VK_LAYER_PATH="${VK_LAYER_PATH}:${START_WINE_PATH}/data/tools/utils/implicit_layer.d"
 export WINE_MONO_OVERRIDES="Microsoft.Xna.Framework.*,Gac=n"
 export __GL_SHADER_DISK_CACHE_PATH="${START_WINE_PATH}/data/tmp/gl_shader_cache"
@@ -683,15 +688,27 @@ if [ "${SW_USE_WINE_MONO}" == 0 ]; then
 fi
 
 if [ "${SW_USE_BATTLEYE}" == 1 ]; then
-    export PROTON_BATTLEYE_RUNTIME="${START_WINE_PATH}/data/tools/utils/Proton BattlEye Runtime"
+
+    if [ -d "${HOME}/.local/share/Steam/steamapps/common/Proton BattlEye Runtime" ]; then
+        export PROTON_BATTLEYE_RUNTIME="${HOME}/.local/share/Steam/steamapps/common/Proton BattlEye Runtime"
+    else
+        export PROTON_BATTLEYE_RUNTIME="${START_WINE_PATH}/data/tools/utils/Proton BattlEye Runtime"
+    fi
+
     try_winedlloverride_update "beclient,beclient_x64=b,n"
+
 else
     unset PROTON_BATTLEYE_RUNTIME
 fi
 
 if [ "${SW_USE_EASYANTICHEAT}" == 1 ]; then
-    export PROTON_EAC_RUNTIME="${START_WINE_PATH}/data/tools/utils/Proton EasyAntiCheat Runtime"
-    try_winedlloverride_update "easyanticheat_x86,easyanticheat_x64=b,n"
+
+    if [ -d "$HOME/.local/share/Steam/steamapps/common/Proton EasyAntiCheat Runtime" ]; then
+        export PROTON_EAC_RUNTIME="$HOME/.local/share/Steam/steamapps/common/Proton EasyAntiCheat Runtime"
+    else
+        export PROTON_EAC_RUNTIME="${START_WINE_PATH}/data/tools/utils/Proton EasyAntiCheat Runtime"
+    fi
+
 else
     unset PROTON_EAC_RUNTIME
 fi
@@ -1055,7 +1072,7 @@ CREATE_SHORTCUT () {
 
     echo "[Desktop Entry]" > "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
     echo "Name=${SW_GAME_NAME}" >> "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
-    echo "Exec=env "\"${START_WINE_PATH}/data/scripts/sw_start\" "\"${SW_GAME_EXE}"\" >> "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
+    echo "Exec=env \"${START_WINE_PATH}/data/scripts/sw_start\" \"${SW_GAME_EXE}\"" >> "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
     echo "Type=Application" >> "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
     echo "Categories=Game" >> "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
     echo "Icon=${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x256.png" >> "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
@@ -1106,6 +1123,10 @@ WINEBOOT_CS () {
                 unsquashfs "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso" &&
                 mv "${START_WINE_PATH}/data/pfx_backup/squashfs-root" "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
 
+                if [ "${REIN_PFX}" == 1 ]; then
+                    crier=`$CRIER -i "$(eval_gettext "Restore prefix completed successfully")"`
+                fi
+
             else
 
                 try_fix_pfx
@@ -1136,13 +1157,18 @@ WINEBOOT_CS () {
 
 ADD_SHORTCUT_TO_MENU () {
 
-    if [ ! -f "/home/${USER}/.local/share/applications/${SW_GAME_NAME}.desktop" ]; then
-        try_copy_file "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop" "/home/${USER}/.local/share/applications"
-        sed -i 's/sw_start/sw_run/g' "/home/${USER}/.local/share/applications/${SW_GAME_NAME}.desktop"
+    if [ ! -f "${HOME}/.local/share/applications/${SW_GAME_NAME}.desktop" ]; then
+        echo "[Desktop Entry]" > "${HOME}/.local/share/applications/${SW_GAME_NAME}.desktop"
+        echo "Name=${SW_GAME_NAME}" >> "${HOME}/.local/share/applications/${SW_GAME_NAME}.desktop"
+        echo "Exec=env \"${START_WINE_PATH}/data/scripts/sw_run\" \"${SW_GAME_EXE}\"" >> "${HOME}/.local/share/applications/${SW_GAME_NAME}.desktop"
+        echo "Type=Application" >> "${HOME}/.local/share/applications/${SW_GAME_NAME}.desktop"
+        echo "Categories=Game" >> "${HOME}/.local/share/applications/${SW_GAME_NAME}.desktop"
+        echo "Icon=${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x256.png" >> "${HOME}/.local/share/applications/${SW_GAME_NAME}.desktop"
+        chmod +x "${HOME}/.local/share/applications/${SW_GAME_NAME}.desktop"
         notify-send -a "StartWine" "$(eval_gettext "Shortcut \${SW_GAME_NAME} created in system menu")"
     else
         if [ "${SW_GAME_NAME}" != "StartWine" ]; then
-            try_remove_file "/home/${USER}/.local/share/applications/${SW_GAME_NAME}.desktop"
+            try_remove_file "${HOME}/.local/share/applications/${SW_GAME_NAME}.desktop"
         fi
         notify-send -a "StartWine" "$(eval_gettext "Shortcut \${SW_GAME_NAME} removed from system menu")"
     fi
@@ -1152,8 +1178,13 @@ ADD_SHORTCUT_TO_MENU () {
 ADD_SHORTCUT_TO_DESKTOP () {
 
     if [ ! -f "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop" ]; then
-        try_copy_file "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop" "${SW_DESKTOP_DIR}"
-        sed -i 's/sw_start/sw_run/g' "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop"
+        echo "[Desktop Entry]" > "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop"
+        echo "Name=${SW_GAME_NAME}" >> "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop"
+        echo "Exec=env \"${START_WINE_PATH}/data/scripts/sw_run\" \"${SW_GAME_EXE}\"" >> "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop"
+        echo "Type=Application" >> "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop"
+        echo "Categories=Game" >> "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop"
+        echo "Icon=${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x256.png" >> "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop"
+        chmod +x "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop"
         notify-send -a "StartWine" "$(eval_gettext "Shortcut \${SW_GAME_NAME} created in desktop")"
     else
         try_remove_file "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop"
@@ -1458,13 +1489,12 @@ INSTALL_RL () {
 
         export WINE="${WINELOADER}"
 
-        "${START_WINE_PATH}/data/scripts/winetricks" -q -f d3dcompiler_42 d3dcompiler_43 \
-        d3dcompiler_47 d3dx10 d3dx10_43 d3dx11_42 d3dx11_43 d3dx9 mfc120 mfc42 msvcirt \
-        physx vcrun2010 vcrun2012 vcrun2013 vcrun2019 vcrun6 vcrun6sp6 || libraries_init_error
+        "${START_WINE_PATH}/data/scripts/winetricks" -q -f mfc120 mfc42 msvcirt physx vcrun2005 vcrun2008 vcrun2010 \
+        vcrun2012 vcrun2013 vcrun2022 vcrun6 vcrun6sp6 || libraries_init_error
         "${WINESERVER}" -w
 
         if [ ! -f "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/btn.log" ];then
-            for btn_log in 15 16 18 20 21 22 23 44 207 210 228 240 274 275 276 279 280 281 ; do
+            for btn_log in 207 210 228 240 272 273 274 275 276 279 281 280 ; do
                 echo "${btn_log}" >> "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/btn.log"
             done
         fi

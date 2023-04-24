@@ -40,16 +40,17 @@ elif [ -x "$(command -v apt)" ]; then
 
     done
 
-###################################___APT-GET___:
+###################################___EPM-ALT___:
 
-elif [ -x "$(command -v apt-get)" ]; then
+elif [ -x "$(command -v epm)" ]; then
 
-    sudo apt-get update -y 2>/dev/null || echo 'Passed' &&
+    sudo epm ei -y 2>/dev/null || echo 'Passed' &&
+    sudo epmu -y 2>/dev/null || echo 'Passed' &&
 
-    for deps in zstd ImageMagick vulkan-tools wine i586-wine xdg-user-dirs vte3 vte gem-vte3 libvte3 libvte3-gir gem-vte3-no-gi i586-gem-vte i586-libvte i586-libvte3 gnome-pty-helper libvte libvte-devel python-module-vte python-module-vte-devel i586-python-module-vte htop python3-module-cairocffi python3-module-OpenGL python3-module-numpy python3-module-Pillow python3-module-six python3-module-matplotlib-gtk3 python-module-vte ; do
+    for deps in zstd squashfuse ImageMagick vulkan-tools wine i586-wine xdg-user-dirs vte3 vte gem-vte3 libvte3 libvte3-gir gem-vte3-no-gi i586-gem-vte i586-libvte i586-libvte3 gnome-pty-helper libvte python-module-vte i586-python-module-vte htop python3-module-cairocffi python3-module-OpenGL python3-module-numpy python3-module-Pillow python3-module-six python3-module-matplotlib-gtk3 python-module-vte ; do
 
-        if [ "`sudo apt-get list --installed $deps 2>/dev/null | cut -d '/' -f1 | tail -n1`" != "$deps" ]; then
-            sudo apt-get install $deps -y 2>/dev/null || echo "$deps __________Passed"
+        if [ "`sudo epm list --installed $deps 2>/dev/null | cut -d '/' -f1 | tail -n1`" != "$deps" ]; then
+            sudo epmi $deps -y 2>/dev/null || echo "$deps __________Passed"
         else
             echo "$deps _________________________________package is already installed"
         fi
