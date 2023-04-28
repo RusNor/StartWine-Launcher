@@ -27,7 +27,7 @@ GitHub: [Click](https://github.com/RusNor/StartWine-Launcher/releases)
 
 or the command
 ```bash
-wget -c -t 5 -T 5 "https://github.com/RusNor/StartWine-Launcher/releases/download/StartWine_v374/StartWine_v374" --output-document="${HOME}/StartWine_v374" && chmod +x StartWine_v374 && ./StartWine_v374
+wget -c -t 5 -T 5 "https://github.com/RusNor/StartWine-Launcher/releases/download/StartWine_v375/StartWine_v375" --output-document="${HOME}/StartWine_v375" && chmod +x StartWine_v375 && ./StartWine_v375
 ```
 
 If you downloaded and launched StartWine via the wget command, you can simply skip the item below
