@@ -9,7 +9,7 @@ export SW_DEVELOPERS="Rus_Nor Nixon VHSgunzo"
 
 ###############################   TOOLS   ######################################
 
-export SW_VER="374"
+export SW_VER="375"
 export GE_VER="7-55"
 export SP_VER="8.0.1"
 export STAG_VER="8.6"
@@ -583,7 +583,7 @@ if [ "${SW_USE_RESTORE_RESOLUTION}" == 1 ]; then
 fi
 
 if [ "${SW_USE_VIRTUAL_DESKTOP}" == 1 ]; then
-    VDESKTOP="explorer /desktop=Wine,`xrandr --current | grep "*" | awk '{print $1;}' | head -1`"
+    VDESKTOP="explorer /desktop=`xrandr --current | grep "*" | awk '{print $1;}' | head -1`"
 fi
 
 if [ "${SW_USE_FSYNC}" == 1 ]; then
@@ -3172,6 +3172,41 @@ INSTALL_LOST_LIGHT () {
 
         SW_USE_EXE="drive_c/Program Files (x86)/LostLight/Lost Light.exe"
         SW_USE_WINE="wine_proton_ge"
+
+        sw_shortcuts_autoinstall
+
+        crier=`$CRIER -i "$(eval_gettext "Application installed successfully")"`
+
+    else
+
+        crier=`$CRIER -i "$(eval_gettext "Application is installed")"`
+
+    fi
+
+}
+
+INSTALL_ROBLOXPLAYER () {
+
+    if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_RobloxPlayerBeta/drive_c/Program Files (x86)/Roblox/Versions/Roblox/RobloxPlayerBeta.exe" ]; then
+
+        WINE_OK=1
+        WINE_4
+
+        export SW_USE_PFX="pfx_RobloxPlayerBeta"
+        export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
+        export WINEDIR="${START_WINE_PATH}/data/wine/wine_lutris"
+        export WINELOADER=$WINEDIR/bin/wine
+
+        "${WINELOADER}" wineboot || prefix_init_error
+        "${WINESERVER}" -w
+
+        export FTP_URL="https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/Roblox_0.1/Roblox_0.1.tar.xz"
+        crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/Roblox_0.1.tar.xz"`
+        crier=`$CRIER -tar "${START_WINE_PATH}/data/tmp/Roblox_0.1.tar.xz" "${WINEPREFIX}/drive_c/Program Files (x86)"` &&
+        try_remove_file "${START_WINE_PATH}/data/tmp/Roblox_0.1.tar.xz"
+
+        SW_USE_EXE="drive_c/Program Files (x86)/Roblox/Versions/Roblox/RobloxPlayerBeta.exe"
+        SW_USE_WINE="wine_lutris"
 
         sw_shortcuts_autoinstall
 

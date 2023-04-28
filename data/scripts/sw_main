@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-################################___SCRIPTS_V374___:
+################################___SCRIPTS_V375___:
 
 import os
 import sys
@@ -123,6 +123,7 @@ launchers_data = [
     f"{sw_pfx}/pfx_PopcoTime/drive_c/PopcoTime/PopcoTime.exe",
     f"{sw_pfx}/pfx_RPG_Club/drive_c/RPG-Club/RPG Club.exe",
     f"{sw_pfx}/pfx_RiotClientServices/drive_c/Riot Games/Riot Client/RiotClientServices.exe",
+    f"{sw_pfx}/pfx_RobloxPlayerBeta/drive_c/Program Files (x86)/Roblox/Versions/Roblox/RobloxPlayerBeta.exe",
     f"{sw_pfx}/pfx_Launcher/drive_c/Program Files/Rockstar Games/Launcher/Launcher.exe",
     f"{sw_pfx}/pfx_ExboLauncher/drive_c/EXBO/java/bin/ExboLauncher.exe",
     f"{sw_pfx}/pfx_StalkerOnline_Launcher/drive_c/StalkerOnline/StalkerOnline Launcher.exe",
