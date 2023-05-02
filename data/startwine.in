@@ -1,0 +1,13 @@
+#!/bin/bash
+if [[ $(cat $HOME/.local/share/StartWine/data/scripts/version 2>/dev/null) = @VERSION@ ]]; then
+	$HOME/.local/share/StartWine/data/scripts/sw_start $@
+else
+	rm -rf $HOME/.local/share/StartWine/data/tmp
+	mkdir -p $HOME/.local/share/StartWine/data/tmp
+	rm -rf $HOME/.local/share/StartWine/data/{scripts,tools}
+	rm -rf $HOME/.local/share/StartWine/data/img/{gui_icons,launcher_icons,sw_themes}
+	rm -f $HOME/.local/share/applications/StartWine.desktop
+	cp -rf /usr/share/startwine/data $HOME/.local/share/StartWine
+	$HOME/.local/share/StartWine/data/scripts/sw_start 2>/dev/null
+fi
+exit
