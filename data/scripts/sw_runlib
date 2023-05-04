@@ -9,10 +9,10 @@ export SW_DEVELOPERS="Rus_Nor Nixon VHSgunzo"
 
 ###############################   TOOLS   ######################################
 
-export SW_VER="375"
+export SW_VER="376"
 export GE_VER="7-55"
 export SP_VER="8.0.1"
-export STAG_VER="8.6"
+export STAG_VER="8.7"
 export LUTRIS_VER="7.2-2"
 export LUTRIS_GE_VER="7-43"
 export UTILS_VER="v2.3"
@@ -327,16 +327,13 @@ sw_shortcuts_autoinstall () {
     export SW_GAME_NAME="$(basename "${SW_GAME_EXE}" | sed 's/\.exe//gi' | sed 's/\.msi//gi' | sed 's/ /_/g')"
     export SW_GAME_PATH="$(cd "$(dirname "${SW_GAME_EXE}")" >/dev/null 2>&1 && pwd)"
 
-    if [ -x "`which wrestool 2>/dev/null`" ]; then
-        cd "${SW_GAME_PATH}"
-        wrestool -x -t14 "${SW_GAME_EXE}" > "${SW_GAME_EXE}.ico"
-        icotool -x "${SW_GAME_EXE}.ico"
-        try_copy_file "$(ls -S -1 "${SW_GAME_EXE}"*.png | head -n 1)" "${SW_GAME_EXE}.png"
-        try_copy_file "${SW_GAME_EXE}.png" "${START_WINE_PATH}/data/img/${SW_GAME_NAME}.png"
-        try_remove_file "${SW_GAME_PATH}/"*.ico
-        try_remove_file "${SW_GAME_PATH}/"*.png
-    fi
-
+    cd "${SW_GAME_PATH}"
+    wrestool -x -t14 "${SW_GAME_EXE}" > "${SW_GAME_EXE}.ico"
+    icotool -x "${SW_GAME_EXE}.ico"
+    try_copy_file "$(ls -S -1 "${SW_GAME_EXE}"*.png | head -n 1)" "${SW_GAME_EXE}.png"
+    try_copy_file "${SW_GAME_EXE}.png" "${START_WINE_PATH}/data/img/${SW_GAME_NAME}.png"
+    try_remove_file "${SW_GAME_PATH}/"*.ico
+    try_remove_file "${SW_GAME_PATH}/"*.png
     convert -resize 256X256 "${START_WINE_PATH}/data/img/${SW_GAME_NAME}.png" "${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x256.png"
     convert -resize 96X96 "${START_WINE_PATH}/data/img/${SW_GAME_NAME}.png" "${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x96.png"
     try_remove_file "${START_WINE_PATH}/data/img/${SW_GAME_NAME}.png"
@@ -445,7 +442,7 @@ export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
 
 ###############################   EXPORT   #####################################
 
-export SW_RUN_RUNIMAGE="${START_WINE_PATH}/data/runimage/sw_runtime"
+export SW_RUN_RUNIMAGE="${START_WINE_PATH}/data/runtime/sw_runtime"
 export VK_LAYER_PATH="${VK_LAYER_PATH}:${START_WINE_PATH}/data/tools/utils/implicit_layer.d"
 export WINE_MONO_OVERRIDES="Microsoft.Xna.Framework.*,Gac=n"
 export __GL_SHADER_DISK_CACHE_PATH="${START_WINE_PATH}/data/tmp/gl_shader_cache"
@@ -842,7 +839,7 @@ fi
 
 ############################   UTILS DOWNLOAD   ################################
 
-if [ ! -d "${START_WINE_PATH}/data/tools/utils/libs" ]; then
+if [ ! -f "${START_WINE_PATH}/data/tools/utils/version" ]; then
     try_remove_dir "${START_WINE_PATH}/data/tools/utils"
     try_remove_file "${START_WINE_PATH}/data/tmp/utils-"${UTILS_VER}".tar.xz"
     export FTP_URL="https://github.com/RusNor/Utils-data/releases/download/utils-"${UTILS_VER}"/utils-"${UTILS_VER}".tar.xz"
@@ -852,6 +849,7 @@ if [ ! -d "${START_WINE_PATH}/data/tools/utils/libs" ]; then
     sed -i "s%nobody%${START_WINE_PATH}/data/tools/utils%" "${START_WINE_PATH}/data/tools/utils/config/vkBasalt.conf"
     sed -i "s%nobody%${START_WINE_PATH}/data/tools/utils%" "${START_WINE_PATH}/data/tools/utils/implicit_layer.d/MangoHud.json"
     sed -i "s%nobody%${START_WINE_PATH}/data/tools/utils%" "${START_WINE_PATH}/data/tools/utils/implicit_layer.d/vkBasalt.json"
+    echo "$UTILS_VER" > "${START_WINE_PATH}/data/tools/utils/version"
 fi
 
 ##############################   PFX_DEFAULT DOWNLOAD  #########################
@@ -955,6 +953,8 @@ RUN_VULKAN () {
                     for wine_vkd3d_dll in d3d12 ; do
                         try_copy_file "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-"${VKD3D_VER}"/x86/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
                         try_copy_file "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-"${VKD3D_VER}"/x64/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+                        try_copy_file "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-"${VKD3D_VER}"/x86/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64/d3d12core.dll"
+                        try_copy_file "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-"${VKD3D_VER}"/x64/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/d3d12core.dll"
                     done
                 else
                     for wine_vkd3d_dll in d3d12 d3d12core ; do
@@ -966,6 +966,8 @@ RUN_VULKAN () {
                 for wine_vkd3d_dll in d3d12 ; do
                     try_copy_file "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-"${VKD3D_VER}"/x86/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
                     try_copy_file "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-"${VKD3D_VER}"/x64/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+                    try_copy_file "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-"${VKD3D_VER}"/x86/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64/d3d12core.dll"
+                    try_copy_file "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-"${VKD3D_VER}"/x64/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/d3d12core.dll"
                 done
             fi
 
@@ -991,6 +993,7 @@ RUN_VULKAN () {
                 if [ ! -d "${START_WINE_PATH}/data/wine/wine_proton_ge/bin" ]; then
                     for wine_vkd3d_dll in d3d12 ; do
                         try_copy_file "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-"${VKD3D_VER}"/x86/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+                        try_copy_file "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-"${VKD3D_VER}"/x86/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/d3d12core.dll"
                     done
                 else
                     for wine_vkd3d_dll in d3d12 d3d12core ; do
@@ -1000,6 +1003,7 @@ RUN_VULKAN () {
             else
                 for wine_vkd3d_dll in d3d12 ; do
                     try_copy_file "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-"${VKD3D_VER}"/x86/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+                    try_copy_file "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-"${VKD3D_VER}"/x86/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32/d3d12core.dll"
                 done
             fi
 
@@ -1039,16 +1043,13 @@ CREATE_ICON () {
 
     if [ ! -f "${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x96.png" ]; then
 
-        if [ -x "`which wrestool 2>/dev/null`" ]; then
-            cd "${SW_GAME_PATH}"
-            wrestool -x -t14 "${SW_GAME_EXE}" > "${SW_GAME_EXE}.ico"
-            icotool -x "${SW_GAME_EXE}.ico"
-            try_copy_file "$(ls -S -1 "${SW_GAME_EXE}"*.png | head -n 1)" "${SW_GAME_EXE}.png"
-            try_copy_file "${SW_GAME_EXE}.png" "${START_WINE_PATH}/data/img/${SW_GAME_NAME}.png"
-            try_remove_file "${SW_GAME_PATH}/"*.ico
-            try_remove_file "${SW_GAME_PATH}/"*.png
-        fi
-
+        cd "${SW_GAME_PATH}"
+        wrestool -x -t14 "${SW_GAME_EXE}" > "${SW_GAME_EXE}.ico"
+        icotool -x "${SW_GAME_EXE}.ico"
+        try_copy_file "$(ls -S -1 "${SW_GAME_EXE}"*.png | head -n 1)" "${SW_GAME_EXE}.png"
+        try_copy_file "${SW_GAME_EXE}.png" "${START_WINE_PATH}/data/img/${SW_GAME_NAME}.png"
+        try_remove_file "${SW_GAME_PATH}/"*.ico
+        try_remove_file "${SW_GAME_PATH}/"*.png
         convert -resize 256X256 "${START_WINE_PATH}/data/img/${SW_GAME_NAME}.png" "${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x256.png"
         convert -resize 96X96 "${START_WINE_PATH}/data/img/${SW_GAME_NAME}.png" "${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x96.png"
         try_remove_file "${START_WINE_PATH}/data/img/${SW_GAME_NAME}.png"
@@ -1943,6 +1944,8 @@ INSTALL_GAMECENTER () {
 
         "${WINELOADER}" wineboot || prefix_init_error
         "${WINESERVER}" -w
+
+        "${WINELOADER}" "regedit" "${START_WINE_PATH}/data/app_patches/Disable_VIRTUAL_DESKTOP_patch.reg"
 
         export FTP_URL="https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/GameCenter_0.1/GameCenter_0.1.tar.xz"
         crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/GameCenter_0.1.tar.xz"`
@@ -3137,7 +3140,7 @@ INSTALL_GENSHIN_IMPACT () {
 
         sw_shortcuts_autoinstall
 
-        export DLL="d3dcompiler_47 d3dx9 vcrun2010 vcrun2012 vcrun2013 vcrun2019"
+        export DLL="vcrun2010 vcrun2012 vcrun2013 vcrun2022"
         export INSTALL_OK=1
 
         SW_WINETRICKS
