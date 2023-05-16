@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-################################___SCRIPTS_V376___:
+################################___SCRIPTS_V377___:
 
 import os
 import sys
@@ -75,9 +75,9 @@ rshread = sw_rsh.read_text().split('\n')
 sw_defconf_read = sw_default_config.read_text().split('\n')
 
 rlibs = [
-    'd3dcompiler_42', 'd3dcompiler_43', 'd3dcompiler_47', 'd3dx10', 'd3dx10_43',
-    'd3dx11_42', 'd3dx11_43', 'd3dx9', 'mfc120', 'mfc42', 'msvcirt', 'physx',
-    'vcrun2010', 'vcrun2012', 'vcrun2013', 'vcrun2019', 'vcrun6', 'vcrun6sp6'
+    'mfc120', 'mfc42', 'msvcirt', 'physx', 'vcrun2005',
+    'vcrun2008', 'vcrun2010', 'vcrun2012', 'vcrun2013',
+    'vcrun2022', 'vcrun6', 'vcrun6sp6'
     ]
 
 themes = [
@@ -144,11 +144,11 @@ arch_index = [
     ]
 
 winver = [
-    'Windows 10', 'Window 8.1', 'Window 8', 'Windows 7', 'Windows XP'
+    'Windows 11', 'Windows 10', 'Window 8.1', 'Window 8', 'Windows 7', 'Windows XP'
     ]
 
 ver_index = [
-    '10', '81', '8', '7', 'xp'
+    '11', '10', '81', '8', '7', 'xp'
     ]
 
 reg_patches = [''] + [
@@ -156,7 +156,7 @@ reg_patches = [''] + [
     ]
 
 dxvk_ver = [
-    '1.9', '1.9.1', '1.9.2', '1.9.3', '1.9.4', '1.10', '1.10.1', '1.10.2', '1.10.3', '2.0', '2.1'
+    '1.9', '1.9.1', '1.9.2', '1.9.3', '1.9.4', '1.10', '1.10.1', '1.10.2', '1.10.3', '2.0', '2.1', '2.2'
     ]
 
 vkd3d_ver = [

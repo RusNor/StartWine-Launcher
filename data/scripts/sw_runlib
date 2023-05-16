@@ -9,12 +9,12 @@ export SW_DEVELOPERS="Rus_Nor Nixon VHSgunzo"
 
 ###############################   TOOLS   ######################################
 
-export SW_VER="376"
-export GE_VER="7-55"
-export SP_VER="8.0.1"
+export SW_VER="377"
+export GE_VER="8-3"
+export SP_VER="8.0.2"
 export STAG_VER="8.7"
 export LUTRIS_VER="7.2-2"
-export LUTRIS_GE_VER="7-43"
+export LUTRIS_GE_VER="8-5"
 export UTILS_VER="v2.3"
 export CRIER="${START_WINE_PATH}/data/scripts/sw_crier.py"
 
@@ -548,7 +548,8 @@ fi
 
 if [ "${SW_USE_MANGOHUD}" == 1 ]; then
     export MANGOHUD_LOG_LEVEL=off
-    export MANGOHUD_CONFIG="background_alpha=0.2,font_size=20,background_color=020202,fps_limit=${SW_USE_FPS_LIMIT}+0,toggle_fps_limit=Shift_L+F1\
+    export MANGOHUD_CONFIG="no_display,cpu_load_change,gpu_load_change,core_load_change,background_alpha=0.2\
+    ,font_size=20,background_color=020202,fps_limit=${SW_USE_FPS_LIMIT}+0,toggle_fps_limit=Shift_L+F1\
     ,position=top-${HUD_POSITION},toggle_hud=Shift_R+F12${SW_USE_MANGOHUD_CONFIG}"
     export VK_INSTANCE_LAYERS="${VK_INSTANCE_LAYERS}:SW_VK_LAYER_MANGOHUD_overlay"
 else
@@ -646,8 +647,12 @@ if [ "${SW_USE_ENABLE_VKBASALT}" == 1 ]; then
     export VKBASALT_SHADER_PATH="${START_WINE_PATH}/data/tools/utils/vkBasalt/shaders"
     export VKBASALT_LOG_LEVEL="none"
     export VKBASALT_LOG_FILE="${START_WINE_PATH}/data/tmp/log/vkBasalt.log"
-    sed -ri "s/effects = .*/effects = ${SW_USE_VKBASALT_EFFECTS}/g" "${START_WINE_PATH}/data/tools/utils/config/vkBasalt.conf"
-    sed -ri "s/casSharpness .*/casSharpness = ${SW_USE_VKBASALT_CAS}/g" "${START_WINE_PATH}/data/tools/utils/config/vkBasalt.conf"
+
+    if [ -f "${START_WINE_PATH}/data/tools/utils/config/vkBasalt.conf" ]; then
+        sed -ri "s/effects = .*/effects = ${SW_USE_VKBASALT_EFFECTS}/g" "${START_WINE_PATH}/data/tools/utils/config/vkBasalt.conf"
+        sed -ri "s/casSharpness .*/casSharpness = ${SW_USE_VKBASALT_CAS}/g" "${START_WINE_PATH}/data/tools/utils/config/vkBasalt.conf"
+    fi
+
     export VK_INSTANCE_LAYERS="${VK_INSTANCE_LAYERS}:SW_VK_LAYER_VKBASALT_post_processing"
 fi
 
@@ -753,8 +758,10 @@ if [ "${SW_USE_DLSS}" == 1 ] && [ "${SW_USE_NVAPI_DISABLE}" == 0 ]; then
 
     else
 
-        try_copy_file "${START_WINE_PATH}/data/tools/utils/dlss_extras/x64/nvngx.dll" "${WINEPREFIX}/drive_c/windows/system32"
-        try_copy_file "${START_WINE_PATH}/data/tools/utils/dlss_extras/x64/nvngx.ini" "${WINEPREFIX}/drive_c/windows/system32"
+        if [ -f "${START_WINE_PATH}/data/tools/utils/dlss_extras/x64/nvngx.dll" ]; then
+            try_copy_file "${START_WINE_PATH}/data/tools/utils/dlss_extras/x64/nvngx.dll" "${WINEPREFIX}/drive_c/windows/system32"
+            try_copy_file "${START_WINE_PATH}/data/tools/utils/dlss_extras/x64/nvngx.ini" "${WINEPREFIX}/drive_c/windows/system32"
+        fi
 
         if [ "${SW_USE_WINMM_DLL}" == 1 ]; then
             try_copy_file "${START_WINE_PATH}/data/tools/utils/dlss_extras/x64/winmm.dll" "${SW_GAME_PATH}"
@@ -828,7 +835,6 @@ if [ ! -d "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-"${VKD3D_VER}"/x64"
     try_remove_dir "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-"${VKD3D_VER}""
     create_new_dir "${START_WINE_PATH}/data/tools/vulkan"
     export FTP_URL="https://github.com/HansKristian-Work/vkd3d-proton/releases/download/v"${VKD3D_VER}"/vkd3d-proton-"${VKD3D_VER}".tar.zst"
-    export DL_NAME="vkd3d-proton-"${VKD3D_VER}""
     crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/vkd3d-proton-"${VKD3D_VER}".tar.zst"` &&
     unzstd "${START_WINE_PATH}/data/tmp/vkd3d-proton-"${VKD3D_VER}".tar.zst" &&
     crier=`$CRIER -tar "${START_WINE_PATH}/data/tmp/vkd3d-proton-"${VKD3D_VER}".tar" "${START_WINE_PATH}/data/tools/vulkan"` &&
@@ -847,8 +853,6 @@ if [ ! -f "${START_WINE_PATH}/data/tools/utils/version" ]; then
     crier=`$CRIER -tar "${START_WINE_PATH}/data/tmp/utils-"${UTILS_VER}".tar.xz" "${START_WINE_PATH}/data/tools"` &&
     try_remove_file "${START_WINE_PATH}/data/tmp/utils-"${UTILS_VER}".tar.xz"
     sed -i "s%nobody%${START_WINE_PATH}/data/tools/utils%" "${START_WINE_PATH}/data/tools/utils/config/vkBasalt.conf"
-    sed -i "s%nobody%${START_WINE_PATH}/data/tools/utils%" "${START_WINE_PATH}/data/tools/utils/implicit_layer.d/MangoHud.json"
-    sed -i "s%nobody%${START_WINE_PATH}/data/tools/utils%" "${START_WINE_PATH}/data/tools/utils/implicit_layer.d/vkBasalt.json"
     echo "$UTILS_VER" > "${START_WINE_PATH}/data/tools/utils/version"
 fi
 
@@ -859,18 +863,38 @@ if [ ! -f "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso" ]; then
     crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso"`
 fi
 
+if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_default/drive_c/windows/system32/start.exe" ]; then
+    if [ -f "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso" ]; then
+        try_remove_dir "${START_WINE_PATH}/data/pfx/pfx_default"
+        unsquashfs -d "${START_WINE_PATH}/data/pfx/pfx_default" "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso"
+    fi
+fi
+
 #############################   STEAM_PROTON DOWNLOAD   ########################
 
 if [ ! -d "${START_WINE_PATH}/data/wine/wine_steam_proton/bin" ]; then
     try_remove_file "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}".tar.xz" &&
     try_remove_dir "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}""
+
     export FTP_URL="https://github.com/RusNor/Wine-Steam-Proton/releases/download/steam-proton-"${SP_VER}"/steam-proton-"${SP_VER}".tar.xz"
     crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}".tar.xz"` &&
     crier=`$CRIER -tar "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}".tar.xz" "${START_WINE_PATH}/data/tmp"` &&
+
+    create_new_dir "${START_WINE_PATH}/data/wine/wine_steam_proton/files"
+
     for copy_dir in bin lib lib64 share ; do
-        try_copy_dir "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}"/${copy_dir}" "${START_WINE_PATH}/data/wine/wine_steam_proton"
+        try_copy_dir "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}"/${copy_dir}" "${START_WINE_PATH}/data/wine/wine_steam_proton/files"
     done
-    try_copy_file "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}"/version" "${START_WINE_PATH}/data/wine/wine_steam_proton" &&
+
+    for link_dir in bin lib lib64 share ; do
+        try_force_link_dir "${START_WINE_PATH}/data/wine/wine_steam_proton/files/${link_dir}" "${START_WINE_PATH}/data/wine/wine_steam_proton"
+    done
+
+    if [ ! -f "${START_WINE_PATH}/data/wine/wine_steam_proton/version" ]; then
+        echo "steam-${SP_VER}" > "${START_WINE_PATH}/data/wine/wine_steam_proton/version"
+        echo "${SP_VER}" >> "${START_WINE_PATH}/data/wine/wine_steam_proton/version"
+    fi
+
     try_remove_file "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}".tar.xz" &&
     try_remove_dir "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}""
     chmod -R 775 "${START_WINE_PATH}/data/wine/wine_steam_proton"
@@ -1096,10 +1120,10 @@ CREATE_SHORTCUT () {
         if [ "${SW_USE_PFX}" != "pfx_default" ]; then
             crier=`$CRIER -q "$(eval_gettext "Restore prefix from backup ?")"`
             if [ "$(echo $crier)" == "0" ]; then
+
                 try_remove_dir "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
-                cd "${START_WINE_PATH}/data/pfx_backup"
-                unsquashfs "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" &&
-                mv "${START_WINE_PATH}/data/pfx_backup/squashfs-root" "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
+                unsquashfs -d "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}" "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" &&
+
                 try_copy_file "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}" "${START_WINE_PATH}/data/app_config"
                 try_remove_file "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}"
                 crier=`$CRIER -i "$(eval_gettext "Restore prefix completed successfully")"`
@@ -1120,9 +1144,8 @@ WINEBOOT_CS () {
             crier=`$CRIER -q "$(eval_gettext "You have a backup of the default prefix. Use it to create a new prefix ?")"`
 
             if [ "$(echo $crier)" == "0" ]; then
-                cd "${START_WINE_PATH}/data/pfx_backup"
-                unsquashfs "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso" &&
-                mv "${START_WINE_PATH}/data/pfx_backup/squashfs-root" "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
+
+                unsquashfs -d "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}" "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso"
 
                 if [ "${REIN_PFX}" == 1 ]; then
                     crier=`$CRIER -i "$(eval_gettext "Restore prefix completed successfully")"`
@@ -1241,9 +1264,8 @@ REINSTALL_PFX () {
         if [ "$(echo $crier)" == "0" ]; then
 
             try_remove_dir "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
-            cd "${START_WINE_PATH}/data/pfx_backup"
-            unsquashfs "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" &&
-            mv "${START_WINE_PATH}/data/pfx_backup/squashfs-root" "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
+            unsquashfs -d "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}" "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" &&
+
             try_copy_file "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}" "${START_WINE_PATH}/data/app_config"
             try_remove_file "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}"
             crier=`$CRIER -i "$(eval_gettext "Restore prefix completed successfully")"`
@@ -1313,9 +1335,7 @@ SW_PFX_RESTORE () {
                 crier=`$CRIER -q "$(eval_gettext "You have a backup of the default prefix. Use it to recover prefix ?")"`
                 if [ "$(echo $crier)" == "0" ]; then
                     try_remove_dir "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
-                    cd "${START_WINE_PATH}/data/pfx_backup"
-                    unsquashfs "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso" &&
-                    mv "${START_WINE_PATH}/data/pfx_backup/squashfs-root" "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
+                    unsquashfs -d "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}" "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso" &&
                     crier=`$CRIER -i "$(eval_gettext "Restore completed successfully")"`
                 fi
             fi
@@ -1323,9 +1343,8 @@ SW_PFX_RESTORE () {
         else
 
             try_remove_dir "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
-            cd "${START_WINE_PATH}/data/pfx_backup"
-            unsquashfs "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" &&
-            mv "${START_WINE_PATH}/data/pfx_backup/squashfs-root" "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
+            unsquashfs -d "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}" "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" &&
+
             try_copy_file "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}" "${START_WINE_PATH}/data/app_config"
             try_remove_file "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}"
             crier=`$CRIER -i "$(eval_gettext "Restore completed successfully")"`
@@ -1372,15 +1391,11 @@ SW_PFX_FULL_RESTORE () {
             crier=`$CRIER -q "$(eval_gettext "Would you like to save the current prefixes ?")"`
             if [ "$(echo $crier)" == "0" ]; then
                 mv "${START_WINE_PATH}/data/pfx" "${START_WINE_PATH}/data/pfx_old"
-                cd "${START_WINE_PATH}/data/pfx_backup"
-                unsquashfs "${START_WINE_PATH}/data/pfx_backup/pfx_full_backup.iso" &&
-                mv "${START_WINE_PATH}/data/pfx_backup/squashfs-root" "${START_WINE_PATH}/data/pfx"
+                unsquashfs -d "${START_WINE_PATH}/data/pfx" "${START_WINE_PATH}/data/pfx_backup/pfx_full_backup.iso" &&
                 crier=`$CRIER -i "$(eval_gettext "Full Restore completed successfully")"`
             else
                 try_remove_dir "${START_WINE_PATH}/data/pfx"
-                cd "${START_WINE_PATH}/data/pfx_backup"
-                unsquashfs "${START_WINE_PATH}/data/pfx_backup/pfx_full_backup.iso" &&
-                mv "${START_WINE_PATH}/data/pfx_backup/squashfs-root" "${START_WINE_PATH}/data/pfx"
+                unsquashfs -d "${START_WINE_PATH}/data/pfx" "${START_WINE_PATH}/data/pfx_backup/pfx_full_backup.iso" &&
                 crier=`$CRIER -i "$(eval_gettext "Full Restore completed successfully")"`
             fi
         fi
@@ -1584,6 +1599,7 @@ WINE_1 () {
 
     if [ ! -f "${START_WINE_PATH}/data/wine/wine_staging/version" ]; then
         echo "wine-staging ${STAG_VER}" > "${START_WINE_PATH}/data/wine/wine_staging/version"
+        echo "${STAG_VER}" >> "${START_WINE_PATH}/data/wine/wine_staging/version"
     fi
 
     chmod -R 775 "${START_WINE_PATH}/data/wine/wine_staging"
@@ -1608,12 +1624,23 @@ WINE_2 () {
     if [ ! -d "${START_WINE_PATH}/data/wine/wine_steam_proton/bin" ]; then
         export FTP_URL="https://github.com/RusNor/Wine-Steam-Proton/releases/download/steam-proton-"${SP_VER}"/steam-proton-"${SP_VER}".tar.xz"
         crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}".tar.xz"` &&
-
         crier=`$CRIER -tar "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}".tar.xz" "${START_WINE_PATH}/data/tmp"` &&
+
+        create_new_dir "${START_WINE_PATH}/data/wine/wine_steam_proton/files"
+
         for copy_dir in bin lib lib64 share ; do
-            try_copy_dir "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}"/${copy_dir}" "${START_WINE_PATH}/data/wine/wine_steam_proton"
+            try_copy_dir "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}"/${copy_dir}" "${START_WINE_PATH}/data/wine/wine_steam_proton/files"
         done
-        try_copy_file "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}"/version" "${START_WINE_PATH}/data/wine/wine_steam_proton" &&
+
+        for link_dir in bin lib lib64 share ; do
+            try_force_link_dir "${START_WINE_PATH}/data/wine/wine_steam_proton/files/${link_dir}" "${START_WINE_PATH}/data/wine/wine_steam_proton"
+        done
+
+        if [ ! -f "${START_WINE_PATH}/data/wine/wine_steam_proton/version" ]; then
+            echo "steam-${SP_VER}" > "${START_WINE_PATH}/data/wine/wine_steam_proton/version"
+            echo "${SP_VER}" >> "${START_WINE_PATH}/data/wine/wine_steam_proton/version"
+        fi
+
         try_remove_file "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}".tar.xz" &&
         try_remove_dir "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}""
     fi
@@ -1642,10 +1669,17 @@ WINE_3 () {
         crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/GE-Proton"${GE_VER}".tar.gz"` &&
 
         crier=`$CRIER -tar "${START_WINE_PATH}/data/tmp/GE-Proton"${GE_VER}".tar.gz" "${START_WINE_PATH}/data/tmp"` &&
-        for copy_dir in bin lib lib64 share ; do
-            try_copy_dir "${START_WINE_PATH}/data/tmp/GE-Proton"${GE_VER}"/files/${copy_dir}" "${START_WINE_PATH}/data/wine/wine_proton_ge"
+        try_copy_dir "${START_WINE_PATH}/data/tmp/GE-Proton"${GE_VER}"/files" "${START_WINE_PATH}/data/wine/wine_proton_ge"
+
+        for link_dir in bin lib lib64 share ; do
+            try_force_link_dir "${START_WINE_PATH}/data/wine/wine_proton_ge/files/${link_dir}" "${START_WINE_PATH}/data/wine/wine_proton_ge"
         done
-        try_copy_file "${START_WINE_PATH}/data/tmp/GE-Proton"${GE_VER}"/version" "${START_WINE_PATH}/data/wine/wine_proton_ge" &&
+
+        if [ ! -f "${START_WINE_PATH}/data/wine/wine_proton_ge/version" ]; then
+            echo "GE-${GE_VER}" > "${START_WINE_PATH}/data/wine/wine_proton_ge/version"
+            echo "${GE_VER}" >> "${START_WINE_PATH}/data/wine/wine_proton_ge/version"
+        fi
+
         try_remove_file "${START_WINE_PATH}/data/tmp/GE-Proton"${GE_VER}".tar.gz" &&
         try_remove_dir "${START_WINE_PATH}/data/tmp/GE-Proton"${GE_VER}""
     fi
@@ -1693,6 +1727,7 @@ WINE_4 () {
 
     if [ ! -f "${START_WINE_PATH}/data/wine/wine_lutris/version" ]; then
         echo "wine-lutris ${LUTRIS_VER}" > "${START_WINE_PATH}/data/wine/wine_lutris/version"
+        echo "${LUTRIS_VER}" >> "${START_WINE_PATH}/data/wine/wine_lutris/version"
     fi
 
     chmod -R 775 "${START_WINE_PATH}/data/wine/wine_lutris"
@@ -1717,11 +1752,18 @@ WINE_5 () {
     if [ ! -d "${START_WINE_PATH}/data/wine/wine_lutris_ge/bin" ]; then
         export FTP_URL="https://github.com/GloriousEggroll/wine-ge-custom/releases/download/GE-Proton"${LUTRIS_GE_VER}"/wine-lutris-GE-Proton"${LUTRIS_GE_VER}"-x86_64.tar.xz"
         crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/wine-lutris-GE-Proton"${LUTRIS_GE_VER}"-x86_64.tar.xz"` &&
-
         crier=`$CRIER -tar "${START_WINE_PATH}/data/tmp/wine-lutris-GE-Proton"${LUTRIS_GE_VER}"-x86_64.tar.xz" "${START_WINE_PATH}/data/tmp"` &&
+
+        create_new_dir "${START_WINE_PATH}/data/wine/wine_lutris_ge/files"
+
         for copy_dir in bin lib lib64 share ; do
-            try_copy_dir "${START_WINE_PATH}/data/tmp/lutris-GE-Proton"${LUTRIS_GE_VER}"-x86_64/${copy_dir}" "${START_WINE_PATH}/data/wine/wine_lutris_ge"
+            try_copy_dir "${START_WINE_PATH}/data/tmp/lutris-GE-Proton"${LUTRIS_GE_VER}"-x86_64/${copy_dir}" "${START_WINE_PATH}/data/wine/wine_lutris_ge/files"
         done
+
+        for link_dir in bin lib lib64 share ; do
+            try_force_link_dir "${START_WINE_PATH}/data/wine/wine_lutris_ge/files/${link_dir}" "${START_WINE_PATH}/data/wine/wine_lutris_ge"
+        done
+
         try_remove_file "${START_WINE_PATH}/data/tmp/wine-lutris-GE-Proton"${LUTRIS_GE_VER}"-x86_64.tar.xz" &&
         try_remove_dir "${START_WINE_PATH}/data/tmp/lutris-GE-Proton"${LUTRIS_GE_VER}"-x86_64"
     fi
@@ -1730,7 +1772,8 @@ WINE_5 () {
     sed -i '/HKLM,Software\\Wow6432Node\\lucasarts/g; /\AppDefaults\\/g' wine.inf
 
     if [ ! -f "${START_WINE_PATH}/data/wine/wine_lutris_ge/version" ]; then
-        echo "wine-lutris-ge ${LUTRIS_GE_VER}" > "${START_WINE_PATH}/data/wine/wine_lutris_ge/version"
+        echo "Lutris-GE-${LUTRIS_GE_VER}" > "${START_WINE_PATH}/data/wine/wine_lutris_ge/version"
+        echo "${LUTRIS_GE_VER}" >> "${START_WINE_PATH}/data/wine/wine_lutris_ge/version"
     fi
 
     chmod -R 775 "${START_WINE_PATH}/data/wine/wine_lutris_ge"
