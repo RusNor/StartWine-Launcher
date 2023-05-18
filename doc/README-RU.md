@@ -48,7 +48,7 @@ chmod +x StartWine_v*
 
 если командой хотите с терминала:
 ```bash
-./StartWine_v369
+./StartWine_v377
 ```
 
 ## Установка (старое)
