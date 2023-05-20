@@ -180,6 +180,8 @@ The creators of StartWine: [Normatov R.R.](https://github.com/RusNor) and [Maslo
 Helpers in creating a manual:
 [Normatov R.R.](https://github.com/RusNor) [Maslov N.G.](https://github.com/nix-on-nix) [Norz3n](https://github.com/vellynproduction) Huskysoul#6112
 
+Website [Click](https://startwine-project.ru/)
+
 If you have any questions, go to the server: [Discord](https://discord.gg/jjY3auVdfm)
 
 Telegram channel: [StartWine](https://t.me/StartWine)
