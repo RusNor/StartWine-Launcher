@@ -181,6 +181,8 @@ StartWine спросит вас: вы хотите создать префикс
 Помощники в создании руководства:
 [Normatov R.R.](https://github.com/RusNor) [Maslov N.G.](https://github.com/nix-on-nix) [Norz3n](https://github.com/vellynproduction) Huskysoul#6112
 
+Веб-сайт [Клик](https://startwine-project.ru/)
+
 Если у вас есть какие-либо вопросы, перейдите на сервер: [Discord](https://discord.gg/jjY3auVdfm)
 
 Телеграм-канал: [StartWine](https://t.me/StartWine)
