@@ -27,7 +27,7 @@ GitHub: [Click](https://github.com/RusNor/StartWine-Launcher/releases)
 
 or the command
 ```bash
-wget -c -t 5 -T 5 "https://github.com/RusNor/StartWine-Launcher/releases/download/StartWine_v375/StartWine_v375" --output-document="${HOME}/StartWine_v375" && chmod +x StartWine_v375 && ./StartWine_v375
+wget -c -t 5 -T 5 "https://github.com/RusNor/StartWine-Launcher/releases/download/StartWine_v377/StartWine_v377" --output-document="${HOME}/StartWine_v377" && chmod +x StartWine_v377 && ./StartWine_v377
 ```
 
 If you downloaded and launched StartWine via the wget command, you can simply skip the item below
@@ -48,7 +48,7 @@ now just drag the file from the folder where you downloaded StartWine into the t
 
 if you want to from the terminal:
 ```bash
-./StartWine_v369
+./StartWine_v377
 ```
 
 ## Installation (old)
@@ -179,6 +179,8 @@ The creators of StartWine: [Normatov R.R.](https://github.com/RusNor) and [Maslo
 
 Helpers in creating a manual:
 [Normatov R.R.](https://github.com/RusNor) [Maslov N.G.](https://github.com/nix-on-nix) [Norz3n](https://github.com/vellynproduction) Huskysoul#6112
+
+Website [Click](https://startwine-project.ru/)
 
 If you have any questions, go to the server: [Discord](https://discord.gg/jjY3auVdfm)
 

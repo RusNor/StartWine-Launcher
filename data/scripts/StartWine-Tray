@@ -121,7 +121,7 @@ if appind == 1:
 
         menu = gtk.Menu()
         indicator = appindicator.Indicator.new(
-            APPINDICATOR_ID, DIRPATH+"/img/gui_icons/folder-wine-symbolic.svg",
+            APPINDICATOR_ID, DIRPATH+"/img/gui_icons/sw-tray_x16.svg",
             appindicator.IndicatorCategory.APPLICATION_STATUS
             )
         indicator.set_status(

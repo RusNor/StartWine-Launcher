@@ -25,7 +25,7 @@ GitHub: [Click](https://github.com/RusNor/StartWine-Launcher/releases)
 
 Или командой 
 ```bash
-wget -c -t 5 -T 5 "https://github.com/RusNor/StartWine-Launcher/releases/download/StartWine_v375/StartWine_v375" --output-document="${HOME}/StartWine_v375" && chmod +x StartWine_v375 && ./StartWine_v375
+wget -c -t 5 -T 5 "https://github.com/RusNor/StartWine-Launcher/releases/download/StartWine_v377/StartWine_v377" --output-document="${HOME}/StartWine_v377" && chmod +x StartWine_v377 && ./StartWine_v377
 ```
 
 Если вы загрузили и запустили StartWine с помощью команды wget, вы можете просто пропустить пункт ниже
@@ -48,7 +48,7 @@ chmod +x StartWine_v*
 
 если командой хотите с терминала:
 ```bash
-./StartWine_v369
+./StartWine_v377
 ```
 
 ## Установка (старое)
@@ -180,6 +180,8 @@ StartWine спросит вас: вы хотите создать префикс
 
 Помощники в создании руководства:
 [Normatov R.R.](https://github.com/RusNor) [Maslov N.G.](https://github.com/nix-on-nix) [Norz3n](https://github.com/vellynproduction) Huskysoul#6112
+
+Веб-сайт [Клик](https://startwine-project.ru/)
 
 Если у вас есть какие-либо вопросы, перейдите на сервер: [Discord](https://discord.gg/jjY3auVdfm)
 
