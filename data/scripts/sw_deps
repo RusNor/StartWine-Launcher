@@ -46,11 +46,27 @@ elif [ -x "$(command -v epm)" ]; then
 
     sudo epmu -y 2>/dev/null || echo 'Passed' &&
 
-    for deps in zstd squashfuse ImageMagick vulkan-tools wine i586-wine xdg-user-dirs vte3 libvte3-gir libgtk+3-gir htop python3-module-cairocffi \
-        python3-module-OpenGL python3-module-numpy python3-module-Pillow python3-module-six ; do
+    for deps in zstd squashfuse ImageMagick vulkan-tools i586-wine xdg-user-dirs vte3 libvte3-gir libgtk+3-gir htop \
+        python3-module-cairocffi python3-module-OpenGL python3-module-numpy python3-module-Pillow python3-module-six ; do
 
-        if [ "`sudo epm list --installed $deps 2>/dev/null | cut -d '/' -f1 | tail -n1`" != "$deps" ]; then
+        if [ "`sudo epm list --installed $deps 2>/dev/null | grep $deps`" == "" ]; then
             sudo epmi $deps -y 2>/dev/null || echo "$deps __________Passed"
+        else
+            echo "$deps _________________________________package is already installed"
+        fi
+
+    done
+
+###################################___EOPKG___:
+
+elif [ -x "$(command -v eopkg)" ]; then
+
+       sudo eopkg ur -y 2>/dev/null || echo 'Passed' &&
+
+    for deps in zstd squashfuse imagemagick vulkan-tools wine wine-32bit xdg-user-dirs libvte htop python-cairo python-opengl python-numexpr python-pillow python-six ; do
+
+        if [ "`sudo eopkg li $deps 2>/dev/null | cut -d '/' -f1 | tail -n1`" != "$deps" ]; then
+            sudo eopkg it $deps -y 2>/dev/null || echo "$deps __________Passed"
         else
             echo "$deps _________________________________package is already installed"
         fi

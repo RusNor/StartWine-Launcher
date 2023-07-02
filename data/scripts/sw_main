@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-################################___SCRIPTS_V377___:
+################################___SCRIPTS_V378___:
 
 import os
 import sys
@@ -119,7 +119,7 @@ launchers_data = [
     f"{sw_pfx}/pfx_yuzu/drive_c/yuzu/yuzu.exe",
     f"{sw_pfx}/pfx_osu!/drive_c/osu!/osu!.exe",
     f"{sw_pfx}/pfx_PathOfExile/drive_c/Grinding Gear Games/Path of Exile/PathOfExile.exe",
-    f"{sw_pfx}/pfx_PlariumPlay/drive_c/users/steamuser/AppData/Local/PlariumPlay/PlariumPlay.exe",
+    f"{sw_pfx}/pfx_PlariumPlay/drive_c/users/$USER/AppData/Local/PlariumPlay/PlariumPlay.exe",
     f"{sw_pfx}/pfx_PopcoTime/drive_c/PopcoTime/PopcoTime.exe",
     f"{sw_pfx}/pfx_RPG_Club/drive_c/RPG-Club/RPG Club.exe",
     f"{sw_pfx}/pfx_RiotClientServices/drive_c/Riot Games/Riot Client/RiotClientServices.exe",
@@ -160,7 +160,7 @@ dxvk_ver = [
     ]
 
 vkd3d_ver = [
-    '2.0', '2.1', '2.2', '2.3', '2.3.1', '2.4', '2.5', '2.6', '2.7', '2.8'
+    '2.0', '2.1', '2.2', '2.3', '2.3.1', '2.4', '2.5', '2.6', '2.7', '2.8', '2.9'
     ]
 
 ################################___LANG___:
