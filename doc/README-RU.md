@@ -23,11 +23,6 @@ Discord: [Click](https://discord.gg/jjY3auVdfm)
 
 GitHub: [Click](https://github.com/RusNor/StartWine-Launcher/releases)
 
-Или командой 
-```bash
-wget -c -t 5 -T 5 "https://github.com/RusNor/StartWine-Launcher/releases/download/StartWine_v377/StartWine_v377" --output-document="${HOME}/StartWine_v377" && chmod +x StartWine_v377 && ./StartWine_v377
-```
-
 Если вы загрузили и запустили StartWine с помощью команды wget, вы можете просто пропустить пункт ниже
 
 После того, как вы загрузили файл, прежде всего щелкните правой кнопкой мыши, свойства, права (или любой другой подобный пункт в свойствах), установите флажок "Является исполняемым" или "Разрешить запуск как программа".
