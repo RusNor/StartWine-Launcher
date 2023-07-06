@@ -45,15 +45,6 @@ if you want to from the terminal:
 ```bash
 ./StartWine_v377
 ```
-
-## Installation (old)
-
-
-If you use a work environment [xfce](https://en.wikipedia.org/wiki/Xfce), then enter this command in the terminal (if suddenly the installer does not work):
-```bash
-xfconf-query --channel thunar --property /misc-exec-shell-scripts-by-default --create --type bool --set true && thunar -q 
-```
-
 Run the file in two mouse clicks and see the installer itself. Click on the Install button and wait for the installation to finish (you can make tea ☕ )
 
 ![sw_image3](/doc/image/sw_image3.png)
