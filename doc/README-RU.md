@@ -45,15 +45,6 @@ chmod +x StartWine_v*
 ```bash
 ./StartWine_v377
 ```
-
-## Установка (старое)
-
-
-Если пользуйтесь рабочим окружением [xfce](https://ru.wikipedia.org/wiki/Xfce), то введите данную команду в терминале (если вдруг установщик не работает):
-```bash
-xfconf-query --channel thunar --property /misc-exec-shell-scripts-by-default --create --type bool --set true && thunar -q 
-```
-
 Запустите файл двумя щелчками мыши и увидите сам установщик. Нажмите на кнопку Установить и дождитесь завершения установки (вы можете приготовить чай ☕).
 
 ![sw_image3](/doc/image/sw_image3.png)
