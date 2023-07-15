@@ -45,7 +45,7 @@ now just drag the file from the folder where you downloaded StartWine into the t
 
 if you want to from the terminal:
 ```bash
-./StartWine_v377
+./StartWine_v37*
 ```
 Run the file in two mouse clicks and see the installer itself. Click on the Install button and wait for the installation to finish (you can make tea ☕ )
 
