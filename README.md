@@ -25,6 +25,8 @@ Discord: [Click](https://discord.gg/jjY3auVdfm)
 
 GitHub: [Click](https://github.com/RusNor/StartWine-Launcher/releases)
 
+StartWine is now in [AUR!](https://aur.archlinux.org/packages/startwine )
+
 If you downloaded and launched StartWine via the wget command, you can simply skip the item below
 
 Once you have downloaded the file, first of all right-click, properties, rights (or any other similar item in the properties), check the "Is executable" or "Allow to run as a program" box.
