@@ -23,6 +23,8 @@ Discord: [Click](https://discord.gg/jjY3auVdfm)
 
 GitHub: [Click](https://github.com/RusNor/StartWine-Launcher/releases)
 
+StartWine теперь в [AUR!](https://aur.archlinux.org/packages/startwine)
+
 Если вы загрузили и запустили StartWine с помощью команды wget, вы можете просто пропустить пункт ниже
 
 После того, как вы загрузили файл, прежде всего щелкните правой кнопкой мыши, свойства, права (или любой другой подобный пункт в свойствах), установите флажок "Является исполняемым" или "Разрешить запуск как программа".
