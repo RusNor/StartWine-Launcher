@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-################################___SCRIPTS_V378___:
+################################___SCRIPTS_V379___:
 
 import os
 import sys
@@ -3029,7 +3029,7 @@ def on_effect_scale(effect_scale):
 
 def on_btn_app_conf_default(self):
 
-    q = _('Do you really want reset settings ?')
+    q = _('Do you really want reset settings?')
     request = get_arg(sw_crier.on_question(q))
     app_conf_default(request)
 

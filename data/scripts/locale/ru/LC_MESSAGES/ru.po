@@ -23,24 +23,21 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-msgid "You have a backup of the default prefix. Use it to recover prefix ?"
-msgstr "У вас есть резервная копия префикса по умолчанию. Использовать его для восстановления префикса ?"
-
 #: sw_main:301
 msgid "___if you see this, you are half way___"
-msgstr "___если ты видишь это, ты на половине пути___"
+msgstr "___если видишь это, ты на половине пути___"
 
 #: sw_main:542
 msgid "Do you really want to remove"
-msgstr "Вы действительно хотите удалить"
+msgstr "Действительно удалить"
 
 #: sw_main:842 sw_main:2057
 msgid "Oops! Nothing to run..."
-msgstr "Уупс! Нечего запускать..."
+msgstr "Ой, нечего запускать..."
 
 #: sw_main:2801
-msgid "Do you really want reset settings ?"
-msgstr "Вы действительно хотите сбросить настройки ?"
+msgid "Do you really want reset settings?"
+msgstr "Действительно сбросить настройки?"
 
 #: sw_main:3225 sw_main:3235
 msgid "START MODE"
@@ -82,15 +79,19 @@ msgstr "Остановить процессы"
 msgid "Exit Tray"
 msgstr "Закрыть Трэй"
 
+#: sw_runlib
+msgid "You have a backup of the default prefix. Use it to recover prefix?"
+msgstr "У вас есть резервная копия префикса по умолчанию. Использовать его для восстановления префикса?"
+
 #: sw_runlib:228
 #, sh-format
 msgid "Error initializing the Wine prefix"
-msgstr "Ошибка инициализации префикса Wine"
+msgstr "Ошибка при инициализации префикса Wine"
 
 #: sw_runlib:238
 #, sh-format
 msgid "Error installing libraries, try again"
-msgstr "Ошибка при установке библиотек, попробуйте еще раз"
+msgstr "Ошибка при установке библиотек, попробуйте ещё раз"
 
 #: sw_runlib:810
 #, sh-format
@@ -102,36 +103,29 @@ msgstr "режим OpenGL"
 msgid "VULKAN mode"
 msgstr "режим Vulkan"
 
+#: sw_runlib
+msgid "Do you have a prefix for this application to use it?"
+msgstr "Использовать для этого приложения существующий префикс?"
+
 #: sw_runlib:965
 #, sh-format
-msgid "Create a new prefix for this application?"
-msgstr "Cоздать новый ярлык и префикс для приложения"
+msgid "Create a prefix for this application?"
+msgstr "Создать префикс для этого приложения?"
 
 #: sw_runlib:998 sw_runlib:1171
 #, sh-format
-msgid "Restore prefix from backup ?"
-msgstr "Восстановить префикс из резервной копии ?"
+msgid "Restore prefix from backup?"
+msgstr "Восстановить префикс из резервной копии?"
 
 #: sw_runlib:1006 sw_runlib:1181
 #, sh-format
 msgid "Restore prefix completed successfully"
-msgstr "Восстановление префикса успешно завершено"
-
-#: sw_runlib:1013
-#, sh-format
-msgid "To create a shortcut run StartWine from the exe file"
-msgstr "Чтобы создать ярлык, запустите StartWine из exe-файла"
-
-#: sw_runlib:1016
-#, sh-format
-msgid "Click the download wine button in the main menu and download Wine"
-msgstr "Нажмите кнопку скачать Wine в главном меню и загрузите Wine"
+msgstr "Префикс восстановлен"
 
 #: sw_runlib:1027
 #, sh-format
-msgid ""
-"You have a backup of the default prefix. Use it to create a new prefix ?"
-msgstr "У вас есть резервная копия дефолтного префикса. Использовать его для создания нового префикса ?"
+msgid "You have a backup of the default prefix. Use it to create a new prefix?"
+msgstr "Найдена резервная копия дефолтного префикса. Использовать её для создания нового?"
 
 #: sw_runlib:1076
 #, sh-format
@@ -141,7 +135,7 @@ msgstr "Ярлык ${SW_GAME_NAME} создан в системном меню"
 #: sw_runlib:1081
 #, sh-format
 msgid "Shortcut ${SW_GAME_NAME} removed from system menu"
-msgstr "Ярлык ${SW_GAME_NAME} удален из системного меню"
+msgstr "Ярлык ${SW_GAME_NAME} удалён из системного меню"
 
 #: sw_runlib:1091
 #, sh-format
@@ -151,12 +145,12 @@ msgstr "Ярлык ${SW_GAME_NAME} создан на рабочем столе"
 #: sw_runlib:1094
 #, sh-format
 msgid "Shortcut ${SW_GAME_NAME} removed from desktop"
-msgstr "Ярлык ${SW_GAME_NAME} удален с рабочего стола"
+msgstr "Ярлык ${SW_GAME_NAME} удалён с рабочего стола"
 
 #: sw_runlib:1120
 #, sh-format
-msgid "Do you really want to remove the prefix ?"
-msgstr "Вы действительно хотите удалить префикс ?"
+msgid "Do you really want to remove the prefix?"
+msgstr "Действительно удалить префикс?"
 
 #: sw_runlib:1134 sw_runlib:1146
 #, sh-format
@@ -165,150 +159,148 @@ msgstr "Ярлык и префикс ${SW_GAME_NAME} удалены"
 
 #: sw_runlib:1157 sw_runlib:1185
 #, sh-format
-msgid "Remove old prefix ?"
-msgstr "Удалить старый префикс ?"
+msgid "Remove old prefix?"
+msgstr "Удалить старый префикс?"
 
 #: sw_runlib:1203
 #, sh-format
-msgid "Do you really want to backup the prefix ?"
-msgstr "Вы действительно хотите сделать резервную копию префикса ?"
+msgid "Do you really want to backup the prefix?"
+msgstr "Действительно сделать резервную копию префикса?"
 
 #: sw_runlib:1209 sw_runlib:1266
 #, sh-format
-msgid "Overwrite old backup ?"
-msgstr "Перезаписать старую резервную копию ?"
+msgid "Overwrite old backup?"
+msgstr "Перезаписать старую резервную копию?"
 
 #: sw_runlib:1217 sw_runlib:1227
 #, sh-format
 msgid "Backup completed successfully"
-msgstr "Резервное копирование успешно завершено"
+msgstr "Резервное копирование завершено"
 
 #: sw_runlib:1237
 #, sh-format
-msgid "Do you really want to restore the prefix ?"
-msgstr "Вы действительно хотите восстановить префикс ?"
+msgid "Do you really want to restore the prefix?"
+msgstr "Действительно восстановить префикс?"
 
 #: sw_runlib:1242 sw_runlib:1290
 #, sh-format
 msgid "You do not have a backup create it first"
-msgstr "У вас нет резервной копии, сначала создайте ее"
+msgstr "Резервной копии не найдено, сначала создайте ее"
 
 #: sw_runlib:1251
 #, sh-format
 msgid "Restore completed successfully"
-msgstr "Восстановление завершено успешно"
+msgstr "Восстановление завершено"
 
 #: sw_runlib:1260
 #, sh-format
-msgid "Do you really want to backup all the prefixes ?"
-msgstr "Вы действительно хотите сделать резервную копию всех префиксов?"
+msgid "Do you really want to backup all the prefixes?"
+msgstr "Действительно сделать резервную копию всех префиксов?"
 
 #: sw_runlib:1271 sw_runlib:1277
 #, sh-format
 msgid "Full backup completed successfully"
-msgstr "Полное резервное копирование успешно завершено"
+msgstr "Полное резервное копирование завершено"
 
 #: sw_runlib:1285
 #, sh-format
-msgid "Do you really want to restore all the prefixes ?"
-msgstr "Вы действительно хотите восстановить все префиксы?"
+msgid "Do you really want to restore all the prefixes?"
+msgstr "Действительно восстановить все префиксы?"
 
 #: sw_runlib:1292
 #, sh-format
-msgid "Would you like to save the current prefixes ?"
-msgstr "Хотите сохранить текущие префиксы ?"
+msgid "Would you like to save the current prefixes?"
+msgstr "Сохранить текущие префиксы?"
 
 #: sw_runlib:1298 sw_runlib:1304
 #, sh-format
 msgid "Full Restore completed successfully"
-msgstr "Полное восстановление успешно завершено"
+msgstr "Полное восстановление префиксов завершено"
 
 #: sw_runlib:1314
 #, sh-format
-msgid "Do you really want to clear the prefix ?"
-msgstr "Вы действительно хотите очистить префикс ?"
+msgid "Do you really want to clear the prefix?"
+msgstr "Действительно очистить префикс?"
 
 #: sw_runlib:2353 sw_runlib:2391 sw_runlib:2429 sw_runlib:2553
 #, sh-format
 msgid "Application installed successfully"
-msgstr "Приложение успешно установлено"
+msgstr "Приложение установлено"
 
 #: sw_runlib:1390 sw_runlib:1432
 #, sh-format
 msgid "Libraries installed successfully"
-msgstr "Библиотеки успешно установлены"
+msgstr "Библиотеки установлены"
 
 #: sw_runlib:1397
 #, sh-format
-msgid "Install recommended libraries ?"
-msgstr "Установить рекомендуемые библиотеки ?"
+msgid "Install recommended libraries?"
+msgstr "Установить рекомендуемые библиотеки?"
 
 #: sw_runlib:1504
 #, sh-format
 msgid "Please wait a while then press ok to open the log file"
-msgstr ""
-"Пожалуйста, подождите некоторое время, затем нажмите ОК, чтобы открыть файл "
-"журнала."
+msgstr "Подождите некоторое время, затем нажмите ОК для открытия журнала."
 
 #: sw_runlib:1537
 #, sh-format
 msgid "Downloading wine staging completed successfully"
-msgstr "Загрузка wine staging завершена успешно"
+msgstr "wine staging загружен"
 
 #: sw_runlib:1539 sw_runlib:1571 sw_runlib:1610 sw_runlib:1644 sw_runlib:1678
 #, sh-format
 msgid "Download failed, try again"
-msgstr "Загрузка не удалась, попробуйте еще раз"
+msgstr "Загрузка не удалась, попробуйте ещё раз"
 
 #: sw_runlib:1569
 #, sh-format
 msgid "Downloading wine steam proton completed successfully"
-msgstr "Загрузка wine steam proton завершена успешно"
+msgstr "wine steam proton загружен"
 
 #: sw_runlib:1608
 #, sh-format
 msgid "Downloading wine proton ge completed successfully"
-msgstr "Загрузка wine proton ge завершена успешно"
+msgstr "wine proton ge загружен"
 
 #: sw_runlib:1642
 #, sh-format
 msgid "Downloading wine lutris completed successfully"
-msgstr "Загрузка wine lutris завершена успешно"
+msgstr "wine lutris загружен"
 
 #: sw_runlib:1676
 #, sh-format
 msgid "Downloading wine lutris ge completed successfully"
-msgstr "Загрузка wine lutris ge завершена успешно"
+msgstr "wine lutris загружен"
 
 #: sw_runlib:1692
 #, sh-format
 msgid "Do you really want to remove the wine staging ?"
-msgstr "Вы действительно хотите удалить wine staging ?"
+msgstr "Действительно удалить wine staging?"
 
 #: sw_runlib:1703
 #, sh-format
-msgid "Do you really want to remove the wine steam proton ?"
-msgstr "Вы действительно хотите удалить wine steam proton ?"
+msgid "Do you really want to remove the wine steam proton?"
+msgstr "Действительно удалить wine steam proton?"
 
 #: sw_runlib:1714
 #, sh-format
-msgid "Do you really want to remove the wine proton ge ?"
-msgstr "Вы действительно хотите удалить wine proton ge ?"
+msgid "Do you really want to remove the wine proton ge?"
+msgstr "Действительно удалить wine proton ge?"
 
 #: sw_runlib:1725
 #, sh-format
-msgid "Do you really want to remove the wine lutris ?"
-msgstr "Вы действительно хотите удалить wine lutris ?"
+msgid "Do you really want to remove the wine lutris?"
+msgstr "Действительно удалить wine lutris?"
 
 #: sw_runlib:1736
 #, sh-format
-msgid "Do you really want to remove the wine lutris ge ?"
-msgstr "Вы действительно хотите удалить wine lutris ge ?"
+msgid "Do you really want to remove the wine lutris ge?"
+msgstr "Действительно удалить wine lutris ge?"
 
 #: sw_runlib:1759
 #, sh-format
 msgid "Kill wine porocesses"
-msgstr "Остановить все процессы wine"
+msgstr "Процессы остановлены"
 
 #: sw_runlib:2395 sw_runlib:2433 sw_runlib:2474 sw_runlib:2517 sw_runlib:2557
 #, sh-format
@@ -317,7 +309,7 @@ msgstr "Приложение установлено"
 
 #: sw_menu.glade:176 sw_menu.glade:671
 msgid "FILE MANAGER"
-msgstr "ФЙЛОВЫЙ МЕНЕДЖЕР"
+msgstr "ФАЙЛОВЫЙ МЕНЕДЖЕР"
 
 #: sw_menu.glade:224 sw_menu.glade:719
 msgid "TEXT EDIT"
@@ -329,7 +321,7 @@ msgstr "ЯРЛЫК В МЕНЮ"
 
 #: sw_menu.glade:320 sw_menu.glade:815
 msgid "APP TO DESKTOP"
-msgstr "ЯРЛЫК НА РАБОЧИЙ СТОЛ"
+msgstr "ЯРЛЫК НА РАБОЧЕМ СТОЛЕ"
 
 #: sw_menu.glade:368 sw_menu.glade:863
 msgid "APP SETTINGS"
@@ -337,7 +329,7 @@ msgstr "НАСТРОЙКИ ПРИЛОЖЕНИЯ"
 
 #: sw_menu.glade:417 sw_menu.glade:912
 msgid "PROTONDB"
-msgstr ""
+msgstr "БД ПРОТОН"
 
 #: sw_menu.glade:466 sw_menu.glade:961
 msgid "WINEHQ"
@@ -388,43 +380,43 @@ msgid ""
 "Gamepad battery percent with icon. *enabled by default\n"
 "Show FPS only"
 msgstr ""
-"Текущая температура процессора\n"
-"Потребляемый ЦП в ваттах\n"
+"Температура процессора\n"
+"Потреблени ЦП (Вт)\n"
 "Нагрузка и частота на ядро\n"
-"Текущая частота процессора в МГц\n"
-"Имя графического процессора\n"
+"Частота процессора (МГц)\n"
+"Название графического процессора\n"
 "Температура графического процессора\n"
-"Потребление ГПУ в ваттах\n"
+"Потребление ГПУ (Вт)\n"
 "Частота ядра ГПУ\n"
-"Частота памяти ГПУ\n"
+"Частота видеопамяти\n"
 "Использование оперативной памяти\n"
 "Использование видеопамяти\n"
 "Использование пространства подкачки\n"
 "Использование резидентной памяти\n"
 "Использование общей памяти\n"
 "Использование виртуальной памяти\n"
-"Чтение операций ввода-вывода, в МиБ/с\n"
-"Запись ввода-вывода, в МиБ/с\n"
+"Чтение операций ввода-вывода (МиБ/с)\n"
+"Запись ввода-вывода (МиБ/с)\n"
 "Включает большинство параметров\n"
 "Основной размер шрифта на весь текст\n"
-"Отображает местное время\n"
+"Местное время\n"
 "Показать метаданные медиаплеера\n"
 "Показывает текущую версию mangohud\n"
 "Показать, разрядность приложения\n"
 "Изменить график кадров на гистограмму\n"
-"Отображает драйвер vulkan\n"
-"Версия OpenGL или vulkan рендеринга\n"
+"Отображает драйвер Vulkan\n"
+"Версия рендеринга OpenGL или Vulkan\n"
 "Показывает текущую версию Wine или Proton\n"
 "Время кадра рядом с текстом кадров\n"
-"Счетчик кадров\n"
+"Счётчик кадров\n"
 "Текущее разрешение\n"
 "Текущий лимит кадров\n"
-"Показывает, включен ли vkbasalt\n"
-"Показывает, включен ли игровой режим\n"
-"Процент заряда батареи и потребление энергии\n"
+"Показывает, включён ли vkBasalt\n"
+"Показывает, включён ли игровой режим\n"
+"Заряд батареи (%) и потребление энергии\n"
 "Значок батареи вместо процентов\n"
 "Батарея беспроводных геймпадов\n"
-"Процент заряда батареи геймпада со значком\n"
+"Заряд батареи геймпада (значок + %)\n"
 "Показывать только FPS"
 
 #: sw_menu.glade:1189
@@ -506,49 +498,46 @@ msgid ""
 "Set vkd3d version"
 
 msgstr ""
-"Установить параметры запуска, пример: -d3d9, -d3d11, -opengl\n"
+"Установить параметры запуска, например: -d3d9, -d3d11, -opengl\n"
 "Переопределить dll в текущем префиксе, например: amd_ags_x64=b,n\n"
-"Установить архитектуру префикса\n"
-"Установить версию Windows\n"
-"Добавить исправление реестра\n"
+"Задать архитектуру префикса\n"
+"Задать версию Windows\n"
+"Добавить правку в реестр\n"
 "Использование пользовательской версии dxvk из wine-proton-ge\n"
-"Использование кастомной версии vkd3d от wine-proton-ge\n"
-"Принудительно использовать opengl для приложений, которые не запускаются в "
-"dxvk\n"
-"Включить ограничение fps в режиме vkd3d или dxvk\n"
+"Использование альтернативной версии vkd3d от wine-proton-ge\n"
+"Принудительно использовать opengl для приложений, не запускающихся в dxvk\n"
+"Включить ограничение FPS в режиме vkd3d или dxvk\n"
 "Системный мониторинг в OpenGL\n"
 "Системный мониторинг в dxvk и vkd3d\n"
 "Набор оптимизаций временно применяется к игровому процессу\n"
 "Библиотеки Steam для запуска приложений\n"
-"Восстановить разрешение экрана после завершения игры\n"
+"Восстановить разрешение экрана по завершению игры\n"
 "Включить эмуляцию рабочего стола Windows\n"
-"Улучшение частоты кадров и скорости отклика с помощью политик планирования\n"
-"Повысить производительность некоторых игр, сильно зависящих от процессора\n"
+"Улучшение частоты кадров и скорости отклика посредством политик планирования\n"
+"Повысить производительность некоторых игр, зависящих в основном от процессора\n"
 "Для старых игр, которые вылетают из-за очень длинных строк расширения\n"
-"Отключить прямой доступ к GPU для видеокарт nvidia\n"
+"Отключить прямой доступ к ГПУ для видеокарт nVidia\n"
 "Отключить режим отладки для wine\n"
 "Выделить для 32-разрядного приложения более 2 ГБ ОЗУ\n"
 "Помогает обойти некоторые виды защиты в старых играх\n"
 "Увеличивает производительность на 5-10%\n"
 "Системный мониторинг в dxvk\n"
 "Асинхронные конвейеры записываются в кэш\n"
-"vkBasalt - это слой постобработки Vulkan для улучшения визуальной графики\n"
-"AMD FSR — передовые технологии апскейлинга для более высокой "
-"поизводительности\n"
+"vkBasalt — это слой постобработки Vulkan для визуального улучшения графики\n"
+"AMD FSR — передовые технологии масштабирования для более высокой поизводительности\n"
 "Включает библиотеки Windows Media Foundation для воспроизведения видео в "
 "некоторых играх\n"
-"Используется для управления гибридной графикой на последних настольных "
-"компьютерах и ноутбуках\n"
-"Открытая и кроссплатформенная реализация .NET Framework\n"
+"Используется для управления гибридной графикой на свежих настольных ПК и ноутбуках\n"
+"Открытая кроссплатформенная реализация .NET Framework\n"
 "Для запуска онлайн-игр, использующих античит-сервис BattlEye\n"
-"Служба EasyAntCheat необходима для запуска онлайн-игр, использующих эту "
-"службу\n"
+"Служба EasyAntiCheat необходима для запуска онлайн-игр, использующих эту "
+"технологию\n"
 "Предварительно загрузить библиотеки d3d\n"
-"Решает проблемы с производительностью и откликом в некоторых приложениях\n"
-"Скрывает определение видеокарт nvidia. Требуется для запуска некоторых "
+"В некоторых приложениях решает проблемы с производительностью и откликом\n"
+"Скрывает определение видеокарт nVidia. Требуется для запуска некоторых "
 "приложений\n"
-"Для запуска игр на основе directx 8 и ниже, в режиме dxvk\n"
-"Aпскейлинг Nvidia c поддержкой FSR для более высокой производительности\n"
+"Для запуска игр в режиме dxvk на основе DirectX-8 и ниже\n"
+"Масштабирование Nvidia c поддержкой FSR для более высокой производительности\n"
 "Выбрать версию dxvk\n"
 "Выбрать версию vkd3d"
 
@@ -626,7 +615,7 @@ msgstr "СКАЧАТЬ WINE"
 
 #: sw_menu.glade:3385
 msgid "INSTALL LAUNCHERS"
-msgstr "УСТАНОВИТЬ ЛАУНЧЕРЫ"
+msgstr "УСТАНОВИТЬ ЛОНЧЕРЫ"
 
 #: sw_menu.glade:3454
 msgid "tools for increase perfomance, system monitoring, post processing"
@@ -649,7 +638,7 @@ msgstr "ОТЛАДКА"
 
 #: sw_menu.glade:3606
 msgid "kill all wine process"
-msgstr "Остановить все процессы wine"
+msgstr "Все процессы остановлены"
 
 #: sw_menu.glade:3621
 msgid "STOP"
@@ -760,18 +749,18 @@ msgid ""
 "to quickly and easily launch Windows \n"
 "applications on Linux operating systems."
 msgstr ""
-"StartWine — это программа запуска,\n"
-"которая позволяет быстро и легко\n"
-"запускать Windows приложения в\n"
-"операционных системах GNU/Linux."
+"StartWine — это программа,\n"
+"позволяющая легко и просто\n"
+"запускать приложения Windows\n"
+"в ОС GNU/Linux."
 
 #: sw_menu.glade:5820
 msgid "GITHUB SOURCE"
-msgstr "GITHUB ИСТОЧНИК"
+msgstr "ИСТОЧНИК GITHUB"
 
 #: sw_menu.glade:5895
 msgid "DISCORD SERVER"
-msgstr "DISCORD СЕРВЕР"
+msgstr "СЕРВЕР DISCORD"
 
 #: sw_menu.glade:6055
 msgid ""
@@ -795,21 +784,20 @@ msgid ""
 "License for more details."
 msgstr ""
 "StartWine — бесплатная программа;\n"
-"вы можете распространять ее и/или\n"
-"изменить ее в соответствии с \n"
-"условиями GNU General Public License\n"
-"как опубликовано Фондом Свободного\n"
-"Программного Обеспечения;\n"
-"любая версия 3 Лицензии,\n"
-"или любая более поздняя версия.\n"
-"StartWine распространяется в \n"
-"надежде, что это будет полезно, но\n"
-"БЕЗ КАКИХ-ЛИБО ГАРАНТИЙ;\n"
+"вы можете распространять и/или\n"
+"изменять её согласно условиям\n"
+"базовой публичной лицензии\n"
+"GNU GPL версии 3 или новее,\n"
+"как опубликовано Фондом свободного\n"
+"программного обеспечения FSF.\n"
+"StartWine распространяется в\n"
+"надежде, что окажется полезен,\n"
+"но БЕЗ КАКИХ-ЛИБО ГАРАНТИЙ —\n"
 "даже без подразумеваемой\n"
 "гарантии ТОВАРНОЙ ПРИГОДНОСТИ\n"
-"или ПРИГОДНОСТИ ДЛЯ КОНКРЕТНОЙ ЦЕЛИ.\n"
-"См. GNU General Public License\n"
-"Лицензия для более подробной информации."
+"или ПРИГОДНОСТИ ДЛЯ КОНКРЕТНОЙ ЦЕЛИ\n"
+"(более подробную информацию см. в\n"
+"GNU General Public License)."
 
 #: sw_menu.glade:6101 sw_menu.glade:6131
 msgid "LICENSE"
@@ -829,7 +817,7 @@ msgstr ""
 
 #: sw_menu.glade:6185
 msgid "Acknowlegment:"
-msgstr "Благодарность:"
+msgstr "Благодарности:"
 
 #: sw_menu.glade:6202
 msgid ""
@@ -841,7 +829,7 @@ msgstr ""
 
 #: sw_menu.glade:6231
 msgid "DONATION"
-msgstr "ПОЖЕРТВОВАНИЕ"
+msgstr "ПОЖЕРТВОВАНИЯ"
 
 #: sw_menu.glade:6287
 msgid "AUTHORS"
@@ -930,4 +918,3 @@ msgstr "ТЕРМИНАЛ"
 #: sw_menu.glade:18217
 msgid "window"
 msgstr ""
-

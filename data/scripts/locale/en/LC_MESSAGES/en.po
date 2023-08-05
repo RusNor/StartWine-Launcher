@@ -31,11 +31,11 @@ msgstr "Do you really want to remove"
 
 #: sw_main:842 sw_main:2057
 msgid "Oops! Nothing to run..."
-msgstr ""
+msgstr "Oops! Nothing to run..."
 
 #: sw_main:2801
-msgid "Do you really want reset settings ?"
-msgstr "Do you really want reset settings ?"
+msgid "Do you really want reset settings?"
+msgstr "Do you really want reset settings?"
 
 #: sw_main:3225 sw_main:3235
 msgid "START MODE"
@@ -55,7 +55,7 @@ msgstr "PREFIX:\n"
 
 #: sw_install_manager:212
 msgid "___dependency_installation_is_complete___"
-msgstr ""
+msgstr "___dependency_installation_is_complete___"
 
 #: sw_install_manager:777
 msgid "STARTWINE UPDATE, PLEASE WAIT..."
@@ -82,8 +82,8 @@ msgid "INSTALLATION COMPLETED SUCCESSFULLY"
 msgstr "INSTALLATION COMPLETED SUCCESSFULLY"
 
 #: sw_install_manager:901
-msgid "Do you really want to remove the StartWine ?"
-msgstr "Do you really want to remove the StartWine ?"
+msgid "Do you really want to remove the StartWine?"
+msgstr "Do you really want to remove the StartWine?"
 
 #: sw_install_manager:910
 msgid "StartWine QUESTION"
@@ -155,14 +155,17 @@ msgstr "OpenGL mode"
 msgid "VULKAN mode"
 msgstr "VULKAN mode"
 
+msgid "Do you have a prefix for this application to use it?"
+msgstr "Do you have a prefix for this application to use it?"
+
 #: sw_runlib:965
-msgid "Create a new prefix for this application ?"
-msgstr "Create a new prefix for this application ?"
+msgid "Create a prefix for this application?"
+msgstr "Create a prefix for this application?"
 
 #: sw_runlib:998 sw_runlib:1171
 #, sh-format
-msgid "Restore prefix from backup ?"
-msgstr "Restore prefix from backup ?"
+msgid "Restore prefix from backup?"
+msgstr "Restore prefix from backup?"
 
 #: sw_runlib:1006 sw_runlib:1181
 #, sh-format
@@ -181,10 +184,8 @@ msgstr "Click the download wine button in the main menu and download Wine"
 
 #: sw_runlib:1027
 #, sh-format
-msgid ""
-"You have a backup of the default prefix. Use it to create a new prefix ?"
-msgstr ""
-"You have a backup of the default prefix. Use it to create a new prefix ?"
+msgid "You have a backup of the default prefix. Use it to create a new prefix?"
+msgstr "You have a backup of the default prefix. Use it to create a new prefix?"
 
 #: sw_runlib:1076
 #, sh-format
@@ -207,8 +208,8 @@ msgid "Shortcut ${STARTWINE_NAME} removed from desktop"
 msgstr "Shortcut ${STARTWINE_NAME} removed from desktop"
 
 #: sw_runlib:1120
-msgid "Do you really want to remove the prefix ?"
-msgstr "Do you really want to remove the prefix ?"
+msgid "Do you really want to remove the prefix?"
+msgstr "Do you really want to remove the prefix?"
 
 #: sw_runlib:1134 sw_runlib:1146
 #, sh-format
@@ -217,17 +218,17 @@ msgstr "Shortcut and prefix ${STARTWINE_NAME} removed"
 
 #: sw_runlib:1157 sw_runlib:1185
 #, sh-format
-msgid "Remove old prefix ?"
-msgstr "Remove old prefix ?"
+msgid "Remove old prefix?"
+msgstr "Remove old prefix?"
 
 #: sw_runlib:1203
-msgid "Do you really want to backup the prefix ?"
-msgstr "Do you really want to backup the prefix ?"
+msgid "Do you really want to backup the prefix?"
+msgstr "Do you really want to backup the prefix?"
 
 #: sw_runlib:1209 sw_runlib:1266
 #, sh-format
-msgid "Overwrite old backup ?"
-msgstr "Overwrite old backup ?"
+msgid "Overwrite old backup?"
+msgstr "Overwrite old backup?"
 
 #: sw_runlib:1217 sw_runlib:1227
 #, sh-format
@@ -235,8 +236,8 @@ msgid "Backup completed successfully"
 msgstr "Backup completed successfully"
 
 #: sw_runlib:1237
-msgid "Do you really want to restore the prefix ?"
-msgstr "Do you really want to restore the prefix ?"
+msgid "Do you really want to restore the prefix?"
+msgstr "Do you really want to restore the prefix?"
 
 #: sw_runlib:1242 sw_runlib:1290
 #, sh-format
@@ -249,8 +250,8 @@ msgid "Restore completed successfully"
 msgstr "Restore completed successfully"
 
 #: sw_runlib:1260
-msgid "Do you really want to backup all the prefixes ?"
-msgstr "Do you really want to backup all the prefixes ?"
+msgid "Do you really want to backup all the prefixes?"
+msgstr "Do you really want to backup all the prefixes?"
 
 #: sw_runlib:1271 sw_runlib:1277
 #, sh-format
@@ -258,13 +259,13 @@ msgid "Full backup completed successfully"
 msgstr "Full backup completed successfully"
 
 #: sw_runlib:1285
-msgid "Do you really want to restore all the prefixes ?"
-msgstr "Do you really want to restore all the prefixes ?"
+msgid "Do you really want to restore all the prefixes?"
+msgstr "Do you really want to restore all the prefixes?"
 
 #: sw_runlib:1292
 #, sh-format
-msgid "Would you like to save the current game prefixes ?"
-msgstr "Would you like to save the current game prefixes ?"
+msgid "Would you like to save the current game prefixes?"
+msgstr "Would you like to save the current game prefixes?"
 
 #: sw_runlib:1298 sw_runlib:1304
 #, sh-format
@@ -272,8 +273,8 @@ msgid "Full Restore completed successfully"
 msgstr "Full Restore completed successfully"
 
 #: sw_runlib:1314
-msgid "Do you really want to clear the prefix ?"
-msgstr "Do you really want to clear the prefix ?"
+msgid "Do you really want to clear the prefix?"
+msgstr "Do you really want to clear the prefix?"
 
 #: sw_runlib:1388 sw_runlib:1430 sw_runlib:1796 sw_runlib:1834 sw_runlib:1872
 #: sw_runlib:1910 sw_runlib:1947 sw_runlib:2001 sw_runlib:2039 sw_runlib:2077
@@ -290,8 +291,8 @@ msgstr "Libraries installed successfully"
 
 #: sw_runlib:1397
 #, sh-format
-msgid "Install recommended libraries ?"
-msgstr "Install recommended libraries ?"
+msgid "Install recommended libraries?"
+msgstr "Install recommended libraries?"
 
 #: sw_runlib:1504
 #, sh-format
@@ -329,24 +330,24 @@ msgid "Downloading wine lutris ge completed successfully"
 msgstr "Downloading wine lutris ge completed successfully"
 
 #: sw_runlib:1692
-msgid "Do you really want to remove the wine staging ?"
-msgstr "Do you really want to remove the wine staging ?"
+msgid "Do you really want to remove the wine staging?"
+msgstr "Do you really want to remove the wine staging?"
 
 #: sw_runlib:1703
-msgid "Do you really want to remove the wine steam proton ?"
-msgstr "Do you really want to remove the wine steam proton ?"
+msgid "Do you really want to remove the wine steam proton?"
+msgstr "Do you really want to remove the wine steam proton?"
 
 #: sw_runlib:1714
-msgid "Do you really want to remove the wine proton ge ?"
-msgstr "Do you really want to remove the wine proton ge ?"
+msgid "Do you really want to remove the wine proton ge?"
+msgstr "Do you really want to remove the wine proton ge?"
 
 #: sw_runlib:1725
-msgid "Do you really want to remove the wine lutris ?"
-msgstr "Do you really want to remove the wine lutris ?"
+msgid "Do you really want to remove the wine lutris?"
+msgstr "Do you really want to remove the wine lutris?"
 
 #: sw_runlib:1736
-msgid "Do you really want to remove the wine lutris ge ?"
-msgstr "Do you really want to remove the wine lutris ge ?"
+msgid "Do you really want to remove the wine lutris ge?"
+msgstr "Do you really want to remove the wine lutris ge?"
 
 #: sw_runlib:1759
 msgid "Kill wine porocesses"
@@ -473,39 +474,39 @@ msgstr ""
 "Show FPS only"
 #: sw_menu.glade:1189
 msgid "yellow"
-msgstr ""
+msgstr "yellow"
 
 #: sw_menu.glade:1230
 msgid "white"
-msgstr ""
+msgstr "white"
 
 #: sw_menu.glade:1271
 msgid "grey"
-msgstr ""
+msgstr "grey"
 
 #: sw_menu.glade:1312
 msgid "black"
-msgstr ""
+msgstr "black"
 
 #: sw_menu.glade:1353
 msgid "red"
-msgstr ""
+msgstr "red"
 
 #: sw_menu.glade:1394
 msgid "green"
-msgstr ""
+msgstr "green"
 
 #: sw_menu.glade:1435
 msgid "blue"
-msgstr ""
+msgstr "blue"
 
 #: sw_menu.glade:1476
 msgid "purple"
-msgstr ""
+msgstr "purple"
 
 #: sw_menu.glade:1517
 msgid "brown"
-msgstr ""
+msgstr "brown"
 
 #: sw_menu.glade:1574
 msgid ""
@@ -950,7 +951,7 @@ msgstr "FONTS LIST"
 #: sw_menu.glade:16661 sw_menu.glade:16672 sw_menu.glade:16683
 #: sw_menu.glade:16694 sw_menu.glade:16705 sw_menu.glade:16716
 msgid "label"
-msgstr ""
+msgstr "label"
 
 #: sw_menu.glade:15265
 msgid "LAUNCH SETTINGS"
