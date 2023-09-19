@@ -1291,7 +1291,7 @@ def cs_staging():
         pass
 
     wine_name = f"wine_staging"
-    wine_download = f"WINE_1"
+    wine_download = f"WINE_STAGING-TKG"
     echo_cs_name(wine_name, wine_download)
 
 def on_btn_cs_steam(self):
@@ -1328,7 +1328,7 @@ def cs_steam():
         pass
 
     wine_name = f"wine_steam_proton"
-    wine_download = f"WINE_2"
+    wine_download = f"WINE_PROTON"
     echo_cs_name(wine_name, wine_download)
 
 def on_btn_cs_ge(self):
@@ -1363,7 +1363,7 @@ def cs_ge():
         pass
 
     wine_name = f"wine_proton_ge"
-    wine_download = f"WINE_3"
+    wine_download = f"WINE_GE_PROTON"
     echo_cs_name(wine_name, wine_download)
 
 def on_btn_cs_lutris(self):
@@ -1399,7 +1399,7 @@ def cs_lutris():
         pass
 
     wine_name = f"wine_lutris"
-    wine_download = f"WINE_4"
+    wine_download = f"WINE_LUTRIS"
     echo_cs_name(wine_name, wine_download)
 
 def on_btn_cs_lutris_ge(self):
@@ -1436,7 +1436,7 @@ def cs_lutris_ge():
         pass
 
     wine_name = f"wine_lutris_ge"
-    wine_download = f"WINE_5"
+    wine_download = f"WINE_LUTRIS_GE"
     echo_cs_name(wine_name, wine_download)
 
 def on_btn_cs_custom(self):
@@ -2219,57 +2219,57 @@ def echo_wine(wine_name):
         sw_fsh.write_text(fshread[0] + '\n' + fshread[1] + '\n' + wine_num)
         proc_wine = Popen(f"{sw_fsh} {app_path}", shell=True, start_new_session=True, stdout=PIPE)
 
-def on_btn_wine_1(self):
+def on_btn_wine_stagging-tkg(self):
 
-    wine_name = f"WINE_1"
+    wine_name = f"WINE_STAGING-TKG"
     echo_wine(wine_name)
 
 def on_btn_rm_staging(self):
 
-    wine_name = f"RM_WINE_1"
+    wine_name = f"RM_WINE_STAGING-TKG"
     echo_wine(wine_name)
 
-def on_btn_wine_2(self):
+def on_btn_wine_proton(self):
 
-    wine_name = f"WINE_2"
+    wine_name = f"WINE_PROTON"
     echo_wine(wine_name)
 
 def on_btn_rm_proton(self):
 
-    wine_name = f"RM_WINE_2"
+    wine_name = f"RM_WINE_PROTON"
     echo_wine(wine_name)
 
-def on_btn_wine_3(self):
+def on_btn_wine_ge_proton(self):
 
-    wine_name = f"WINE_3"
+    wine_name = f"WINE_GE_PROTON"
     echo_wine(wine_name)
 
 def on_btn_rm_ge(self):
 
-    wine_name = f"RM_WINE_3"
+    wine_name = f"RM_WINE_GE_PROTON"
     echo_wine(wine_name)
 
-def on_btn_wine_4(self):
+def on_btn_wine_lutris(self):
 
-    wine_name = f"WINE_4"
+    wine_name = f"WINE_LUTRIS"
     echo_wine(wine_name)
 
 def on_btn_rm_lutris(self):
 
-    wine_name = f"RM_WINE_4"
+    wine_name = f"RM_WINE_LUTRIS"
     echo_wine(wine_name)
 
-def on_btn_wine_5(self):
+def on_btn_wine_lutris_ge(self):
 
-    wine_name = f"WINE_5"
+    wine_name = f"WINE_LUTRIS_GE"
     echo_wine(wine_name)
 
 def on_btn_rm_lutris_ge(self):
 
-    wine_name = f"RM_WINE_5"
+    wine_name = f"RM_WINE_LUTRIS_GE"
     echo_wine(wine_name)
 
-def on_btn_wine_6(self):
+def on_btn_wine_custom(self):
 
     cmd = f"xdg-open {sw_path}/data/wine/wine_custom"
     Popen(cmd, shell=True)
@@ -3560,38 +3560,38 @@ btn_debug.connect("clicked", on_btn_debug)
 btn_dw = builder.get_object("btn_dw")
 btn_dw.connect("clicked", on_btn_dw)
 
-btn_wine_1 = builder.get_object("btn_staging")
-btn_wine_1.connect("clicked", on_btn_wine_1)
+btn_wine_stagging-tkg = builder.get_object("btn_staging")
+btn_wine_stagging-tkg.connect("clicked", on_btn_wine_stagging-tkg)
 
 btn_rm_staging = builder.get_object("btn_rm_staging")
 btn_rm_staging.connect("clicked", on_btn_rm_staging)
 
-btn_wine_2 = builder.get_object("btn_steam")
-btn_wine_2.connect("clicked", on_btn_wine_2)
+btn_wine_proton = builder.get_object("btn_steam")
+btn_wine_proton.connect("clicked", on_btn_wine_proton)
 
 btn_rm_proton = builder.get_object("btn_rm_proton")
 btn_rm_proton.connect("clicked", on_btn_rm_proton)
 
-btn_wine_3 = builder.get_object("btn_ge")
-btn_wine_3.connect("clicked", on_btn_wine_3)
+btn_wine_ge_proton = builder.get_object("btn_ge")
+btn_wine_ge_proton.connect("clicked", on_btn_wine_ge_proton)
 
 btn_rm_ge = builder.get_object("btn_rm_ge")
 btn_rm_ge.connect("clicked", on_btn_rm_ge)
 
-btn_wine_4 = builder.get_object("btn_lutris")
-btn_wine_4.connect("clicked", on_btn_wine_4)
+btn_wine_lutris = builder.get_object("btn_lutris")
+btn_wine_lutris.connect("clicked", on_btn_wine_lutris)
 
 btn_rm_lutris = builder.get_object("btn_rm_lutris")
 btn_rm_lutris.connect("clicked", on_btn_rm_lutris)
 
-btn_wine_5 = builder.get_object("btn_lutris_ge")
-btn_wine_5.connect("clicked", on_btn_wine_5)
+btn_wine_lutris_ge = builder.get_object("btn_lutris_ge")
+btn_wine_lutris_ge.connect("clicked", on_btn_wine_lutris_ge)
 
 btn_rm_lutris_ge = builder.get_object("btn_rm_lutris_ge")
 btn_rm_lutris_ge.connect("clicked", on_btn_rm_lutris_ge)
 
-btn_wine_6 = builder.get_object("btn_custom")
-btn_wine_6.connect("clicked", on_btn_wine_6)
+btn_wine_custom = builder.get_object("btn_custom")
+btn_wine_custom.connect("clicked", on_btn_wine_custom)
 
 ################################___BUILDER_LAUNCHERS___:
 

@@ -1606,7 +1606,7 @@ DEBUG_VULKAN () {
 
 ##############################   DOWNLOAD WINE   ###############################
 
-WINE_1 () {
+WINE_STAGING-TKG () {
 
     try_remove "${START_WINE_PATH}/data/tmp/wine-${STAG_VER}-staging-tkg-amd64.tar.xz" &&
     try_remove "${START_WINE_PATH}/data/tmp/wine-${STAG_VER}-staging-tkg-amd64"
@@ -1642,7 +1642,7 @@ WINE_1 () {
 
 }
 
-WINE_2 () {
+WINE_PROTON () {
 
     try_remove "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}".tar.xz" &&
     try_remove "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}""
@@ -1685,7 +1685,7 @@ WINE_2 () {
 
 }
 
-WINE_3 () {
+WINE_GE_PROTON () {
 
     try_remove "${START_WINE_PATH}/data/tmp/GE-Proton"${GE_VER}".tar.gz" &&
     try_remove "${START_WINE_PATH}/data/tmp/GE-Proton"${GE_VER}""
@@ -1726,7 +1726,7 @@ WINE_3 () {
 
 }
 
-WINE_4 () {
+WINE_LUTRIS () {
 
     try_remove "${START_WINE_PATH}/data/tmp/wine-lutris-"${LUTRIS_VER}"-x86_64.tar.xz" &&
     try_remove "${START_WINE_PATH}/data/tmp/lutris-"${LUTRIS_VER}"-x86_64"
@@ -1762,7 +1762,7 @@ WINE_4 () {
 
 }
 
-WINE_5 () {
+WINE_LUTRIS_GE () {
 
     try_remove "${START_WINE_PATH}/data/tmp/wine-lutris-GE-Proton"${LUTRIS_GE_VER}"-x86_64.tar.xz" &&
     try_remove "${START_WINE_PATH}/data/tmp/lutris-GE-Proton"${LUTRIS_GE_VER}"-x86_64"
@@ -1805,13 +1805,13 @@ WINE_5 () {
 
 }
 
-WINE_6 () {
+WINE_CUSTOM () {
 
     xdg-open "${START_WINE_PATH}/data/wine/wine_custom"
 
 }
 
-RM_WINE_1 () {
+RM_WINE_STAGING-TKG () {
 
     crier=`$CRIER -q "$(eval_gettext "Do you really want to remove the wine staging?")"`
 
@@ -1822,7 +1822,7 @@ RM_WINE_1 () {
 
 }
 
-RM_WINE_2 () {
+RM_WINE_PROTON () {
 
     crier=`$CRIER -q "$(eval_gettext "Do you really want to remove the wine steam proton?")"`
 
@@ -1833,7 +1833,7 @@ RM_WINE_2 () {
 
 }
 
-RM_WINE_3 () {
+RM_WINE_GE_PROTON () {
 
     crier=`$CRIER -q "$(eval_gettext "Do you really want to remove the wine proton ge?")"`
 
@@ -1844,7 +1844,7 @@ RM_WINE_3 () {
 
 }
 
-RM_WINE_4 () {
+RM_WINE_LUTRIS () {
 
     crier=`$CRIER -q "$(eval_gettext "Do you really want to remove the wine lutris?")"`
 
@@ -1855,7 +1855,7 @@ RM_WINE_4 () {
 
 }
 
-RM_WINE_5 () {
+RM_WINE_LUTRIS_GE () {
 
     crier=`$CRIER -q "$(eval_gettext "Do you really want to remove the wine lutris ge?")"`
 
@@ -1888,7 +1888,7 @@ INSTALL_BATTLE_NET () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_Battle.net/drive_c/Program Files (x86)/Battle.net/Battle.net.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export SW_USE_PFX="pfx_Battle.net"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
@@ -1926,7 +1926,7 @@ INSTALL_EPICGAMES () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_EpicGamesLauncher/drive_c/Program Files (x86)/Epic Games/Launcher/Portal/Binaries/Win32/EpicGamesLauncher.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export SW_USE_PFX="pfx_EpicGamesLauncher"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
@@ -1964,7 +1964,7 @@ INSTALL_EVE_ONLINE () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_evelauncher/drive_c/EVE/Launcher/evelauncher.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export SW_USE_PFX="pfx_evelauncher"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
@@ -2002,7 +2002,7 @@ INSTALL_GAMECENTER () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_GameCenter/drive_c/GameCenter/GameCenter.exe" ]; then
 
         WINE_OK=1
-        WINE_5
+        WINE_LUTRIS_GE
 
         export SW_USE_PFX="pfx_GameCenter"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
@@ -2042,7 +2042,7 @@ INSTALL_GALAXYCLIENT () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_GalaxyClient/drive_c/Program Files (x86)/GOG Galaxy/GalaxyClient.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export GOG_VER=2.0.46.133
         export FTP_URL="https://content-system.gog.com/open_link/download?path=/open/galaxy/client/${GOG_VER}/setup_galaxy_${GOG_VER}.exe"
@@ -2133,7 +2133,7 @@ INSTALL_EA_LAUNCHER () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_EALauncher/drive_c/Program Files/Electronic Arts/EA Desktop/EA Desktop/EALauncher.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export FTP_URL="https://origin-a.akamaihd.net/EA-Desktop-Client-Download/installer-releases/EAappInstaller.exe"
         crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/EAappInstaller.exe"`
@@ -2174,7 +2174,7 @@ INSTALL_ROCKSTARGAMES () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_Launcher/drive_c/Program Files/Rockstar Games/Launcher/Launcher.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export SW_USE_PFX="pfx_Launcher"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
@@ -2212,7 +2212,7 @@ INSTALL_STEAM () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_steam/drive_c/Program Files (x86)/Steam/steam.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export SW_USE_PFX="pfx_steam"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
@@ -2252,7 +2252,7 @@ INSTALL_UBISOFT () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_UbisoftConnect/drive_c/Program Files (x86)/Ubisoft/Ubisoft Game Launcher/UbisoftConnect.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export SW_USE_PFX="pfx_UbisoftConnect"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
@@ -2290,7 +2290,7 @@ INSTALL_WARGAMING () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_wgc_api/drive_c/ProgramData/Wargaming.net/GameCenter/api/wgc_api.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export SW_USE_PFX="pfx_wgc_api"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
@@ -2328,7 +2328,7 @@ INSTALL_ZONA () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_Zona/drive_c/Program Files (x86)/Zona/Zona.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export FTP_URL="https://dlf1.appzona.org/ZonaSetup[mpj07].exe"
         crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/ZonaSetup.exe"`
@@ -2366,7 +2366,7 @@ INSTALL_BETHESDANET () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_BethesdaNetLauncher/drive_c/Program Files (x86)/Bethesda.net Launcher/BethesdaNetLauncher.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export FTP_URL="https://download.cdp.bethesda.net/BethesdaNetLauncher_Setup.exe"
         crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/BethesdaNetLauncher_Setup.exe"`
@@ -2406,7 +2406,7 @@ INSTALL_OSU () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_osu!/drive_c/osu!/osu!.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export SW_USE_PFX="pfx_osu!"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
@@ -2480,7 +2480,7 @@ INSTALL_ANKAMA () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_Ankama_Launcher/drive_c/users/steamuser/AppData/Local/Programs/Ankama Launcher/Ankama Launcher.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export FTP_URL="https://launcher.cdn.ankama.com/installers/production/Ankama%20Launcher-Setup.exe"
         crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/Ankama Launcher-Setup.exe"`
@@ -2520,7 +2520,7 @@ INSTALL_GFCLIENT () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_gfclient/drive_c/Program Files (x86)/GameforgeClient/gfclient.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export FTP_URL="https://raw.githubusercontent.com/WarfaceZ/lutris-clients/master/GameforgeInstaller.exe"
         crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/GameforgeInstaller.exe"`
@@ -2558,7 +2558,7 @@ INSTALL_ITCH () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_itch/drive_c/users/steamuser/AppData/Local/itch/app-25.5.1/itch.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export FTP_URL="https://itch.io/app/download?platform=windows"
         crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/itch-setup.exe"`
@@ -2596,7 +2596,7 @@ INSTALL_WORLDOFSEABATTLE () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_WorldOfSeaBattleClient/drive_c/World Of Sea Battle/WorldOfSeaBattleClient.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export SW_USE_PFX="pfx_WorldOfSeaBattleClient"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
@@ -2637,7 +2637,7 @@ INSTALL_BSGLAUNCHER () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_BsgLauncher/drive_c/Battlestate Games/BsgLauncher/BsgLauncher.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export SW_USE_PFX="pfx_BsgLauncher"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
@@ -2678,7 +2678,7 @@ INSTALL_CROSSOUT () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_CrossOut/drive_c/Crossout/CrossOut.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export SW_USE_PFX="pfx_CrossOut"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
@@ -2770,7 +2770,7 @@ INSTALL_LESTA_GAME () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_lgc_api/drive_c/ProgramData/Lesta/GameCenter/api/lgc_api.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export SW_USE_PFX="pfx_lgc_api"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
@@ -2808,7 +2808,7 @@ INSTALL_STALCRAFT_LAUNCHER () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_ExboLauncher/drive_c/EXBO/java/bin/ExboLauncher.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export SW_USE_PFX="pfx_ExboLauncher"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
@@ -2846,7 +2846,7 @@ INSTALL_LINEAGE_LAUNCHER () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_Lineage/drive_c/GameCoast Games/launcher/Lineage.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export SW_USE_PFX="pfx_Lineage"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
@@ -2884,7 +2884,7 @@ INSTALL_PLARIUMPLAY () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_PlariumPlay/drive_c/users/$USER/AppData/Local/PlariumPlay/PlariumPlay.exe" ]; then
 
         WINE_OK=1
-        WINE_5
+        WINE_LUTRIS_GE
 
         export FTP_URL="https://plarium.com/services/api/downloads/desktop?lid=1&arc=64&os=windows"
         crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/PlariumPlaySetup.exe"`
@@ -2918,7 +2918,7 @@ INSTALL_PATHOFEXILE () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_PathOfExile/drive_c/Grinding Gear Games/Path of Exile/PathOfExile.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export SW_USE_PFX="pfx_PathOfExile"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
@@ -2956,7 +2956,7 @@ INSTALL_STALKERONLINE () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_StalkerOnline_Launcher/drive_c/StalkerOnline/StalkerOnline Launcher.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export SW_USE_PFX="pfx_StalkerOnline_Launcher"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
@@ -2994,7 +2994,7 @@ INSTALL_ANOMALY_ZONE () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_Anomaly_Zone/drive_c/Cybertime Games/Anomaly-Zone/Anomaly Zone.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export SW_USE_PFX="pfx_Anomaly_Zone"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
@@ -3032,7 +3032,7 @@ INSTALL_NINTENDO_SWITCH () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_yuzu/drive_c/yuzu/yuzu.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export SW_USE_PFX="pfx_yuzu"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
@@ -3071,7 +3071,7 @@ INSTALL_STARWARS_TOR () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_Star_Wars_TOR/drive_c/Electronic Arts/BioWare/Star Wars - The Old Republic/Star Wars TOR.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export SW_USE_PFX="pfx_Star_Wars_TOR"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
@@ -3109,7 +3109,7 @@ INSTALL_POPCOTIME () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_PopcoTime/drive_c/PopcoTime/PopcoTime.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export SW_USE_PFX="pfx_PopcoTime"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
@@ -3147,7 +3147,7 @@ INSTALL_GAMEXP () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_GameXP_Launcher/drive_c/Launcher/GameXP Launcher.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export SW_USE_PFX="pfx_GameXP_Launcher"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
@@ -3185,7 +3185,7 @@ INSTALL_RPG_CLUB () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_RPG_Club/drive_c/RPG-Club/RPG Club.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export SW_USE_PFX="pfx_RPG_Club"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
@@ -3223,7 +3223,7 @@ INSTALL_GENSHIN_IMPACT () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_launcher/drive_c/Program Files/Genshin Impact/launcher.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export SW_USE_PFX="pfx_launcher"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
@@ -3261,7 +3261,7 @@ INSTALL_LOST_LIGHT () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_Lost_Light/drive_c/Program Files (x86)/LostLight/Lost Light.exe" ]; then
 
         WINE_OK=1
-        WINE_3
+        WINE_GE_PROTON
 
         export SW_USE_PFX="pfx_Lost_Light"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
@@ -3299,7 +3299,7 @@ INSTALL_ROBLOXPLAYER () {
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_RobloxPlayerBeta/drive_c/Program Files (x86)/Roblox/Versions/Roblox/RobloxPlayerBeta.exe" ]; then
 
         WINE_OK=1
-        WINE_4
+        WINE_LUTRIS
 
         export SW_USE_PFX="pfx_RobloxPlayerBeta"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
