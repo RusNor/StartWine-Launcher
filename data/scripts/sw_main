@@ -2219,7 +2219,7 @@ def echo_wine(wine_name):
         sw_fsh.write_text(fshread[0] + '\n' + fshread[1] + '\n' + wine_num)
         proc_wine = Popen(f"{sw_fsh} {app_path}", shell=True, start_new_session=True, stdout=PIPE)
 
-def on_btn_wine_stagging-tkg(self):
+def on_btn_wine_stagging(self):
 
     wine_name = f"WINE_STAGING"
     echo_wine(wine_name)
@@ -3560,8 +3560,8 @@ btn_debug.connect("clicked", on_btn_debug)
 btn_dw = builder.get_object("btn_dw")
 btn_dw.connect("clicked", on_btn_dw)
 
-btn_wine_stagging-tkg = builder.get_object("btn_staging")
-btn_wine_stagging-tkg.connect("clicked", on_btn_wine_stagging-tkg)
+btn_wine_stagging = builder.get_object("btn_staging")
+btn_wine_stagging.connect("clicked", on_btn_wine_stagging)
 
 btn_rm_staging = builder.get_object("btn_rm_staging")
 btn_rm_staging.connect("clicked", on_btn_rm_staging)
