@@ -1291,7 +1291,7 @@ def cs_staging():
         pass
 
     wine_name = f"wine_staging"
-    wine_download = f"WINE_STAGING-TKG"
+    wine_download = f"WINE_STAGING"
     echo_cs_name(wine_name, wine_download)
 
 def on_btn_cs_steam(self):
@@ -2221,12 +2221,12 @@ def echo_wine(wine_name):
 
 def on_btn_wine_stagging-tkg(self):
 
-    wine_name = f"WINE_STAGING-TKG"
+    wine_name = f"WINE_STAGING"
     echo_wine(wine_name)
 
 def on_btn_rm_staging(self):
 
-    wine_name = f"RM_WINE_STAGING-TKG"
+    wine_name = f"RM_WINE_STAGING"
     echo_wine(wine_name)
 
 def on_btn_wine_proton(self):

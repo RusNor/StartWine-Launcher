@@ -1606,7 +1606,7 @@ DEBUG_VULKAN () {
 
 ##############################   DOWNLOAD WINE   ###############################
 
-WINE_STAGING-TKG () {
+WINE_STAGING () {
 
     try_remove "${START_WINE_PATH}/data/tmp/wine-${STAG_VER}-staging-tkg-amd64.tar.xz" &&
     try_remove "${START_WINE_PATH}/data/tmp/wine-${STAG_VER}-staging-tkg-amd64"
@@ -1811,7 +1811,7 @@ WINE_CUSTOM () {
 
 }
 
-RM_WINE_STAGING-TKG () {
+RM_WINE_STAGING () {
 
     crier=`$CRIER -q "$(eval_gettext "Do you really want to remove the wine staging?")"`
 
