@@ -45,7 +45,7 @@ now just drag the file from the folder where you downloaded StartWine into the t
 
 if you want to from the terminal:
 ```bash
-./StartWine_v37*
+./StartWine_v3*
 ```
 
 ## Installation (old)
