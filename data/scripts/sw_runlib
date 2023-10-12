@@ -9,12 +9,12 @@ export SW_DEVELOPERS="Rus_Nor Nixon VHSgunzo"
 
 ###############################   TOOLS   ######################################
 
-export SW_VER="380"
-export GE_VER="8-14"
-export SP_VER="8.0.3"
-export STAG_VER="8.15"
+export SW_VER="381"
+export GE_VER="8-16"
+export SP_VER="8.0.4"
+export STAG_VER="8.17"
 export LUTRIS_VER="7.2-2"
-export LUTRIS_GE_VER="8-14"
+export LUTRIS_GE_VER="8-17"
 export UTILS_VER="v2.3"
 export CRIER="${START_WINE_PATH}/data/scripts/sw_crier.py"
 
@@ -42,11 +42,7 @@ try_copy () {
 
     if [[ -f "$1" || -d "$1" || -L "$1" ]]; then
         cp -rf "$@" 2>/dev/null
-        if [ "$?" != 0 ]; then
-            print_error "failed to copy '$1' to '$2'" || return 0
-        else
-            print_info "copy '$1' to '$2' completed successfully" || return 0
-        fi
+        [ "$?" != 0 ] && print_error "failed to copy '$1' to '$2'" || return 0
     elif [ ! -n "$(dirname "$2" 2>/dev/null)" ]; then
         print_error "path for '$2' not found!"
     else
@@ -127,15 +123,7 @@ try_ld_library_path_update () {
         export LD_LIBRARY_PATH="${1}"
     fi
 
-}
-
-try_winedllpath_update () {
-
-    if [ ! -z "${WINEDLLPATH}" ]; then
-        export WINEDLLPATH="${1}:${WINEDLLPATH}"
-    else
-        export WINEDLLPATH="${1}"
-    fi
+    LD_LIBRARY_PATH=$(echo ${LD_LIBRARY_PATH} | sed 's/::/:/g')
 
 }
 
@@ -151,44 +139,44 @@ try_path_update () {
 
 try_clear_pfx () {
 
-    rm -rf "$WINEPREFIX/registry_"*
-    rm -rf "$WINEPREFIX/"*.reg
-    rm -rf "$WINEPREFIX/"*.log
-    rm -rf "$WINEPREFIX/.update-timestamp"
-    rm -rf "$WINEPREFIX/drive_c/.windows-serial"
-    rm -rf "$WINEPREFIX/drive_c/windows/"
-    rm -rf "$WINEPREFIX/drive_c/ProgramData/Setup"
-    rm -rf "$WINEPREFIX/drive_c/ProgramData/Windows"
-    rm -rf "$WINEPREFIX/drive_c/ProgramData/WindowsTask"
-    rm -rf "$WINEPREFIX/drive_c/ProgramData/Package Cache"
-    rm -rf "$WINEPREFIX/drive_c/users/Public/Local Settings/Application Data/Microsoft"
-    rm -rf "$WINEPREFIX/drive_c/users/Public/Local Settings/Application Data/Temp"
-    rm -rf "$WINEPREFIX/drive_c/users/Public/Local Settings/Temporary Internet Files"
-    rm -rf "$WINEPREFIX/drive_c/users/Public/Application Data/Microsoft"
-    rm -rf "$WINEPREFIX/drive_c/users/Public/Application Data/wine_gecko"
-    rm -rf "$WINEPREFIX/drive_c/users/Public/Temp"
-    rm -rf "$WINEPREFIX/drive_c/users/user/Local Settings/Application Data/Microsoft"
-    rm -rf "$WINEPREFIX/drive_c/users/user/Local Settings/Application Data/Temp"
-    rm -rf "$WINEPREFIX/drive_c/users/user/Local Settings/Temporary Internet Files"
-    rm -rf "$WINEPREFIX/drive_c/users/user/Application Data/Microsoft"
-    rm -rf "$WINEPREFIX/drive_c/users/user/Application Data/wine_gecko"
-    rm -rf "$WINEPREFIX/drive_c/users/user/Temp"
-    rm -rf "$WINEPREFIX/drive_c/Program Files/Internet Explorer"
-    rm -rf "$WINEPREFIX/drive_c/Program Files/Windows Media Player"
-    rm -rf "$WINEPREFIX/drive_c/Program Files/Windows NT"
-    rm -rf "$WINEPREFIX/drive_c/Program Files/Common Files"
-    rm -rf "$WINEPREFIX/drive_c/Program Files (x86)/Internet Explorer"
-    rm -rf "$WINEPREFIX/drive_c/Program Files (x86)/Common Files"
-    rm -rf "$WINEPREFIX/drive_c/Program Files (x86)/Windows Media Player"
-    rm -rf "$WINEPREFIX/drive_c/Program Files (x86)/Windows NT"
-    rm -rf "${START_WINE_PATH}/data/tmp/gl_shader_cache/"*
-    rm -rf "${START_WINE_PATH}/data/tmp/log/"*
-    rm -rf "${START_WINE_PATH}/data/tmp/"*.log
-    rm -rf "${START_WINE_PATH}/data/tmp/dxvk_cache/"*
-    rm -rf "${START_WINE_PATH}/data/tmp/vkd3d_cache/"*
-    rm -rf "${START_WINE_PATH}/data/tmp/gstreamer-1.0/"*
-    rm -rf "$HOME/.cache/gstreamer-1.0/"*
-    rm -rf "${START_WINE_PATH}/data/tmp/mesa_shader_cache/"*
+    try_remove "$WINEPREFIX/registry_"*
+    try_remove "$WINEPREFIX/"*.reg
+    try_remove "$WINEPREFIX/"*.log
+    try_remove "$WINEPREFIX/.update-timestamp"
+    try_remove "$WINEPREFIX/drive_c/.windows-serial"
+    try_remove "$WINEPREFIX/drive_c/windows/"
+    try_remove "$WINEPREFIX/drive_c/ProgramData/Setup"
+    try_remove "$WINEPREFIX/drive_c/ProgramData/Windows"
+    try_remove "$WINEPREFIX/drive_c/ProgramData/WindowsTask"
+    try_remove "$WINEPREFIX/drive_c/ProgramData/Package Cache"
+    try_remove "$WINEPREFIX/drive_c/users/Public/Local Settings/Application Data/Microsoft"
+    try_remove "$WINEPREFIX/drive_c/users/Public/Local Settings/Application Data/Temp"
+    try_remove "$WINEPREFIX/drive_c/users/Public/Local Settings/Temporary Internet Files"
+    try_remove "$WINEPREFIX/drive_c/users/Public/Application Data/Microsoft"
+    try_remove "$WINEPREFIX/drive_c/users/Public/Application Data/wine_gecko"
+    try_remove "$WINEPREFIX/drive_c/users/Public/Temp"
+    try_remove "$WINEPREFIX/drive_c/users/user/Local Settings/Application Data/Microsoft"
+    try_remove "$WINEPREFIX/drive_c/users/user/Local Settings/Application Data/Temp"
+    try_remove "$WINEPREFIX/drive_c/users/user/Local Settings/Temporary Internet Files"
+    try_remove "$WINEPREFIX/drive_c/users/user/Application Data/Microsoft"
+    try_remove "$WINEPREFIX/drive_c/users/user/Application Data/wine_gecko"
+    try_remove "$WINEPREFIX/drive_c/users/user/Temp"
+    try_remove "$WINEPREFIX/drive_c/Program Files/Internet Explorer"
+    try_remove "$WINEPREFIX/drive_c/Program Files/Windows Media Player"
+    try_remove "$WINEPREFIX/drive_c/Program Files/Windows NT"
+    try_remove "$WINEPREFIX/drive_c/Program Files/Common Files"
+    try_remove "$WINEPREFIX/drive_c/Program Files (x86)/Internet Explorer"
+    try_remove "$WINEPREFIX/drive_c/Program Files (x86)/Common Files"
+    try_remove "$WINEPREFIX/drive_c/Program Files (x86)/Windows Media Player"
+    try_remove "$WINEPREFIX/drive_c/Program Files (x86)/Windows NT"
+    try_remove "${START_WINE_PATH}/data/tmp/gl_shader_cache/"*
+    try_remove "${START_WINE_PATH}/data/tmp/log/"*
+    try_remove "${START_WINE_PATH}/data/tmp/"*.log
+    try_remove "${START_WINE_PATH}/data/tmp/dxvk_cache/"*
+    try_remove "${START_WINE_PATH}/data/tmp/vkd3d_cache/"*
+    try_remove "${START_WINE_PATH}/data/tmp/gstreamer-1.0/"*
+    try_remove "$HOME/.cache/gstreamer-1.0/"*
+    try_remove "${START_WINE_PATH}/data/tmp/mesa_shader_cache/"*
 
 }
 
@@ -261,10 +249,6 @@ try_fix_pfx () {
         try_link "${WINEPREFIX}/drive_c/users/steamuser" "${WINEPREFIX}/drive_c/users/${USER}"
     fi
 
-    if [ ! -d "${WINEPREFIX}/drive_c/users/${USER}" ]; then
-        try_link "${WINEPREFIX}/drive_c/users/steamuser" "${WINEPREFIX}/drive_c/users/${USER}"
-    fi
-
     if [ ! -d "${WINEPREFIX}/drive_c/users/steamuser/Application Data" ]; then
         try_link "${WINEPREFIX}/drive_c/users/steamuser/AppData/Roaming" "${WINEPREFIX}/drive_c/users/steamuser/Application Data"
     fi
@@ -320,16 +304,17 @@ sw_shortcuts_autoinstall () {
     export SW_GAME_NAME="$(basename "${SW_GAME_EXE}" | sed 's/\.exe//gi' | sed 's/\.msi//gi' | sed 's/ /_/g')"
     export SW_GAME_PATH="$(cd "$(dirname "${SW_GAME_EXE}")" >/dev/null 2>&1 && pwd)"
 
-    cd "${SW_GAME_PATH}"
-    wrestool -x -t14 "${SW_GAME_EXE}" > "${SW_GAME_EXE}.ico"
-    icotool -x "${SW_GAME_EXE}.ico"
-    try_copy "$(ls -S -1 "${SW_GAME_EXE}"*.png | head -n 1)" "${SW_GAME_EXE}.png"
-    try_copy "${SW_GAME_EXE}.png" "${START_WINE_PATH}/data/img/${SW_GAME_NAME}.png"
-    try_remove "${SW_GAME_PATH}/"*.ico
-    try_remove "${SW_GAME_PATH}/"*.png
-    convert -resize 256X256 "${START_WINE_PATH}/data/img/${SW_GAME_NAME}.png" "${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x256.png"
-    convert -resize 96X96 "${START_WINE_PATH}/data/img/${SW_GAME_NAME}.png" "${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x96.png"
-    try_remove "${START_WINE_PATH}/data/img/${SW_GAME_NAME}.png"
+    export SW_ICO_TMP_PATH="${START_WINE_PATH}/data/tmp/icon"
+    icoextract "${SW_GAME_EXE}" "${SW_ICO_TMP_PATH}/${SW_GAME_NAME}.ico"
+    convert "${SW_ICO_TMP_PATH}/${SW_GAME_NAME}.ico" "${SW_ICO_TMP_PATH}/${SW_GAME_NAME}.png"
+
+    if [ ! -f "${SW_ICO_TMP_PATH}/${SW_GAME_NAME}.png" ]; then
+        try_copy "$(ls -S -1 "${SW_ICO_TMP_PATH}/${SW_GAME_NAME}"*[_-]*.png 2>/dev/null | head -1)" "${SW_ICO_TMP_PATH}/${SW_GAME_NAME}.png" 2>/dev/null
+    fi
+
+    convert -resize 256X256 "${SW_ICO_TMP_PATH}/${SW_GAME_NAME}.png" "${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x256.png"
+    convert -resize 96X96 "${SW_ICO_TMP_PATH}/${SW_GAME_NAME}.png" "${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x96.png"
+    try_remove "${SW_ICO_TMP_PATH}/"*.png
 
     echo "[Desktop Entry]" > "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
     echo "Name=${SW_GAME_NAME}" >> "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
@@ -423,9 +408,6 @@ try_ld_library_path_update "${START_WINE_PATH}/data/tools/utils/libs/lib"
 try_ld_library_path_update "${WINEDIR}/lib"
 try_ld_library_path_update "${WINEDIR}/lib64"
 
-try_winedllpath_update "${WINEDIR}/lib/wine"
-try_winedllpath_update "${WINEDIR}/lib64/wine"
-
 try_path_update "${WINEDIR}/bin"
 
 export WINEARCH="${SW_USE_WINEARCH}"
@@ -435,7 +417,6 @@ export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
 
 ###############################   EXPORT   #####################################
 
-export SW_RUN_RUNIMAGE="${START_WINE_PATH}/data/runtime/sw_runtime"
 export VK_LAYER_PATH="${VK_LAYER_PATH}:${START_WINE_PATH}/data/tools/utils/implicit_layer.d"
 export WINE_MONO_OVERRIDES="Microsoft.Xna.Framework.*,Gac=n"
 export __GL_SHADER_DISK_CACHE_PATH="${START_WINE_PATH}/data/tmp/gl_shader_cache"
@@ -455,6 +436,7 @@ try_create_dir "${START_WINE_PATH}/data/tmp"
 try_create_dir "${START_WINE_PATH}/Shortcuts"
 try_create_dir "${START_WINE_PATH}/data/tools"
 try_create_dir "${START_WINE_PATH}/data/tmp/log"
+try_create_dir "${START_WINE_PATH}/data/tmp/icon"
 try_create_dir "${START_WINE_PATH}/data/pfx_backup"
 try_create_dir "${START_WINE_PATH}/data/tmp/vkd3d_cache"
 try_create_dir "${START_WINE_PATH}/data/tmp/dxvk_cache"
@@ -486,7 +468,8 @@ if [ ! -f "${HOME}/.local/share/applications/StartWine.desktop" ] && [ ! -f "/us
     echo "[Desktop Entry]" > "${HOME}/.local/share/applications/${sw_desktop_name}"
     echo "Name=StartWine" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
     echo "Exec=env ${START_WINE_PATH}/data/scripts/sw_start %F" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
-    echo "Comment=Launch Windows applications on Linux operating systems" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
+    echo "Comment[en_GB]=Launch Windows applications on Linux operating systems" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
+    echo "Comment[ru]=Запуск приложений Windows в операционных системах Linux" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
     echo "Type=Application" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
     echo "MimeType=application/x-wine-extension-msp;application/x-msi;application/x-ms-dos-executable;" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
     echo "Categories=Game" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
@@ -499,7 +482,8 @@ if [ ! -f "${HOME}/.local/share/applications/StartWine-Run.desktop" ] && [ ! -f 
     echo "[Desktop Entry]" > "${HOME}/.local/share/applications/${sw_desktop_name}"
     echo "Name=StartWine-Run" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
     echo "Exec=env ${START_WINE_PATH}/data/scripts/sw_run %F" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
-    echo "Comment=Launch Windows applications on Linux operating systems" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
+    echo "Comment[en_GB]=Launch Windows applications on Linux operating systems" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
+    echo "Comment[ru]=Запуск приложений Windows в операционных системах Linux" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
     echo "Type=Application" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
     echo "MimeType=application/x-wine-extension-msp;application/x-msi;application/x-ms-dos-executable;" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
     echo "Categories=Game" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
@@ -558,7 +542,10 @@ if [ "${SW_USE_GAMEMODE}" == 1 ]; then
 fi
 
 if [ "${SW_USE_RUNTIME}" == 1 ]; then
-    export SW_RUN_RUNTIME="${START_WINE_PATH}/data/tools/steam-runtime/run.sh"
+    export MOUNTDIR_FOR_PRESSURE_VESSEL="${START_WINE_PATH}"
+    export PRESSURE_VESSEL_FILESYSTEMS_RW="$MOUNTDIR_FOR_PRESSURE_VESSEL:/media:/mnt:/run/media/"
+    export PRESSURE_VESSEL_FILESYSTEMS_RO="$PRESSURE_VESSEL_FILESYSTEMS_RO"
+    export SW_RUN_RUNTIME="${START_WINE_PATH}/data/tools/steam-runtime/run --"
 fi
 
 if [ "${SW_USE_RESTORE_RESOLUTION}" == 1 ]; then
@@ -777,14 +764,16 @@ fi
 
 ##############################   RUNTIME DOWNLOAD   ############################
 
-if [ ! -d "${START_WINE_PATH}/data/tools/steam-runtime" ]; then
-    export FTP_URL="https://repo.steampowered.com/steamrt-images-scout/snapshots/latest-steam-client-public-beta/steam-runtime.tar.xz"
-    crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/steam-runtime.tar.xz"` &&
-    crier=`$CRIER -tar "${START_WINE_PATH}/data/tmp/steam-runtime.tar.xz" "${START_WINE_PATH}/data/tools"` &&
-    try_remove "${START_WINE_PATH}/data/tmp/steam-runtime.tar.xz"
-    unset LD_LIBRARY_PATH
-    sleep 1
-    "${START_WINE_PATH}/data/tools/steam-runtime/setup.sh" --force
+if [ ! -f "${START_WINE_PATH}/data/tools/steam-runtime/run" ]; then
+    try_remove "${START_WINE_PATH}/data/tmp/steam-container-runtime-complete.tar.gz"
+    try_remove "${START_WINE_PATH}/data/tmp/steam-container-runtime"
+    try_remove "${START_WINE_PATH}/data/tools/steam-runtime"
+    export FTP_URL="https://repo.steampowered.com/steamrt-images-sniper/snapshots/latest-container-runtime-depot/steam-container-runtime-complete.tar.gz"
+    crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/steam-container-runtime-complete.tar.gz"` &&
+    crier=`$CRIER -tar "${START_WINE_PATH}/data/tmp/steam-container-runtime-complete.tar.gz" "${START_WINE_PATH}/data/tmp"` &&
+    try_move "${START_WINE_PATH}/data/tmp/steam-container-runtime/depot" "${START_WINE_PATH}/data/tools/steam-runtime"
+    try_remove "${START_WINE_PATH}/data/tmp/steam-container-runtime-complete.tar.gz"
+    try_remove "${START_WINE_PATH}/data/tmp/steam-container-runtime"
 fi
 
 ###############################   DXVK DOWNLOAD   ##############################
@@ -865,11 +854,12 @@ if [ "${SW_DOWNLOAD_GE}" == 1 ]; then
 
         try_remove "${START_WINE_PATH}/data/tmp/GE-Proton"${GE_VER}".tar.gz"
         try_remove "${START_WINE_PATH}/data/tmp/GE-Proton"${GE_VER}""
+
+        chmod -R 775 "${START_WINE_PATH}/data/wine/wine_proton_ge"
+
+        try_remove "${START_WINE_PATH}/data/wine/wine_proton_ge/bin/cabextract"
+
     fi
-
-    chmod -R 775 "${START_WINE_PATH}/data/wine/wine_proton_ge"
-
-    try_remove "${START_WINE_PATH}/data/wine/wine_proton_ge/bin/cabextract"
 
 fi
 
@@ -919,7 +909,7 @@ RUN_VULKAN () {
 
         cd "${SW_GAME_PATH}"
 
-        ${SW_RUN_RUNTIME} ${SW_RUN_GAMEMODE} ${SW_RUN_MANGOHUD} "${WINELOADER}" ${VDESKTOP} "$@" ${LAUNCH_PARAMETERS} &
+        ${SW_RUN_RUNTIME} env LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" ${SW_RUN_GAMEMODE} ${SW_RUN_MANGOHUD} "${WINELOADER}" ${VDESKTOP} "$@" ${LAUNCH_PARAMETERS} &
 
         sw_main_pid_kill
 
@@ -1079,7 +1069,7 @@ RUN_VULKAN () {
 
         cd "${SW_GAME_PATH}"
 
-        ${SW_RUN_RUNTIME} ${SW_RUN_GAMEMODE} "${WINELOADER}" ${VDESKTOP} "$@" ${LAUNCH_PARAMETERS} &
+        ${SW_RUN_RUNTIME} env LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" ${SW_RUN_GAMEMODE} "${WINELOADER}" ${VDESKTOP} "$@" ${LAUNCH_PARAMETERS} &
 
         sw_main_pid_kill
 
@@ -1092,18 +1082,17 @@ RUN_VULKAN () {
 CREATE_ICON () {
 
     if [ ! -f "${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x96.png" ]; then
+        export SW_ICO_TMP_PATH="${START_WINE_PATH}/data/tmp/icon"
+        icoextract "${SW_GAME_EXE}" "${SW_ICO_TMP_PATH}/${SW_GAME_NAME}.ico"
+        convert "${SW_ICO_TMP_PATH}/${SW_GAME_NAME}.ico" "${SW_ICO_TMP_PATH}/${SW_GAME_NAME}.png"
 
-        cd "${SW_GAME_PATH}"
-        wrestool -x -t14 "${SW_GAME_EXE}" > "${SW_GAME_EXE}.ico"
-        icotool -x "${SW_GAME_EXE}.ico"
-        try_copy "$(ls -S -1 "${SW_GAME_EXE}"*.png | head -n 1)" "${SW_GAME_EXE}.png"
-        try_copy "${SW_GAME_EXE}.png" "${START_WINE_PATH}/data/img/${SW_GAME_NAME}.png"
-        try_remove "${SW_GAME_PATH}/"*.ico
-        try_remove "${SW_GAME_PATH}/"*.png
-        convert -resize 256X256 "${START_WINE_PATH}/data/img/${SW_GAME_NAME}.png" "${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x256.png"
-        convert -resize 96X96 "${START_WINE_PATH}/data/img/${SW_GAME_NAME}.png" "${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x96.png"
-        try_remove "${START_WINE_PATH}/data/img/${SW_GAME_NAME}.png"
+        if [ ! -f "${SW_ICO_TMP_PATH}/${SW_GAME_NAME}.png" ]; then
+            try_copy "$(ls -S -1 "${SW_ICO_TMP_PATH}/${SW_GAME_NAME}"*[_-]*.png 2>/dev/null | head -1)" "${SW_ICO_TMP_PATH}/${SW_GAME_NAME}.png" 2>/dev/null
+        fi
 
+        convert -resize 256X256 "${SW_ICO_TMP_PATH}/${SW_GAME_NAME}.png" "${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x256.png"
+        convert -resize 96X96 "${SW_ICO_TMP_PATH}/${SW_GAME_NAME}.png" "${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x96.png"
+        try_remove "${SW_ICO_TMP_PATH}/"*.png
     fi
 
 }
@@ -1447,7 +1436,7 @@ WINECFG () {
 
     try_fix_pfx
 
-    "${WINELOADER}" "winecfg"
+    ${SW_RUN_RUNTIME} env LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" "${WINELOADER}" "winecfg"
 
 }
 
@@ -1456,7 +1445,7 @@ WINECONSOLE () {
     try_fix_pfx
 
     cd "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/drive_c"
-    "${WINELOADER}" "wineconsole"
+    ${SW_RUN_RUNTIME} env LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" "${WINELOADER}" "wineconsole"
 
 }
 
@@ -1464,7 +1453,7 @@ REGEDIT () {
 
     try_fix_pfx
 
-    "${WINELOADER}" "regedit"
+    ${SW_RUN_RUNTIME} env LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" "${WINELOADER}" "regedit"
 
 }
 
@@ -1472,7 +1461,7 @@ WINEFILE () {
 
     try_fix_pfx
 
-    ${SW_RUN_RUNTIME} "${WINELOADER}" ${VDESKTOP} "explorer"
+    ${SW_RUN_RUNTIME} env LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" "${WINELOADER}" ${VDESKTOP} "explorer"
 
 }
 
@@ -1481,7 +1470,7 @@ UNINSTALLER () {
     try_fix_pfx
 
     cd "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/drive_c"
-    "${WINELOADER}" "uninstaller"
+    ${SW_RUN_RUNTIME} env LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" "${WINELOADER}" "uninstaller"
 
 }
 
@@ -1608,23 +1597,23 @@ DEBUG_VULKAN () {
 
 WINE_1 () {
 
-    try_remove "${START_WINE_PATH}/data/tmp/wine-${STAG_VER}-staging-tkg-amd64.tar.xz" &&
-    try_remove "${START_WINE_PATH}/data/tmp/wine-${STAG_VER}-staging-tkg-amd64"
+    try_remove "${START_WINE_PATH}/data/tmp/wine-"${STAG_VER}"-staging-amd64.tar.xz" &&
+    try_remove "${START_WINE_PATH}/data/tmp/wine-"${STAG_VER}"-staging-amd64"
 
     if [ ! -d "${START_WINE_PATH}/data/wine/wine_staging/bin" ]; then
-        export FTP_URL="https://github.com/Kron4ek/Wine-Builds/releases/download/${STAG_VER}/wine-${STAG_VER}-staging-tkg-amd64.tar.xz"
-        crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/wine-${STAG_VER}-staging-tkg-amd64.tar.xz"`
+        export FTP_URL="https://github.com/Kron4ek/Wine-Builds/releases/download/"${STAG_VER}"/wine-"${STAG_VER}"-staging-amd64.tar.xz"
+        crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/wine-"${STAG_VER}"-staging-amd64.tar.xz"`
 
-        crier=`$CRIER -tar "${START_WINE_PATH}/data/tmp/wine-${STAG_VER}-staging-tkg-amd64.tar.xz" "${START_WINE_PATH}/data/tmp"`
+        crier=`$CRIER -tar "${START_WINE_PATH}/data/tmp/wine-"${STAG_VER}"-staging-amd64.tar.xz" "${START_WINE_PATH}/data/tmp"`
         for copy_dir in bin lib share ; do
-            try_copy "${START_WINE_PATH}/data/tmp/wine-${STAG_VER}-staging-tkg-amd64/${copy_dir}" "${START_WINE_PATH}/data/wine/wine_staging"
+            try_copy "${START_WINE_PATH}/data/tmp/wine-"${STAG_VER}"-staging-amd64/${copy_dir}" "${START_WINE_PATH}/data/wine/wine_staging"
         done
-        try_remove "${START_WINE_PATH}/data/tmp/wine-${STAG_VER}-staging-tkg-amd64.tar.xz" &&
-        try_remove "${START_WINE_PATH}/data/tmp/wine-${STAG_VER}-staging-tkg-amd64"
+        try_remove "${START_WINE_PATH}/data/tmp/wine-"${STAG_VER}"-staging-amd64.tar.xz" &&
+        try_remove "${START_WINE_PATH}/data/tmp/wine-"${STAG_VER}"-staging-amd64"
     fi
 
     if [ ! -f "${START_WINE_PATH}/data/wine/wine_staging/version" ]; then
-        echo "wine-staging-tkg ${STAG_VER}" > "${START_WINE_PATH}/data/wine/wine_staging/version"
+        echo "wine-staging ${STAG_VER}" > "${START_WINE_PATH}/data/wine/wine_staging/version"
         echo "${STAG_VER}" >> "${START_WINE_PATH}/data/wine/wine_staging/version"
     fi
 

@@ -47,7 +47,7 @@ elif [ -x "$(command -v epm)" ]; then
     sudo epmu -y 2>/dev/null || echo 'Passed' &&
 
     for deps in zstd squashfuse ImageMagick vulkan-tools i586-wine xdg-user-dirs vte3 libvte3-gir libgtk+3-gir htop \
-        python3-module-cairocffi python3-module-OpenGL python3-module-numpy python3-module-Pillow python3-module-six ; do
+        python3-module-pefile python3-module-cairocffi python3-module-OpenGL python3-module-numpy python3-module-Pillow python3-module-six ; do
 
         if [ "`sudo epm list --installed $deps 2>/dev/null | grep $deps`" == "" ]; then
             sudo epmi $deps -y 2>/dev/null || echo "$deps __________Passed"
