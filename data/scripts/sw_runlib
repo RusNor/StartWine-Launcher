@@ -5,18 +5,15 @@ export link="$(pwd)"
 cd "${link}/../../"
 export START_WINE_PATH="$(pwd)"
 
-export SW_DEVELOPERS="Rus_Nor Nixon VHSgunzo"
+###############################   VERSION   ####################################
 
-###############################   TOOLS   ######################################
-
-export SW_VER="381"
-export GE_VER="8-16"
+export SW_VER="382"
+export GE_VER="8-23"
 export SP_VER="8.0.4"
-export STAG_VER="8.17"
+export STAG_VER="8.19"
 export LUTRIS_VER="7.2-2"
-export LUTRIS_GE_VER="8-17"
+export LUTRIS_GE_VER="8-22"
 export UTILS_VER="v2.3"
-export CRIER="${START_WINE_PATH}/data/scripts/sw_crier.py"
 
 ##############################...LOCALE...######################################
 
@@ -122,8 +119,6 @@ try_ld_library_path_update () {
     else
         export LD_LIBRARY_PATH="${1}"
     fi
-
-    LD_LIBRARY_PATH=$(echo ${LD_LIBRARY_PATH} | sed 's/::/:/g')
 
 }
 
@@ -355,14 +350,16 @@ try_link_d3d_plugins () {
             try_winedlloverride_update "${sw_d3d_plugins}=n"
         done
     else
-        export sw_d3d_plugins="d3dcompiler_33 d3dcompiler_34 d3dcompiler_35 \
-        d3dcompiler_36 d3dcompiler_37 d3dcompiler_38 d3dcompiler_39 d3dcompiler_40 \
-        d3dcompiler_41 d3dcompiler_42 d3dcompiler_43 d3dcompiler_46 d3dcompiler_47 \
-        d3dx10_33 d3dx10_34 d3dx10_35 d3dx10_36 d3dx10_37 d3dx10_38 d3dx10_39 d3dx10_40 \
-        d3dx10_41 d3dx10_42 d3dx10_43 d3dx10 d3dx11_42 d3dx11_43 d3dx9_24 d3dx9_25 d3dx9_26 \
-        d3dx9_27 d3dx9_28 d3dx9_29 d3dx9_30 d3dx9_31 d3dx9_32 d3dx9_33 d3dx9_34 d3dx9_35 \
-        d3dx9_36 d3dx9_37 d3dx9_38 d3dx9_39 d3dx9_40 d3dx9_41 d3dx9_42 d3dx9_43"
-        try_winedlloverride_update "${sw_d3d_plugins}=b"
+        for sw_d3d_plugins in d3dcompiler_33 d3dcompiler_34 d3dcompiler_35 \
+            d3dcompiler_36 d3dcompiler_37 d3dcompiler_38 d3dcompiler_39 d3dcompiler_40 \
+            d3dcompiler_41 d3dcompiler_42 d3dcompiler_43 d3dcompiler_46 d3dcompiler_47 \
+            d3dx10_33 d3dx10_34 d3dx10_35 d3dx10_36 d3dx10_37 d3dx10_38 d3dx10_39 d3dx10_40 \
+            d3dx10_41 d3dx10_42 d3dx10_43 d3dx10 d3dx11_42 d3dx11_43 d3dx9_24 d3dx9_25 d3dx9_26 \
+            d3dx9_27 d3dx9_28 d3dx9_29 d3dx9_30 d3dx9_31 d3dx9_32 d3dx9_33 d3dx9_34 d3dx9_35 \
+            d3dx9_36 d3dx9_37 d3dx9_38 d3dx9_39 d3dx9_40 d3dx9_41 d3dx9_42 d3dx9_43 ; do
+
+            try_winedlloverride_update "${sw_d3d_plugins}=b"
+        done
     fi
 
 }
@@ -419,11 +416,14 @@ export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
 
 export VK_LAYER_PATH="${VK_LAYER_PATH}:${START_WINE_PATH}/data/tools/utils/implicit_layer.d"
 export WINE_MONO_OVERRIDES="Microsoft.Xna.Framework.*,Gac=n"
+export CRIER="${START_WINE_PATH}/data/scripts/sw_crier.py"
+export MESA_SHADER_CACHE_DIR="${START_WINE_PATH}/data/tmp"
+export MESA_DISK_CACHE_SINGLE_FILE=1
+export RADV_PERFTEST="rt,gpl"
 export __GL_SHADER_DISK_CACHE_PATH="${START_WINE_PATH}/data/tmp/gl_shader_cache"
 export __GL_SHADER_DISK_CACHE_SIZE="1000000000"
 export __GL_SHADER_DISK_CACHE_SKIP_CLEANUP=1
 export __GL_SHADER_DISK_CACHE=1
-export MESA_SHADER_CACHE_DIR="${START_WINE_PATH}/data/tmp"
 export SW_DESKTOP_DIR="$(xdg-user-dir DESKTOP)"
 export DXVK_VER="${SW_USE_DXVK_VER}"
 export VKD3D_VER="${SW_USE_VKD3D_VER}"
@@ -437,11 +437,11 @@ try_create_dir "${START_WINE_PATH}/Shortcuts"
 try_create_dir "${START_WINE_PATH}/data/tools"
 try_create_dir "${START_WINE_PATH}/data/tmp/log"
 try_create_dir "${START_WINE_PATH}/data/tmp/icon"
+try_create_dir "${HOME}/.local/share/applications"
 try_create_dir "${START_WINE_PATH}/data/pfx_backup"
 try_create_dir "${START_WINE_PATH}/data/tmp/vkd3d_cache"
 try_create_dir "${START_WINE_PATH}/data/tmp/dxvk_cache"
 try_create_dir "${START_WINE_PATH}/data/pfx/pfx_default"
-try_create_dir "/home/${USER}/.local/share/applications"
 try_create_dir "${START_WINE_PATH}/data/wine/wine_custom"
 try_create_dir "${START_WINE_PATH}/data/wine/wine_lutris"
 try_create_dir "${START_WINE_PATH}/data/tmp/gstreamer-1.0"
@@ -524,9 +524,10 @@ else
 fi
 
 if [ "${SW_USE_MANGOHUD}" == 1 ]; then
+    export SW_HUD_SIZE="$(${START_WINE_PATH}/data/scripts/sw_mh_size)"
     export MANGOHUD_LOG_LEVEL=off
-    export MANGOHUD_CONFIG="round_corners=10,no_display,cpu_load_change,gpu_load_change,core_load_change,background_alpha=0.2\
-    ,font_size=20,background_color=020202,fps_limit=${SW_USE_FPS_LIMIT}+0,toggle_fps_limit=Shift_L+F1\
+    export MANGOHUD_CONFIG="fps_color_change,round_corners=10,no_display,cpu_load_change,gpu_load_change,core_load_change,background_alpha=0.2\
+    ,font_size=${SW_HUD_SIZE},background_color=020202,fps_limit=${SW_USE_FPS_LIMIT}+0,toggle_fps_limit=Shift_L+F1\
     ,position=top-${HUD_POSITION},toggle_hud=Shift_R+F12${SW_USE_MANGOHUD_CONFIG}"
     export VK_INSTANCE_LAYERS="${VK_INSTANCE_LAYERS}:SW_VK_LAYER_MANGOHUD_overlay"
 else
@@ -654,9 +655,11 @@ if [ "${SW_USE_GSTREAMER}" == 1 ]; then
     export MEDIACONV_AUDIO_TRANSCODED_FILE="${START_WINE_PATH}/data/tmp/gstreamer-1.0/transcoded_audio.foz"
     export MEDIACONV_VIDEO_DUMP_FILE="${START_WINE_PATH}/data/tmp/gstreamer-1.0/video.foz"
     export MEDIACONV_VIDEO_TRANSCODED_FILE="${START_WINE_PATH}/data/tmp/gstreamer-1.0/transcoded_video.foz"
+
     if [ "${SW_USE_WINE}" != "wine_staging" ] && [ "${SW_USE_WINE}" != "wine_lutris_ge" ]; then
         export GST_PLUGIN_SYSTEM_PATH_1_0="${WINEDIR}/lib64/gstreamer-1.0:${WINEDIR}/lib/gstreamer-1.0"
     fi
+
 fi
 
 if [ "${SW_USE_DRI_PRIME}" == 1 ]; then
@@ -857,7 +860,9 @@ if [ "${SW_DOWNLOAD_GE}" == 1 ]; then
 
         chmod -R 775 "${START_WINE_PATH}/data/wine/wine_proton_ge"
 
-        try_remove "${START_WINE_PATH}/data/wine/wine_proton_ge/bin/cabextract"
+        if [ -f "${START_WINE_PATH}/data/wine/${SW_USE_WINE}/bin/cabextract" ]; then
+            try_remove "${START_WINE_PATH}/data/wine/${SW_USE_WINE}/bin/cabextract"
+        fi
 
     fi
 
@@ -909,7 +914,7 @@ RUN_VULKAN () {
 
         cd "${SW_GAME_PATH}"
 
-        ${SW_RUN_RUNTIME} env LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" ${SW_RUN_GAMEMODE} ${SW_RUN_MANGOHUD} "${WINELOADER}" ${VDESKTOP} "$@" ${LAUNCH_PARAMETERS} &
+        ${SW_RUN_RUNTIME} env LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" ${SW_RUN_GAMEMODE} ${SW_RUN_MANGOHUD} "${WINELOADER}" ${VDESKTOP} "$@" ${LAUNCH_PARAMETERS} &&
 
         sw_main_pid_kill
 
@@ -1051,7 +1056,6 @@ RUN_VULKAN () {
 
         try_winedlloverride_update "libvkd3d-1,libvkd3d-shader-1,d3d12,d3d12core,openvr_api_dxvk,d3d11,d3d10,d3d10core,d3d10_1,d3d9,dxgi=n"
 
-        export __GL_DXVK_OPTIMIZATIONS=1
         export DXVK_CONFIG_FILE="${START_WINE_PATH}/data/tools/utils/config/dxvk.conf"
         export DXVK_STATE_CACHE_PATH="${START_WINE_PATH}/data/tmp/dxvk_cache"
         export DXVK_STATE_CACHE=1
@@ -1069,7 +1073,7 @@ RUN_VULKAN () {
 
         cd "${SW_GAME_PATH}"
 
-        ${SW_RUN_RUNTIME} env LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" ${SW_RUN_GAMEMODE} "${WINELOADER}" ${VDESKTOP} "$@" ${LAUNCH_PARAMETERS} &
+        ${SW_RUN_RUNTIME} env LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" ${SW_RUN_GAMEMODE} "${WINELOADER}" ${VDESKTOP} "$@" ${LAUNCH_PARAMETERS} &&
 
         sw_main_pid_kill
 
@@ -1099,46 +1103,51 @@ CREATE_ICON () {
 
 CREATE_SHORTCUT () {
 
-    if [ -d "${WINEPREFIX}" ]; then
-        crier=`$CRIER -q "$(eval_gettext "Do you have a prefix for this application to use it?")"`
+    if [ "${SW_GAME_NAME}" == "" ]; then
+        crier=`$CRIER -i "$(eval_gettext "Path not exist, try to create new shortcut")"`
+        exit 0
     else
-        crier=`$CRIER -q "$(eval_gettext "Create a prefix for this application?")"`
-    fi
+        if [ -d "${WINEPREFIX}" ]; then
+            crier=`$CRIER -q "$(eval_gettext "Do you have a prefix for this application to use it?")"`
+        else
+            crier=`$CRIER -q "$(eval_gettext "Create a prefix for this application?")"`
+        fi
 
-    if [ "$(echo $crier)" == "0" ]; then
-        export SW_USE_PFX="pfx_${SW_GAME_NAME}"
-    else
-        export SW_USE_PFX="pfx_default"
-        sed -i "s%pfx_${SW_GAME_NAME}%pfx_default%" "${START_WINE_PATH}/data/app_config/${SW_GAME_NAME}"
-    fi
+        if [ "$(echo $crier)" == "0" ]; then
+            export SW_USE_PFX="pfx_${SW_GAME_NAME}"
+        else
+            export SW_USE_PFX="pfx_default"
+            sed -i "s%pfx_${SW_GAME_NAME}%pfx_default%" "${START_WINE_PATH}/data/app_config/${SW_GAME_NAME}"
+        fi
 
-    CREATE_ICON
+        CREATE_ICON
 
-    echo "[Desktop Entry]" > "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
-    echo "Name=${SW_GAME_NAME}" >> "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
-    echo "Exec=env \"${START_WINE_PATH}/data/scripts/sw_start\" \"${SW_GAME_EXE}\"" >> "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
-    echo "Type=Application" >> "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
-    echo "Categories=Game" >> "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
-    echo "Icon=${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x256.png" >> "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
-    chmod +x "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
+        echo "[Desktop Entry]" > "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
+        echo "Name=${SW_GAME_NAME}" >> "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
+        echo "Exec=env \"${START_WINE_PATH}/data/scripts/sw_start\" \"${SW_GAME_EXE}\"" >> "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
+        echo "Type=Application" >> "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
+        echo "Categories=Game" >> "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
+        echo "Icon=${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x256.png" >> "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
+        chmod +x "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
 
-    try_remove "${START_WINE_PATH}/data/wine/${SW_USE_WINE}/bin/cabextract"
+        if [ -f "${START_WINE_PATH}/data/wine/${SW_USE_WINE}/bin/cabextract" ]; then
+            try_remove "${START_WINE_PATH}/data/wine/${SW_USE_WINE}/bin/cabextract"
+        fi
 
-    if [ ! -f "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" ]; then
-        WINEBOOT_CS
-    else
-        if [ "${SW_USE_PFX}" != "pfx_default" ]; then
-            crier=`$CRIER -q "$(eval_gettext "Restore prefix from backup?")"`
-            if [ "$(echo $crier)" == "0" ]; then
-
-                try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
-                unsquashfs -d "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}" "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" &&
-
-                try_copy "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}" "${START_WINE_PATH}/data/app_config"
-                try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}"
-                crier=`$CRIER -i "$(eval_gettext "Restore prefix completed successfully")"`
-            else
-                 WINEBOOT_CS
+        if [ ! -f "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" ]; then
+            WINEBOOT_CS
+        else
+            if [ "${SW_USE_PFX}" != "pfx_default" ]; then
+                crier=`$CRIER -q "$(eval_gettext "Restore prefix from backup?")"`
+                if [ "$(echo $crier)" == "0" ]; then
+                    try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
+                    unsquashfs -d "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}" "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" &&
+                    try_copy "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}" "${START_WINE_PATH}/data/app_config"
+                    try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}"
+                    crier=`$CRIER -i "$(eval_gettext "Restore prefix completed successfully")"`
+                else
+                     WINEBOOT_CS
+                fi
             fi
         fi
     fi
@@ -1191,21 +1200,26 @@ WINEBOOT_CS () {
 
 ADD_SHORTCUT_TO_MENU () {
 
-    if [ ! -f "${HOME}/.local/share/applications/${SW_GAME_NAME}.desktop" ]; then
-        if [ "${SW_GAME_NAME}" != "StartWine" ]; then
-            echo "[Desktop Entry]" > "${HOME}/.local/share/applications/${SW_GAME_NAME}.desktop"
-            echo "Name=${SW_GAME_NAME}" >> "${HOME}/.local/share/applications/${SW_GAME_NAME}.desktop"
-            echo "Exec=env \"${START_WINE_PATH}/data/scripts/sw_run\" \"${SW_GAME_EXE}\"" >> "${HOME}/.local/share/applications/${SW_GAME_NAME}.desktop"
-            echo "Type=Application" >> "${HOME}/.local/share/applications/${SW_GAME_NAME}.desktop"
-            echo "Categories=Game" >> "${HOME}/.local/share/applications/${SW_GAME_NAME}.desktop"
-            echo "Icon=${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x256.png" >> "${HOME}/.local/share/applications/${SW_GAME_NAME}.desktop"
-            chmod +x "${HOME}/.local/share/applications/${SW_GAME_NAME}.desktop"
-            notify-send -a "StartWine" "$(eval_gettext "Shortcut \${SW_GAME_NAME} created in system menu")"
-        fi
+    if [ "${SW_GAME_NAME}" == "" ]; then
+        crier=`$CRIER -i "$(eval_gettext "Path not exist, try to create new shortcut")"`
+        exit 0
     else
-        if [ "${SW_GAME_NAME}" != "StartWine" ]; then
-            try_remove "${HOME}/.local/share/applications/${SW_GAME_NAME}.desktop"
-            notify-send -a "StartWine" "$(eval_gettext "Shortcut \${SW_GAME_NAME} removed from system menu")"
+        if [ ! -f "${HOME}/.local/share/applications/${SW_GAME_NAME}.desktop" ]; then
+            if [ "${SW_GAME_NAME}" != "StartWine" ]; then
+                echo "[Desktop Entry]" > "${HOME}/.local/share/applications/${SW_GAME_NAME}.desktop"
+                echo "Name=${SW_GAME_NAME}" >> "${HOME}/.local/share/applications/${SW_GAME_NAME}.desktop"
+                echo "Exec=env \"${START_WINE_PATH}/data/scripts/sw_run\" \"${SW_GAME_EXE}\"" >> "${HOME}/.local/share/applications/${SW_GAME_NAME}.desktop"
+                echo "Type=Application" >> "${HOME}/.local/share/applications/${SW_GAME_NAME}.desktop"
+                echo "Categories=Game" >> "${HOME}/.local/share/applications/${SW_GAME_NAME}.desktop"
+                echo "Icon=${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x256.png" >> "${HOME}/.local/share/applications/${SW_GAME_NAME}.desktop"
+                chmod +x "${HOME}/.local/share/applications/${SW_GAME_NAME}.desktop"
+                notify-send -a "StartWine" "$(eval_gettext "Shortcut \${SW_GAME_NAME} created in system menu")"
+            fi
+        else
+            if [ "${SW_GAME_NAME}" != "StartWine" ]; then
+                try_remove "${HOME}/.local/share/applications/${SW_GAME_NAME}.desktop"
+                notify-send -a "StartWine" "$(eval_gettext "Shortcut \${SW_GAME_NAME} removed from system menu")"
+            fi
         fi
     fi
 
@@ -1213,21 +1227,26 @@ ADD_SHORTCUT_TO_MENU () {
 
 ADD_SHORTCUT_TO_DESKTOP () {
 
-    if [ ! -f "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop" ]; then
-        if [ "${SW_GAME_NAME}" != "StartWine" ]; then
-            echo "[Desktop Entry]" > "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop"
-            echo "Name=${SW_GAME_NAME}" >> "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop"
-            echo "Exec=env \"${START_WINE_PATH}/data/scripts/sw_run\" \"${SW_GAME_EXE}\"" >> "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop"
-            echo "Type=Application" >> "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop"
-            echo "Categories=Game" >> "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop"
-            echo "Icon=${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x256.png" >> "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop"
-            chmod +x "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop"
-            notify-send -a "StartWine" "$(eval_gettext "Shortcut \${SW_GAME_NAME} created in desktop")"
-        fi
+    if [ "${SW_GAME_NAME}" == "" ]; then
+        crier=`$CRIER -i "$(eval_gettext "Path not exist, try to create new shortcut")"`
+        exit 0
     else
-        if [ "${SW_GAME_NAME}" != "StartWine" ]; then
-            try_remove "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop"
-            notify-send -a "StartWine" "$(eval_gettext "Shortcut \${SW_GAME_NAME} removed from desktop")"
+        if [ ! -f "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop" ]; then
+            if [ "${SW_GAME_NAME}" != "StartWine" ]; then
+                echo "[Desktop Entry]" > "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop"
+                echo "Name=${SW_GAME_NAME}" >> "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop"
+                echo "Exec=env \"${START_WINE_PATH}/data/scripts/sw_run\" \"${SW_GAME_EXE}\"" >> "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop"
+                echo "Type=Application" >> "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop"
+                echo "Categories=Game" >> "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop"
+                echo "Icon=${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x256.png" >> "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop"
+                chmod +x "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop"
+                notify-send -a "StartWine" "$(eval_gettext "Shortcut \${SW_GAME_NAME} created in desktop")"
+            fi
+        else
+            if [ "${SW_GAME_NAME}" != "StartWine" ]; then
+                try_remove "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop"
+                notify-send -a "StartWine" "$(eval_gettext "Shortcut \${SW_GAME_NAME} removed from desktop")"
+            fi
         fi
     fi
 
@@ -1237,56 +1256,38 @@ ADD_SHORTCUT_TO_DESKTOP () {
 
 REMOVE_PFX () {
 
-    crier=`$CRIER -q "$(eval_gettext "Do you really want to remove the prefix?")"`
+    if [ "${SW_GAME_NAME}" == "" ]; then
+        crier=`$CRIER -i "$(eval_gettext "Path not exist, try to create new shortcut")"`
+        exit 0
+    else
+        crier=`$CRIER -q "$(eval_gettext "Do you really want to remove the prefix?")"`
 
-    if [ "$(echo $crier)" == "0" ]; then
+        if [ "$(echo $crier)" == "0" ]; then
 
-        try_remove "${START_WINE_PATH}/data/pfx/pfx_${SW_GAME_NAME}"
-        try_remove "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
-        try_remove "${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x96.png"
-        try_remove "${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x256.png"
-        try_remove "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop"
+            try_remove "${START_WINE_PATH}/data/pfx/pfx_${SW_GAME_NAME}"
+            try_remove "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
+            try_remove "${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x96.png"
+            try_remove "${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x256.png"
+            try_remove "${SW_DESKTOP_DIR}/${SW_GAME_NAME}.desktop"
 
-        if [ "${SW_GAME_NAME}" != "StartWine" ]; then
-            try_remove "/home/${USER}/.local/share/applications/${SW_GAME_NAME}.desktop"
+            if [ "${SW_GAME_NAME}" != "StartWine" ]; then
+                try_remove "/home/${USER}/.local/share/applications/${SW_GAME_NAME}.desktop"
+            fi
+
+            notify-send -a "StartWine" "$(eval_gettext "Shortcut and prefix \${SW_GAME_NAME} removed")"
+
         fi
-
-        notify-send -a "StartWine" "$(eval_gettext "Shortcut and prefix \${SW_GAME_NAME} removed")"
-
     fi
 
 }
 
 REINSTALL_PFX () {
 
-    if [ ! -f "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" ]; then
-
-        crier=`$CRIER -q "$(eval_gettext "Remove old prefix?")"`
-
-        if [ "$(echo $crier)" == "0" ]; then
-
-            try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
-
-            export REIN_PFX=1
-
-            WINEBOOT_CS
-
-        fi
-
+    if [ "${SW_GAME_NAME}" == "" ]; then
+        crier=`$CRIER -i "$(eval_gettext "Path not exist, try to create new shortcut")"`
+        exit 0
     else
-
-        crier=`$CRIER -q "$(eval_gettext "Restore prefix from backup?")"`
-
-        if [ "$(echo $crier)" == "0" ]; then
-
-            try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
-            unsquashfs -d "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}" "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" &&
-
-            try_copy "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}" "${START_WINE_PATH}/data/app_config"
-            try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}"
-            crier=`$CRIER -i "$(eval_gettext "Restore prefix completed successfully")"`
-
-        else
+        if [ ! -f "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" ]; then
 
             crier=`$CRIER -q "$(eval_gettext "Remove old prefix?")"`
 
@@ -1299,6 +1300,40 @@ REINSTALL_PFX () {
                 WINEBOOT_CS
 
             fi
+
+        else
+
+            if [ "${SW_GAME_NAME}" != "" ];then
+
+                crier=`$CRIER -q "$(eval_gettext "Restore prefix from backup?")"`
+
+                if [ "$(echo $crier)" == "0" ]; then
+
+                    try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
+                    unsquashfs -d "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}" "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" &&
+                    try_copy "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}" "${START_WINE_PATH}/data/app_config"
+
+                    if [ -f "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}" ];then
+                        try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}"
+                    fi
+
+                    crier=`$CRIER -i "$(eval_gettext "Restore prefix completed successfully")"`
+
+                else
+
+                    crier=`$CRIER -q "$(eval_gettext "Remove old prefix?")"`
+
+                    if [ "$(echo $crier)" == "0" ]; then
+
+                        try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
+
+                        export REIN_PFX=1
+
+                        WINEBOOT_CS
+
+                    fi
+                fi
+            fi
         fi
     fi
 
@@ -1306,15 +1341,27 @@ REINSTALL_PFX () {
 
 SW_PFX_BACKUP () {
 
-    crier=`$CRIER -q "$(eval_gettext "Do you really want to backup the prefix?")"`
+    if [ "${SW_GAME_NAME}" == "" ]; then
+        crier=`$CRIER -i "$(eval_gettext "Path not exist, try to create new shortcut")"`
+        exit 0
+    else
+        crier=`$CRIER -q "$(eval_gettext "Do you really want to backup the prefix?")"`
 
-    if [ "$(echo $crier)" == "0" ]; then
+        if [ "$(echo $crier)" == "0" ]; then
 
-        if [ -f "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" ]; then
+            if [ -f "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" ]; then
 
-            crier=`$CRIER -q "$(eval_gettext "Overwrite old backup?")"`
+                crier=`$CRIER -q "$(eval_gettext "Overwrite old backup?")"`
 
-            if [ "$(echo $crier)" == "0" ]; then
+                if [ "$(echo $crier)" == "0" ]; then
+                    try_copy "${START_WINE_PATH}/data/app_config/${SW_GAME_NAME}" "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
+                    try_remove "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso"
+                    mksquashfs "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}" "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" -noappend -b 1M -comp zstd -Xcompression-level 1 &&
+                    try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}"
+                    crier=`$CRIER -i "$(eval_gettext "Backup completed successfully")"`
+                fi
+
+            else
 
                 try_copy "${START_WINE_PATH}/data/app_config/${SW_GAME_NAME}" "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
                 try_remove "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso"
@@ -1324,47 +1371,42 @@ SW_PFX_BACKUP () {
 
             fi
 
-        else
-
-            try_copy "${START_WINE_PATH}/data/app_config/${SW_GAME_NAME}" "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
-            try_remove "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso"
-            mksquashfs "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}" "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" -noappend -b 1M -comp zstd -Xcompression-level 1 &&
-            try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}"
-            crier=`$CRIER -i "$(eval_gettext "Backup completed successfully")"`
-
         fi
-
     fi
 
 }
 
 SW_PFX_RESTORE () {
 
-    crier=`$CRIER -q "$(eval_gettext "Do you really want to restore the prefix?")"`
+    if [ "${SW_GAME_NAME}" == "" ]; then
+        crier=`$CRIER -i "$(eval_gettext "Path not exist, try to create new shortcut")"`
+        exit 0
+    else
+        crier=`$CRIER -q "$(eval_gettext "Do you really want to restore the prefix?")"`
 
-    if [ "$(echo $crier)" == "0" ]; then
+        if [ "$(echo $crier)" == "0" ]; then
 
-        if [ ! -f "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" ]; then
-            crier=`$CRIER -i "$(eval_gettext "You do not have a backup create it first")"`
+            if [ ! -f "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" ]; then
+                crier=`$CRIER -i "$(eval_gettext "You do not have a backup create it first")"`
 
-            if [ -f "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso" ]; then
-                crier=`$CRIER -q "$(eval_gettext "You have a backup of the default prefix. Use it to recover prefix?")"`
-                if [ "$(echo $crier)" == "0" ]; then
-                    try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
-                    unsquashfs -d "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}" "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso" &&
-                    crier=`$CRIER -i "$(eval_gettext "Restore completed successfully")"`
+                if [ -f "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso" ]; then
+                    crier=`$CRIER -q "$(eval_gettext "You have a backup of the default prefix. Use it to recover prefix?")"`
+                    if [ "$(echo $crier)" == "0" ]; then
+                        try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
+                        unsquashfs -d "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}" "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso" &&
+                        crier=`$CRIER -i "$(eval_gettext "Restore completed successfully")"`
+                    fi
                 fi
+
+            else
+
+                try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
+                unsquashfs -d "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}" "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" &&
+                try_copy "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}" "${START_WINE_PATH}/data/app_config"
+                try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}"
+                crier=`$CRIER -i "$(eval_gettext "Restore completed successfully")"`
+
             fi
-
-        else
-
-            try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
-            unsquashfs -d "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}" "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" &&
-
-            try_copy "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}" "${START_WINE_PATH}/data/app_config"
-            try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}"
-            crier=`$CRIER -i "$(eval_gettext "Restore completed successfully")"`
-
         fi
     fi
 
@@ -1422,10 +1464,15 @@ SW_PFX_FULL_RESTORE () {
 
 SW_CLEAR_PFX () {
 
-    crier=`$CRIER -q "$(eval_gettext "Do you really want to clear the prefix?")"`
+    if [ "${SW_GAME_NAME}" == "" ]; then
+        crier=`$CRIER -i "$(eval_gettext "Path not exist, try to create new shortcut")"`
+        exit 0
+    else
+        crier=`$CRIER -q "$(eval_gettext "Do you really want to clear the prefix?")"`
 
-    if [ "$(echo $crier)" == "0" ]; then
-        try_clear_pfx
+        if [ "$(echo $crier)" == "0" ]; then
+            try_clear_pfx
+        fi
     fi
 
 }
@@ -1434,80 +1481,73 @@ SW_CLEAR_PFX () {
 
 WINECFG () {
 
-    try_fix_pfx
-
-    ${SW_RUN_RUNTIME} env LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" "${WINELOADER}" "winecfg"
+    if [ "${SW_GAME_NAME}" == "" ]; then
+        crier=`$CRIER -i "$(eval_gettext "Path not exist, try to create new shortcut")"`
+        exit 0
+    else
+        try_fix_pfx
+        ${SW_RUN_RUNTIME} env LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" "${WINELOADER}" "winecfg"
+    fi
 
 }
 
 WINECONSOLE () {
 
-    try_fix_pfx
-
-    cd "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/drive_c"
-    ${SW_RUN_RUNTIME} env LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" "${WINELOADER}" "wineconsole"
+    if [ "${SW_GAME_NAME}" == "" ]; then
+        crier=`$CRIER -i "$(eval_gettext "Path not exist, try to create new shortcut")"`
+        exit 0
+    else
+        try_fix_pfx
+        cd "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/drive_c"
+        ${SW_RUN_RUNTIME} env LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" "${WINELOADER}" "wineconsole"
+    fi
 
 }
 
 REGEDIT () {
 
-    try_fix_pfx
-
-    ${SW_RUN_RUNTIME} env LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" "${WINELOADER}" "regedit"
+    if [ "${SW_GAME_NAME}" == "" ]; then
+        crier=`$CRIER -i "$(eval_gettext "Path not exist, try to create new shortcut")"`
+        exit 0
+    else
+        try_fix_pfx
+        ${SW_RUN_RUNTIME} env LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" "${WINELOADER}" "regedit"
+    fi
 
 }
 
 WINEFILE () {
 
-    try_fix_pfx
-
-    ${SW_RUN_RUNTIME} env LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" "${WINELOADER}" ${VDESKTOP} "explorer"
+    if [ "${SW_GAME_NAME}" == "" ]; then
+        crier=`$CRIER -i "$(eval_gettext "Path not exist, try to create new shortcut")"`
+        exit 0
+    else
+        try_fix_pfx
+        ${SW_RUN_RUNTIME} env LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" "${WINELOADER}" ${VDESKTOP} "explorer"
+    fi
 
 }
 
 UNINSTALLER () {
 
-    try_fix_pfx
-
-    cd "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/drive_c"
-    ${SW_RUN_RUNTIME} env LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" "${WINELOADER}" "uninstaller"
+    if [ "${SW_GAME_NAME}" == "" ]; then
+        crier=`$CRIER -i "$(eval_gettext "Path not exist, try to create new shortcut")"`
+        exit 0
+    else
+        try_fix_pfx
+        cd "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/drive_c"
+        ${SW_RUN_RUNTIME} env LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" "${WINELOADER}" "uninstaller"
+    fi
 
 }
 
 SW_WINETRICKS () {
 
-    unset VK_INSTANCE_LAYERS
-
-    if [ -f "${START_WINE_PATH}/data/scripts/winetricks" ]; then
-        try_remove "${START_WINE_PATH}/data/scripts/winetricks"
-    fi
-
-    export FTP_URL="https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks"
-    crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/scripts/winetricks"` &&
-    chmod +x "${START_WINE_PATH}/data/scripts/winetricks"
-
-    try_fix_pfx
-
-    export WINE="${WINELOADER}"
-
-    "${START_WINE_PATH}/data/scripts/winetricks" -q -f ${DLL} || libraries_init_error
-    "${WINESERVER}" -w
-
-    if [ "${INSTALL_OK}" == 1 ]; then
-        crier=`$CRIER -i "$(eval_gettext "Application installed successfully")"`
+    if [ "${SW_GAME_NAME}" == "" ]; then
+        crier=`$CRIER -i "$(eval_gettext "Path not exist, try to create new shortcut")"`
+        exit 0
     else
-        crier=`$CRIER -i "$(eval_gettext "Libraries installed successfully")"`
-    fi
-
-}
-
-INSTALL_RL () {
-
-    unset VK_INSTANCE_LAYERS
-
-    crier=`$CRIER -q "$(eval_gettext "Install recommended libraries?")"`
-
-    if [ "$(echo $crier)" == "0" ]; then
+        unset VK_INSTANCE_LAYERS
 
         if [ -f "${START_WINE_PATH}/data/scripts/winetricks" ]; then
             try_remove "${START_WINE_PATH}/data/scripts/winetricks"
@@ -1521,23 +1561,60 @@ INSTALL_RL () {
 
         export WINE="${WINELOADER}"
 
-        "${START_WINE_PATH}/data/scripts/winetricks" -q -f mfc120 mfc42 msvcirt openal physx vb6run vcrun2005 vcrun2008 vcrun2010 \
-        vcrun2012 vcrun2013 vcrun2022 vcrun6 vcrun6sp6 lucida nocrashdialog || libraries_init_error
+        "${START_WINE_PATH}/data/scripts/winetricks" -q -f ${DLL} || libraries_init_error
         "${WINESERVER}" -w
 
-        if [ ! -f "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/btn.log" ];then
-            for btn_log in 207 210 228 240 270 272 273 274 275 276 279 281 280 ; do
-                echo "${btn_log}" >> "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/btn.log"
-            done
-        fi
-
-        if [ "${INST_RL_OK}" == 1 ]; then
-            echo " "
+        if [ "${INSTALL_OK}" == 1 ]; then
+            crier=`$CRIER -i "$(eval_gettext "Application installed successfully")"`
         else
-            if [ "${INSTALL_OK}" == 1 ]; then
-                crier=`$CRIER -i "$(eval_gettext "Application installed successfully")"`
+            crier=`$CRIER -i "$(eval_gettext "Libraries installed successfully")"`
+        fi
+    fi
+
+}
+
+INSTALL_RL () {
+
+    if [ "${SW_GAME_NAME}" == "" ]; then
+        crier=`$CRIER -i "$(eval_gettext "Path not exist, try to create new shortcut")"`
+        exit 0
+    else
+        unset VK_INSTANCE_LAYERS
+
+        crier=`$CRIER -q "$(eval_gettext "Install recommended libraries?")"`
+
+        if [ "$(echo $crier)" == "0" ]; then
+
+            if [ -f "${START_WINE_PATH}/data/scripts/winetricks" ]; then
+                try_remove "${START_WINE_PATH}/data/scripts/winetricks"
+            fi
+
+            export FTP_URL="https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks"
+            crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/scripts/winetricks"` &&
+            chmod +x "${START_WINE_PATH}/data/scripts/winetricks"
+
+            try_fix_pfx
+
+            export WINE="${WINELOADER}"
+
+            "${START_WINE_PATH}/data/scripts/winetricks" -q -f mfc120 mfc42 msvcirt openal physx vb6run vcrun2005 vcrun2008 vcrun2010 \
+            vcrun2012 vcrun2013 vcrun2022 vcrun6 vcrun6sp6 lucida nocrashdialog || libraries_init_error
+            "${WINESERVER}" -w
+
+            if [ ! -f "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/btn.log" ];then
+                for btn_log in 207 210 228 240 270 272 273 274 275 276 279 281 280 ; do
+                    echo "${btn_log}" >> "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/btn.log"
+                done
+            fi
+
+            if [ "${INST_RL_OK}" == 1 ]; then
+                echo " "
             else
-                crier=`$CRIER -i "$(eval_gettext "Libraries installed successfully")"`
+                if [ "${INSTALL_OK}" == 1 ]; then
+                    crier=`$CRIER -i "$(eval_gettext "Application installed successfully")"`
+                else
+                    crier=`$CRIER -i "$(eval_gettext "Libraries installed successfully")"`
+                fi
             fi
         fi
     fi
@@ -1582,14 +1659,19 @@ DEBUG_LOG () {
 
 DEBUG_VULKAN () {
 
-    DEBUG_LOG
+    if [ "${SW_GAME_NAME}" == "" ]; then
+        crier=`$CRIER -i "$(eval_gettext "Path not exist, try to create new shortcut")"`
+        exit 0
+    else
+        DEBUG_LOG
 
-    RUN_VULKAN >> "${START_WINE_PATH}/data/tmp/${SW_GAME_NAME}.log" 2>&1 "$@"
-    crier=`$CRIER -i "$(eval_gettext "Please wait a while then press ok to open the log file")"`
-    zData="${START_WINE_PATH}/data/tmp/${SW_GAME_NAME}.log"
-    crier=`$CRIER -t "${zData}"`
+        RUN_VULKAN >> "${START_WINE_PATH}/data/tmp/${SW_GAME_NAME}.log" 2>&1 "$@"
+        crier=`$CRIER -i "$(eval_gettext "Please wait a while then press ok to open the log file")"`
+        zData="${START_WINE_PATH}/data/tmp/${SW_GAME_NAME}.log"
+        crier=`$CRIER -t "${zData}"`
 
-    STOP
+        STOP
+    fi
 
 }
 
@@ -1603,19 +1685,18 @@ WINE_1 () {
     if [ ! -d "${START_WINE_PATH}/data/wine/wine_staging/bin" ]; then
         export FTP_URL="https://github.com/Kron4ek/Wine-Builds/releases/download/"${STAG_VER}"/wine-"${STAG_VER}"-staging-amd64.tar.xz"
         crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/wine-"${STAG_VER}"-staging-amd64.tar.xz"`
-
         crier=`$CRIER -tar "${START_WINE_PATH}/data/tmp/wine-"${STAG_VER}"-staging-amd64.tar.xz" "${START_WINE_PATH}/data/tmp"`
+
         for copy_dir in bin lib share ; do
             try_copy "${START_WINE_PATH}/data/tmp/wine-"${STAG_VER}"-staging-amd64/${copy_dir}" "${START_WINE_PATH}/data/wine/wine_staging"
         done
+
         try_remove "${START_WINE_PATH}/data/tmp/wine-"${STAG_VER}"-staging-amd64.tar.xz" &&
         try_remove "${START_WINE_PATH}/data/tmp/wine-"${STAG_VER}"-staging-amd64"
     fi
 
-    if [ ! -f "${START_WINE_PATH}/data/wine/wine_staging/version" ]; then
-        echo "wine-staging ${STAG_VER}" > "${START_WINE_PATH}/data/wine/wine_staging/version"
-        echo "${STAG_VER}" >> "${START_WINE_PATH}/data/wine/wine_staging/version"
-    fi
+    echo "wine-staging ${STAG_VER}" > "${START_WINE_PATH}/data/wine/wine_staging/version"
+    echo "${STAG_VER}" >> "${START_WINE_PATH}/data/wine/wine_staging/version"
 
     chmod -R 775 "${START_WINE_PATH}/data/wine/wine_staging"
 
@@ -1640,7 +1721,6 @@ WINE_2 () {
         export FTP_URL="https://github.com/RusNor/Wine-Steam-Proton/releases/download/steam-proton-"${SP_VER}"/steam-proton-"${SP_VER}".tar.xz"
         crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}".tar.xz"` &&
         crier=`$CRIER -tar "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}".tar.xz" "${START_WINE_PATH}/data/tmp"` &&
-
         try_create_dir "${START_WINE_PATH}/data/wine/wine_steam_proton/files"
 
         for copy_dir in bin lib lib64 share ; do
@@ -1651,10 +1731,8 @@ WINE_2 () {
             try_link "${START_WINE_PATH}/data/wine/wine_steam_proton/files/${link_dir}" "${START_WINE_PATH}/data/wine/wine_steam_proton"
         done
 
-        if [ ! -f "${START_WINE_PATH}/data/wine/wine_steam_proton/version" ]; then
-            echo "steam-${SP_VER}" > "${START_WINE_PATH}/data/wine/wine_steam_proton/version"
-            echo "${SP_VER}" >> "${START_WINE_PATH}/data/wine/wine_steam_proton/version"
-        fi
+        echo "steam-${SP_VER}" > "${START_WINE_PATH}/data/wine/wine_steam_proton/version"
+        echo "${SP_VER}" >> "${START_WINE_PATH}/data/wine/wine_steam_proton/version"
 
         try_remove "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}".tar.xz" &&
         try_remove "${START_WINE_PATH}/data/tmp/steam-proton-"${SP_VER}""
@@ -1682,7 +1760,6 @@ WINE_3 () {
     if [ ! -d "${START_WINE_PATH}/data/wine/wine_proton_ge/bin" ]; then
         export FTP_URL="https://github.com/GloriousEggroll/proton-ge-custom/releases/download/GE-Proton"${GE_VER}"/GE-Proton"${GE_VER}".tar.gz"
         crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/GE-Proton"${GE_VER}".tar.gz"` &&
-
         crier=`$CRIER -tar "${START_WINE_PATH}/data/tmp/GE-Proton"${GE_VER}".tar.gz" "${START_WINE_PATH}/data/tmp"` &&
         try_copy "${START_WINE_PATH}/data/tmp/GE-Proton"${GE_VER}"/files" "${START_WINE_PATH}/data/wine/wine_proton_ge"
 
@@ -1690,10 +1767,8 @@ WINE_3 () {
             try_link "${START_WINE_PATH}/data/wine/wine_proton_ge/files/${link_dir}" "${START_WINE_PATH}/data/wine/wine_proton_ge"
         done
 
-        if [ ! -f "${START_WINE_PATH}/data/wine/wine_proton_ge/version" ]; then
-            echo "GE-${GE_VER}" > "${START_WINE_PATH}/data/wine/wine_proton_ge/version"
-            echo "${GE_VER}" >> "${START_WINE_PATH}/data/wine/wine_proton_ge/version"
-        fi
+        echo "GE-${GE_VER}" > "${START_WINE_PATH}/data/wine/wine_proton_ge/version"
+        echo "${GE_VER}" >> "${START_WINE_PATH}/data/wine/wine_proton_ge/version"
 
         try_remove "${START_WINE_PATH}/data/tmp/GE-Proton"${GE_VER}".tar.gz" &&
         try_remove "${START_WINE_PATH}/data/tmp/GE-Proton"${GE_VER}""
@@ -1701,7 +1776,9 @@ WINE_3 () {
 
     chmod -R 775 "${START_WINE_PATH}/data/wine/wine_proton_ge"
 
-    try_remove "${START_WINE_PATH}/data/wine/wine_proton_ge/bin/cabextract"
+    if [ -f "${START_WINE_PATH}/data/wine/wine_proton_ge/bin/cabextract" ]; then
+        try_remove "${START_WINE_PATH}/data/wine/wine_proton_ge}/bin/cabextract"
+    fi
 
     if [ "${WINE_OK}" == 1 ]; then
         echo " "
@@ -1723,19 +1800,18 @@ WINE_4 () {
     if [ ! -d "${START_WINE_PATH}/data/wine/wine_lutris/bin" ]; then
         export FTP_URL="https://github.com/lutris/wine/releases/download/lutris-wine-"${LUTRIS_VER}"/wine-lutris-"${LUTRIS_VER}"-x86_64.tar.xz"
         crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/wine-lutris-"${LUTRIS_VER}"-x86_64.tar.xz"` &&
-
         crier=`$CRIER -tar "${START_WINE_PATH}/data/tmp/wine-lutris-"${LUTRIS_VER}"-x86_64.tar.xz" "${START_WINE_PATH}/data/tmp"` &&
+
         for copy_dir in bin lib lib64 share ; do
             try_copy "${START_WINE_PATH}/data/tmp/lutris-"${LUTRIS_VER}"-x86_64/${copy_dir}" "${START_WINE_PATH}/data/wine/wine_lutris"
         done
+
         try_remove "${START_WINE_PATH}/data/tmp/wine-lutris-"${LUTRIS_VER}"-x86_64.tar.xz" &&
         try_remove "${START_WINE_PATH}/data/tmp/lutris-"${LUTRIS_VER}"-x86_64"
     fi
 
-    if [ ! -f "${START_WINE_PATH}/data/wine/wine_lutris/version" ]; then
-        echo "wine-lutris ${LUTRIS_VER}" > "${START_WINE_PATH}/data/wine/wine_lutris/version"
-        echo "${LUTRIS_VER}" >> "${START_WINE_PATH}/data/wine/wine_lutris/version"
-    fi
+    echo "wine-lutris ${LUTRIS_VER}" > "${START_WINE_PATH}/data/wine/wine_lutris/version"
+    echo "${LUTRIS_VER}" >> "${START_WINE_PATH}/data/wine/wine_lutris/version"
 
     chmod -R 775 "${START_WINE_PATH}/data/wine/wine_lutris"
 
@@ -1760,7 +1836,6 @@ WINE_5 () {
         export FTP_URL="https://github.com/GloriousEggroll/wine-ge-custom/releases/download/GE-Proton"${LUTRIS_GE_VER}"/wine-lutris-GE-Proton"${LUTRIS_GE_VER}"-x86_64.tar.xz"
         crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/wine-lutris-GE-Proton"${LUTRIS_GE_VER}"-x86_64.tar.xz"` &&
         crier=`$CRIER -tar "${START_WINE_PATH}/data/tmp/wine-lutris-GE-Proton"${LUTRIS_GE_VER}"-x86_64.tar.xz" "${START_WINE_PATH}/data/tmp"` &&
-
         try_create_dir "${START_WINE_PATH}/data/wine/wine_lutris_ge/files"
 
         for copy_dir in bin lib lib64 share ; do
@@ -1775,10 +1850,8 @@ WINE_5 () {
         try_remove "${START_WINE_PATH}/data/tmp/lutris-GE-Proton"${LUTRIS_GE_VER}"-x86_64"
     fi
 
-    if [ ! -f "${START_WINE_PATH}/data/wine/wine_lutris_ge/version" ]; then
-        echo "Lutris-GE-${LUTRIS_GE_VER}" > "${START_WINE_PATH}/data/wine/wine_lutris_ge/version"
-        echo "${LUTRIS_GE_VER}" >> "${START_WINE_PATH}/data/wine/wine_lutris_ge/version"
-    fi
+    echo "Lutris-GE-${LUTRIS_GE_VER}" > "${START_WINE_PATH}/data/wine/wine_lutris_ge/version"
+    echo "${LUTRIS_GE_VER}" >> "${START_WINE_PATH}/data/wine/wine_lutris_ge/version"
 
     chmod -R 775 "${START_WINE_PATH}/data/wine/wine_lutris_ge"
 
@@ -2088,7 +2161,7 @@ INSTALL_RIOTCLIENT () {
 
         export SW_USE_PFX="pfx_RiotClientServices"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
-        export WINEDIR="${START_WINE_PATH}/data/wine/wine_custom/lutris-ge-lol"
+        export WINEDIR="${START_WINE_PATH}/data/wine/wine_proton_ge"
         export WINELOADER=$WINEDIR/bin/wine
 
         try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
@@ -3307,7 +3380,7 @@ INSTALL_ROBLOXPLAYER () {
         try_remove "${START_WINE_PATH}/data/tmp/Roblox_0.1.tar.xz"
 
         SW_USE_EXE="drive_c/Program Files (x86)/Roblox/Versions/Roblox/RobloxPlayerBeta.exe"
-        SW_USE_WINE="wine_lutris"
+        SW_USE_WINE="wine_proton_ge"
 
         sw_shortcuts_autoinstall
 

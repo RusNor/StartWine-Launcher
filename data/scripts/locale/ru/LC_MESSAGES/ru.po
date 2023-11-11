@@ -104,6 +104,10 @@ msgid "VULKAN mode"
 msgstr "режим Vulkan"
 
 #: sw_runlib
+msgid "Path not exist, try to create new shortcut"
+msgstr "Путь не существует, попробуйте создать новый ярлык"
+
+#: sw_runlib
 msgid "Do you have a prefix for this application to use it?"
 msgstr "Использовать для этого приложения существующий префикс?"
 

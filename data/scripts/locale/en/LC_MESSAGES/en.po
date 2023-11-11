@@ -155,6 +155,11 @@ msgstr "OpenGL mode"
 msgid "VULKAN mode"
 msgstr "VULKAN mode"
 
+#: sw_runlib
+msgid "Path not exist, try to create new shortcut"
+msgstr "Path not exist, try to create new shortcut"
+
+#: sw_runlib
 msgid "Do you have a prefix for this application to use it?"
 msgstr "Do you have a prefix for this application to use it?"
 
