@@ -7,12 +7,12 @@ export START_WINE_PATH="$(pwd)"
 
 ###############################   VERSION   ####################################
 
-export SW_VER="382"
-export GE_VER="8-23"
+export SW_VER="383"
+export GE_VER="8-25"
 export SP_VER="8.0.4"
-export STAG_VER="8.19"
+export STAG_VER="8.20"
 export LUTRIS_VER="7.2-2"
-export LUTRIS_GE_VER="8-22"
+export LUTRIS_GE_VER="8-24"
 export UTILS_VER="v2.3"
 
 ##############################...LOCALE...######################################
@@ -171,7 +171,7 @@ try_clear_pfx () {
     try_remove "${START_WINE_PATH}/data/tmp/vkd3d_cache/"*
     try_remove "${START_WINE_PATH}/data/tmp/gstreamer-1.0/"*
     try_remove "$HOME/.cache/gstreamer-1.0/"*
-    try_remove "${START_WINE_PATH}/data/tmp/mesa_shader_cache/"*
+    try_remove "${START_WINE_PATH}/data/tmp/mesa_shader_cache_sf/"*
 
 }
 
@@ -299,7 +299,7 @@ sw_shortcuts_autoinstall () {
     export SW_GAME_NAME="$(basename "${SW_GAME_EXE}" | sed 's/\.exe//gi' | sed 's/\.msi//gi' | sed 's/ /_/g')"
     export SW_GAME_PATH="$(cd "$(dirname "${SW_GAME_EXE}")" >/dev/null 2>&1 && pwd)"
 
-    export SW_ICO_TMP_PATH="${START_WINE_PATH}/data/tmp/icon"
+    export SW_ICO_TMP_PATH="${START_WINE_PATH}/data/tmp/icons"
     icoextract "${SW_GAME_EXE}" "${SW_ICO_TMP_PATH}/${SW_GAME_NAME}.ico"
     convert "${SW_ICO_TMP_PATH}/${SW_GAME_NAME}.ico" "${SW_ICO_TMP_PATH}/${SW_GAME_NAME}.png"
 
@@ -436,7 +436,7 @@ try_create_dir "${START_WINE_PATH}/data/tmp"
 try_create_dir "${START_WINE_PATH}/Shortcuts"
 try_create_dir "${START_WINE_PATH}/data/tools"
 try_create_dir "${START_WINE_PATH}/data/tmp/log"
-try_create_dir "${START_WINE_PATH}/data/tmp/icon"
+try_create_dir "${START_WINE_PATH}/data/tmp/icons"
 try_create_dir "${HOME}/.local/share/applications"
 try_create_dir "${START_WINE_PATH}/data/pfx_backup"
 try_create_dir "${START_WINE_PATH}/data/tmp/vkd3d_cache"
@@ -639,7 +639,7 @@ if [ "${SW_USE_FSR}" == 1 ]; then
     export WINE_FULLSCREEN_FSR=1
     export WINE_FULLSCREEN_FSR_STRENGTH=2
     export WINE_FULLSCREEN_INTEGER_SCALING=0
-    export WINE_FULLSCREEN_FSR_MODE="balanced"
+    export WINE_FULLSCREEN_FSR_MODE="performance"
 #    ultra
 #    quality
 #    balanced
@@ -652,8 +652,8 @@ if [ "${SW_USE_GSTREAMER}" == 1 ]; then
     export GST_DEBUG="0:WARNING"
     export WINE_GST_REGISTRY_DIR="${START_WINE_PATH}/data/tmp/gstreamer-1.0"
     export MEDIACONV_AUDIO_DUMP_FILE="${START_WINE_PATH}/data/tmp/gstreamer-1.0/audio.foz"
-    export MEDIACONV_AUDIO_TRANSCODED_FILE="${START_WINE_PATH}/data/tmp/gstreamer-1.0/transcoded_audio.foz"
     export MEDIACONV_VIDEO_DUMP_FILE="${START_WINE_PATH}/data/tmp/gstreamer-1.0/video.foz"
+    export MEDIACONV_AUDIO_TRANSCODED_FILE="${START_WINE_PATH}/data/tmp/gstreamer-1.0/transcoded_audio.foz"
     export MEDIACONV_VIDEO_TRANSCODED_FILE="${START_WINE_PATH}/data/tmp/gstreamer-1.0/transcoded_video.foz"
 
     if [ "${SW_USE_WINE}" != "wine_staging" ] && [ "${SW_USE_WINE}" != "wine_lutris_ge" ]; then
@@ -1086,7 +1086,7 @@ RUN_VULKAN () {
 CREATE_ICON () {
 
     if [ ! -f "${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x96.png" ]; then
-        export SW_ICO_TMP_PATH="${START_WINE_PATH}/data/tmp/icon"
+        export SW_ICO_TMP_PATH="${START_WINE_PATH}/data/tmp/icons"
         icoextract "${SW_GAME_EXE}" "${SW_ICO_TMP_PATH}/${SW_GAME_NAME}.ico"
         convert "${SW_ICO_TMP_PATH}/${SW_GAME_NAME}.ico" "${SW_ICO_TMP_PATH}/${SW_GAME_NAME}.png"
 
@@ -1287,50 +1287,55 @@ REINSTALL_PFX () {
         crier=`$CRIER -i "$(eval_gettext "Path not exist, try to create new shortcut")"`
         exit 0
     else
-        if [ ! -f "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" ]; then
+        crier=`$CRIER -q "$(eval_gettext "Do you really want to reinstall the prefix?")"`
 
-            crier=`$CRIER -q "$(eval_gettext "Remove old prefix?")"`
+        if [ "$(echo $crier)" == "0" ]; then
 
-            if [ "$(echo $crier)" == "0" ]; then
+            if [ ! -f "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" ]; then
 
-                try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
-
-                export REIN_PFX=1
-
-                WINEBOOT_CS
-
-            fi
-
-        else
-
-            if [ "${SW_GAME_NAME}" != "" ];then
-
-                crier=`$CRIER -q "$(eval_gettext "Restore prefix from backup?")"`
+                crier=`$CRIER -q "$(eval_gettext "Remove old prefix?")"`
 
                 if [ "$(echo $crier)" == "0" ]; then
 
                     try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
-                    unsquashfs -d "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}" "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" &&
-                    try_copy "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}" "${START_WINE_PATH}/data/app_config"
 
-                    if [ -f "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}" ];then
-                        try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}"
-                    fi
+                    export REIN_PFX=1
 
-                    crier=`$CRIER -i "$(eval_gettext "Restore prefix completed successfully")"`
+                    WINEBOOT_CS
 
-                else
+                fi
 
-                    crier=`$CRIER -q "$(eval_gettext "Remove old prefix?")"`
+            else
+
+                if [ "${SW_GAME_NAME}" != "" ]; then
+
+                    crier=`$CRIER -q "$(eval_gettext "Restore prefix from backup?")"`
 
                     if [ "$(echo $crier)" == "0" ]; then
 
                         try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
+                        unsquashfs -d "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}" "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" &&
+                        try_copy "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}" "${START_WINE_PATH}/data/app_config"
 
-                        export REIN_PFX=1
+                        if [ -f "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}" ]; then
+                            try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}"
+                        fi
 
-                        WINEBOOT_CS
+                        crier=`$CRIER -i "$(eval_gettext "Restore prefix completed successfully")"`
 
+                    else
+
+                        crier=`$CRIER -q "$(eval_gettext "Remove old prefix?")"`
+
+                        if [ "$(echo $crier)" == "0" ]; then
+
+                            try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
+
+                            export REIN_PFX=1
+
+                            WINEBOOT_CS
+
+                        fi
                     fi
                 fi
             fi
@@ -1601,7 +1606,7 @@ INSTALL_RL () {
             vcrun2012 vcrun2013 vcrun2022 vcrun6 vcrun6sp6 lucida nocrashdialog || libraries_init_error
             "${WINESERVER}" -w
 
-            if [ ! -f "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/btn.log" ];then
+            if [ ! -f "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/btn.log" ]; then
                 for btn_log in 207 210 228 240 270 272 273 274 275 276 279 281 280 ; do
                     echo "${btn_log}" >> "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/btn.log"
                 done

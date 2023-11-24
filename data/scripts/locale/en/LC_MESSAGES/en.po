@@ -172,6 +172,9 @@ msgstr "Create a prefix for this application?"
 msgid "Restore prefix from backup?"
 msgstr "Restore prefix from backup?"
 
+msgid "Do you really want to reinstall the prefix?"
+msgstr "Do you really want to reinstall the prefix?"
+
 #: sw_runlib:1006 sw_runlib:1181
 #, sh-format
 msgid "Restore prefix completed successfully"

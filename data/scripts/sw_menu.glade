@@ -5619,7 +5619,7 @@ Example: -d3d11</property>
                                     <property name="can-focus">False</property>
                                     <property name="label" translatable="yes">
 StartWine
-3.8.2</property>
+3.8.3</property>
                                     <property name="justify">center</property>
                                     <attributes>
                                       <attribute name="underline" value="True"/>
