@@ -7,12 +7,12 @@ export START_WINE_PATH="$(pwd)"
 
 ###############################   VERSION   ####################################
 
-export SW_VER="383"
+export SW_VER="384"
 export GE_VER="8-25"
 export SP_VER="8.0.4"
-export STAG_VER="8.20"
+export STAG_VER="8.21"
 export LUTRIS_VER="7.2-2"
-export LUTRIS_GE_VER="8-24"
+export LUTRIS_GE_VER="8-25"
 export UTILS_VER="v2.3"
 
 ##############################...LOCALE...######################################
@@ -830,42 +830,6 @@ if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_default/drive_c/windows/system32/star
         try_remove "${START_WINE_PATH}/data/pfx/pfx_default"
         unsquashfs -d "${START_WINE_PATH}/data/pfx/pfx_default" "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso"
     fi
-fi
-
-#############################   GE_PROTON DOWNLOAD   ###########################
-
-if [ "${SW_DOWNLOAD_GE}" == 1 ]; then
-
-    if [ ! -f "${START_WINE_PATH}/data/wine/wine_proton_ge/bin/wine" ]; then
-
-        try_remove "${START_WINE_PATH}/data/tmp/GE-Proton"${GE_VER}".tar.gz" &&
-        try_remove "${START_WINE_PATH}/data/tmp/GE-Proton"${GE_VER}""
-
-        export FTP_URL="https://github.com/GloriousEggroll/proton-ge-custom/releases/download/GE-Proton"${GE_VER}"/GE-Proton"${GE_VER}".tar.gz"
-        crier=`$CRIER -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/GE-Proton"${GE_VER}".tar.gz"` &&
-        crier=`$CRIER -tar "${START_WINE_PATH}/data/tmp/GE-Proton"${GE_VER}".tar.gz" "${START_WINE_PATH}/data/tmp"` &&
-        try_copy "${START_WINE_PATH}/data/tmp/GE-Proton"${GE_VER}"/files" "${START_WINE_PATH}/data/wine/wine_proton_ge"
-
-        for link_dir in bin lib lib64 share ; do
-            try_link "${START_WINE_PATH}/data/wine/wine_proton_ge/files/${link_dir}" "${START_WINE_PATH}/data/wine/wine_proton_ge"
-        done
-
-        if [ ! -f "${START_WINE_PATH}/data/wine/wine_proton_ge/version" ]; then
-            echo "GE-${GE_VER}" > "${START_WINE_PATH}/data/wine/wine_proton_ge/version"
-            echo "${GE_VER}" >> "${START_WINE_PATH}/data/wine/wine_proton_ge/version"
-        fi
-
-        try_remove "${START_WINE_PATH}/data/tmp/GE-Proton"${GE_VER}".tar.gz"
-        try_remove "${START_WINE_PATH}/data/tmp/GE-Proton"${GE_VER}""
-
-        chmod -R 775 "${START_WINE_PATH}/data/wine/wine_proton_ge"
-
-        if [ -f "${START_WINE_PATH}/data/wine/${SW_USE_WINE}/bin/cabextract" ]; then
-            try_remove "${START_WINE_PATH}/data/wine/${SW_USE_WINE}/bin/cabextract"
-        fi
-
-    fi
-
 fi
 
 ##############################   RUN VULKAN   ##################################

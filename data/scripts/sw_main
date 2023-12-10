@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
-################################___SCRIPTS_V383___:
+################################___SCRIPTS_V384___:
 
 import os
 import sys
 from pathlib import Path
 import subprocess
 from subprocess import *
+import psutil
 
 import gi
 gi.require_version('Gtk', '3.0')
@@ -485,7 +486,8 @@ def echo_func_name(func_name):
 
         else:
             sw_fsh.write_text(fshread[0] + '\n' + fshread[1] + '\n' + func)
-            proc_fsh = Popen(f"{sw_fsh} {app_path}", shell=True, start_new_session=True, stdout=PIPE, stderr=sys.stderr, encoding='UTF-8')
+            proc_fsh = run(f"{sw_fsh} {app_path}", shell=True, start_new_session=True,
+            stderr=sys.stderr, encoding='UTF-8')
 
 ################################___MENU_BUTTONS___:
 
@@ -919,9 +921,42 @@ def pid_name_print_all(bar):
 
 ################################___RUN_APPLICATION___:
 
+def find_process(app_suffix):
+    '''___Return a list of processes matching name___'''
+
+    procs = psutil.Process(os.getpid()).children(recursive=True)
+    for p in procs:
+        try:
+            ls = p.as_dict(attrs=['name'])
+        except:
+            pass
+        else:
+            n = ls['name']
+            if app_suffix.lower() in n.lower():
+                print(n)
+                return True
+
+    return False
+
+def wait_exe_proc(bar, app_suffix):
+    '''___Waiting for the executing process to close the menu___'''
+
+    found = find_process(app_suffix)
+    if found:
+        bar.set_show_text(False)
+        bar.set_fraction(0.0)
+        bar.set_visible(False)
+        window.close()
+        return False
+
+    bar.set_visible(True)
+    bar.pulse()
+    return True
+
 def on_btn_start(self):
 
     app_name = get_arg(get_out())
+    app_suffix = get_suffix()
 
     if app_name == 'StartWine':
         i = _("Oops! Nothing to run...")
@@ -952,21 +987,21 @@ def on_btn_start(self):
             thread_opengl.start()
 
             if progressbar_lock.acquire(False):
-                GLib.timeout_add(60, progress)
+                GLib.timeout_add(100, wait_exe_proc, progressbar, app_suffix)
 
         else:
             if str(vulkan_dri) == str('llvmpipe') and str(vulkan_dri2) == str('llvmpipe'):
                 Thread(target=run_opengl).start()
 
                 if progressbar_lock.acquire(False):
-                    GLib.timeout_add(60, progress)
+                    GLib.timeout_add(100, wait_exe_proc, progressbar, app_suffix)
 
             else:
                 thread_vulkan = Thread(target=run_vulkan)
                 thread_vulkan.start()
 
                 if progressbar_lock.acquire(False):
-                    GLib.timeout_add(60, progress)
+                    GLib.timeout_add(100, wait_exe_proc, progressbar, app_suffix)
 
 def run_vulkan():
 
