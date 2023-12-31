@@ -1,0 +1,236 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-09-07 13:07+0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: sw_runlib:217
+#, sh-format
+msgid "Error initializing the Wine prefix"
+msgstr ""
+
+#: sw_runlib:227
+#, sh-format
+msgid "Error installing libraries, try again"
+msgstr ""
+
+#: sw_runlib:976
+#, sh-format
+msgid "OpenGL mode"
+msgstr ""
+
+#: sw_runlib:1139
+#, sh-format
+msgid "VULKAN mode"
+msgstr ""
+
+#: sw_runlib:1171
+#, sh-format
+msgid "Create a prefix for this application?"
+msgstr ""
+
+#: sw_runlib:1196 sw_runlib:1326
+#, sh-format
+msgid "Restore prefix from backup?"
+msgstr ""
+
+#: sw_runlib:1204 sw_runlib:1226 sw_runlib:1335
+#, sh-format
+msgid "Restore prefix completed successfully"
+msgstr ""
+
+#: sw_runlib:1219
+#, sh-format
+msgid "You have a backup of the default prefix. Use it to create a new prefix?"
+msgstr ""
+
+#: sw_runlib:1289
+#, sh-format
+msgid "Do you really want to remove the prefix?"
+msgstr ""
+
+#: sw_runlib:1302
+#, sh-format
+msgid "Shortcut and prefix ${SW_GAME_NAME} removed"
+msgstr ""
+
+#: sw_runlib:1312 sw_runlib:1339
+#, sh-format
+msgid "Remove old prefix?"
+msgstr ""
+
+#: sw_runlib:1357
+#, sh-format
+msgid "Do you really want to backup the prefix?"
+msgstr ""
+
+#: sw_runlib:1363 sw_runlib:1429
+#, sh-format
+msgid "Overwrite old backup?"
+msgstr ""
+
+#: sw_runlib:1371 sw_runlib:1381
+#, sh-format
+msgid "Backup completed successfully"
+msgstr ""
+
+#: sw_runlib:1391
+#, sh-format
+msgid "Do you really want to restore the prefix?"
+msgstr ""
+
+#: sw_runlib:1396 sw_runlib:1453
+#, sh-format
+msgid "You do not have a backup create it first"
+msgstr ""
+
+#: sw_runlib:1399
+#, sh-format
+msgid "You have a backup of the default prefix. Use it to recover prefix?"
+msgstr ""
+
+#: sw_runlib:1403 sw_runlib:1414
+#, sh-format
+msgid "Restore completed successfully"
+msgstr ""
+
+#: sw_runlib:1423
+#, sh-format
+msgid "Do you really want to backup all the prefixes?"
+msgstr ""
+
+#: sw_runlib:1434 sw_runlib:1440
+#, sh-format
+msgid "Full backup completed successfully"
+msgstr ""
+
+#: sw_runlib:1448
+#, sh-format
+msgid "Do you really want to restore all the prefixes?"
+msgstr ""
+
+#: sw_runlib:1455
+#, sh-format
+msgid "Would you like to save the current prefixes?"
+msgstr ""
+
+#: sw_runlib:1459 sw_runlib:1463
+#, sh-format
+msgid "Full Restore completed successfully"
+msgstr ""
+
+#: sw_runlib:1473
+#, sh-format
+msgid "Do you really want to clear the prefix?"
+msgstr ""
+
+#: sw_runlib:1545 sw_runlib:1580 sw_runlib:1953 sw_runlib:1993 sw_runlib:2033
+#: sw_runlib:2075 sw_runlib:2114 sw_runlib:2170 sw_runlib:2253 sw_runlib:2295
+#: sw_runlib:2335 sw_runlib:2375 sw_runlib:2415 sw_runlib:2457 sw_runlib:2575
+#: sw_runlib:2615 sw_runlib:2655 sw_runlib:2781 sw_runlib:2837 sw_runlib:2877
+#: sw_runlib:2917 sw_runlib:2957 sw_runlib:2993 sw_runlib:3033 sw_runlib:3073
+#: sw_runlib:3113 sw_runlib:3153 sw_runlib:3234 sw_runlib:3274 sw_runlib:3314
+#: sw_runlib:3354 sw_runlib:3394 sw_runlib:3434
+#, sh-format
+msgid "Application installed successfully"
+msgstr ""
+
+#: sw_runlib:1547 sw_runlib:1582
+#, sh-format
+msgid "Libraries installed successfully"
+msgstr ""
+
+#: sw_runlib:1556
+#, sh-format
+msgid "Install recommended libraries?"
+msgstr ""
+
+#: sw_runlib:1631
+#, sh-format
+msgid "Please wait a while then press ok to open the log file"
+msgstr ""
+
+#: sw_runlib:1669
+#, sh-format
+msgid "Downloading wine staging ${STAG_VER} completed successfully"
+msgstr ""
+
+#: sw_runlib:1672 sw_runlib:1716 sw_runlib:1758 sw_runlib:1795 sw_runlib:1839
+#, sh-format
+msgid "Download failed, try again"
+msgstr ""
+
+#: sw_runlib:1713
+#, sh-format
+msgid "Downloading wine steam proton ${SP_VER} completed successfully"
+msgstr ""
+
+#: sw_runlib:1755
+#, sh-format
+msgid "Downloading wine proton ge ${GE_VER} completed successfully"
+msgstr ""
+
+#: sw_runlib:1792
+#, sh-format
+msgid "Downloading wine lutris ${LUTRIS_VER} completed successfully"
+msgstr ""
+
+#: sw_runlib:1836
+#, sh-format
+msgid "Downloading wine lutris ge ${LUTRIS_GE_VER} completed successfully"
+msgstr ""
+
+#: sw_runlib:1853
+#, sh-format
+msgid "Do you really want to remove the wine staging?"
+msgstr ""
+
+#: sw_runlib:1864
+#, sh-format
+msgid "Do you really want to remove the wine steam proton?"
+msgstr ""
+
+#: sw_runlib:1875
+#, sh-format
+msgid "Do you really want to remove the wine proton ge?"
+msgstr ""
+
+#: sw_runlib:1886
+#, sh-format
+msgid "Do you really want to remove the wine lutris?"
+msgstr ""
+
+#: sw_runlib:1897
+#, sh-format
+msgid "Do you really want to remove the wine lutris ge?"
+msgstr ""
+
+#: sw_runlib:1915
+#, sh-format
+msgid "Terminate all processes"
+msgstr ""
+
+#: sw_runlib:1957 sw_runlib:1997 sw_runlib:2037 sw_runlib:2079 sw_runlib:2118
+#: sw_runlib:2174 sw_runlib:2217 sw_runlib:2257 sw_runlib:2299 sw_runlib:2339
+#: sw_runlib:2379 sw_runlib:2419 sw_runlib:2461 sw_runlib:2537 sw_runlib:2579
+#: sw_runlib:2619 sw_runlib:2659 sw_runlib:2702 sw_runlib:2745 sw_runlib:2785
+#: sw_runlib:2841 sw_runlib:2881 sw_runlib:2921 sw_runlib:2961 sw_runlib:2997
+#: sw_runlib:3037 sw_runlib:3077 sw_runlib:3117 sw_runlib:3157 sw_runlib:3197
+#: sw_runlib:3238 sw_runlib:3278 sw_runlib:3318 sw_runlib:3358 sw_runlib:3398
+#: sw_runlib:3438
+#, sh-format
+msgid "Application is installed"
+msgstr ""

@@ -1,0 +1,2449 @@
+/*___PROGRESS BARS___*/
+
+sw_progressbar {
+    color: rgba(163, 163, 163, 0.7);
+    font-size: smaller;
+    font-feature-settings: "tnum";
+}
+
+sw_progressbar text {
+    color: @sw_bg_color;
+    filter: invert(100%);
+}
+
+sw_progressbar > trough {
+    background-color: rgba(127, 127, 137, 0.8);
+    border-radius: 12px;
+}
+
+sw_progressbar > trough > progress {
+    background-color: @sw_accent_fg_color;
+    border-radius: 12px;
+}
+
+sw_progressbar.horizontal > trough {
+    min-width: 150px;
+}
+
+sw_progressbar.horizontal > trough,
+sw_progressbar.horizontal > trough > progress {
+    min-height: 6px;
+}
+
+sw_progressbar.vertical > trough {
+    min-height: 80px;
+}
+
+sw_progressbar.vertical > trough,
+sw_progressbar.vertical > trough > progress {
+    min-width: 6px;
+}
+
+
+/*___SPINNER___*/
+
+sw_spinner {
+    background: none;
+    opacity: 0;
+    -gtk-icon-source: -gtk-icontheme("process-working-symbolic");
+}
+
+sw_spinner:checked {
+    opacity: 1;
+    animation: spin 1s linear infinite;
+}
+
+sw_spinner:checked:disabled {
+    opacity: 0.5;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(1turn);
+    }
+}
+
+/*___PICTURE___*/
+
+sw_picture.sw_blur {
+    filter: blur(3px);
+}
+
+sw_picture {
+    border-radius: 12px;
+/*    background-color: @sw_accent_bg_color;*/
+    background-size: cover;
+    background-position: center;
+}
+
+/*___LABELS___*/
+
+sw_label {
+    font-weight: 600;
+    font-variant: normal;
+    font-size: 11pt;
+    color: @sw_text_color;
+}
+
+sw_label_title {
+    font-weight: bold;
+    font-size: 13pt;
+    color: @sw_text_color;
+/*    color: @sw_bg_color;*/
+/*    filter: invert(100%);*/
+}
+
+sw_label_desc {
+    font-weight: 500;
+    font-variant: normal;
+    font-size: 11pt;
+    color: shade(@sw_text_color, 0.9);
+/*    color: @sw_bg_color;*/
+/*    filter: invert(100%);*/
+}
+
+sw_label_sub {
+    font-weight: 500;
+    font-variant: normal;
+    font-size: 11pt;
+    color: shade(#c0c0c0, 0.9);
+}
+
+sw_label_view {
+    font-weight: bold;
+    font-size: 10pt;
+    color: #c0c0c0;
+}
+
+sw_label_view.font_size_10 {
+    font-weight: bold;
+    font-size: 10pt;
+    color: #c0c0c0;
+}
+
+sw_label_view.font_size_11 {
+    font-weight: bold;
+    font-size: 10pt;
+    color: #c0c0c0;
+}
+
+sw_label_view.font_size_12 {
+    font-weight: bold;
+    font-size: 11pt;
+    color: #c0c0c0;
+}
+
+sw_label_view.font_size_13 {
+    font-weight: bold;
+    font-size: 12pt;
+    color: #c0c0c0;
+}
+
+sw_label_view.font_size_14 {
+    font-weight: bold;
+    font-size: 13pt;
+    color: #c0c0c0;
+}
+
+sw_label_view.font_size_15 {
+    font-weight: bold;
+    font-size: 14pt;
+    color: #c0c0c0;
+}
+
+sw_label_view.font_size_16 {
+    font-weight: bold;
+    font-size: 15pt;
+    color: #c0c0c0;
+}
+
+sw_label_view.font_size_17 {
+    font-weight: bold;
+    font-size: 17pt;
+    color: #c0c0c0;
+}
+
+sw_label_popover {
+    font-weight: 500;
+    font-variant: normal;
+    font-size: 11pt;
+    color: @sw_pop_bg_color;
+    filter: invert(80%);
+}
+
+sw_label_info {
+    font-weight: 500;
+    font-variant: normal;
+    font-size: 11pt;
+    color: #0099ff;
+}
+
+sw_label_warning {
+    font-weight: 500;
+    font-variant: normal;
+    font-size: 11pt;
+    color: red;
+}
+
+sw_label.not.link>label {
+    color: @sw_text_color;
+}
+
+sw_label.not.link>label:hover {
+    color: @sw_text_hover_color;
+}
+
+sw_label.separator {
+    color: @sw_text_hover_color;
+}
+
+sw_label>selection {
+    color: @sw_text_hover_color;
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+sw_label:disabled selection {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/*___HEADERBARS___*/
+
+sw_header_top {
+    color: @sw_text_color;
+    background-color: @sw_header_bg_color;
+    background-image: image(@sw_header_bg_color);
+    min-height: 38px;
+    margin-left: -1px;
+    margin-right: -1px;
+    box-shadow: none;
+    background-image: none;
+    border-color: transparent;
+    border-bottom: 1px solid transparent;
+    padding-right: 2px;
+    padding-left: 3px;
+}
+
+sw_header_bottom {
+    color: @sw_text_color;
+    background-image: image(@sw_header_bg_color);
+    min-height: 38px;
+    margin-left: -1px;
+    margin-right: -1px;
+    color: white;
+    background-color: @sw_header_bg_color;
+    box-shadow: none;
+    background-image: none;
+    border-color: transparent;
+    border-bottom: 1px solid transparent;
+    padding-right: 2px;
+    padding-left: 3px;
+}
+
+/*___WINDOW___*/
+
+sw_window.sw_background.csd {
+    transition: box-shadow 150ms cubic-bezier(0, 0, 0.2, 1);
+    border-radius: 12px;
+/*    box-shadow: 0 3px 3px 0 rgba(36, 36, 36, 0.1),*/
+/*                0 8px 8px 0 rgba(36, 36, 36, 0.1),*/
+/*                0 16px 16px 0 rgba(36, 36, 36, 0.1),*/
+/*                0 0 0 2px rgba(36, 36, 36, 0.1),*/
+/*                0 0 0 1px rgba(36, 36, 36, 0.1);*/
+    box-shadow: none;
+    margin: 0;
+}
+
+sw_window.sw_background {
+    border: 1px solid @sw_accent_bg_color;
+    border-radius: 12px;
+    background-color: transparent;
+    background-image: image(@sw_bg_color);
+}
+
+sw_window.sw_background.maximized,
+sw_window.sw_background.fullscreen {
+/*    border: none;*/
+    border-radius: 0;
+}
+
+sw_window {
+    font-weight: 500;
+    font-size: 11pt;
+}
+
+/*_______________________________________*/
+
+sw_wc_resize {
+    padding: 0px;
+    margin-right: 4px;
+    border-radius: 10px;
+    background-color: transparent;
+    border-radius: 10px;
+    transition: 200ms;
+}
+
+sw_wc_resize:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+sw_wc_close,
+sw_wc_minimize,
+sw_wc_maximize {
+    min-width: 16px;
+    min-height: 16px;
+    padding: 0px;
+    margin-right: 4px;
+    transition: 200ms;
+    color: white;
+    background-color: @sw_accent_fg_color;
+    border: 2px solid @sw_accent_fg_color;
+    border-radius: 9999px;
+    background-size: cover;
+    background-position: center;
+
+}
+
+sw_wc_close:hover {
+    transition: 200ms;
+    background-color: #ff0000;
+    border: 2px solid #ff0000;
+}
+
+sw_wc_minimize:hover{
+    transition: 200ms;
+    background-color: #ff9900;
+    border: 2px solid #ff9900;
+}
+
+sw_wc_maximize:hover {
+    transition: 200ms;
+    background-color: #00ff00;
+    border: 2px solid #00ff00;
+}
+
+sw_wc_close:active,
+sw_wc_minimize:active,
+sw_wc_maximize:active {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+    transition: 200ms;
+    background-color: @sw_accent_bg_color;
+}
+
+/*___BUTTONS___*/
+
+sw_button_accept {
+    font-size: 11pt;
+    padding: 6px;
+    border-radius: 10px;
+    color: white;
+    background-color: #0099ff;
+    background-image: image(#0099ff);
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    outline: 0 solid transparent;
+}
+
+sw_button_accept:hover {
+    color: white;
+    background-color: shade(#0099ff, 0.9);
+    background-image: image(shade(#0099ff, 0.9));
+}
+
+sw_button_accept:focus {
+    color: white;
+    background-color: shade(#0099ff, 0.9);
+    background-image: image(shade(#0099ff, 0.9));
+    outline-color: #0099ff;
+    outline-width: 2px;
+    outline-offset: -1px;
+}
+
+sw_button_cancel {
+    font-size: 11pt;
+    padding: 6px;
+    border-radius: 10px;
+    color: white;
+    background-color: #ff6060;
+    background-image: image(#ff6060);
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    outline: 0 solid transparent;
+}
+
+sw_button_cancel:hover {
+    color: white;
+    background-color: #cc4040;
+    background-image: image(#cc4040);
+}
+
+sw_button_cancel:focus {
+    color: white;
+    background-color: #cc4040;
+    background-image: image(#cc4040);
+    outline-color: #cc4040;
+    outline-width: 2px;
+    outline-offset: -1px;
+}
+
+sw_button_close {
+    font-size: 11pt;
+    padding: 5px;
+    border-radius: 9999px;
+    color: @sw_text_color;
+    background-color: transparent;
+    background-image: none;
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    outline: 0 solid transparent;
+}
+
+sw_button_close:hover {
+    color: @sw_text_hover_color;
+    background-image: image(@sw_accent_bg_color);
+}
+
+sw_button_close:focus {
+    color: @sw_text_hover_color;
+    outline-color: @sw_accent_fg_color;
+    outline-width: 2px;
+    outline-offset: -1px;
+}
+
+sw_button_close:active {
+    background-image: image(alpha(@sw_accent_fg_color, 0.5));
+}
+
+sw_button.sw_custom {
+    color: #a0a0a0;
+    background-color: rgba(0, 0, 0, 0.8);
+    background-image: image(#000);
+    padding: 10px;
+    border-radius: 10px;
+}
+
+sw_button.sw_custom:hover {
+    color: #a0a0a0;
+    background-color: rgba(0, 0, 0, 0.8);
+    background-image: image(alpha(rgba(25, 25, 25, 0.5),0.5));
+}
+
+sw_button.sw_custom sw_label {
+    color: #a0a0a0;
+}
+
+sw_button.sw_custom:hover sw_label {
+    color: shade(#a0a0a0, 1.3);
+}
+
+sw_button_path {
+    font-size: 11pt;
+    padding: 4px;
+    border-radius: 6px;
+    color: @sw_accent_fg_color;
+    background-color: @sw_accent_bg_color;
+    background-image: image(@sw_accent_bg_color);
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    outline: 0 solid transparent;
+}
+
+sw_button_path:hover {
+    color: @sw_text_hover_color;
+    background-image: image(alpha(@sw_accent_fg_color, 0.5));
+}
+
+sw_button_path:hover sw_label_desc {
+    color: @sw_text_hover_color;
+}
+
+sw_button_path:active {
+    background-image: image(alpha(@sw_accent_fg_color, 0.5));
+}
+
+sw_button_header {
+    font-size: 11pt;
+    padding: 10px;
+    border-radius: 10px;
+    color: @sw_text_color;
+    background-color: transparent;
+    background-image: none;
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    outline: 0 solid transparent;
+}
+
+sw_button_header:hover {
+    color: @sw_text_hover_color;
+    background-image: image(@sw_accent_bg_color);
+}
+
+sw_button_header:focus {
+    color: @sw_text_hover_color;
+    outline-color: @sw_accent_fg_color;
+    outline-width: 2px;
+    outline-offset: -1px;
+}
+
+sw_button_header:active {
+    background-image: image(alpha(@sw_accent_fg_color, 0.5));
+}
+
+sw_button {
+    font-size: 11pt;
+    padding: 10px;
+    border-radius: 10px;
+    color: @sw_text_color;
+    background-color: lighter(@sw_accent_bg_color);
+    background-image: image(lighter(@sw_accent_bg_color));
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    outline: 0 solid transparent;
+}
+
+sw_button:hover {
+    color: @sw_text_hover_color;
+    background-image: image(alpha(@sw_accent_fg_color, 0.5));
+}
+
+sw_button:hover sw_label {
+    color: @sw_text_hover_color;
+}
+
+sw_button:hover sw_label_desc {
+    color: @sw_text_hover_color;
+}
+
+sw_button:focus:hover {
+    color: @sw_text_hover_color;
+    background-image: image(alpha(@sw_accent_fg_color, 0.5));
+}
+
+sw_button:focus {
+    color: @sw_text_color;
+    outline-color: @sw_accent_fg_color;
+    outline-width: 2px;
+    outline-offset: -1px;
+}
+
+sw_button:active {
+    background-image: image(alpha(@sw_accent_fg_color, 0.5));
+}
+
+sw_button.toggle:checked {
+    background-image: image(alpha(@sw_accent_fg_color, 0.5));
+}
+
+sw_grid sw_buttoncolor {
+    font-size: 11pt;
+    padding: 0px;
+    margin: 0px;
+    border-radius: 6px;
+    border-color: transparent;
+    color: @sw_text_color;
+    background-color: transparent;
+    background-image: none;
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    outline: 0 solid transparent;
+}
+
+sw_grid sw_buttoncolor>button.sw_color {
+    padding: 0px;
+    margin: 0px;
+    border-radius: 6px;
+    border-color: transparent;
+    color: @sw_text_color;
+    background-color: transparent;
+    background-image: none;
+    outline: 0 solid transparent;
+}
+
+sw_grid sw_buttoncolor>button.sw_color>colorswatch overlay,
+sw_grid sw_buttoncolor>button.sw_color>colorswatch#add-color-button>overlay,
+sw_grid sw_buttoncolor>button.sw_color>colorswatch:only-child,
+sw_grid sw_buttoncolor>button.sw_color>colorswatch:only-child>overlay {
+    padding: 0px;
+    margin: 0px;
+    border-radius: 6px;
+    border-color: transparent;
+    color: @sw_text_color;
+    background-color: transparent;
+    background-image: none;
+    outline: 0 solid transparent;
+}
+
+/*___SPIN_BUTTON___*/
+
+sw_spinbutton {
+    min-height: 34px;
+    padding-left: 9px;
+    padding-right: 9px;
+    border-radius: 6px;
+    border-spacing: 6px;
+    background-clip: padding-box;
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    caret-color: currentColor;
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    background-color: @sw_accent_bg_color;
+    color: @sw_text_color;
+    outline: 0 solid transparent;
+    outline-offset: 0px;
+    border: none;
+}
+
+sw_spinbutton>button {
+    border: none;
+    color: @sw_accent_fg_color;
+    background-color: lighter(@sw_accent_bg_color);
+    background-image: image(lighter(@sw_accent_bg_color));
+}
+
+sw_spinbutton>button:focus,
+sw_spinbutton>button:active,
+sw_spinbutton>button:hover {
+    outline-color: @sw_accent_fg_color;
+    outline-width: 2px;
+    outline-offset: -1px;
+    color: @sw_accent_fg_color;
+    background-color: @sw_accent_bg_color;
+    background-image: image(lighter(@sw_accent_bg_color));
+}
+
+sw_spinbutton>button:disabled {
+    border: none;
+    color: @sw_text_color;
+}
+
+/*___LINK_BUTTON___*/
+
+sw_button.link>label {
+    color: @sw_accent_fg_color;
+}
+
+sw_link {
+    border-radius: 10px;
+    color: @sw_text_color;
+    background-color: transparent;
+}
+
+sw_link sw_label {
+    color: @sw_accent_fg_color;
+}
+
+sw_link sw_label:hover {
+    color: darker(@sw_text_color);
+}
+
+sw_link:hover {
+    color: darker(@sw_text_color);
+}
+
+
+/*___CHECK_BUTTON___*/
+
+sw_checkbutton {
+    font-size: 11pt;
+    padding: 0px;
+    border-radius: 10px;
+    color: @sw_text_color;
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    transition: 200ms;
+    animation-timing-function: ease-in-out;
+    border-spacing: 0px;
+    padding: 3px;
+    border-radius: 9999px;
+}
+
+sw_checkbutton sw_check_dark {
+    min-height: 22px;
+    min-width: 22px;
+    padding: 0px;
+    margin: 0px;
+    color: @sw_text_color;
+    border-radius: 9999px;
+    background-color: transparent;
+    background-image: image(#0a0e12);
+    background-clip: padding-box;
+}
+
+sw_checkbutton sw_check_dark.checked {
+    border: 3px solid @sw_accent_fg_color;
+}
+
+sw_checkbutton sw_check_light {
+    min-height: 22px;
+    min-width: 22px;
+    padding: 0px;
+    margin: 0px;
+    color: @sw_text_color;
+    border-radius: 9999px;
+    background-color: transparent;
+    background-image: image(#c8c8d2);
+    background-clip: padding-box;
+}
+
+sw_checkbutton sw_check_light.checked {
+    border: 3px solid @sw_accent_fg_color;
+}
+
+sw_checkbutton sw_check_custom {
+    min-height: 22px;
+    min-width: 22px;
+    padding: 0px;
+    margin: 0px;
+    color: @sw_text_color;
+    border-radius: 9999px;
+    background-color: transparent;
+    background-image: repeating-linear-gradient(#ff0000, #00ffff);
+    background-clip: padding-box;
+}
+
+sw_checkbutton sw_check_custom.checked {
+    border: 3px solid @sw_accent_fg_color;
+}
+
+sw_checkbutton sw_uncheck {
+    min-height: 22px;
+    min-width: 22px;
+    padding: 0px;
+    margin: 0px;
+    color: @sw_text_color;
+    border: 2px solid @sw_accent_fg_color;
+    border-radius: 9999px;
+    background-color: transparent;
+    background-image: image(darker(@sw_accent_bg_color));
+    -gtk-icon-transform: translate(-3px, 6px) rotate(90deg) scaleY(0) rotate(-45deg) scaleX(0.2);
+}
+
+sw_checkbutton:focus:focus-visible {
+    outline-color: transparent;
+    outline-width: 2px;
+    outline-offset: -2px;
+}
+
+sw_checkbutton check:checked,
+sw_checkbutton check:indeterminate,
+sw_checkbutton radio:checked,
+sw_checkbutton radio:indeterminate {
+    color: @sw_text_hover_color;
+    background-color: @sw_accent_fg_color;
+    background-image: image(@sw_accent_fg_color);
+    box-shadow: none;
+}
+
+/*___SWITCH___*/
+
+sw_switch {
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    transition: all 200ms cubic-bezier(0, 0, 0.2, 1);
+    border-radius: 9999px;
+    background-color: transparent;
+    background-clip: padding-box;
+    color: transparent;
+    box-shadow: none;
+    background-image: image(rgba(160, 160, 160, 0.8));
+    padding: 2px;
+}
+
+sw_switch:hover {
+    transition: all 200ms cubic-bezier(0, 0, 0.2, 1);
+    background-color: @sw_text_color;
+    background-image: image(rgba(160, 160, 160, 0.6));
+}
+
+sw_switch:active {
+    transition: all 200ms cubic-bezier(0, 0, 0.2, 1);
+    background-color: @sw_text_color;
+    background-image: image(@sw_accent_fg_color);
+}
+
+sw_switch:checked {
+    animation: switch_ripple_effect 0.3s cubic-bezier(0, 0, 0.2, 1);
+    color: transparent;
+    box-shadow: none;
+    transition: background-image 0.3s, box-shadow 0;
+    background-color: @sw_text_color;
+    background-image: image(@sw_accent_fg_color);
+}
+
+sw_switch > slider {
+    box-shadow: none;
+    transition: all 200ms cubic-bezier(0, 0, 0.2, 1), box-shadow 150ms cubic-bezier(0, 0, 0.2, 1), margin 0;
+    min-width: 20px;
+    min-height: 20px;
+    margin: 0px 0 0px 0px;
+    background-image: none;
+    border-color: transparent;
+    border-radius: 9999px;
+    background-color: white;
+}
+
+sw_switch>slider:disabled {
+    box-shadow: none;
+}
+
+sw_switch:hover>slider,
+sw_switch:active>slider,
+sw_switch:checked>slider {
+    background: white;
+    border-color: transparent;
+    margin: 0;
+}
+
+sw_switch>slider:backdrop,
+sw_switch>slider:disabled,
+sw_switch>slider:checked:backdrop,
+sw_switch>slider:checked:disabled {
+    filter: opacity(0.5);
+}
+
+
+/*___SCALE___*/
+
+sw_scale {
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    min-height: 16px;
+    min-width: 16px;
+    padding: 3px;
+}
+
+sw_scale {
+    color: @sw_accent_fg_color;
+}
+
+sw_scale>trough>fill,
+sw_scale>trough {
+    border-radius: 9999px;
+    background-color: @sw_accent_bg_color;
+}
+
+sw_scale>trough {
+    transition: outline-width 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94), outline-offset 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    background-color: @sw_accent_bg_color;
+    border-radius: 9999px;
+    padding: 2px;
+    padding-left: 10px;
+    padding-right: 10px;
+    border-color: transparent;
+}
+
+sw_scale > trough > slider {
+    box-shadow: none;
+    outline: 1px solid transparent;
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition-property: background, border, box-shadow;
+    min-height: 16px;
+    min-width: 16px;
+    background-image: image(@sw_accent_fg_color);
+    border: 0px solid @sw_accent_bg_color;
+    border-radius: 9999px;
+    margin: -8px;
+}
+
+sw_scale > trough > highlight {
+    border-radius: 9999px;
+    background-color: @sw_accent_bg_color;
+    min-height: 4px;
+    min-width: 16px;
+    margin-right: -8px;
+    margin-left: -8px;
+    border-color: transparent;
+    background-image: image(@sw_accent_fg_color);
+}
+
+sw_scale.horizontal>marks indicator{
+    background-color: @sw_text_color;
+    min-height: 6px;
+    min-width: 1px;
+}
+
+sw_stack {
+    background-color: transparent;
+}
+
+/*___PREFERENCES_BOX___*/
+
+sw_tabs {
+    background-color: @sw_view_bg_color;
+}
+
+sw_pref_box {
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    color: @sw_text_color;
+    margin-left: 20px;
+    margin-right: 20px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    border-color: @sw_bg_color;
+    border-width: 0px;
+    background-clip: padding-box;
+    background-color: @sw_bg_color;
+    border-radius: 12px;
+}
+
+/*___TEXT_VIEW___*/
+
+sw_textview.text {
+    font-size: 11pt;
+    color: @sw_text_color;
+    background-color: @sw_bg_color;
+}
+
+/*___LIST_VIEW___*/
+
+sw_listview {
+    color: @sw_text_color;
+    background-color: transparent;
+}
+
+sw_listview.view {
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    border-left-color: @sw_view_bg_color;
+    border-top-color: @sw_view_bg_color;
+    padding-bottom: 16px;
+    padding-left: 24px;
+    padding-right: 24px;
+    outline: 4px solid transparent;
+    outline-offset: 40px;
+    background-color: transparent;
+}
+
+sw_listview sw_label {
+    color: lighter(@sw_text_color);
+    font-weight: 500;
+    font-variant: normal;
+}
+
+sw_listview>row {
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    outline: 1px solid transparent;
+    outline-offset: 40px;
+    border-radius: 12px;
+    background-color: transparent;
+}
+
+sw_listview>row:hover {
+    border-radius: 12px;
+    background-color: rgba(235,245,255,0.1);
+    background-image: image(alpha(@sw_accent_fg_color, 0.1));
+}
+
+sw_listview>row:selected.activatable {
+    border-radius: 12px;
+    color: @sw_text_hover_color;
+    background-image: image(alpha(@sw_accent_fg_color, 0.5));
+}
+
+sw_listview>row>cell:not(:first-child) {
+    border-left: 1px solid transparent;
+}
+
+/*___COLUMN_VIEW___*/
+
+sw_grid {
+    background-color: transparent;
+}
+
+sw_box {
+    border-color: @sw_bg_color;
+    border-width: 0px;
+    background-clip: padding-box;
+    background-color: transparent;
+    border-radius: 12px;
+}
+
+sw_box_tab {
+    margin-left: 16px;
+    margin-right: 16px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    border-color: @sw_bg_color;
+    border-width: 0px;
+    background-clip: padding-box;
+    background-color: @sw_bg_color;
+    border-radius: 12px;
+}
+
+sw_box_view {
+    margin-left: 8px;
+    margin-right: 8px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    border-color: @sw_bg_color;
+    border-width: 0px;
+    background-clip: padding-box;
+    background-color: transparent;
+    border-radius: 12px;
+}
+
+sw_box_overlay {
+    padding: 4px;
+    border-color: @sw_accent_bg_color;
+    border-width: 0px;
+    background-clip: padding-box;
+    background-color: rgba(0,0,0,0.8);
+    border-radius: 12px;
+}
+
+sw_box_overlay sw_label {
+    color: @sw_text_hover_color;
+}
+
+sw_shade_box {
+    background-color:transparent;
+    background-image: image(@sw_view_bg_color);
+}
+
+sw_columnview {
+    color: @sw_text_color;
+    background-color: transparent;
+}
+
+sw_columnview.view {
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    border-left-color: @sw_view_bg_color;
+    border-top-color: @sw_view_bg_color;
+    padding-bottom: 16px;
+    padding-left: 24px;
+    padding-right: 24px;
+    outline: 4px solid transparent;
+    outline-offset: 40px;
+    background-color: transparent;
+}
+
+sw_columnview>listview {
+    color: @sw_text_color;
+    background-color: transparent;
+    padding-bottom: 32px;
+}
+
+sw_columnview>listview label {
+    color: lighter(@sw_text_color);
+    font-weight: 500;
+    font-variant: normal;
+}
+
+sw_columnview listview row {
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    outline: 1px solid transparent;
+    outline-offset: 40px;
+    border-radius: 12px;
+    background-color: transparent;
+}
+
+sw_columnview>listview>row:hover {
+    border-radius: 12px;
+    background-color: rgba(235,245,255,0.1);
+    background-image: image(alpha(@sw_accent_fg_color, 0.1));
+}
+
+sw_columnview>listview>row:selected.activatable {
+    border-radius: 12px;
+    color: @sw_text_hover_color;
+    background-image: image(alpha(@sw_accent_fg_color, 0.5));
+}
+
+sw_columnview>listview>row>cell:not(:first-child) {
+    border-left: 1px solid transparent;
+}
+
+sw_columnview>header {
+    border-image: none;
+    background-color: transparent;
+    background-image: none;
+    border-radius: 12px;
+}
+
+sw_columnview>header>button {
+    font-weight: bold;
+    font-size: 11pt;
+    padding: 6px;
+    margin-right: 2px;
+    margin-left: 2px;
+    margin-top: 6px;
+    margin-bottom: 6px;
+    border-radius: 12px;
+    border-color: transparent;
+    color: @sw_text_color;
+    background-color: lighter(@sw_accent_bg_color);
+    background-image: image(lighter(@sw_accent_bg_color));
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    outline: 0 solid transparent;
+}
+
+sw_columnview>header>button:hover {
+    color: @sw_text_hover_color;
+    background-image: image(alpha(@sw_accent_fg_color, 0.5));
+}
+
+sw_columnview>header>button:hover sw_label {
+    color: @sw_text_hover_color;
+}
+
+sw_columnview>header>button:hover sw_label_desc {
+    color: @sw_text_hover_color;
+}
+
+sw_columnview>header>button:focus:hover {
+    color: @sw_text_hover_color;
+    background-image: image(alpha(@sw_accent_fg_color, 0.5));
+}
+
+sw_columnview>header>button:focus {
+    color: darker(@sw_text_color);
+    outline-color: @sw_accent_fg_color;
+    outline-width: 2px;
+    outline-offset: -1px;
+}
+
+sw_columnview>header>button:active {
+    background-image: image(alpha(@sw_accent_fg_color, 0.5));
+}
+
+sw_columnview_view {
+    color: @sw_text_color;
+    background-color: @sw_bg_color;
+    background-image: image(@sw_bg_color);
+}
+
+sw_columnview_view.view {
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    border-left-color: @sw_view_bg_color;
+    border-top-color: @sw_view_bg_color;
+    padding-bottom: 16px;
+    padding-left: 24px;
+    padding-right: 24px;
+    outline: 4px solid transparent;
+    outline-offset: 40px;
+    background-color: transparent;
+}
+
+sw_columnview_view>listview {
+    color: @sw_text_color;
+    background-color: @sw_bg_color;
+    padding-bottom: 32px;
+    border-radius: 12px;
+}
+
+sw_columnview_view>listview label {
+    color: lighter(@sw_text_color);
+    font-weight: 500;
+    font-variant: normal;
+}
+
+sw_columnview_view listview row {
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    outline: 1px solid transparent;
+    outline-offset: 40px;
+    border-radius: 12px;
+    background-color: transparent;
+}
+
+sw_columnview_view>listview>row:hover {
+    border-radius: 12px;
+    background-color: rgba(235,245,255,0.1);
+    background-image: image(alpha(@sw_accent_fg_color, 0.1));
+}
+
+sw_columnview_view>listview>row:selected.activatable {
+    border-radius: 12px;
+    color: @sw_text_hover_color;
+    background-image: image(alpha(@sw_accent_fg_color, 0.5));
+}
+
+sw_columnview_view>listview>row:selected.activatable sw_progressbar>text {
+    color: #000;
+}
+
+sw_columnview_view>listview>row:selected.activatable sw_progressbar>trough>progress {
+    background-color: white;
+}
+
+sw_columnview_view>listview>row>cell:not(:first-child) {
+    border-left: 1px solid transparent;
+}
+
+sw_columnview_view>header {
+    border-image: none;
+    background-color: transparent;
+    background-image: none;
+    border-radius: 12px;
+}
+
+sw_columnview_view>header>button {
+    font-weight: bold;
+    font-size: 11pt;
+    padding: 6px;
+    margin-right: 2px;
+    margin-left: 2px;
+    margin-top: 6px;
+    margin-bottom: 6px;
+    border-color: transparent;
+    border-radius: 12px;
+    color: @sw_text_color;
+    background-color: lighter(@sw_accent_bg_color);
+    background-image: image(lighter(@sw_accent_bg_color));
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    outline: 0 solid transparent;
+}
+
+sw_columnview_view>header>button:hover {
+    color: @sw_text_hover_color;
+    background-image: image(alpha(@sw_accent_fg_color, 0.5));
+}
+
+sw_columnview_view>header>button:hover sw_label {
+    color: @sw_text_hover_color;
+}
+
+sw_columnview_view>header>button:hover sw_label_desc {
+    color: @sw_text_hover_color;
+}
+
+sw_columnview_view>header>button:focus:hover {
+    color: @sw_text_hover_color;
+    background-image: image(alpha(@sw_accent_fg_color, 0.5));
+}
+
+sw_columnview_view>header>button:focus {
+    color: darker(@sw_text_color);
+    outline-color: @sw_accent_fg_color;
+    outline-width: 2px;
+    outline-offset: -1px;
+}
+
+sw_columnview_view>header>button:active {
+    background-image: image(alpha(@sw_accent_fg_color, 0.5));
+}
+
+sw_grid listview row {
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    outline: 1px solid transparent;
+    outline-offset: 40px;
+    border-radius: 12px;
+    background-color: transparent;
+}
+
+sw_grid listview>row:hover {
+    border-radius: 12px;
+    color: @sw_text_color;
+    background-color: rgba(235,245,255,0.1);
+    background-image: image(alpha(@sw_accent_fg_color, 0.1));
+}
+
+sw_grid listview>row:selected.activatable {
+    border-radius: 12px;
+    color: @sw_text_hover_color;
+    background-color: rgba(235,245,255,0.1);
+    background-image: image(alpha(@sw_accent_fg_color, 0.5));
+}
+
+sw_grid listview>row:selected.activatable sw_label_desc {
+    color: @sw_text_hover_color;
+}
+
+sw_grid listview>row>cell:not(:first-child) {
+    border-left: 1px solid transparent;
+}
+
+sw_grid header {
+    border-image: none;
+    background-color: transparent;
+    background-image: none;
+    border-radius: 12px;
+}
+
+sw_grid header label {
+    font-weight: bold;
+    color: @sw_text_color;
+}
+
+sw_grid header button:hover label {
+    font-weight: bold;
+    color: @sw_text_hover_color;
+}
+
+sw_grid header button.title {
+    font-size: 11pt;
+    padding: 6px;
+    border-radius: 12px;
+    border-color: transparent;
+    color: @sw_text_color;
+    background-color: lighter(@sw_accent_bg_color);
+    background-image: image(lighter(@sw_accent_bg_color));
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    outline: 0 solid transparent;
+}
+
+sw_grid header button.title:hover {
+    color: @sw_text_hover_color;
+    background-image: image(alpha(@sw_accent_fg_color, 0.5));
+}
+
+sw_grid header button.title label {
+    font-weight: bold;
+    color: @sw_text_color;
+}
+
+sw_grid header button.title:hover label {
+    font-weight: bold;
+    color: @sw_text_hover_color;
+}
+
+sw_pref_box listview row {
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    outline: 1px solid transparent;
+    outline-offset: 40px;
+    border-radius: 12px;
+    background-color: transparent;
+}
+
+sw_pref_box listview>row:hover {
+    border-radius: 12px;
+    color: @sw_text_color;
+    background-color: rgba(235,245,255,0.1);
+    background-image: image(alpha(@sw_accent_fg_color, 0.1));
+}
+
+sw_pref_box listview>row:selected.activatable {
+    border-radius: 12px;
+    color: @sw_text_hover_color;
+    background-color: rgba(235,245,255,0.1);
+    background-image: image(alpha(@sw_accent_fg_color, 0.5));
+}
+
+sw_pref_box listview>row:selected.activatable sw_label_desc {
+    color: @sw_text_hover_color;
+}
+
+sw_pref_box listview>row>cell:not(:first-child) {
+    border-left: 1px solid transparent;
+}
+
+sw_pref_box header {
+    border-image: none;
+    background-color: transparent;
+    background-image: none;
+    border-radius: 12px;
+}
+
+sw_pref_box header label {
+    font-weight: bold;
+    color: @sw_text_color;
+}
+
+sw_pref_box header button:hover label {
+    font-weight: bold;
+    color: @sw_text_hover_color;
+}
+
+sw_pref_box sw_columnview>header>button:hover {
+    color: @sw_text_hover_color;
+    background-image: image(alpha(@sw_accent_fg_color, 0.5));
+}
+
+sw_pref_box header button.title {
+    font-size: 11pt;
+    padding: 6px;
+    border-radius: 12px;
+    border-color: transparent;
+    color: @sw_text_color;
+    background-color: lighter(@sw_accent_bg_color);
+    background-image: image(lighter(@sw_accent_bg_color));
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    outline: 0 solid transparent;
+}
+
+sw_pref_box header button.title:hover {
+    color: @sw_text_hover_color;
+    background-image: image(alpha(@sw_accent_fg_color, 0.5));
+}
+
+sw_pref_box header button.title label {
+    font-weight: bold;
+    color: @sw_text_color;
+}
+
+sw_pref_box header button.title:hover label {
+    font-weight: bold;
+    color: @sw_text_hover_color;
+}
+
+/*___FLOWBOX, GRIDVIEW___*/
+
+sw_gridview {
+    color: @sw_text_color;
+    background-color:transparent;
+    background-image: none;
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    margin-left: 20px;
+    margin-right: 20px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    border-color: @sw_bg_color;
+    border-width: 0px;
+    background-clip: padding-box;
+    border-radius: 12px;
+}
+
+sw_scrolled_view {
+    background-color:transparent;
+    background-image: image(@sw_view_bg_color);
+/*    border-radius: 12px;*/
+}
+
+sw_flowbox {
+    color: @sw_text_color;
+    background-color:transparent;
+    background-image: image(@sw_flow_bg_color);
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+sw_gridview>child {
+    margin: 4px;
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    border-radius: 12px;
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    outline: 0 solid transparent;
+}
+
+sw_flowboxchild {
+    margin: 8px;
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    border-radius: 12px;
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    outline: 0 solid transparent;
+}
+
+sw_flowboxchild {
+    outline-color: lighter(@sw_accent_bg_color);
+    outline-width: 1px;
+    outline-offset: -1px;
+    background-color: mix(@sw_accent_bg_color, lighter(@sw_accent_bg_color), 0.5);
+}
+
+sw_flowboxchild:hover {
+    outline-color: @sw_accent_fg_color;
+    outline-width: 2px;
+    outline-offset: -1px;
+    background-color: lighter(@sw_accent_bg_color);
+}
+
+sw_gridview>child:hover {
+    outline-color: lighter(@sw_accent_bg_color);
+    outline-width: 2px;
+    outline-offset: -1px;
+    background-color: rgba(163,163,163,0.3);
+}
+
+sw_flowboxchild:selected,
+sw_gridview>child:selected {
+    animation: infinite alternate ease-in-out 0.75s;
+    background-repeat: no-repeat;
+    background-position: 50.00% 50.00%;
+    outline-color: @sw_accent_fg_color;
+    outline-width: 2px;
+    outline-offset: -1px;
+}
+
+sw_gridview>child.activatable:active {
+    background-color: alpha(@sw_accent_bg_color, 0.5);
+}
+
+sw_gridview>child.activatable:selected:hover {
+    background-color: alpha(@sw_accent_fg_color, 0.5);
+}
+
+sw_gridview>child.activatable:selected:active {
+    background-color: alpha(@sw_accent_bg_color, 0.5);
+}
+
+sw_gridview>child.activatable:selected:disabled {
+    background-color: alpha(@sw_accent_bg_color, 0.5);
+}
+
+sw_gridview>child.activatable:selected:disabled {
+    background-color: transparent;
+    background-image: none;
+    filter: opacity(0.5);
+}
+
+sw_frame {
+    color: @sw_text_color;
+    background-color: @sw_bg_color;
+    border: 1px solid transparent;
+    border-color: lighter(@sw_bg_color);
+}
+
+sw_row {
+    padding: 4px;
+    color: @sw_text_color;
+    background-color: @sw_header_bg_color;
+    border: 1px solid transparent;
+    border-radius: 12px;
+}
+
+sw_row sw_label {
+    font-weight: 600;
+    font-variant: normal;
+    color: @sw_header_bg_color;
+    filter: invert(80%);
+    border: 1px solid transparent;
+}
+
+sw_preferencesgroup {
+    color: @sw_text_color;
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-color: transparent;
+    border-radius: 12px;
+}
+
+sw_preferencesgroup {
+    color: @sw_text_color;
+    font-weight: 500;
+    font-variant: normal;
+}
+
+sw_preferencesgroup list {
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-color: transparent;
+    border-radius: 12px;
+    background-image: none;
+}
+
+sw_preferencesgroup label {
+    color: @sw_text_color;
+    font-weight: 500;
+    font-variant: normal;
+}
+
+/*___RUBBERBAND___*/
+
+sw_gridview rubberband {
+    border: 0px solid transparent;
+    background-color: alpha(@sw_accent_fg_color, 0.3);
+    background-image: image(alpha(@sw_accent_fg_color, 0.3));
+}
+
+/*___POPOVERS___*/
+
+sw_popovermenu > arrow.left {
+    margin-left: -2px;
+    margin-right: 6px;
+}
+
+sw_popovermenu > arrow.right {
+    margin-left: 6px;
+    margin-right: -2px;
+}
+
+sw_popovermenu {
+    border-radius: 12px;
+    color: @sw_text_color;
+    background: none;
+    background-image: image(@sw_pop_bg_color);
+/*    box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.2);*/
+}
+
+sw_popovermenu > contents {
+    padding-top: 8px;
+    padding-bottom: 8px;
+    padding-left: 12px;
+    padding-right: 12px;
+    border-radius: 12px;
+    background-image: image(@sw_pop_bg_color);
+}
+
+sw_popovermenu > contents box {
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+
+sw_popovermenu > contents box > modelbutton {
+    padding: 2px;
+    border-radius: 12px;
+    font-weight: 500;
+    font-size: 11pt;
+    color: @sw_text_color;
+}
+
+sw_popovermenu > contents box > modelbutton label {
+    font-weight: 500;
+    font-size: 11pt;
+    color: @sw_pop_bg_color;
+    filter: invert(80%);
+}
+
+sw_popovermenu > contents box > modelbutton:hover {
+    color: @sw_text_hover_color;
+    background-color: rgba(160,160,160,0.16);
+    background-image: image(rgba(160,160,160,0.16));
+}
+
+sw_popovermenu > contents box > modelbutton:focus {
+    color: @sw_text_hover_color;
+    background-color: rgba(160,160,160,0.16);
+    background-image: image(rgba(160,160,160,0.16));
+}
+
+sw_popovermenu > contents box > modelbutton:selected.activatable {
+    color: @sw_text_hover_color;
+    background-color: rgba(160,160,160,0.16);
+    background-image: image(rgba(160,160,160,0.16));
+}
+
+sw_popovermenu > contents box > label {
+    font-weight: 500;
+    font-size: 11pt;
+}
+
+sw_popover {
+    padding: 4px;
+    border-radius: 12px;
+    color: @sw_text_color;
+    background-color: @sw_pop_bg_color;
+    background-image: image(@sw_pop_bg_color);
+}
+
+sw_popover > contents {
+    border-radius: 0px;
+    background-image: image(@sw_pop_bg_color);
+}
+
+sw_popover > arrow.left {
+    margin-left: -2px;
+    margin-right: 6px;
+}
+
+sw_popover > arrow.right {
+    margin-left: 6px;
+    margin-right: -2px;
+}
+
+sw_popover > contents box > button {
+    font-weight: 500;
+    font-size: 11pt;
+    color: @sw_text_color;
+    border-radius: 12px;
+}
+
+sw_popover sw_label {
+    font-weight: 500;
+    font-size: 11pt;
+    color: @sw_pop_bg_color;
+    filter: invert(100%);
+}
+
+sw_popover label {
+    font-weight: 500;
+    font-size: 11pt;
+    color: @sw_pop_bg_color;
+    filter: invert(100%);
+}
+
+sw_popovermenu.menu separator {
+    background-image: image(@sw_text_color);
+    min-width: 1px;
+    min-height: 1px;
+    margin: 2px;
+}
+
+sw_popovermenu.menu list separator {
+    margin: 0;
+}
+
+separator {
+    min-width: 1px;
+    min-height: 1px;
+}
+
+separator.spacer {
+    background: none;
+}
+
+separator.spacer.horizontal {
+    min-width: 12px;
+}
+
+separator.spacer.vertical {
+    min-height: 12px;
+}
+
+/*___ENTRIES___*/
+
+sw_entry {
+    min-height: 32px;
+    margin: 4px;
+    padding-left: 4px;
+    padding-right: 4px;
+    border-radius: 12px;
+    border-spacing: 4px;
+    background-clip: padding-box;
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    caret-color: currentColor;
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    background-color: @sw_accent_bg_color;
+    color: @sw_accent_fg_color;
+    outline: 0 solid transparent;
+}
+
+sw_entry:hover {
+    outline-color: darker(@sw_accent_fg_color);
+    outline-width: 2px;
+    outline-offset: -1px;
+}
+
+sw_entry:focus-within {
+    outline-color: @sw_accent_fg_color;
+    outline-width: 2px;
+    outline-offset: -1px;
+}
+
+sw_entry:backdrop,
+sw_entry:disabled {
+    filter: opacity(1);
+    background-color: rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.5);
+    transition: 200ms;
+}
+
+sw_entry>text {
+    color: @sw_accent_fg_color;
+/*    filter: invert(100%);*/
+}
+
+sw_entry>text selection {
+    background-color: @sw_accent_bg_color;
+}
+
+sw_entry sw_button_path>label {
+    color: @sw_header_bg_color;
+    filter: invert(80%);
+}
+
+sw_entry>text>placeholder {
+    color: @sw_accent_fg_color;
+    font-weight: 500;
+    font-variant: normal;
+}
+
+sw_action_row {
+    min-height: 32px;
+    padding: 4px;
+    margin: 4px;
+    border: 1px solid transparent;
+    border-spacing: 4px;
+    border-radius: 12px;
+    background-clip: padding-box;
+    background-color: mix(@sw_accent_bg_color, lighter(@sw_accent_bg_color), 0.5);
+    color: @sw_text_color;
+    box-shadow: inset 0 -1px rgba(163, 163, 163, 0.3);
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    outline: 0 solid transparent;
+    outline-offset: 0px;
+    border: none;
+}
+
+sw_action_row:hover {
+    color: @sw_text_hover_color;
+    background-color: lighter(@sw_accent_bg_color);
+}
+
+sw_action_row:focus {
+    color: @sw_text_hover_color;
+    background-color: lighter(@sw_accent_bg_color);
+    outline-color: @sw_accent_fg_color;
+    outline-width: 2px;
+    outline-offset: -1px;
+}
+
+sw_action_row label {
+    color: @sw_text_color;
+    font-weight: 500;
+    font-variant: normal;
+}
+
+sw_entry_row {
+    min-height: 32px;
+    padding: 4px;
+    padding-right: 8px;
+    padding-left: 8px;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    background-color: darker(@sw_accent_bg_color);
+    color: lighter(@sw_text_color);
+    box-shadow: inset 0 -1px rgba(163, 163, 163, 0.3);
+}
+
+sw_entry_row label {
+    color: @sw_text_color;
+    font-weight: 500;
+    font-variant: normal;
+}
+
+sw_entry_row>text>placeholder {
+    color: @sw_text_color;
+    font-weight: 500;
+    font-variant: normal;
+}
+
+sw_entry image {
+    padding: 4px;
+    margin: 4px;
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    outline: 0 solid transparent;
+    outline-offset: 0px;
+    border: none;
+    background-color: @sw_accent_bg_color;
+    border-radius: 999px;
+}
+
+sw_entry image:hover {
+    background-color: @sw_accent_fg_color;
+    outline: 1px solid transparent;
+    outline-color: @sw_accent_fg_color;
+    border-radius: 999px;
+}
+
+sw_entry image:active {
+    background-color: lighter(@sw_accent_fg_color);
+    outline: 1px solid transparent;
+    outline-color: lighter(@sw_accent_fg_color);
+    border-radius: 999px;
+}
+
+/*___COMBO_BOXES___*/
+
+sw_dropdown {
+    border-radius: 12px;
+    color: @sw_text_color;
+    background-color: @sw_accent_bg_color;
+    background-image: image(@sw_accent_bg_color);
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    outline: 0 solid transparent;
+}
+
+sw_dropdown listview {
+    background-color: @sw_pop_bg_color;
+    background-image: image(@sw_pop_bg_color);
+}
+
+sw_dropdown button {
+    color: @sw_text_color;
+    background-color: @sw_accent_bg_color;
+    background-image: image(@sw_accent_bg_color);
+    border: none;
+}
+
+sw_dropdown label {
+    font-weight: 500;
+    font-variant: normal;
+    color: @sw_text_color;
+}
+
+sw_dropdown listview label {
+    font-weight: 500;
+    font-variant: normal;
+    color: @sw_pop_bg_color;
+    filter: invert(100%);
+}
+
+sw_dropdown image {
+    color: @sw_accent_fg_color;
+}
+
+sw_dropdown arrow,
+sw_combobox arrow {
+    min-width: 16px;
+    min-height: 16px;
+    -gtk-icon-source: -gtk-icontheme("pan-down-symbolic");
+    transition: -gtk-icon-transform 75ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+sw_dropdown button:checked arrow,
+sw_combobox button:checked arrow {
+    color: @sw_accent_fg_color;
+    -gtk-icon-transform: rotate(-0.5turn);
+}
+
+sw_dropdown > button > box {
+    border-spacing: 6px;
+}
+
+sw_dropdown > popover.menu > contents {
+    padding: 0;
+    color: @sw_text_color;
+    background-color: @sw_pop_bg_color;
+    background-image: image(@sw_pop_bg_color);
+}
+
+sw_dropdown > popover.menu > contents listview {
+    padding: 6px 0;
+}
+
+sw_dropdown > popover.menu > contents listview > row {
+    color: @sw_text_color;
+    min-height: 24px;
+    padding: 4px 8px;
+}
+
+sw_dropdown > popover.menu > contents listview > row:selected {
+    border-radius: 12px;
+    background-color: rgba(160,160,160,0.16);
+    background-image: image(rgba(160,160,160,0.16));
+}
+
+sw_dropdown > popover.menu > contents listview > row:selected label {
+    color: @sw_pop_bg_color;
+    filter: invert(100%);
+}
+
+sw_dropdown > popover.menu > contents listview > row:selected image {
+    color: @sw_accent_fg_color;
+}
+
+.sw_dropdown-searchbar {
+    border-bottom: 1px solid rgba(163, 163, 163, 0.2);
+}
+
+.sw_dropdown-searchbar > entry.search {
+    border-image: none;
+    border-radius: 12px;
+    box-shadow: none;
+    background-color: transparent;
+}
+
+sw_dropdown > button.toggle,
+button.combo:only-child {
+    padding-left: 8px;
+    padding-right: 8px;
+    border-radius: 2px 2px 0 0;
+    font-weight: 500;
+    box-shadow: inset 0 -1px rgba(163, 163, 163, 0.3);
+    background-color: transparent;
+    color: @sw_text_color;
+    caret-color: @sw_accent_fg_color;
+    border-radius: 12px;
+}
+
+sw_dropdown > button.toggle:focus,
+button.combo:only-child:focus {
+    box-shadow: inset 0 -1px rgba(163, 163, 163, 0.3);
+    background-color: @sw_accent_bg_color;
+    outline-color: @sw_accent_fg_color;
+    outline-width: 2px;
+    outline-offset: -1px;
+}
+
+sw_dropdown > button.toggle:drop(active), sw_dropdown > button.toggle:hover,
+button.combo:only-child:drop(active),
+button.combo:only-child:hover {
+    box-shadow: inset 0 -1px rgba(163, 163, 163, 0.3);
+    background-color: @sw_accent_bg_color;
+}
+
+sw_dropdown > button.toggle:checked,
+button.combo:only-child:checked {
+    box-shadow: inset 0 -1px rgba(163, 163, 163, 0.3);
+    background-color: @sw_accent_bg_color;
+}
+
+sw_dropdown > button.toggle:disabled,
+button.combo:only-child:disabled {
+    box-shadow: inset 0 -1px rgba(163, 163, 163, 0.2);
+    color: rgba(163, 163, 163, 0.5);
+    background-color: @sw_accent_bg_color;
+    background-image: image(@sw_accent_bg_color);
+    filter: opacity(0.5);
+}
+
+sw_dropdown > button.toggle arrow,
+button.combo:only-child arrow {
+    transition: color 75ms cubic-bezier(0, 0, 0.2, 1);
+    color: rgba(163, 163, 163, 0.7);
+}
+sw_dropdown > button.toggle arrow:disabled,
+button.combo:only-child arrow:disabled {
+    color: rgba(163, 163, 163, 0.3);
+}
+
+sw_combobox > box > button > box {
+    border-spacing: 6px;
+}
+
+sw_combobox cellview {
+    margin: -2px;
+}
+
+sw_combobox > popover.menu > contents modelbutton {
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+sw_combobox > .linked:not(.vertical) > entry:not(:only-child):first-child {
+    margin-right: -36px;
+    padding-right: 32px;
+}
+
+sw_combobox > .linked:not(.vertical) > entry:not(:only-child):last-child {
+    margin-left: -36px;
+    padding-left: 32px;
+}
+
+sw_combobox > .linked:not(.vertical) > button:not(:only-child) {
+    min-height: 16px;
+    min-width: 16px;
+    margin: 4px;
+    padding: 4px;
+    border-radius: 9999px;
+}
+
+
+/*DIALOG MESSAGE*/
+
+sw_dialog {
+    background-image: image(@sw_pop_bg_color);
+}
+
+sw_dialog label {
+    color: @sw_pop_bg_color;
+    filter: invert(100%);
+}
+
+sw_dialog.background,
+sw_dialog.titlebar {
+    border-radius: 12px;
+    min-height: 28px;
+    background-color: @sw_bg_color;
+}
+
+sw_dialog.background:backdrop,
+sw_dialog .titlebar:backdrop {
+    background-color: @sw_bg_color;
+}
+
+sw_dialog box.dialog-vbox.vertical {
+    margin-top: 6px;
+    border-spacing: 10px;
+}
+
+sw_dialog box.dialog-vbox.vertical>box>box>box>label.title {
+    font-weight: 800;
+    font-size: 11pt;
+}
+
+sw_dialog box.dialog-vbox.vertical>box>box>box>label {
+    font-weight: 800;
+    font-size: 11pt;
+}
+
+sw_dialog {
+    border-radius: 12px;
+}
+
+sw_dialog .dialog-action-area {
+    border-top: 0px solid transparent;
+    margin: 0;
+    border-spacing: 0;
+    padding: 0px;
+}
+
+sw_dialog .dialog-action-area>button {
+    background-clip: padding-box;
+    border-left: 0px solid transparent;
+    padding: 6px 12px;
+    box-shadow: none;
+    border-radius: 6px;
+    margin: 5px;
+    border: none;
+    background-image: image(@sw_accent_bg_color);
+    font-size: 11pt;
+}
+
+sw_dialog .dialog-action-area>button:focus:focus-visible,
+.osd sw_dialog .dialog-action-area>button:focus:focus-visible,
+sw_dialog .osd .dialog-action-area>button:focus:focus-visible {
+    outline-color: transparent;
+}
+
+sw_dialog .dialog-action-area>button:hover {
+    color: @sw_text_hover_color;
+    background-color: @sw_accent_fg_color;
+    background-image: image(@sw_accent_fg_color);
+}
+
+sw_dialog .dialog-action-area>button:active {
+    color: @sw_text_hover_color;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+sw_dialog .dialog-action-area>button.keyboard-activating,
+sw_dialog .dialog-action-area>button:checked,
+sw_dialog .dialog-action-area>button:checked:hover,
+sw_dialog .dialog-action-area>button:checked.keyboard-activating,
+sw_dialog .dialog-action-area>button:checked:active {
+    color: @sw_text_hover_color;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+sw_dialog .dialog-action-area>button:backdrop,
+sw_dialog .dialog-action-area>button:disabled {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.5);
+}
+
+sw_dialog .dialog-action-area>button.suggested-action,
+sw_dialog .dialog-action-area>button.destructive-action {
+    border-radius: 6px;
+    color: white;
+}
+
+sw_dialog .dialog-action-area>button.suggested-action:hover {
+    background-color: #2094c9;
+}
+
+sw_dialog .dialog-action-area>button.suggested-action:active {
+    background-color: #196b93;
+}
+
+sw_dialog .dialog-action-area>button.suggested-action:checked {
+    background-color: #2094c9;
+}
+
+sw_dialog .dialog-action-area>button.suggested-action:backdrop {
+    color: rgba(255, 255, 255, 0.5);
+    background-color: #196b93;
+}
+
+sw_dialog .dialog-action-area>button.suggested-action:disabled {
+    color: rgba(255, 255, 255, 0.5);
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+sw_dialog .dialog-action-area>button.destructive-action:hover {
+    background-color: #d65451;
+}
+
+sw_dialog .dialog-action-area>button.destructive-action:active {
+    background-color: #a8403e;
+}
+
+sw_dialog .dialog-action-area>button.destructive-action:checked {
+    background-color: #d65451;
+}
+
+sw_dialog .dialog-action-area>button.destructive-action:backdrop {
+    color: rgba(255, 255, 255, 0.5);
+    background-color: #a8403e;
+}
+
+sw_dialog .dialog-action-area>button.destructive-action:disabled {
+    color: rgba(255, 255, 255, 0.5);
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+sw_window.aboutdialog image.large-icons {
+    -gtk-icon-size: 128px;
+}
+
+sw_window.alert-dialog {
+    background-image: image(red);
+}
+
+/*TOOLTIP*/
+
+tooltip {
+    padding: 6px 10px;
+    border-radius: 12px;
+    box-shadow: none;
+}
+
+tooltip.background {
+    background-color: @sw_bg_color;
+    background-image: image(alpha(@sw_accent_fg_color, 0.5));
+    background-clip: padding-box;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+tooltip>box {
+    border-spacing: 6px;
+}
+
+tooltip label {
+    color: white;
+}
+
+sw_vte {
+    background: none;
+}
+
+
+/*SCROLLBAR*/
+
+sw_scrolled_view scrollbar,
+sw_scrolledwindow scrollbar {
+    color: @sw_accent_fg_color;
+    background-color: transparent;
+    transition: all 100ms linear;
+    border-color: transparent;
+}
+
+sw_scrolled_view scrollbar.top,
+sw_scrolledwindow scrollbar.top {
+    box-shadow: none;
+    padding-bottom: 1px;
+}
+
+sw_scrolled_view scrollbar.bottom,
+sw_scrolledwindow scrollbar.bottom {
+    box-shadow: none;
+    padding-top: 1px;
+}
+
+sw_scrolled_view scrollbar.left,
+sw_scrolledwindow scrollbar.left {
+    box-shadow: none;
+    padding-right: 1px;
+}
+
+sw_scrolled_view scrollbar.right,
+sw_scrolledwindow scrollbar.right {
+    box-shadow: none;
+    padding-left: 1px;
+}
+
+sw_scrolled_view scrollbar>range>trough,
+sw_scrolledwindow scrollbar>range>trough {
+    margin: 7px;
+    transition: all 200ms linear;
+    border-radius: 10px;
+}
+
+sw_scrolled_view scrollbar slider,
+sw_scrolledwindow scrollbar slider {
+    min-width: 8px;
+    min-height: 40px;
+    margin: 0px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background-clip: padding-box;
+    background-color: @sw_accent_fg_color;
+    background-image: image(@sw_accent_fg_color);
+    transition: all 100ms linear;
+}
+
+sw_scrolled_view scrollbar.horizontal slider,
+sw_scrolledwindow scrollbar.horizontal slider {
+    min-width: 40px;
+    min-height: 8px;
+}
+
+sw_scrolled_view scrollbar slider:hover,
+sw_scrolledwindow scrollbar slider:hover {
+    background-color: lighter(@sw_accent_fg_color);
+    background-image: image(lighter(@sw_accent_fg_color));
+}
+
+sw_scrolled_view scrollbar slider:hover:active,
+sw_scrolledwindow scrollbar slider:hover:active {
+    background-color: lighter(@sw_accent_fg_color);
+    background-image: image(lighter(@sw_accent_fg_color));
+}
+
+sw_scrolled_view scrollbar slider:backdrop,
+sw_scrolledwindow scrollbar slider:backdrop {
+    background-color: lighter(@sw_accent_fg_color);
+    background-image: image(lighter(@sw_accent_fg_color));
+}
+
+sw_scrolled_view scrollbar slider:disabled,
+sw_scrolledwindow scrollbar slider:disabled {
+    background-color: transparent;
+}
+
+sw_scrolled_view scrollbar.horizontal>range>trough,
+sw_scrolledwindow scrollbar.horizontal>range>trough {
+    margin-top: 6px;
+    margin-bottom: 6px;
+}
+
+sw_scrolled_view scrollbar.vertical>range>trough,
+sw_scrolledwindow scrollbar.vertical>range>trough {
+    margin-left: 6px;
+    margin-right: 6px;
+}
+
+sw_scrolled_view scrollbar.overlay-indicator,
+sw_scrolledwindow scrollbar.overlay-indicator {
+    background: none;
+    color: inherit;
+    box-shadow: none;
+    padding: 0;
+}
+
+sw_scrolled_view scrollbar.overlay-indicator>range>trough,
+sw_scrolledwindow scrollbar.overlay-indicator>range>trough {
+    outline: 1px solid transparent;
+}
+
+sw_scrolled_view scrollbar.overlay-indicator>range>trough>slider,
+sw_scrolledwindow scrollbar.overlay-indicator>range>trough>slider {
+    outline: 0px solid transparent;
+    outline-offset: 0px;
+}
+
+.osd sw_scrolled_view scrollbar.overlay-indicator>range>trough>slider,
+.osd sw_scrolledwindow scrollbar.overlay-indicator>range>trough>slider {
+    outline: 0px solid transparent;
+    outline-offset: 0px;
+}
+
+sw_scrolled_view scrollbar.overlay-indicator:not(.hovering)>range>trough>slider,
+sw_scrolledwindow scrollbar.overlay-indicator:not(.hovering)>range>trough>slider {
+    min-width: 3px;
+    min-height: 3px;
+    outline-color: transparent;
+}
+
+.osd sw_scrolled_view scrollbar.overlay-indicator:not(.hovering)>range>trough>slider,
+.osd sw_scrolledwindow scrollbar.overlay-indicator:not(.hovering)>range>trough>slider {
+    outline-color: transparent;
+}
+
+sw_scrolled_view scrollbar.overlay-indicator.hovering>range>trough,
+sw_scrolledwindow scrollbar.overlay-indicator.hovering>range>trough {
+    outline-color: transparent;
+    background-color: transparent;
+}
+
+.osd sw_scrolled_view scrollbar.overlay-indicator.hovering>range>trough,
+.osd sw_scrolledwindow scrollbar.overlay-indicator.hovering>range>trough {
+    outline-color: transparent;
+    background-color: transparent;
+}
+
+sw_scrolled_view scrollbar.overlay-indicator.horizontal>range>trough>slider,
+sw_scrolledwindow scrollbar.overlay-indicator.horizontal>range>trough>slider {
+    min-width: 40px;
+}
+
+sw_scrolled_view scrollbar.overlay-indicator.horizontal.hovering>range>trough>slider,
+sw_scrolledwindow scrollbar.overlay-indicator.horizontal.hovering>range>trough>slider {
+    min-height: 8px;
+}
+
+sw_scrolled_view scrollbar.overlay-indicator.horizontal:not(.hovering)>range>trough,
+sw_scrolledwindow scrollbar.overlay-indicator.horizontal:not(.hovering)>range>trough {
+    margin-top: 3px;
+    margin-bottom: 3px;
+}
+
+sw_scrolled_view scrollbar.overlay-indicator.vertical>range>trough>slider,
+sw_scrolledwindow scrollbar.overlay-indicator.vertical>range>trough>slider {
+    min-height: 40px;
+}
+
+sw_scrolled_view scrollbar.overlay-indicator.vertical.hovering>range>trough>slider,
+sw_scrolledwindow scrollbar.overlay-indicator.vertical.hovering>range>trough>slider {
+    min-width: 8px;
+}
+
+sw_scrolled_view scrollbar.overlay-indicator.vertical:not(.hovering)>range>trough,
+sw_scrolledwindow scrollbar.overlay-indicator.vertical:not(.hovering)>range>trough {
+    margin-left: 3px;
+    margin-right: 3px;
+}
+
+sw_scrolled_view scrollbar.horizontal>range>trough>slider,
+sw_scrolledwindow scrollbar.horizontal>range>trough>slider {
+    min-width: 40px;
+}
+
+sw_scrolled_view scrollbar.vertical>range>trough>slider,
+sw_scrolledwindow scrollbar.vertical>range>trough>slider {
+    min-height: 40px;
+}
+
+sw_scrolled_view scrollbar>range.fine-tune>trough>slider,
+sw_scrolled_view scrollbar>range.fine-tune>trough>slider:hover,
+sw_scrolled_view scrollbar>range.fine-tune>trough>slider:active,
+sw_scrolledwindow scrollbar>range.fine-tune>trough>slider,
+sw_scrolledwindow scrollbar>range.fine-tune>trough>slider:hover,
+sw_scrolledwindow scrollbar>range.fine-tune>trough>slider:active {
+    background-color: transparent;
+}
+

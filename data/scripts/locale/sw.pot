@@ -6,1117 +6,2149 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"#-#-#-#-#  py.pot (PACKAGE VERSION)  #-#-#-#-#\n"
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-20 21:18+0300\n"
+"POT-Creation-Date: 2023-11-13 15:35+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
-"Content-Transfer-Encoding: 8bit\n"
-"#-#-#-#-#  sh.pot (PACKAGE VERSION)  #-#-#-#-#\n"
-"Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-20 21:19+0300\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
-"Content-Transfer-Encoding: 8bit\n"
-"#-#-#-#-#  glade.pot (PACKAGE VERSION)  #-#-#-#-#\n"
-"Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-20 21:20+0300\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: sw_main:301
-msgid "___if you see this, you are half way___"
+#: sw_data.py:740
+msgid "Dark"
 msgstr ""
 
-#: sw_main:542
-msgid "Do you really want to remove"
+#: sw_data.py:741
+msgid "Light"
 msgstr ""
 
-#: sw_main:842 sw_main:2057
-msgid "Oops! Nothing to run..."
+#: sw_data.py:742
+msgid "Custom"
 msgstr ""
 
-#: sw_main:2801
-msgid "Do you really want reset settings ?"
+#: sw_data.py:748
+msgid "Open StartWine"
 msgstr ""
 
-#: sw_main:3225 sw_main:3235
-msgid "START MODE"
+#: sw_data.py:749
+msgid "Fast run"
 msgstr ""
 
-#: sw_main:3227
-msgid ""
-"PREFIX:\n"
-"default"
-msgstr ""
-
-#: sw_main:3237
-msgid "PREFIX:\n"
-msgstr ""
-
-#: sw_install_manager:212
-msgid "___dependency_installation_is_complete___"
-msgstr ""
-
-#: sw_install_manager:777
-msgid "STARTWINE UPDATE, PLEASE WAIT..."
-msgstr ""
-
-#: sw_install_manager:778
-msgid "UPDATE..."
-msgstr ""
-
-#: sw_install_manager:792
-msgid "UPDATE COMPLETED SUCCESSFULLY"
-msgstr ""
-
-#: sw_install_manager:795
-msgid "___process_error___"
-msgstr ""
-
-#: sw_install_manager:803
-msgid "STARTWINE INSTALLING, PLEASE WAIT..."
-msgstr ""
-
-#: sw_install_manager:811
-msgid "INSTALLATION COMPLETED SUCCESSFULLY"
-msgstr ""
-
-#: sw_install_manager:901
-msgid "Do you really want to remove the StartWine ?"
-msgstr ""
-
-#: sw_install_manager:910
-msgid "StartWine QUESTION"
-msgstr ""
-
-#: sw_install_manager:938
-msgid "StartWine remove completed successfully"
-msgstr ""
-
-#: sw_install_manager:943
-msgid "StartWine INFO"
-msgstr ""
-
-#: sw_install_manager:950
-msgid "INFO dialog closed"
-msgstr ""
-
-#: sw_install_manager:959
-msgid "Cancel"
-msgstr ""
-
-#: sw_install_manager:1134
-msgid "UPDATE"
-msgstr ""
-
-#: sw_install_manager:1136 sw_install_manager.glade:133
-msgid "INSTALL"
-msgstr ""
-
-#: StartWine-Tray:119
-msgid "Open "
-msgstr ""
-
-#: StartWine-Tray:130
-msgid "Run "
-msgstr ""
-
-#: StartWine-Tray:144
+#: sw_data.py:750 sw_data.py:851 sw_data.py:1046 sw_data.py:1200
 msgid "Shortcuts"
 msgstr ""
 
-#: StartWine-Tray:148
+#: sw_data.py:751 sw_data.py:1052 sw_data.py:2708
 msgid "Settings"
 msgstr ""
 
-#: StartWine-Tray:152
-msgid "Stop"
+#: sw_data.py:752
+msgid "Stop processes"
 msgstr ""
 
-#: StartWine-Tray:156
-msgid "Exit"
+#: sw_data.py:753
+msgid "Exit Tray"
 msgstr ""
 
-#: sw_runlib:228
-#, sh-format
-msgid "Error initializing the Wine prefix"
+#: sw_data.py:759 sw_data.py:816 sw_data.py:2650
+msgid "Run"
 msgstr ""
 
-#: sw_runlib:238
-#, sh-format
-msgid "Error installing libraries, try again"
+#: sw_data.py:760 sw_data.py:817 sw_data.py:2648
+msgid "Open"
 msgstr ""
 
-#: sw_runlib:810
-#, sh-format
-msgid "OpenGL mode"
+#: sw_data.py:761
+msgid "Open file location"
 msgstr ""
 
-#: sw_runlib:919
-#, sh-format
-msgid "VULKAN mode"
+#: sw_data.py:762 sw_data.py:818
+msgid "App settings"
 msgstr ""
 
-#: sw_runlib:965
-#, sh-format
-msgid "Create a new prefix for this application?"
+#: sw_data.py:763 sw_data.py:813 sw_data.py:819 sw_data.py:2694
+msgid "Remove"
 msgstr ""
 
-#: sw_runlib:998 sw_runlib:1171
-#, sh-format
-msgid "Restore prefix from backup ?"
+#: sw_data.py:764
+msgid "App to menu"
 msgstr ""
 
-#: sw_runlib:1006 sw_runlib:1181
-#, sh-format
-msgid "Restore prefix completed successfully"
+#: sw_data.py:765
+msgid "App to desktop"
 msgstr ""
 
-#: sw_runlib:1013
-#, sh-format
-msgid "To create a shortcut run StartWine from the exe file"
+#: sw_data.py:766 sw_data.py:2652
+msgid "Change wine"
 msgstr ""
 
-#: sw_runlib:1016
-#, sh-format
-msgid "Click the download wine button in the main menu and download Wine"
+#: sw_data.py:767
+msgid "Winehq"
 msgstr ""
 
-#: sw_runlib:1027
-#, sh-format
+#: sw_data.py:768
+msgid "Protondb"
+msgstr ""
+
+#: sw_data.py:769 sw_data.py:822
+msgid "wine staging"
+msgstr ""
+
+#: sw_data.py:770 sw_data.py:823
+msgid "wine steam proton"
+msgstr ""
+
+#: sw_data.py:771 sw_data.py:824
+msgid "wine proton ge"
+msgstr ""
+
+#: sw_data.py:772 sw_data.py:825
+msgid "wine lutris ge"
+msgstr ""
+
+#: sw_data.py:773 sw_data.py:826
+msgid "wine lutris"
+msgstr ""
+
+#: sw_data.py:774
+msgid "Create file"
+msgstr ""
+
+#: sw_data.py:775
+msgid "Create directory"
+msgstr ""
+
+#: sw_data.py:776
+msgid "Create link"
+msgstr ""
+
+#: sw_data.py:777 sw_data.py:2653
+msgid "Rename"
+msgstr ""
+
+#: sw_data.py:778 sw_data.py:808
+msgid "Cut"
+msgstr ""
+
+#: sw_data.py:779 sw_data.py:809
+msgid "Copy"
+msgstr ""
+
+#: sw_data.py:780 sw_data.py:810
+msgid "Paste"
+msgstr ""
+
+#: sw_data.py:781 sw_data.py:811
+msgid "Select all"
+msgstr ""
+
+#: sw_data.py:782 sw_data.py:812
+msgid "Move to trash"
+msgstr ""
+
+#: sw_data.py:783
+msgid "Delete permanently"
+msgstr ""
+
+#: sw_data.py:784 sw_data.py:1056
+msgid "Properties"
+msgstr ""
+
+#: sw_data.py:785
+msgid "Text"
+msgstr ""
+
+#: sw_data.py:786
+msgid "Bourne shell"
+msgstr ""
+
+#: sw_data.py:787
+msgid "Python"
+msgstr ""
+
+#: sw_data.py:788
+msgid "Desktop"
+msgstr ""
+
+#: sw_data.py:789
+msgid "Copy current path"
+msgstr ""
+
+#: sw_data.py:790
+msgid "Add to bookmark"
+msgstr ""
+
+#: sw_data.py:828
+msgid "sample"
+msgstr ""
+
+#: sw_data.py:852 sw_data.py:1051 sw_data.py:1201 sw_data.py:2707
+msgid "Install launchers"
+msgstr ""
+
+#: sw_data.py:853 sw_data.py:1212
+msgid "Launch settings"
+msgstr ""
+
+#: sw_data.py:854 sw_data.py:1213
+msgid "Mangohud settings"
+msgstr ""
+
+#: sw_data.py:855 sw_data.py:1214
+msgid "Vkbasalt settings"
+msgstr ""
+
+#: sw_data.py:856
+msgid "Mangohud colors settings"
+msgstr ""
+
+#: sw_data.py:857 sw_data.py:1216
+msgid "Global settings"
+msgstr ""
+
+#: sw_data.py:858
+msgid "Files"
+msgstr ""
+
+#: sw_data.py:859 sw_data.py:1108
+msgid "Winetricks"
+msgstr ""
+
+#: sw_data.py:860
+msgid "Terminal"
+msgstr ""
+
+#: sw_data.py:861
+msgid "Text view"
+msgstr ""
+
+#: sw_data.py:886
+msgid "Prefix: "
+msgstr ""
+
+#: sw_data.py:887
+msgid "Current prefix:\n"
+msgstr ""
+
+#: sw_data.py:888
+msgid "Current wine:\n"
+msgstr ""
+
+#: sw_data.py:889
+msgid "Oops! Nothing to run..."
+msgstr ""
+
+#: sw_data.py:908
+msgid "New"
+msgstr ""
+
+#: sw_data.py:909
+msgid "Details"
+msgstr ""
+
+#: sw_data.py:910
+msgid "Authors"
+msgstr ""
+
+#: sw_data.py:911
+msgid "License"
+msgstr ""
+
+#: sw_data.py:912
+msgid "Donations and help"
+msgstr ""
+
+#: sw_data.py:913
+msgid "Code"
+msgstr ""
+
+#: sw_data.py:914
+msgid "Projects"
+msgstr ""
+
+#: sw_data.py:915
+msgid "Members"
+msgstr ""
+
+#: sw_data.py:916
+msgid "Design"
+msgstr ""
+
+#: sw_data.py:917
+msgid "Github"
+msgstr ""
+
+#: sw_data.py:918
+msgid "Discord"
+msgstr ""
+
+#: sw_data.py:919
+msgid "Telegram"
+msgstr ""
+
+#: sw_data.py:927
 msgid ""
-"You have a backup of the default prefix. Use it to create a new prefix ?"
+"Is a Windows application launcher for GNU/Linux operating systems. Includes "
+"many features, extensions, and fixes to improve performance, visuals, and "
+"usability."
 msgstr ""
 
-#: sw_runlib:1076
-#, sh-format
-msgid "Shortcut ${STARTWINE_NAME} created in system menu"
-msgstr ""
-
-#: sw_runlib:1081
-#, sh-format
-msgid "Shortcut ${STARTWINE_NAME} removed from system menu"
-msgstr ""
-
-#: sw_runlib:1091
-#, sh-format
-msgid "Shortcut ${STARTWINE_NAME} created in desktop"
-msgstr ""
-
-#: sw_runlib:1094
-#, sh-format
-msgid "Shortcut ${STARTWINE_NAME} removed from desktop"
-msgstr ""
-
-#: sw_runlib:1120
-#, sh-format
-msgid "Do you really want to remove the prefix ?"
-msgstr ""
-
-#: sw_runlib:1134 sw_runlib:1146
-#, sh-format
-msgid "Shortcut and prefix ${STARTWINE_NAME} removed"
-msgstr ""
-
-#: sw_runlib:1157 sw_runlib:1185
-#, sh-format
-msgid "Remove old prefix ?"
-msgstr ""
-
-#: sw_runlib:1203
-#, sh-format
-msgid "Do you really want to backup the prefix ?"
-msgstr ""
-
-#: sw_runlib:1209 sw_runlib:1266
-#, sh-format
-msgid "Overwrite old backup ?"
-msgstr ""
-
-#: sw_runlib:1217 sw_runlib:1227
-#, sh-format
-msgid "Backup completed successfully"
-msgstr ""
-
-#: sw_runlib:1237
-#, sh-format
-msgid "Do you really want to restore the prefix ?"
-msgstr ""
-
-#: sw_runlib:1242 sw_runlib:1290
-#, sh-format
-msgid "You do not have a backup create it first"
-msgstr ""
-
-#: sw_runlib:1251
-#, sh-format
-msgid "Restore completed successfully"
-msgstr ""
-
-#: sw_runlib:1260
-#, sh-format
-msgid "Do you really want to backup all the prefixes ?"
-msgstr ""
-
-#: sw_runlib:1271 sw_runlib:1277
-#, sh-format
-msgid "Full backup completed successfully"
-msgstr ""
-
-#: sw_runlib:1285
-#, sh-format
-msgid "Do you really want to restore all the prefixes ?"
-msgstr ""
-
-#: sw_runlib:1292
-#, sh-format
-msgid "Would you like to save the current game prefixes ?"
-msgstr ""
-
-#: sw_runlib:1298 sw_runlib:1304
-#, sh-format
-msgid "Full Restore completed successfully"
-msgstr ""
-
-#: sw_runlib:1314
-#, sh-format
-msgid "Do you really want to clear the prefix ?"
-msgstr ""
-
-#: sw_runlib:1388 sw_runlib:1430 sw_runlib:1796 sw_runlib:1834 sw_runlib:1872
-#: sw_runlib:1910 sw_runlib:1947 sw_runlib:2001 sw_runlib:2039 sw_runlib:2077
-#: sw_runlib:2119 sw_runlib:2155 sw_runlib:2194 sw_runlib:2232 sw_runlib:2270
-#: sw_runlib:2353 sw_runlib:2391 sw_runlib:2429 sw_runlib:2553
-#, sh-format
-msgid "Application installed successfully"
-msgstr ""
-
-#: sw_runlib:1390 sw_runlib:1432
-#, sh-format
-msgid "Libraries installed successfully"
-msgstr ""
-
-#: sw_runlib:1397
-#, sh-format
-msgid "Install recommended libraries ?"
-msgstr ""
-
-#: sw_runlib:1504
-#, sh-format
-msgid "Please wait a while then press ok to open the log file"
-msgstr ""
-
-#: sw_runlib:1537
-#, sh-format
-msgid "Downloading wine staging completed successfully"
-msgstr ""
-
-#: sw_runlib:1539 sw_runlib:1571 sw_runlib:1610 sw_runlib:1644 sw_runlib:1678
-#, sh-format
-msgid "Download failed, try again"
-msgstr ""
-
-#: sw_runlib:1569
-#, sh-format
-msgid "Downloading wine steam proton completed successfully"
-msgstr ""
-
-#: sw_runlib:1608
-#, sh-format
-msgid "Downloading wine proton ge completed successfully"
-msgstr ""
-
-#: sw_runlib:1642
-#, sh-format
-msgid "Downloading wine lutris completed successfully"
-msgstr ""
-
-#: sw_runlib:1676
-#, sh-format
-msgid "Downloading wine lutris ge completed successfully"
-msgstr ""
-
-#: sw_runlib:1692
-#, sh-format
-msgid "Do you really want to remove the wine staging ?"
-msgstr ""
-
-#: sw_runlib:1703
-#, sh-format
-msgid "Do you really want to remove the wine steam proton ?"
-msgstr ""
-
-#: sw_runlib:1714
-#, sh-format
-msgid "Do you really want to remove the wine proton ge ?"
-msgstr ""
-
-#: sw_runlib:1725
-#, sh-format
-msgid "Do you really want to remove the wine lutris ?"
-msgstr ""
-
-#: sw_runlib:1736
-#, sh-format
-msgid "Do you really want to remove the wine lutris ge ?"
-msgstr ""
-
-#: sw_runlib:1759
-#, sh-format
-msgid "Kill wine porocesses"
-msgstr ""
-
-#: sw_runlib:1800 sw_runlib:1838 sw_runlib:1876 sw_runlib:1914 sw_runlib:1951
-#: sw_runlib:2005 sw_runlib:2043 sw_runlib:2081 sw_runlib:2123 sw_runlib:2159
-#: sw_runlib:2198 sw_runlib:2236 sw_runlib:2274 sw_runlib:2319 sw_runlib:2357
-#: sw_runlib:2395 sw_runlib:2433 sw_runlib:2474 sw_runlib:2517 sw_runlib:2557
-#, sh-format
-msgid "Application is installed"
-msgstr ""
-
-#: sw_menu.glade:176 sw_menu.glade:671
-msgid "FILE MANAGER"
-msgstr ""
-
-#: sw_menu.glade:224 sw_menu.glade:719
-msgid "TEXT EDIT"
-msgstr ""
-
-#: sw_menu.glade:272 sw_menu.glade:767
-msgid "APP TO MENU"
-msgstr ""
-
-#: sw_menu.glade:320 sw_menu.glade:815
-msgid "APP TO DESKTOP"
-msgstr ""
-
-#: sw_menu.glade:368 sw_menu.glade:863
-msgid "APP SETTINGS"
-msgstr ""
-
-#: sw_menu.glade:417 sw_menu.glade:912
-msgid "PROTONDB"
-msgstr ""
-
-#: sw_menu.glade:466 sw_menu.glade:961
-msgid "WINEHQ"
-msgstr ""
-
-#: sw_menu.glade:514 sw_menu.glade:1009 sw_install_manager.glade:110
-msgid "REMOVE"
-msgstr ""
-
-#: sw_menu.glade:579
+#: sw_data.py:933
 msgid ""
-"Current CPU temperature\n"
-"CPU draw in watts\n"
-"Load & frequency per core\n"
-"Shows the CPUs current MHz\n"
-"GPU name from pci.ids\n"
-"Current GPU temperature\n"
-"GPU draw in watts\n"
-"GPU core frequency\n"
-"GPU memory frequency\n"
-"System RAM usage\n"
-"System VRAM usage\n"
-"Swap space usage next to system RAM usage\n"
-"Process resident memory usage\n"
-"Process shared memory usage\n"
-"Process  virtual memory usage\n"
-"Show non-cached IO read, in MiB/s\n"
-"Show non-cached IO write, in MiB/s\n"
-"Enables most of the toggleable parameters\n"
-"Use primary font size for smaller text like units\n"
-"Displays local time\n"
-"Show media player metadata\n"
-"Shows current mangohud version\n"
-"Show if the application is 32 or 64 bit\n"
-"Change fps graph to histogram\n"
-"Displays used vulkan driver\n"
-"OpenGL or vulkan-based render engine's version\n"
-"Shows current Wine or Proton version in use\n"
-"Frametime next to fps text\n"
-"Frame count\n"
-"Current resolution\n"
-"Current fps limit\n"
-"Shows if vkbasalt is on\n"
-"Shows if gamemode is on\n"
-"Current battery percent and energy consumption\n"
-"Battery icon instead of percent\n"
-"Battey of wireless gamepads (xone,xpadneo,ds4)\n"
-"Gamepad battery percent with icon. *enabled by default\n"
-"Show FPS only"
+"This release adds the following features:\n"
+"- Added a way to export fonts.\n"
+"- Better support for monospace fonts.\n"
+"- Added a way to preview italic text.\n"
+"- Bug fixes and performance improvements.\n"
+"- Translation updates."
 msgstr ""
 
-#: sw_menu.glade:1189
-msgid "yellow"
-msgstr ""
-
-#: sw_menu.glade:1230
-msgid "white"
-msgstr ""
-
-#: sw_menu.glade:1271
-msgid "grey"
-msgstr ""
-
-#: sw_menu.glade:1312
-msgid "black"
-msgstr ""
-
-#: sw_menu.glade:1353
-msgid "red"
-msgstr ""
-
-#: sw_menu.glade:1394
-msgid "green"
-msgstr ""
-
-#: sw_menu.glade:1435
-msgid "blue"
-msgstr ""
-
-#: sw_menu.glade:1476
-msgid "purple"
-msgstr ""
-
-#: sw_menu.glade:1517
-msgid "brown"
-msgstr ""
-
-#: sw_menu.glade:1574
+#: sw_data.py:941
 msgid ""
-"Set launch paremeters, example: -d3d9, -d3d11, -opengl\n"
-"Override dll in the current prefix, example: amd_ags_x64=b,n\n"
-"Set prefix architrcture, example: win64, win32\n"
-"Set windows version, example: xp,2003,2008,7,8,10\n"
-"Add registry patch\n"
-"Using custom dxvk version from wine-proton-ge\n"
-"Using custom vkd3d version from wine-proton-ge\n"
-"Force use opengl, for some applications that d'nt run in dxvk\n"
-"Enable fps limit in vkd3d or dxvk mode\n"
-"System monitoring in OpenGL\n"
-"System monitoring in dxvk and vkd3d\n"
-"Set of optimisations be temporarily applied a game process\n"
-"Steam runtime library\n"
-"Restore display resolution after game termination\n"
-"Enable windows desktop emulation\n"
-"Improving frame rates and responsiveness with scheduling policies\n"
-"Increase performance for some games, especially ones that rely heavily on "
-"the CPU\n"
-"For old games that crash on very long extension strings\n"
-"Disable direct gpu access for nvidia video cards\n"
-"Disable debug mode for wine\n"
-"Allocate to a 32-bit application more than 2 GB of RAM\n"
-"Helps circumvent some types of protection in old games\n"
-"Increases performance by 5-10%\n"
-"System monitoring in dxvk\n"
-"Async pipelines are written to the state cache\n"
-"vkBasalt is a Vulkan post processing layer to enhance the visual graphics of "
-"games\n"
-"AMD FidelityFX Super Resolution - advanced upscaling technologies for higher "
-"fps\n"
-"Includes Windows Media Foundation libraries for video playback in some "
-"games\n"
-"Used to manage hybrid graphics found on recent desktops and laptops\n"
-"Open-source and cross-platform implementation of the .NET Framework\n"
-"BattlEye anti-cheat service required to run online games that use this "
-"service\n"
-"EasyAntCheat service required to run online games that use this service\n"
-"Preload d3d libraries\n"
-"Solves performance problems in some applications\n"
-"Hides the definition of nvidia video cards. Required to run some applications"
+"Rustam Normatov\n"
+"Nikita Maslov"
 msgstr ""
 
-#: sw_menu.glade:2297
-msgid "StartWine"
-msgstr ""
-
-#: sw_menu.glade:2401
-msgid "RESIZE"
-msgstr ""
-
-#: sw_menu.glade:2480 sw_menu.glade:6015
-msgid "ABOUT"
-msgstr ""
-
-#: sw_menu.glade:2532
-msgid "EXIT"
-msgstr ""
-
-#: sw_menu.glade:2597
+#: sw_data.py:945
 msgid ""
-"Launch parameters\n"
-"Example: -d3d11"
+"Rustam Normatov\n"
+"Nikita Maslov\n"
+"Maksim Tarasov"
 msgstr ""
 
-#: sw_menu.glade:2606 sw_menu.glade:2607
-msgid "Launch parameters"
+#: sw_data.py:983
+msgid "StartWine Design Team"
 msgstr ""
 
-#: sw_menu.glade:2681
-msgid "START"
+#: sw_data.py:985
+msgid "GNU General Public License"
 msgstr ""
 
-#: sw_menu.glade:2959
-msgid "open your games and applications"
-msgstr ""
-
-#: sw_menu.glade:2974
-msgid "SHORTCUTS"
-msgstr ""
-
-#: sw_menu.glade:3043
-msgid "create a new shortcut and prefix for the game or application"
-msgstr ""
-
-#: sw_menu.glade:3057
-msgid "CREATE SHORTCUT"
-msgstr ""
-
-#: sw_menu.glade:3126
-msgid "remove or reinstall the current prefix"
-msgstr ""
-
-#: sw_menu.glade:3140 sw_menu.glade:5229
-msgid "PREFIX TOOLS"
-msgstr ""
-
-#: sw_menu.glade:3209
-msgid "install the required libraries and dependencies to the current prefix"
-msgstr ""
-
-#: sw_menu.glade:3223 sw_menu.glade:5662
-msgid "WINE TOOLS"
-msgstr ""
-
-#: sw_menu.glade:3292
-msgid "translates Windows API calls into POSIX calls on-the-fly"
-msgstr ""
-
-#: sw_menu.glade:3306
-msgid "DOWNLOAD WINE"
-msgstr ""
-
-#: sw_menu.glade:3385
-msgid "INSTALL LAUNCHERS"
-msgstr ""
-
-#: sw_menu.glade:3454
-msgid "tools for increase perfomance, system monitoring, post processing"
-msgstr ""
-
-#: sw_menu.glade:3468
-msgid "SETTINGS"
-msgstr ""
-
-#: sw_menu.glade:3537
-msgid "run debug and logging mode in dxvk vkd3d or opengl mode"
-msgstr ""
-
-#: sw_menu.glade:3551
-msgid "DEBUG"
-msgstr ""
-
-#: sw_menu.glade:3606
-msgid "kill all wine process"
-msgstr ""
-
-#: sw_menu.glade:3621
-msgid "STOP"
-msgstr ""
-
-#: sw_menu.glade:3746 sw_menu.glade:4157 sw_menu.glade:4713
-#: sw_install_manager.glade:942
-msgid "WINE STAGING"
-msgstr ""
-
-#: sw_menu.glade:3795 sw_menu.glade:4206
-msgid "WINE STEAM PROTON"
-msgstr ""
-
-#: sw_menu.glade:3844 sw_menu.glade:4255 sw_menu.glade:4615
-#: sw_install_manager.glade:1014
-msgid "WINE PROTON GE"
-msgstr ""
-
-#: sw_menu.glade:3893 sw_menu.glade:4304 sw_menu.glade:4762
-#: sw_install_manager.glade:978
-msgid "WINE LUTRIS"
-msgstr ""
-
-#: sw_menu.glade:3942 sw_menu.glade:4353 sw_menu.glade:4664
-#: sw_install_manager.glade:906
-msgid "WINE LUTRIS GE"
-msgstr ""
-
-#: sw_menu.glade:3996 sw_menu.glade:4402
-msgid "WINE CUSTOM"
-msgstr ""
-
-#: sw_menu.glade:4036
-msgid "CREATE SHORTCUT WITH"
-msgstr ""
-
-#: sw_menu.glade:4552
-msgid "DOWNLOAD LIST"
-msgstr ""
-
-#: sw_menu.glade:4789
-msgid "CUSTOM SOURCE LIST"
-msgstr ""
-
-#: sw_menu.glade:4901
-msgid "REMOVE CURRENT PREFIX"
-msgstr ""
-
-#: sw_menu.glade:4949
-msgid "CLEAR CURRENT PREFIX"
-msgstr ""
-
-#: sw_menu.glade:4997
-msgid "REINSTALL CURRENT PREFIX"
-msgstr ""
-
-#: sw_menu.glade:5045
-msgid "PREFIX BACKUP"
-msgstr ""
-
-#: sw_menu.glade:5093
-msgid "PREFIX RECOVERY"
-msgstr ""
-
-#: sw_menu.glade:5141
-msgid "BACKUP ALL PREFIXES"
-msgstr ""
-
-#: sw_menu.glade:5189
-msgid "RECOVERY ALL PREFIXES"
-msgstr ""
-
-#: sw_menu.glade:5334
-msgid "WINE SETTINGS"
-msgstr ""
-
-#: sw_menu.glade:5382
-msgid "WINE CONSOLE"
-msgstr ""
-
-#: sw_menu.glade:5430
-msgid "REGEDIT"
-msgstr ""
-
-#: sw_menu.glade:5478
-msgid "FILE EXPLORER"
-msgstr ""
-
-#: sw_menu.glade:5526
-msgid "UNINSTALLER"
-msgstr ""
-
-#: sw_menu.glade:5574
-msgid "WINETRICKS"
-msgstr ""
-
-#: sw_menu.glade:5622
-msgid "RECOMENDED LIBS"
-msgstr ""
-
-#: sw_menu.glade:5749
+#: sw_data.py:988
 msgid ""
-"\n"
-"StartWine\n"
-"3.5.7"
+"StartWine is free software. You can redistribute it and/or modify it under "
+"the terms of the GNU General Public License as published by the Free "
+"Software Foundation; either version 3 of the License, or (at your option) "
+"any later version. StartWine is distributed without any warranty. See the "
+"GNU Lesser General Public License for more details."
 msgstr ""
 
-#: sw_menu.glade:5769
-msgid ""
-"StartWine is a launcher that allows you \n"
-"to quickly and easily launch Windows \n"
-"applications on Linux operating systems."
+#: sw_data.py:1045
+msgid "Start"
 msgstr ""
 
-#: sw_menu.glade:5820
-msgid "GITHUB SOURCE"
+#: sw_data.py:1047 sw_data.py:2651
+msgid "Create shortcut"
 msgstr ""
 
-#: sw_menu.glade:5895
-msgid "DISCORD SERVER"
+#: sw_data.py:1048
+msgid "Prefix tools"
 msgstr ""
 
-#: sw_menu.glade:5970 sw_install_manager.glade:618
-msgid "TELEGRAM"
+#: sw_data.py:1049
+msgid "Wine tools"
 msgstr ""
 
-#: sw_menu.glade:6055
-msgid ""
-"StartWine is free software;\n"
-"you can redistribute it and/or\n"
-"modify it under the terms of \n"
-"the GNU General Public License \n"
-"as published by the Free Software \n"
-"Foundation;\n"
-"either version 3 of the License,\n"
-"or (at your option) any later version.\n"
-"\n"
-"StartWine is distributed in the \n"
-"hope that it will be useful, but\n"
-"WITHOUT ANY WARRANTY; \n"
-"without even the implied\n"
-"warranty of MERCHANTABILITY\n"
-"or FITNESS FOR A PARTICULAR \n"
-"PURPOSE.\n"
-"See the GNU General Public\n"
-"License for more details."
+#: sw_data.py:1050 sw_data.py:2706
+msgid "Download wine"
 msgstr ""
 
-#: sw_menu.glade:6101 sw_menu.glade:6131
-msgid "LICENSE"
+#: sw_data.py:1053 sw_data.py:2709
+msgid "Debug"
 msgstr ""
 
-#: sw_menu.glade:6155
-msgid "Authors:"
+#: sw_data.py:1054 sw_data.py:2710
+msgid "Terminate all processes"
 msgstr ""
 
-#: sw_menu.glade:6172
-msgid ""
-"Normatov R.R.\n"
-"Maslov N.G."
+#: sw_data.py:1055 sw_data.py:2711
+msgid "About"
 msgstr ""
 
-#: sw_menu.glade:6185
-msgid "Acknowlegment:"
+#: sw_data.py:1057
+msgid "Bookmarks"
 msgstr ""
 
-#: sw_menu.glade:6202
-msgid ""
-"Huskysoul\n"
-"Lintech\n"
-"Lex\n"
-"VHSgunzo"
+#: sw_data.py:1065
+msgid "Default prefix"
 msgstr ""
 
-#: sw_menu.glade:6231
-msgid "DONATION"
+#: sw_data.py:1066
+msgid "Application prefix"
 msgstr ""
 
-#: sw_menu.glade:6287
-msgid "AUTHORS"
+#: sw_data.py:1080
+msgid "Remove current prefix"
 msgstr ""
 
-#: sw_menu.glade:6383
-msgid "CONFIRM INSTALL"
+#: sw_data.py:1081
+msgid "Clear current prefix"
 msgstr ""
 
-#: sw_menu.glade:12580
-msgid "DLL LIST"
+#: sw_data.py:1082
+msgid "Reinstall current prefix"
 msgstr ""
 
-#: sw_menu.glade:13447
-msgid "FONTS LIST"
+#: sw_data.py:1083
+msgid "Prefix backup"
 msgstr ""
 
-#: sw_menu.glade:14300 sw_menu.glade:14311 sw_menu.glade:14322
-#: sw_menu.glade:14333 sw_menu.glade:14344 sw_menu.glade:14355
-#: sw_menu.glade:14366 sw_menu.glade:14377 sw_menu.glade:14388
-#: sw_menu.glade:14399 sw_menu.glade:14410 sw_menu.glade:14421
-#: sw_menu.glade:14432 sw_menu.glade:14443 sw_menu.glade:14454
-#: sw_menu.glade:14465 sw_menu.glade:14476 sw_menu.glade:14487
-#: sw_menu.glade:14498 sw_menu.glade:14509 sw_menu.glade:14520
-#: sw_menu.glade:14531 sw_menu.glade:14542 sw_menu.glade:14553
-#: sw_menu.glade:14564 sw_menu.glade:14575 sw_menu.glade:14586
-#: sw_menu.glade:14597 sw_menu.glade:14608 sw_menu.glade:14619
-#: sw_menu.glade:14630 sw_menu.glade:14641 sw_menu.glade:14652
-#: sw_menu.glade:14663 sw_menu.glade:14674 sw_menu.glade:14689
-#: sw_menu.glade:14704 sw_menu.glade:14719 sw_menu.glade:14734
-#: sw_menu.glade:14749 sw_menu.glade:14764 sw_menu.glade:14779
-#: sw_menu.glade:14794 sw_menu.glade:14809 sw_menu.glade:14824
-#: sw_menu.glade:14839 sw_menu.glade:14854 sw_menu.glade:14869
-#: sw_menu.glade:14884 sw_menu.glade:14899 sw_menu.glade:14914
-#: sw_menu.glade:14929 sw_menu.glade:14944 sw_menu.glade:14959
-#: sw_menu.glade:14974 sw_menu.glade:14989 sw_menu.glade:15004
-#: sw_menu.glade:15019 sw_menu.glade:15034 sw_menu.glade:15049
-#: sw_menu.glade:15064 sw_menu.glade:15079 sw_menu.glade:15094
-#: sw_menu.glade:15122 sw_menu.glade:15137 sw_menu.glade:15332
-#: sw_menu.glade:15344 sw_menu.glade:15356 sw_menu.glade:15368
-#: sw_menu.glade:15380 sw_menu.glade:15392 sw_menu.glade:15404
-#: sw_menu.glade:15416 sw_menu.glade:15428 sw_menu.glade:15440
-#: sw_menu.glade:15452 sw_menu.glade:15464 sw_menu.glade:15476
-#: sw_menu.glade:15488 sw_menu.glade:15500 sw_menu.glade:15512
-#: sw_menu.glade:15524 sw_menu.glade:15536 sw_menu.glade:15548
-#: sw_menu.glade:15560 sw_menu.glade:15572 sw_menu.glade:15584
-#: sw_menu.glade:15596 sw_menu.glade:15608 sw_menu.glade:15620
-#: sw_menu.glade:15632 sw_menu.glade:15644 sw_menu.glade:15656
-#: sw_menu.glade:15668 sw_menu.glade:15680 sw_menu.glade:15692
-#: sw_menu.glade:15704 sw_menu.glade:15716 sw_menu.glade:15728
-#: sw_menu.glade:15740 sw_menu.glade:15752 sw_menu.glade:15764
-#: sw_menu.glade:15776 sw_menu.glade:16573 sw_menu.glade:16584
-#: sw_menu.glade:16595 sw_menu.glade:16606 sw_menu.glade:16617
-#: sw_menu.glade:16628 sw_menu.glade:16639 sw_menu.glade:16650
-#: sw_menu.glade:16661 sw_menu.glade:16672 sw_menu.glade:16683
-#: sw_menu.glade:16694 sw_menu.glade:16705 sw_menu.glade:16716
-msgid "label"
+#: sw_data.py:1084
+msgid "Prefix recovery"
 msgstr ""
 
-#: sw_menu.glade:15265
-msgid "LAUNCH SETTINGS"
+#: sw_data.py:1085
+msgid "Backup all prefixes"
 msgstr ""
 
-#: sw_menu.glade:15316 sw_menu.glade:15786 sw_menu.glade:15800
-#: sw_menu.glade:15814 sw_menu.glade:15828 sw_menu.glade:15842
-#: sw_menu.glade:15856 sw_menu.glade:15870 sw_menu.glade:15884
-#: sw_menu.glade:15898 sw_menu.glade:15912 sw_menu.glade:15926
-#: sw_menu.glade:15940 sw_menu.glade:15954 sw_menu.glade:15968
-#: sw_menu.glade:15982 sw_menu.glade:15996 sw_menu.glade:16010
-#: sw_menu.glade:16024 sw_menu.glade:16038 sw_menu.glade:16052
-#: sw_menu.glade:16066 sw_menu.glade:16080 sw_menu.glade:16094
-#: sw_menu.glade:16108 sw_menu.glade:16122 sw_menu.glade:16136
-#: sw_menu.glade:16150 sw_menu.glade:16164 sw_menu.glade:16178
-#: sw_menu.glade:16192 sw_menu.glade:16206 sw_menu.glade:16220
-#: sw_menu.glade:16234 sw_menu.glade:16248 sw_menu.glade:16262
-#: sw_menu.glade:16276 sw_menu.glade:16290 sw_menu.glade:16940
-#: sw_menu.glade:16954 sw_menu.glade:16968 sw_menu.glade:16982
-#: sw_menu.glade:16996 sw_menu.glade:17010 sw_menu.glade:17024
-#: sw_menu.glade:17038 sw_menu.glade:17052 sw_menu.glade:17066
-#: sw_menu.glade:17080 sw_menu.glade:17094 sw_menu.glade:17108
-#: sw_menu.glade:17122 sw_menu.glade:17136 sw_menu.glade:17150
-#: sw_menu.glade:17164 sw_menu.glade:17178 sw_menu.glade:17192
-#: sw_menu.glade:17206 sw_menu.glade:17220 sw_menu.glade:17234
-#: sw_menu.glade:17248 sw_menu.glade:17262 sw_menu.glade:17276
-#: sw_menu.glade:17290 sw_menu.glade:17304 sw_menu.glade:17318
-#: sw_menu.glade:17332 sw_menu.glade:17346 sw_menu.glade:17360
-#: sw_menu.glade:17374 sw_menu.glade:17388 sw_menu.glade:17402
-#: sw_menu.glade:17416 sw_menu.glade:17430 sw_menu.glade:17444
-#: sw_menu.glade:17458 sw_menu.glade:17472 sw_menu.glade:17486
-#: sw_menu.glade:17500 sw_menu.glade:17514 sw_menu.glade:17528
-#: sw_menu.glade:17542 sw_menu.glade:17556 sw_menu.glade:17570
-#: sw_menu.glade:17584 sw_menu.glade:17598 sw_menu.glade:17612
-#: sw_menu.glade:17626 sw_menu.glade:17640 sw_menu.glade:17654
-#: sw_menu.glade:17668 sw_menu.glade:17682 sw_menu.glade:17696
-#: sw_menu.glade:17710 sw_menu.glade:17724 sw_menu.glade:17738
-#: sw_menu.glade:17752 sw_menu.glade:17766 sw_menu.glade:17780
-#: sw_menu.glade:17794 sw_menu.glade:17808 sw_menu.glade:17822
-#: sw_menu.glade:17836 sw_menu.glade:17850 sw_menu.glade:17864
-#: sw_menu.glade:17878 sw_menu.glade:17892 sw_menu.glade:17906
-#: sw_menu.glade:17920 sw_menu.glade:17934
-msgid "checkbutton"
+#: sw_data.py:1086
+msgid "Recovery all prefixes"
 msgstr ""
 
-#: sw_menu.glade:16318
-msgid "HUD_POSITION"
+#: sw_data.py:1103
+msgid "Wine settings"
 msgstr ""
 
-#: sw_menu.glade:16349
-msgid "L"
+#: sw_data.py:1104
+msgid "Wine console"
 msgstr ""
 
-#: sw_menu.glade:16375
-msgid "R"
+#: sw_data.py:1105
+msgid "Regedit"
 msgstr ""
 
-#: sw_menu.glade:16412
+#: sw_data.py:1106
+msgid "File explorer"
+msgstr ""
+
+#: sw_data.py:1107
+msgid "Uninstaller"
+msgstr ""
+
+#: sw_data.py:1109
+msgid "Recomended libs"
+msgstr ""
+
+#: sw_data.py:1127
+msgid "Path"
+msgstr ""
+
+#: sw_data.py:1128
+msgid "Modified date"
+msgstr ""
+
+#: sw_data.py:1129
+msgid "Creation date"
+msgstr ""
+
+#: sw_data.py:1130
+msgid "Owner / Group"
+msgstr ""
+
+#: sw_data.py:1131
+msgid "Access"
+msgstr ""
+
+#: sw_data.py:1132
+msgid "Permission"
+msgstr ""
+
+#: sw_data.py:1133
+msgid "Executable"
+msgstr ""
+
+#: sw_data.py:1134
+msgid "Can-readable"
+msgstr ""
+
+#: sw_data.py:1135
+msgid "Can-writable"
+msgstr ""
+
+#: sw_data.py:1136
+msgid "Non-readable"
+msgstr ""
+
+#: sw_data.py:1137
+msgid "Non-writable"
+msgstr ""
+
+#: sw_data.py:1138
+msgid "Symbolic link to"
+msgstr ""
+
+#: sw_data.py:1186
+msgid "Adding a new bookmark completed successfully"
+msgstr ""
+
+#: sw_data.py:1187
+msgid "Remove bookmark completed successfully"
+msgstr ""
+
+#: sw_data.py:1188
+msgid "Bookmark is already exists!"
+msgstr ""
+
+#: sw_data.py:1199
+msgid "Games"
+msgstr ""
+
+#: sw_data.py:1202
+msgid "Prefixes"
+msgstr ""
+
+#: sw_data.py:1203
+msgid "Backups"
+msgstr ""
+
+#: sw_data.py:1204
+msgid "Prefix configurations"
+msgstr ""
+
+#: sw_data.py:1209
+msgid "Move settings"
+msgstr ""
+
+#: sw_data.py:1215
+msgid "Colors settings"
+msgstr ""
+
+#: sw_data.py:1217
+msgid "Reset app settings"
+msgstr ""
+
+#: sw_data.py:1218
+msgid "Reset menu settings"
+msgstr ""
+
+#: sw_data.py:1243
+msgid "Optimization, patches, tools, utilities and libraries"
+msgstr ""
+
+#: sw_data.py:1246 sw_data.py:1276
+msgid "LAUNCH_PARAMETERS"
+msgstr ""
+
+#: sw_data.py:1247 sw_data.py:1277
+msgid "WINEDLLOVERRIDES"
+msgstr ""
+
+#: sw_data.py:1250 sw_data.py:1278
+msgid "WINEARCH"
+msgstr ""
+
+#: sw_data.py:1251 sw_data.py:1279
+msgid "WINDOWS_VER"
+msgstr ""
+
+#: sw_data.py:1252 sw_data.py:1280
+msgid "REGEDIT_PATCH"
+msgstr ""
+
+#: sw_data.py:1253 sw_data.py:1281
+msgid "DXVK_VER"
+msgstr ""
+
+#: sw_data.py:1254 sw_data.py:1282
+msgid "VKD3D_VER"
+msgstr ""
+
+#: sw_data.py:1255 sw_data.py:1283
+msgid "FSR_MODE"
+msgstr ""
+
+#: sw_data.py:1257 sw_data.py:1284
 msgid "FPS_LIMIT"
 msgstr ""
 
-#: sw_menu.glade:16459
-msgid "INDICATORS"
+#: sw_data.py:1292
+msgid "Set launch parameters"
 msgstr ""
 
-#: sw_menu.glade:16813
-msgid "COLORS"
+#: sw_data.py:1293
+msgid "Override dll in the current prefix"
 msgstr ""
 
-#: sw_menu.glade:16840
-msgid "PREVIEW"
+#: sw_data.py:1294
+msgid "Set the architecture bit depth for the prefix"
 msgstr ""
 
-#: sw_menu.glade:16851
-msgid "mangohud_notebook"
+#: sw_data.py:1295
+msgid "Set windows version"
 msgstr ""
 
-#: sw_menu.glade:16897
-msgid "MANGOHUD SETTINGS"
+#: sw_data.py:1296
+msgid "Add registry patch"
 msgstr ""
 
-#: sw_menu.glade:17980
-msgid "EFFECT DEPTH"
+#: sw_data.py:1297
+msgid "Set dxvk version"
 msgstr ""
 
-#: sw_menu.glade:18035
-msgid "VKBASALT EFFECTS SETTINGS"
+#: sw_data.py:1298
+msgid "Set vkd3d version"
 msgstr ""
 
-#: sw_menu.glade:18064
-msgid "SET DEFAULT"
+#: sw_data.py:1299
+msgid "Set AMD FSR scaling mode"
 msgstr ""
 
-#: sw_menu.glade:18096
-msgid "app_settings_notebook"
+#: sw_data.py:1300
+msgid "Limit frame rate, value \"0\" - no limit"
 msgstr ""
 
-#: sw_menu.glade:18172
-msgid "TERMINAL"
+#: sw_data.py:1402
+msgid "Ultra"
 msgstr ""
 
-#: sw_menu.glade:18217
-msgid "window"
+#: sw_data.py:1402
+msgid "Quality"
 msgstr ""
 
-#: sw_install_manager.glade:10
-msgid "StartWine-Install-Manager"
+#: sw_data.py:1402
+msgid "Balanced"
 msgstr ""
 
-#: sw_install_manager.glade:210
-msgid "page0"
+#: sw_data.py:1402
+msgid "Performance"
 msgstr ""
 
-#: sw_install_manager.glade:220
-msgid "page1"
+#: sw_data.py:1440
+msgid "Using dxvk version from wine-proton-ge"
 msgstr ""
 
-#: sw_install_manager.glade:231
-msgid "page2"
+#: sw_data.py:1441
+msgid "Using vkd3d version from wine-proton-ge"
 msgstr ""
 
-#: sw_install_manager.glade:242
-msgid "page3"
+#: sw_data.py:1442
+msgid "Force use opengl, for applications that d'nt run in dxvk and vkd3d"
 msgstr ""
 
-#: sw_install_manager.glade:253
-msgid "page4"
+#: sw_data.py:1443
+msgid "System monitoring in dxvk and vkd3d"
 msgstr ""
 
-#: sw_install_manager.glade:264
-msgid "page5"
+#: sw_data.py:1444
+msgid "Set of optimisations be temporarily applied a game process"
 msgstr ""
 
-#: sw_install_manager.glade:275
-msgid "page6"
+#: sw_data.py:1445
+msgid "Runtime libraries from Valve Steam Proton"
 msgstr ""
 
-#: sw_install_manager.glade:286
-msgid "page7"
+#: sw_data.py:1446
+msgid "Enable windows desktop emulation"
 msgstr ""
 
-#: sw_install_manager.glade:297
-msgid "page8"
+#: sw_data.py:1447
+msgid "Improving frame rates and responsiveness with scheduling policies"
 msgstr ""
 
-#: sw_install_manager.glade:308
-msgid "page9"
-msgstr ""
-
-#: sw_install_manager.glade:319
-msgid "page10"
-msgstr ""
-
-#: sw_install_manager.glade:330
-msgid "page11"
-msgstr ""
-
-#: sw_install_manager.glade:341
-msgid "page12"
-msgstr ""
-
-#: sw_install_manager.glade:352
-msgid "page13"
-msgstr ""
-
-#: sw_install_manager.glade:363
-msgid "page14"
-msgstr ""
-
-#: sw_install_manager.glade:374
-msgid "page15"
-msgstr ""
-
-#: sw_install_manager.glade:385
-msgid "page16"
-msgstr ""
-
-#: sw_install_manager.glade:463
-msgid "SYSTEM OUTPUT"
-msgstr ""
-
-#: sw_install_manager.glade:522
-msgid "GITHUB"
-msgstr ""
-
-#: sw_install_manager.glade:570
-msgid "DISCORD"
-msgstr ""
-
-#: sw_install_manager.glade:650
-msgid "ADVANCED OPTIONS"
-msgstr ""
-
-#: sw_install_manager.glade:739 sw_install_manager.glade:830
-msgid "BACK"
-msgstr ""
-
-#: sw_install_manager.glade:869
-msgid "SELECT AN ADDITIONAL WINE TO INSTALL"
-msgstr ""
-
-#: sw_install_manager.glade:1052
-msgid "WINE STEAM PROTON ( DEFAULT )"
-msgstr ""
-
-#: sw_install_manager.glade:1077
+#: sw_data.py:1448
 msgid ""
-"Fork of Wine developed by Valve. It is a collection of software and "
-"libraries combined with a patched version of Wine. Proton incorporates "
-"several libraries that improve 3D performance."
+"Increase performance for some games, especially ones that rely heavily on "
+"the CPU"
 msgstr ""
 
-#: sw_install_manager.glade:1097
+#: sw_data.py:1449
+msgid "For old games that crash on very long extension strings"
+msgstr ""
+
+#: sw_data.py:1450
 msgid ""
-"Custom build of Proton with the most recent bleeding-edge proton "
-"experimental Wine. Includes some patches: DXVK patched with Async, media "
-"foundation patches, AMD FSR patches, Nvidia CUDA support for phsyx, nvapi "
-"and others."
+"Disabling the nvapi library required by PhysX to enable GPU acceleration via "
+"CUDA"
 msgstr ""
 
-#: sw_install_manager.glade:1117
+#: sw_data.py:1451
+msgid "Disable debugging mode for wine to improve performance"
+msgstr ""
+
+#: sw_data.py:1452
+msgid "Allocate to a 32-bit application more than 2 GB of RAM"
+msgstr ""
+
+#: sw_data.py:1453
+msgid "Helps circumvent some types of protection in old games"
+msgstr ""
+
+#: sw_data.py:1454
+msgid "Сan optimize some wineserver calls by using shared memory"
+msgstr ""
+
+#: sw_data.py:1455
+msgid "System monitoring in dxvk"
+msgstr ""
+
+#: sw_data.py:1456
 msgid ""
-"Wine Staging is the testing area of winehq.org. It contains bug fixes and "
-"features, which have not been integrated into the development branch yet."
+"Asynchronous compilation of shaders from the render process to prevent hangs "
+"while waiting"
 msgstr ""
 
-#: sw_install_manager.glade:1137
+#: sw_data.py:1457
 msgid ""
-"Custom build of Wine based on/forked from the most recent bleeding-edge "
-"proton experimental Wine repo."
+"vkBasalt is a Vulkan post processing layer to enhance the visual graphics in "
+"games"
 msgstr ""
 
-#: sw_install_manager.glade:1157
-msgid "Fork of Wine developed by Lutris progect."
-msgstr ""
-
-#: sw_install_manager.glade:1225 sw_install_manager.glade:1272
+#: sw_data.py:1458
 msgid ""
-"Wine (originally an acronym for \"Wine Is Not an Emulator\") is a "
-"compatibility layer capable of running Windows applications on several POSIX-"
-"compliant operating systems, such as Linux, macOS, & BSD. Instead of "
-"simulating internal Windows logic like a virtual machine or emulator, Wine "
-"translates Windows API calls into POSIX calls on-the-fly, eliminating the "
-"performance and memory penalties of other methods and allowing you to "
-"cleanly integrate Windows applications into your desktop."
+"AMD FidelityFX Super Resolution - advanced upscaling technologies for higher "
+"fps"
+msgstr ""
+
+#: sw_data.py:1459
+msgid ""
+"An open source library containing plugins and codecs for handling media in "
+"applications"
+msgstr ""
+
+#: sw_data.py:1460
+msgid "Used to manage hybrid graphics found on recent desktops and laptops"
+msgstr ""
+
+#: sw_data.py:1461
+msgid "Open-source and cross-platform implementation of the .NET Framework"
+msgstr ""
+
+#: sw_data.py:1462
+msgid ""
+"BattlEye anti-cheat service required to run online games that use this "
+"service"
+msgstr ""
+
+#: sw_data.py:1463
+msgid "EasyAntCheat service required to run online games that use this service"
+msgstr ""
+
+#: sw_data.py:1464
+msgid "Preload d3d libraries"
+msgstr ""
+
+#: sw_data.py:1465
+msgid "Forcibly disabling vsync solves performance issues in some apps"
+msgstr ""
+
+#: sw_data.py:1466
+msgid ""
+"Hides the definition of nvidia video cards. Required to run some applications"
+msgstr ""
+
+#: sw_data.py:1467
+msgid "To run games using directx 8 and below, in dxvk mode"
+msgstr ""
+
+#: sw_data.py:1468
+msgid ""
+"Nvidia DLSS with DLSS to AMD FSR support. Advanced upscaling technologies "
+"for higher fps for higher frame rate per second"
+msgstr ""
+
+#: sw_data.py:1469
+msgid "Disable prefix update on startup"
+msgstr ""
+
+#: sw_data.py:1520
+msgid "Current CPU temperature"
+msgstr ""
+
+#: sw_data.py:1521
+msgid "CPU draw in watts"
+msgstr ""
+
+#: sw_data.py:1522
+msgid "Load and frequency per core"
+msgstr ""
+
+#: sw_data.py:1523
+msgid "Shows the CPUs current MHz"
+msgstr ""
+
+#: sw_data.py:1524
+msgid "Shows the Steam Deck fan rpm"
+msgstr ""
+
+#: sw_data.py:1525
+msgid "GPU name from pci.ids"
+msgstr ""
+
+#: sw_data.py:1526
+msgid "Current GPU temperature"
+msgstr ""
+
+#: sw_data.py:1527
+msgid "GPU draw in watts"
+msgstr ""
+
+#: sw_data.py:1528
+msgid "GPU core frequency"
+msgstr ""
+
+#: sw_data.py:1529
+msgid "GPU memory frequency"
+msgstr ""
+
+#: sw_data.py:1530
+msgid "System RAM usage"
+msgstr ""
+
+#: sw_data.py:1531
+msgid "System VRAM usage"
+msgstr ""
+
+#: sw_data.py:1532
+msgid "Swap space usage next to system RAM usage"
+msgstr ""
+
+#: sw_data.py:1533
+msgid "Process resident memory usage"
+msgstr ""
+
+#: sw_data.py:1534
+msgid "Process shared memory usage"
+msgstr ""
+
+#: sw_data.py:1535
+msgid "Process virtual memory usage"
+msgstr ""
+
+#: sw_data.py:1536
+msgid "Show non-cached IO read, in MiB/s"
+msgstr ""
+
+#: sw_data.py:1537
+msgid "Show non-cached IO write, in MiB/s"
+msgstr ""
+
+#: sw_data.py:1538
+msgid "Enables most of the toggleable parameters"
+msgstr ""
+
+#: sw_data.py:1539
+msgid "Use primary font size for smaller text like units"
+msgstr ""
+
+#: sw_data.py:1540
+msgid "Show media player metadata"
+msgstr ""
+
+#: sw_data.py:1541
+msgid "Shows current mangohud version"
+msgstr ""
+
+#: sw_data.py:1542
+msgid "Show if the application is 32 or 64 bit"
+msgstr ""
+
+#: sw_data.py:1543
+msgid "Change fps graph to histogram"
+msgstr ""
+
+#: sw_data.py:1544
+msgid "Displays used vulkan driver"
+msgstr ""
+
+#: sw_data.py:1545
+msgid "OpenGL or vulkan-based render engine's version"
+msgstr ""
+
+#: sw_data.py:1546
+msgid "Shows current Wine or Proton version in use"
+msgstr ""
+
+#: sw_data.py:1547
+msgid "Frametime next to fps text"
+msgstr ""
+
+#: sw_data.py:1548
+msgid "Frame count"
+msgstr ""
+
+#: sw_data.py:1549
+msgid "Current resolution"
+msgstr ""
+
+#: sw_data.py:1550
+msgid "Current fps limit"
+msgstr ""
+
+#: sw_data.py:1551
+msgid "Shows if vkbasalt is on"
+msgstr ""
+
+#: sw_data.py:1552
+msgid "Shows if gamemode is on"
+msgstr ""
+
+#: sw_data.py:1553
+msgid "Current battery percent and energy consumption"
+msgstr ""
+
+#: sw_data.py:1554
+msgid "Battery icon instead of percent"
+msgstr ""
+
+#: sw_data.py:1555
+msgid "Battey of wireless gamepads (xone,xpadneo,ds4)"
+msgstr ""
+
+#: sw_data.py:1556
+msgid "Gamepad battery percent with icon. *enabled by default"
+msgstr ""
+
+#: sw_data.py:1557
+msgid "Show FPS only"
+msgstr ""
+
+#: sw_data.py:1558
+msgid "Displays local time"
+msgstr ""
+
+#: sw_data.py:1561
+msgid "System monitoring indicators"
+msgstr ""
+
+#: sw_data.py:1570
+msgid "Supposedly imitation of rendering on the legendary 3dfx video cards."
+msgstr ""
+
+#: sw_data.py:1571
+msgid ""
+"Adaptive fog. Used most for creating a color background, or putting a "
+"subject in shadows."
+msgstr ""
+
+#: sw_data.py:1572
+msgid ""
+"Contrast Adaptive Sharpening. An image sharpening method that observes the "
+"contrast of the local environment."
+msgstr ""
+
+#: sw_data.py:1573
+msgid ""
+"Ambient light. Bloom mixed with the EyeAdaption shader effect and lens dirt."
+msgstr ""
+
+#: sw_data.py:1574
+msgid "For those who miss text games and Matrix fans."
+msgstr ""
+
+#: sw_data.py:1575
+msgid "Сorrects aspect ratio in stretched images."
+msgstr ""
+
+#: sw_data.py:1576
+msgid ""
+"A shader for simulating image blur depending on the brightness of the scene."
+msgstr ""
+
+#: sw_data.py:1577
+msgid ""
+"If you want to add borders in image but want the subject to hover over said "
+"border then try this shader."
+msgstr ""
+
+#: sw_data.py:1578
+msgid "Creates an outline effect that makes the image look more cartoonish."
+msgstr ""
+
+#: sw_data.py:1579
+msgid "Setting a blue or green screen away from the camera."
+msgstr ""
+
+#: sw_data.py:1580
+msgid ""
+"It operates in HDR, simulating the physical effect of light passing through "
+"a prism inside a camera."
+msgstr ""
+
+#: sw_data.py:1581
+msgid "Based on the most realistic and most used Depth of Field shader."
+msgstr ""
+
+#: sw_data.py:1582
+msgid ""
+"Shader for image enhancement, makes things look sharper. Can rid the picture "
+"of haze."
+msgstr ""
+
+#: sw_data.py:1583
+msgid ""
+"Editing colors using the color matrix. Essentially changes the brightness of "
+"the color channels: red, green and blue."
+msgstr ""
+
+#: sw_data.py:1584
+msgid "Saturates faded colors without touching the bright ones."
+msgstr ""
+
+#: sw_data.py:1585
+msgid ""
+"To simulate a cathode ray tube monitor. The combination with the "
+"PerfectPerspective shader will shed a tear of nostalgia."
+msgstr ""
+
+#: sw_data.py:1586
+msgid ""
+"Increases the contrast of the image, while not touching the bright and dark "
+"areas, so that the detail in the shadows and the sky is not lost."
+msgstr ""
+
+#: sw_data.py:1587
+msgid "Removes some colors."
+msgstr ""
+
+#: sw_data.py:1588
+msgid ""
+"Remove banding - gradients that dont blend smoothly into each other when "
+"there arent enough tones available to recreate a smooth gradation."
+msgstr ""
+
+#: sw_data.py:1589
+msgid ""
+"Remove dot noise. If possible, turn off the noise in the game itself, "
+"because the noise reduction shader reduces the frame rate."
+msgstr ""
+
+#: sw_data.py:1590
+msgid "Split screen for owners of virtual reality glasses."
+msgstr ""
+
+#: sw_data.py:1591
+msgid ""
+"Simple depth-blur that makes far-away objects look slightly blurred, with "
+"fog based on depth and screen position."
+msgstr ""
+
+#: sw_data.py:1592
+msgid ""
+"This is a shader mostly useful for checking if the depth buffer is working "
+"as intended."
+msgstr ""
+
+#: sw_data.py:1593
+msgid ""
+"Loss of sharpness in distant objects with the effect of chromatic aberration."
+msgstr ""
+
+#: sw_data.py:1594
+msgid ""
+"Makes the image look like it was converted from film to Cineon DPX. Can be "
+"used to create a sunny look."
+msgstr ""
+
+#: sw_data.py:1595
+msgid ""
+"Make a part of the scene pop out more while other parts are de-emphasized. "
+"By default, it desaturates the areas which are not in focus."
+msgstr ""
+
+#: sw_data.py:1596
+msgid ""
+"This shader brightens or darkens the image depending on the average "
+"brightness of the screen."
+msgstr ""
+
+#: sw_data.py:1597
+msgid ""
+"Should restore detail in too dark and bright areas of the frame. Darkens the "
+"image in practice."
+msgstr ""
+
+#: sw_data.py:1598
+msgid "Pseudo motion blur."
+msgstr ""
+
+#: sw_data.py:1599 sw_data.py:1600
+msgid "Film grain without copying texture."
+msgstr ""
+
+#: sw_data.py:1601 sw_data.py:1603 sw_data.py:1607 sw_data.py:1615
+msgid "Sharpering for more cinema-like look."
+msgstr ""
+
+#: sw_data.py:1602
+msgid "Applies some common color adjustments to mimic a more cinema-like look."
+msgstr ""
+
+#: sw_data.py:1604
+msgid ""
+"The most primitive and fastest of the anti-aliasing filters (pixel "
+"smoothing)."
+msgstr ""
+
+#: sw_data.py:1605
+msgid "Just blurs the image."
+msgstr ""
+
+#: sw_data.py:1606
+msgid ""
+"To simulate a failing video card and cause nausea. People with epilepsy "
+"should not turn on this filter!"
+msgstr ""
+
+#: sw_data.py:1608
+msgid ""
+"Smoothing nearby pixels with filling in the missing parts. Is useful for "
+"smoothing objects in pixel games."
+msgstr ""
+
+#: sw_data.py:1609
+msgid "Lightweight focus and sharpering effect."
+msgstr ""
+
+#: sw_data.py:1610
+msgid ""
+"Make own layer.png and overwrite on of the textures. It support alpha "
+"transparency."
+msgstr ""
+
+#: sw_data.py:1611
+msgid ""
+"Shifts white and black points. will help in the absence of real black "
+"(everything is whitish, as if in a fog) or white is too gray."
+msgstr ""
+
+#: sw_data.py:1612
+msgid "Shifts white and black points. will help in the absence of real black."
+msgstr ""
+
+#: sw_data.py:1613
+msgid ""
+"Gamma correction in color channels: red, green and blue. Can stylization of "
+"some games under a certain color shade."
+msgstr ""
+
+#: sw_data.py:1614
+msgid ""
+"The most lightweight defocus shader in terms of function, which does not "
+"greatly reduce performance."
+msgstr ""
+
+#: sw_data.py:1616
+msgid ""
+"In the context of game shaders, loot allows you to give the picture a cinema-"
+"like look."
+msgstr ""
+
+#: sw_data.py:1617
+msgid ""
+"Shader based on scene luminosity. It uses a Gaussian blur applied on the "
+"fly. It blends the bloom with the rest using the Screen blending method."
+msgstr ""
+
+#: sw_data.py:1618
+msgid "The effect of simulating a black and white image."
+msgstr ""
+
+#: sw_data.py:1619
+msgid "Hollywood preset LUT included."
+msgstr ""
+
+#: sw_data.py:1620
+msgid ""
+"The effect of self-shadowing of objects, visually adding volume to them."
+msgstr ""
+
+#: sw_data.py:1621
+msgid "For those who are nostalgic for a night vision device?"
+msgstr ""
+
+#: sw_data.py:1622
+msgid ""
+"Shader to create a 4-bit frame. Tries to mimic the look of very old "
+"computers or console systems."
+msgstr ""
+
+#: sw_data.py:1623
+msgid ""
+"The shader tilts the image and changes the point of view of the image. Can "
+"be useful for owners of virtual reality glasses."
+msgstr ""
+
+#: sw_data.py:1624
+msgid ""
+"Filter that adds a glow around bright screen areas, adapting to the current "
+"scene brightness."
+msgstr ""
+
+#: sw_data.py:1625
+msgid ""
+"If you want to add godrays to a scene then this shader can help you with "
+"that."
+msgstr ""
+
+#: sw_data.py:1626
+msgid ""
+"Yet Another Chromatic Aberration: It operates in HDR, is the only shader "
+"with a correct spectral gradient."
+msgstr ""
+
+#: sw_data.py:1627
+msgid ""
+"Adds reflections to objects in the frame. Can improve the picture in older "
+"games without reflection support, but is useless in modern ones."
+msgstr ""
+
+#: sw_data.py:1628
+msgid ""
+"Applying a shade of brown. Color inherent in old black and white photographs."
+msgstr ""
+
+#: sw_data.py:1629
+msgid ""
+"Advanced implementation of anti-aliasing. Highlight the objects in the frame "
+"and blur their boundaries without erasing the small details of the frame."
+msgstr ""
+
+#: sw_data.py:1630
+msgid ""
+"Resize image, positioning it, rotating it and use different blending modes."
+msgstr ""
+
+#: sw_data.py:1631
+msgid "Reduction in object detail without blurring contrasting contours."
+msgstr ""
+
+#: sw_data.py:1632
+msgid ""
+"Makes the image look like it was processed using a three-strip Technicolor "
+"process."
+msgstr ""
+
+#: sw_data.py:1633
+msgid ""
+"Like Technicolor, but Gives a different picture, more aggressively changing "
+"colors."
+msgstr ""
+
+#: sw_data.py:1634
+msgid ""
+"For simulating tilt-shift photography, but recommended to use CinematicDOF."
+msgstr ""
+
+#: sw_data.py:1635
+msgid "Tone map for brightness, color and gamma correction."
+msgstr ""
+
+#: sw_data.py:1636
+msgid ""
+"Detects the presence of a UI on the screen and switches the visibility of "
+"effects depending on its presence."
+msgstr ""
+
+#: sw_data.py:1637
+msgid ""
+"Shader-mask that makes holes in the effects in the places of the menu items, "
+"provided that they do not move anywhere."
+msgstr ""
+
+#: sw_data.py:1638
+msgid ""
+"Saturates faded colors without touching the bright ones. The default "
+"settings are almost invisible."
+msgstr ""
+
+#: sw_data.py:1639
+msgid "Adds vignetting, reducing the brightness of the frame at the edges."
+msgstr ""
+
+#: sw_data.py:1642
+msgid "Vulkan layer postprocessing visual effects"
+msgstr ""
+
+#: sw_data.py:1643
+msgid "Effect intensity"
+msgstr ""
+
+#: sw_data.py:1647
+msgid "Mangohud colors"
+msgstr ""
+
+#: sw_data.py:1648
+msgid "Mangohud indicator color scheme settings"
+msgstr ""
+
+#: sw_data.py:1668
+msgid "GPU indicator"
+msgstr ""
+
+#: sw_data.py:1669
+msgid "CPU indicator"
+msgstr ""
+
+#: sw_data.py:1670
+msgid "VRAM indicator"
+msgstr ""
+
+#: sw_data.py:1671
+msgid "RAM indicator"
+msgstr ""
+
+#: sw_data.py:1672
+msgid "IO indicator"
+msgstr ""
+
+#: sw_data.py:1673
+msgid "Render engines version"
+msgstr ""
+
+#: sw_data.py:1674
+msgid "Frametime indicator"
+msgstr ""
+
+#: sw_data.py:1675
+msgid "Overlay background"
+msgstr ""
+
+#: sw_data.py:1676
+msgid "Text color"
+msgstr ""
+
+#: sw_data.py:1677
+msgid "Media player color"
+msgstr ""
+
+#: sw_data.py:1678
+msgid "Wine color"
+msgstr ""
+
+#: sw_data.py:1679
+msgid "GPU load color"
+msgstr ""
+
+#: sw_data.py:1680
+msgid "CPU load color"
+msgstr ""
+
+#: sw_data.py:1681
+msgid "Battery indicator"
+msgstr ""
+
+#: sw_data.py:1686
+msgid "Confirm changes"
+msgstr ""
+
+#: sw_data.py:1687
+msgid "Mangohud preview"
+msgstr ""
+
+#: sw_data.py:1689
+msgid "Custom theme"
+msgstr ""
+
+#: sw_data.py:1690
+msgid "Custom interface color scheme settings"
+msgstr ""
+
+#: sw_data.py:1705
+msgid "Primary text"
+msgstr ""
+
+#: sw_data.py:1706
+msgid "Primary background"
+msgstr ""
+
+#: sw_data.py:1707
+msgid "Accent color"
+msgstr ""
+
+#: sw_data.py:1708
+msgid "Accent background"
+msgstr ""
+
+#: sw_data.py:1709
+msgid "Headerbars"
+msgstr ""
+
+#: sw_data.py:1710
+msgid "Popover context menu"
+msgstr ""
+
+#: sw_data.py:1715
+msgid "Additional general parameters and keyboard shortcuts"
+msgstr ""
+
+#: sw_data.py:1717
+msgid "Startup options"
+msgstr ""
+
+#: sw_data.py:1718
+msgid "Some settings will take effect the next time you start"
+msgstr ""
+
+#: sw_data.py:1720
+msgid "Language"
+msgstr ""
+
+#: sw_data.py:1721
+msgid "Change the interface language"
+msgstr ""
+
+#: sw_data.py:1723
+msgid "Autostart"
+msgstr ""
+
+#: sw_data.py:1724
+msgid "Run startwine in the tray at system startup"
+msgstr ""
+
+#: sw_data.py:1726
+msgid "Restore menu"
+msgstr ""
+
+#: sw_data.py:1727
+msgid "Restore the menu after exiting a game or application"
+msgstr ""
+
+#: sw_data.py:1729
+msgid "Icons"
+msgstr ""
+
+#: sw_data.py:1730
+msgid "Use system icon theme"
+msgstr ""
+
+#: sw_data.py:1732
+msgid "Compact mode"
+msgstr ""
+
+#: sw_data.py:1733
+msgid "Always run the menu in compact size mode"
+msgstr ""
+
+#: sw_data.py:1735
+msgid "Default directory"
+msgstr ""
+
+#: sw_data.py:1736
+msgid ""
+"The default directory in which files will be opened in the startwine file "
+"manager"
+msgstr ""
+
+#: sw_data.py:1738
+msgid "OpenGL background"
+msgstr ""
+
+#: sw_data.py:1739
+msgid ""
+"Live background (opengl animation based on selected shaders). Warning!!! "
+"This function can lead to slowdowns and additional load on the graphics card."
+msgstr ""
+
+#: sw_data.py:1742
+msgid "Shaders"
+msgstr ""
+
+#: sw_data.py:1743
+msgid "Select shaders for the live background from the list"
+msgstr ""
+
+#: sw_data.py:1745
+msgid "Hotkeys"
+msgstr ""
+
+#: sw_data.py:1746
+msgid "List of default hotkeys settings"
+msgstr ""
+
+#: sw_data.py:1748
+msgid ""
+"Wrong path, path does not exist, specify the correct path to the directory"
+msgstr ""
+
+#: sw_data.py:1791
+msgid "show hotkey settings window"
+msgstr ""
+
+#: sw_data.py:1792
+msgid "enable / disable mangohud overlay in the game"
+msgstr ""
+
+#: sw_data.py:1793
+msgid "toggle mangohud overlay postion in the game"
+msgstr ""
+
+#: sw_data.py:1794
+msgid "enable / disable vkbasalt effects in the game"
+msgstr ""
+
+#: sw_data.py:1795
+msgid "close startwine window"
+msgstr ""
+
+#: sw_data.py:1796
+msgid "change the window size mode"
+msgstr ""
+
+#: sw_data.py:1797
+msgid "increase the size of the icons and shortcuts"
+msgstr ""
+
+#: sw_data.py:1798
+msgid "reduce the size of the icons and shortcuts"
+msgstr ""
+
+#: sw_data.py:1799 sw_data.py:1800
+msgid "update files or shortcuts list view"
+msgstr ""
+
+#: sw_data.py:1801
+msgid "to display or not to display hidden files"
+msgstr ""
+
+#: sw_data.py:1802
+msgid "show current directory path string"
+msgstr ""
+
+#: sw_data.py:1803
+msgid "select all files in file manager"
+msgstr ""
+
+#: sw_data.py:1804
+msgid "create new directory"
+msgstr ""
+
+#: sw_data.py:1805
+msgid "create symbolic links for selected files"
+msgstr ""
+
+#: sw_data.py:1806
+msgid "copy to clipboard"
+msgstr ""
+
+#: sw_data.py:1807
+msgid "paste from clipboard"
+msgstr ""
+
+#: sw_data.py:1808
+msgid "cut selected files"
+msgstr ""
+
+#: sw_data.py:1809
+msgid "terminate all processes"
+msgstr ""
+
+#: sw_data.py:1810
+msgid "move to trash selected files"
+msgstr ""
+
+#: sw_data.py:1811
+msgid "permanently delete selected files"
+msgstr ""
+
+#: sw_data.py:1812
+msgid "rename file or directory in file manager"
+msgstr ""
+
+#: sw_data.py:1813
+msgid "go to the directory up in the file manager"
+msgstr ""
+
+#: sw_data.py:1814
+msgid "go to the next menu page"
+msgstr ""
+
+#: sw_data.py:1815
+msgid "go to the previous menu page"
+msgstr ""
+
+#: sw_data.py:1816
+msgid "show or hide sidebar menu"
+msgstr ""
+
+#: sw_data.py:1817
+msgid "shortcuts view"
+msgstr ""
+
+#: sw_data.py:1818
+msgid "open file manager"
+msgstr ""
+
+#: sw_data.py:1819
+msgid "show or hide list of mounted volumes"
+msgstr ""
+
+#: sw_data.py:1820
+msgid "show or hide bookmarks list"
+msgstr ""
+
+#: sw_data.py:1821
+msgid "open winetricks menu"
+msgstr ""
+
+#: sw_data.py:1822
+msgid "launchers view"
+msgstr ""
+
+#: sw_data.py:1823
+msgid "open launch settings menu"
+msgstr ""
+
+#: sw_data.py:1824
+msgid "open mangohud settings menu"
+msgstr ""
+
+#: sw_data.py:1825
+msgid "open vkbasalt settings menu"
+msgstr ""
+
+#: sw_data.py:1826
+msgid "open colors settings menu"
+msgstr ""
+
+#: sw_data.py:1827
+msgid "open base settings menu"
+msgstr ""
+
+#: sw_data.py:1834
+msgid "Description"
+msgstr ""
+
+#: sw_data.py:1835
+msgid "Confirm install"
+msgstr ""
+
+#: sw_data.py:1836
+msgid "Library"
+msgstr ""
+
+#: sw_data.py:1837
+msgid "Fonts"
+msgstr ""
+
+#: sw_data.py:1838
+msgid "Library list"
+msgstr ""
+
+#: sw_data.py:1839
+msgid "Fonts list"
+msgstr ""
+
+#: sw_data.py:1840
+msgid "Installing native windows library to the current prefix"
+msgstr ""
+
+#: sw_data.py:2641
+msgid "Yes"
+msgstr ""
+
+#: sw_data.py:2642
+msgid "No"
+msgstr ""
+
+#: sw_data.py:2643
+msgid "Ok"
+msgstr ""
+
+#: sw_data.py:2644
+msgid "Add"
+msgstr ""
+
+#: sw_data.py:2645
+msgid "Cancel"
+msgstr ""
+
+#: sw_data.py:2646
+msgid "Accept"
+msgstr ""
+
+#: sw_data.py:2647
+msgid "Select"
+msgstr ""
+
+#: sw_data.py:2649 sw_data.py:2697
+msgid "Save"
+msgstr ""
+
+#: sw_data.py:2654
+msgid "Create"
+msgstr ""
+
+#: sw_data.py:2655
+msgid "Create new directory"
+msgstr ""
+
+#: sw_data.py:2656
+msgid "New directory"
+msgstr ""
+
+#: sw_data.py:2657
+msgid "Add shortcut to desktop"
+msgstr ""
+
+#: sw_data.py:2658
+msgid "[ Original name ] + "
+msgstr ""
+
+#: sw_data.py:2659
+msgid "File's"
+msgstr ""
+
+#: sw_data.py:2660
+msgid "Rename directory"
+msgstr ""
+
+#: sw_data.py:2661
+msgid "Rename file"
+msgstr ""
+
+#: sw_data.py:2662
+msgid "Replace file"
+msgstr ""
+
+#: sw_data.py:2663
+msgid "Copying completed successfully"
+msgstr ""
+
+#: sw_data.py:2664
+msgid "Move completed successfully"
+msgstr ""
+
+#: sw_data.py:2665
+msgid "Move to trash completed successfully"
+msgstr ""
+
+#: sw_data.py:2666
+msgid "Deletion completed successfully"
+msgstr ""
+
+#: sw_data.py:2667
+msgid "Rename completed successfully"
+msgstr ""
+
+#: sw_data.py:2668
+msgid "Choose an action"
+msgstr ""
+
+#: sw_data.py:2669 sw_data.py:2712
+msgid "Choose the application to transfer settings"
+msgstr ""
+
+#: sw_data.py:2670
+msgid "Do you really want to reset settings?"
+msgstr ""
+
+#: sw_data.py:2671
+msgid "Do you really want to remove\n"
+msgstr ""
+
+#: sw_data.py:2672
+msgid "Oops! Wrong path..."
+msgstr ""
+
+#: sw_data.py:2673
+msgid ""
+"Another file with the same name already exists. Replacing will overwrite "
+"content"
+msgstr ""
+
+#: sw_data.py:2674
+msgid "You have not selected any libraries to install"
+msgstr ""
+
+#: sw_data.py:2675
+msgid "Path not exist, try to create new shortcut"
+msgstr ""
+
+#: sw_data.py:2676
+msgid "Termination of active processes..."
+msgstr ""
+
+#: sw_data.py:2677
+msgid "You can't copy a directory to itself"
+msgstr ""
+
+#: sw_data.py:2678
+msgid "not exists, do you want to download now?"
+msgstr ""
+
+#: sw_data.py:2679
+msgid "It is impossible to create a file in the current directory"
+msgstr ""
+
+#: sw_data.py:2685
+msgid "Go to the home directory"
+msgstr ""
+
+#: sw_data.py:2686
+msgid "Move up directory"
+msgstr ""
+
+#: sw_data.py:2687
+msgid "Current directory menu"
+msgstr ""
+
+#: sw_data.py:2688
+msgid "Back to sidebar main menu"
+msgstr ""
+
+#: sw_data.py:2689
+msgid "Change menu size"
+msgstr ""
+
+#: sw_data.py:2690
+msgid "Change color scheme"
+msgstr ""
+
+#: sw_data.py:2691
+msgid "Change icon size"
+msgstr ""
+
+#: sw_data.py:2692
+msgid "Show or hide sidebar"
+msgstr ""
+
+#: sw_data.py:2693
+msgid "Vertical or horizontal icons"
+msgstr ""
+
+#: sw_data.py:2695
+msgid "Show search entry"
+msgstr ""
+
+#: sw_data.py:2696
+msgid "Show path entry"
+msgstr ""
+
+#: sw_data.py:2698
+msgid "Choose color"
+msgstr ""
+
+#: sw_data.py:2699
+msgid "Edit color value"
+msgstr ""
+
+#: sw_data.py:2700
+msgid "Current rgb value"
+msgstr ""
+
+#: sw_data.py:2701
+msgid "Choose directory"
+msgstr ""
+
+#: sw_data.py:2702
+msgid "Show or hide volume list"
+msgstr ""
+
+#: sw_data.py:2703
+msgid "Show or hide bookmarks list"
+msgstr ""
+
+#: sw_data.py:2704
+msgid "Apply"
+msgstr ""
+
+#: sw_data.py:2705
+msgid "registry patch"
+msgstr ""
+
+#: sw_data.py:2718
+msgid "Search..."
+msgstr ""
+
+#: sw_data.py:2719
+msgid "Loaded successfully"
+msgstr ""
+
+#: sw_data.py:2720
+msgid "The app is loading..."
+msgstr ""
+
+#: sw_data.py:2721
+msgid "Squashfs..."
+msgstr ""
+
+#: sw_data.py:2724
+msgid "Deletion"
+msgstr ""
+
+#: sw_data.py:2725
+msgid "Сopying"
+msgstr ""
+
+#: sw_data.py:2726
+msgid "Removal"
+msgstr ""
+
+#: sw_data.py:2727
+msgid "copy"
+msgstr ""
+
+#: sw_data.py:2733
+msgid "blue plasma waves"
+msgstr ""
+
+#: sw_data.py:2734
+msgid "red plasma waves"
+msgstr ""
+
+#: sw_data.py:2735
+msgid "teal plasma waves"
+msgstr ""
+
+#: sw_data.py:2736
+msgid "mint plasma waves"
+msgstr ""
+
+#: sw_data.py:2737
+msgid "golden plasma waves"
+msgstr ""
+
+#: sw_data.py:2738
+msgid "purple plasma waves"
+msgstr ""
+
+#: sw_data.py:2739
+msgid "brown plasma waves"
+msgstr ""
+
+#: sw_data.py:2740
+msgid "gray plasma waves"
+msgstr ""
+
+#: sw_data.py:2741
+msgid "teal damask rose"
+msgstr ""
+
+#: sw_data.py:2742
+msgid "red damask rose"
+msgstr ""
+
+#: sw_data.py:2743
+msgid "blue damask rose"
+msgstr ""
+
+#: sw_data.py:2744
+msgid "purple damask rose"
+msgstr ""
+
+#: sw_data.py:2745
+msgid "golden damask rose"
+msgstr ""
+
+#: sw_data.py:2746
+msgid "mint damask rose"
+msgstr ""
+
+#: sw_data.py:2747
+msgid "brown damask rose"
+msgstr ""
+
+#: sw_data.py:2748
+msgid "gray damask rose"
+msgstr ""
+
+#: sw_data.py:2749
+msgid "macos monterey"
+msgstr ""
+
+#: sw_data.py:2750
+msgid "neon road"
+msgstr ""
+
+#: sw_data.py:2751
+msgid "alien planet"
+msgstr ""
+
+#: sw_data.py:2752
+msgid "wallpaper"
+msgstr ""
+
+#: sw_data.py:2753
+msgid "ice and fire"
+msgstr ""
+
+#: sw_data.py:2754
+msgid "voronoi gradient"
+msgstr ""
+
+#: sw_data.py:2755
+msgid "pixelated rgb"
+msgstr ""
+
+#: sw_data.py:2756
+msgid "ps3 home background"
+msgstr ""
+
+#: sw_data.py:2757
+msgid "infinite hexes background"
+msgstr ""
+
+#: sw_data.py:2758
+msgid "floating playstation shapes"
+msgstr ""
+
+#: sw_data.py:2759
+msgid "abstract movement background"
+msgstr ""
+
+#: sw_data.py:2760
+msgid "dark chocolate"
+msgstr ""
+
+#: sw_data.py:2761
+msgid "red waves"
+msgstr ""
+
+#: sw_data.py:2762
+msgid "vista-esque wallpaper thing"
+msgstr ""
+
+#: sw_data.py:2763
+msgid "misty grid"
+msgstr ""
+
+#: sw_data.py:2764
+msgid "factory windows"
+msgstr ""
+
+#: sw_data.py:2765
+msgid "star nest"
+msgstr ""
+
+#: sw_data.py:2766
+msgid "neon triangle"
+msgstr ""
+
+#: sw_data.py:2767
+msgid "firestorm"
+msgstr ""
+
+#: sw_data.py:2768
+msgid "underwater bubbles"
+msgstr ""
+
+#: sw_data.py:2769
+msgid "universe within"
+msgstr ""
+
+#: sw_data.py:2770
+msgid "parabolic waves"
+msgstr ""
+
+#: sw_data.py:2771
+msgid "fractal galaxy"
+msgstr ""
+
+#: sw_data.py:2772
+msgid "glowing stars"
+msgstr ""
+
+#: sw_data.py:2773
+msgid "colored bagel"
+msgstr ""
+
+#: sw_data.py:2774
+msgid "protonophore"
+msgstr ""
+
+#: sw_data.py:2775
+msgid "simplicity"
+msgstr ""
+
+#: sw_data.py:2776
+msgid "melting colors"
+msgstr ""
+
+#: sw_data.py:2777
+msgid "generators redux"
+msgstr ""
+
+#: sw_data.py:2778
+msgid "water turbulence"
+msgstr ""
+
+#: sw_data.py:2779
+msgid "perspex web lattice"
+msgstr ""
+
+#: sw_data.py:2780
+msgid "monochrome waves"
+msgstr ""
+
+#: sw_data.py:2781
+msgid "galaxies of the universe"
+msgstr ""
+
+#: sw_data.py:2782
+msgid "auroras"
+msgstr ""
+
+#: sw_data.py:2783
+msgid "super mario bros"
+msgstr ""
+
+#: sw_data.py:2784
+msgid "fractal flythrough"
+msgstr ""
+
+#: sw_data.py:2785
+msgid "blue circles"
+msgstr ""
+
+#: sw_data.py:2786
+msgid "smiley"
+msgstr ""
+
+#: sw_data.py:2787
+msgid "water high light"
+msgstr ""
+
+#: sw_data.py:2788
+msgid "triangle gradients"
+msgstr ""
+
+#: sw_data.py:2789
+msgid "shadow dance"
+msgstr ""
+
+#: sw_data.py:2790
+msgid "neon sunset"
+msgstr ""
+
+#: sw_data.py:2791
+msgid "synthwave sunset logo"
+msgstr ""
+
+#: sw_data.py:2792
+msgid "portal"
+msgstr ""
+
+#: sw_data.py:2793
+msgid "jellow lights"
+msgstr ""
+
+#: sw_data.py:2794
+msgid "evil membrane"
+msgstr ""
+
+#: sw_data.py:2795
+msgid "abstract pattern"
+msgstr ""
+
+#: sw_data.py:2796
+msgid "sun rays"
+msgstr ""
+
+#: sw_data.py:2797
+msgid "spiral riders"
+msgstr ""
+
+#: sw_data.py:2798
+msgid "inside the matrix"
+msgstr ""
+
+#: sw_data.py:2799
+msgid "plexus particles"
+msgstr ""
+
+#: sw_data.py:2800
+msgid "windows 95"
 msgstr ""

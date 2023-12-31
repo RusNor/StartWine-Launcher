@@ -1,51 +1,139 @@
 #!/usr/bin/env python3
 
 import os
-import sys
+from os import environ as env
+from os import getenv
+from sys import argv
 from pathlib import Path
-import subprocess
-from subprocess import Popen, run
-import platform
+from subprocess import Popen, run, PIPE
+from threading import Thread
+import shutil
 
 #######################___PATHS__:
 
-sw_path = Path(os.path.dirname(os.path.abspath(__file__))).parent.parent
-sw_scripts = f"{sw_path}/data/scripts"
+sw_scripts = Path(argv[0]).absolute().parent
+sw_path = sw_scripts.parent.parent
 sw_tools = Path(f"{sw_path}/data/tools")
-sw_main = Path(f"{sw_scripts}/sw_main")
+sw_menu = Path(f"{sw_scripts}/sw_menu.py")
 sw_crier = Path(f"{sw_scripts}/sw_crier.py")
-
-ld_path_x86_64 = f"{sw_tools}/utils/libs/lib"
-ld_path_i386 = f"{sw_tools}/utils/libs/lib32"
-gi_path = f"{sw_tools}/utils/libs/lib/gi_typelib"
-
-python_modules = f"{sw_tools}/utils/libs/python/site-packages"
-
-os.environ["LD_LIBRARY_PATH"] = os.pathsep + ld_path_i386 + os.pathsep + ld_path_x86_64
-os.environ["GI_TYPELIB_PATH"] = os.pathsep + gi_path
+sw_cube = Path(f"{sw_scripts}/sw_cube.py")
+sw_tray =  Path(f"{sw_scripts}/sw_tray.py")
+sw_runtime = Path(f"{sw_path}/data/runtime/sw_runtime")
 
 ################################___START___:
 
-def start():
+def init_icon_theme():
+
+    cmd = "gsettings get org.gnome.desktop.interface icon-theme"
+    p = Popen(cmd, shell=True, stdout=PIPE, encoding='UTF-8')
+    out, err = p.communicate()
+    gtk_icon_theme_name = out.splitlines()[0].strip("'")
+    env['SW_GTK_ICON_THEME'] = gtk_icon_theme_name
+
+def copy_icon_theme():
+
+    icon_theme_name = getenv('SW_GTK_ICON_THEME').split('-')[0]
+    sys_icons = Path(f'/usr/share/icons/{icon_theme_name}')
+    local_icons = Path(f'{Path.home()}/.local/share/icons/{icon_theme_name}')
+
+    if (not local_icons.exists()
+        and sys_icons.exists()):
+            for icons in sys_icons.parent.iterdir():
+                if (icons.is_dir()
+                    and icon_theme_name in icons.name):
+                        target = Path(f'{local_icons.parent}/{icons.name}')
+                        if not target.exists():
+                            shutil.copytree(icons, target, symlinks=True, dirs_exist_ok=True)
+                            print(icons.name)
+
+def on_start():
 
     try:
-        arg = sys.argv[1]
-        Popen(f"{sw_main} \"{arg}\"", shell=True)
-
+        arg = argv[1]
+        Popen(f'"{sw_runtime}" "{sw_menu}" "{arg}"', shell=True, start_new_session=True)
     except IndexError as e:
-        print('<< start_sw_main_default >>')
-        Popen(f"{sw_main}", shell=True)
+        Popen(f'"{sw_runtime}" "{sw_menu}"', shell=True, start_new_session=True)
 
-try:
-    py_ver = str(platform.python_version())
-    print('\n-----------------< SW_START >-----------------\n')
-    print(f'<< python_version_{py_ver} >>')
+def on_start_():
 
-    os.environ["PYTHONPATH"] = os.pathsep + python_modules
-    start()
+    try:
+        arg = argv[1]
+        Popen(f'"{sw_menu}" "{arg}"', shell=True, start_new_session=True)
+    except IndexError as e:
+        Popen(f'"{sw_menu}"', shell=True, start_new_session=True)
 
-except IOError as e:
-    info_text = f"{e}"
-    Popen(f'{sw_crier} -e {info_text}', shell=True)
+def on_runtime():
 
-################################___THE END___:
+    run(f'"{sw_runtime}" "bash"', shell=True, start_new_session=True)
+
+def on_cube():
+
+    try:
+        run(f'"{sw_runtime}" mangohud --dlsym "{sw_cube}" -v', shell=True)
+    except IOError as e:
+        print(f'{e}')
+
+def on_tray():
+
+    try:
+        run(f'"{sw_runtime}" "{sw_tray}"', shell=True, start_new_session=True)
+    except IOError as e:
+        print(f'{e}')
+
+def on_crier(args):
+
+    try:
+        run(f"{sw_runtime} {sw_crier} {args}", shell=True, start_new_session=True)
+    except IOError as e:
+        print(f'{e}')
+
+def on_helper():
+
+    sw_start_help = '''
+    -c or --cube                          run opengl cube
+    -t or --tray                          run StartWine in tray
+    -d or --dialog ('-h' for print help)  run dialogs window with message
+    -n or --no-runtime                    run StartWine without runtime
+    -r or --runtime                       run runtime container without StartWine
+    -h or --help                          print this help info
+    '''
+    print(sw_start_help)
+
+if __name__ == '__main__':
+
+    if len(argv) <= 1:
+        init_icon_theme()
+        Thread(target=copy_icon_theme).start()
+        on_start()
+
+    elif len(argv) > 1:
+
+        if argv[1] == '--cube' or argv[1] == '-c':
+            on_cube()
+
+        elif argv[1] == '--tray' or argv[1] == '-t':
+            on_tray()
+
+        elif argv[1] == '--dialog' or argv[1] == '-d':
+            if len(argv) > 2:
+                args = argv[2]
+                on_crier(args)
+            else:
+                on_helper()
+
+        elif argv[1] == '--no-runtime' or argv[1] == '-n':
+            init_icon_theme()
+            Thread(target=copy_icon_theme).start()
+            on_start_()
+
+        elif argv[1] == '--runtime' or argv[1] == '-r':
+            on_runtime()
+
+        elif argv[1] == '--help' or argv[1] == '-h':
+            on_helper()
+
+        else:
+            init_icon_theme()
+            Thread(target=copy_icon_theme).start()
+            on_start()
+

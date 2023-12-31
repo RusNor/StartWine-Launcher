@@ -1,0 +1,13 @@
+/* GLOBAL COLOR DEFINITIONS */
+
+@define-color sw_text_color #505060;
+@define-color sw_text_hover_color shade(@sw_text_color, 1.3);
+@define-color sw_accent_fg_color rgba(0,160,255,0.8);
+@define-color sw_accent_bg_color rgba(210,210,220,0.8);
+@define-color sw_bg_color rgba(210,210,220,0.8);
+@define-color sw_view_bg_color rgba(0,0,0,0.5);
+@define-color sw_flow_bg_color rgba(0,0,0,0.5);
+@define-color sw_header_bg_color rgba(240,240,250,1);
+@define-color sw_pop_bg_color rgba(220,220,230,1);
+
+@import url("../default.css");

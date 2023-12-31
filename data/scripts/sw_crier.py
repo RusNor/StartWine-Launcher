@@ -1,347 +1,628 @@
 #!/usr/bin/env python3
 
 import os
+from os import stat as Stat
 import sys
-import gi
-gi.require_version('Gtk', '3.0')
-gi.require_version('Gdk', '3.0')
-from gi.repository import Gdk, GdkPixbuf, Gio, GLib, GObject, Gtk
+from sys import argv, exit
 from pathlib import Path
-import subprocess
-from subprocess import run
-import threading
-from threading import Thread, Event
-import urllib.request
-from urllib.request import Request, urlopen, urlretrieve
-from urllib.error import HTTPError
-import time
+from threading import Thread, Timer, Event
+import multiprocessing as mp
+from time import time
 import tarfile
 import zipfile
 import shutil
+from warnings import filterwarnings
+import json
 
+import gi
+gi.require_version('Gtk', '4.0')
+gi.require_version('Gdk', '4.0')
+from gi.repository import Gdk, Gio, GLib, Gtk
+import urllib.request
+from urllib.request import Request, urlopen, urlretrieve
+from urllib.error import HTTPError
+
+from sw_data import Msg as msg
+filterwarnings("ignore")
+
+#############################___PATHS LINKS___:
+
+program_name = 'StartWine'
+sw_scripts = Path(argv[0]).absolute().parent
+sw_path = Path(sw_scripts).parent.parent
+sw_menu_json = Path(f'{sw_scripts}/sw_menu.json')
+sw_img = Path(f'{sw_path}/data/img')
+sw_app_config = Path(f'{sw_path}/data/app_config')
+sw_css_dark = Path(f'{sw_path}/data/img/sw_themes/css/dark/gtk.css')
+sw_css_light = Path(f'{sw_path}/data/img/sw_themes/css/light/gtk.css')
+sw_css_custom = Path(f'{sw_path}/data/img/sw_themes/css/custom/gtk.css')
+sw_cube_png = f"{sw_img}/gui_icons/cube.png"
+sw_sounds = Path(f'{sw_img}/sw_themes/sounds')
+
+#############################___DISPLAY___:
+
+display = Gdk.Display().get_default()
 try:
-    from OpenGL.GL import *
-    from OpenGL.GL import shaders
-    import numpy as np
-    from PIL import Image
+    monitor = display.get_monitors()[0]
 except:
-    pass
+    width = 1280
+    height = 720
+else:
+    width = monitor.get_geometry().width
+    height = monitor.get_geometry().height
 
-sw_path = Path(os.path.dirname(os.path.abspath(__file__))).parent.parent
-sw_scripts = f"{sw_path}/data/scripts"
-sw_icon = f"{sw_path}/data/img"
-sw_app_config = f"{sw_path}/data/app_config"
-sw_css = f"{sw_icon}/sw_themes/css"
-sw_rsh = Path(f"{sw_scripts}/sw_run.sh")
-crier_title = f"StartWine"
+############################___SET_CSS_STYLE___:
 
-themes = ['black','grey','white', 'blue','purple','red','green','yellow','brown']
+if sw_menu_json.exists():
 
-window = None
-dialog = None
-view = None
-filechooser = None
+    menu_conf_read = open(sw_menu_json, 'r')
+    dict_ini = json.load(menu_conf_read)
 
-try:
-    m = str(sys.argv[1])
-except IndexError as e:
-    print('<< start_sw_crier_default >>')
-    m = str("")
+    if dict_ini['color_scheme'] == 'dark':
+        css_provider = Gtk.CssProvider()
+        css_provider.load_from_file(Gio.File.new_for_path(bytes(sw_css_dark)))
+        Gtk.StyleContext.add_provider_for_display(
+            Gdk.Display.get_default(),
+            css_provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            )
+    elif dict_ini['color_scheme'] == 'light':
+        css_provider = Gtk.CssProvider()
+        css_provider.load_from_file(Gio.File.new_for_path(bytes(sw_css_light)))
+        Gtk.StyleContext.add_provider_for_display(
+            Gdk.Display.get_default(),
+            css_provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            )
+    elif dict_ini['color_scheme'] == 'custom':
+        css_provider = Gtk.CssProvider()
+        css_provider.load_from_file(Gio.File.new_for_path(bytes(sw_css_custom)))
+        Gtk.StyleContext.add_provider_for_display(
+            Gdk.Display.get_default(),
+            css_provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            )
 
-def get_out():
+    menu_conf_read.close()
 
-    app_path = str(sw_rsh.read_text()).split('" ')[-1].replace('\n', '').replace('%F', '').replace(' ', '_')
-    app_name = app_path.split('/')[-1].split('.exe')[0]
-    return app_name
+def media_play(media_file, samples, volume):
+    '''___playing system event sounds___'''
 
-def get_arg(arg):
+    if isinstance(samples, str):
+        media_file.set_filename(f'{samples}')
+        media_file.set_volume(volume)
+        media_file.play()
 
-    return arg
+def dialog_entry(app, title, text_message, response, func, num):
+    '''___dialog window with entry row___'''
 
-def get_css(css_name):
-
-    css = css_name
-    screen = Gdk.Screen.get_default()
-    provider = Gtk.CssProvider()
-    style_context = Gtk.StyleContext()
-    style_context.add_provider_for_screen(
-        screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+    headerbar = Gtk.HeaderBar(
+                        css_name='sw_header_top',
+                        show_title_buttons=False,
     )
-    provider.load_from_path(css)
+    box = Gtk.Box(
+                css_name='sw_box',
+                orientation=Gtk.Orientation.HORIZONTAL,
+    )
+    dialog = Gtk.Window(
+                        css_name='sw_window',
+                        application=app,
+                        transient_for=app.get_windows()[0],
+                        modal=True,
+                        titlebar=headerbar,
+                        title=title,
+                        child=box,
+    )
+    dialog.remove_css_class('background')
+    dialog.add_css_class('sw_background')
 
-def get_gradient_css(window, dialog, view, filechooser):
+    btn_cancel = Gtk.Button(
+                        css_name='sw_button_cancel',
+                        label=msg.msg_dict['cancel'],
+                        valign=Gtk.Align.CENTER,
+    )
+    btn_cancel.set_size_request(120, 16)
 
-    proc_vga = run(f"lspci | grep VGA", shell=True, stdout=subprocess.PIPE, encoding='UTF-8')
-    grep_vga = str(proc_vga.stdout[0:]).replace('\n', '')
+    btn_accept = Gtk.Button(
+                        css_name='sw_button_accept',
+                        label=response,
+                        valign=Gtk.Align.CENTER,
+    )
+    btn_accept.set_size_request(120, 16)
 
-    if not str('NVIDIA') in grep_vga:
+    btn_accept.connect('clicked', cb_btn_response, dialog, func[0])
+    btn_cancel.connect('clicked', cb_btn_response, dialog, func[1])
+    headerbar.pack_start(btn_cancel)
+    headerbar.pack_end(btn_accept)
+    btn_accept.grab_focus()
 
+    for i in range(num):
+        entry = Gtk.Entry(
+                        css_name='sw_entry',
+                        margin_start=8,
+                        margin_end=8,
+                        hexpand=True,
+                        valign=Gtk.Align.CENTER,
+                        text=text_message[i]
+        )
+        box.append(entry)
+
+    dialog.set_default_size(500, 120)
+    dialog.set_size_request(500, 120)
+    dialog.set_resizable(False)
+    dialog.present()
+    return dialog
+
+def dialog_question(app, title, text_message, response, func):
+    '''___dialog question window for text message___'''
+
+    if title is None:
+        title = f"{program_name} Question"
+
+    if text_message is None:
+        text_message = ''
+
+    label = Gtk.Label(
+                    css_name='sw_label',
+                    margin_top=8,
+                    margin_bottom=8,
+                    margin_start=8,
+                    margin_end=8,
+                    wrap=True,
+                    natural_wrap_mode=True,
+                    label=text_message,
+    )
+    scrolled = Gtk.ScrolledWindow(
+                                css_name='sw_scrolledwindow',
+                                vexpand=True,
+                                hexpand=True,
+                                propagate_natural_height=True,
+                                propagate_natural_width=True,
+                                max_content_width=width*0.33,
+                                max_content_height=height*0.33,
+                                child=label
+    )
+    scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.NEVER)
+
+    headerbar = Gtk.HeaderBar(
+                        css_name='sw_header_top',
+                        show_title_buttons=False
+    )
+    box = Gtk.Box(
+                css_name='sw_box',
+                orientation=Gtk.Orientation.VERTICAL,
+                spacing=8,
+    )
+    box_btn = Gtk.Box(
+                css_name='sw_box',
+                orientation=Gtk.Orientation.VERTICAL,
+                spacing=8,
+                margin_start=16,
+                margin_end=16,
+                margin_top=16,
+                margin_bottom=16,
+    )
+    dialog = Gtk.Window(
+                        css_name='sw_window',
+                        application=app,
+                        titlebar=headerbar,
+                        title=title,
+                        modal=True,
+                        transient_for=app.get_windows()[0],
+                        child=box,
+    )
+    dialog.remove_css_class('background')
+    dialog.add_css_class('sw_background')
+    if response is None:
+        response = [msg.msg_dict['yes'], msg.msg_dict['no']]
+        btn_yes = Gtk.Button(
+                            css_name='sw_button_accept',
+                            label=response[0],
+                            valign=Gtk.Align.CENTER,
+        )
+        btn_yes.set_size_request(96, 16)
+        btn_no = Gtk.Button(
+                            css_name='sw_button_cancel',
+                            label=response[1],
+                            vexpand=True,
+                            valign=Gtk.Align.CENTER,
+        )
+        btn_no.set_size_request(96, 16)
+        btn_yes.connect('clicked', cb_btn_response, dialog, func[0])
+        btn_no.connect('clicked', cb_btn_response, dialog, func[1])
+        headerbar.pack_start(btn_no)
+        headerbar.pack_end(btn_yes)
+        btn_yes.grab_focus()
+    else:
+        count = -1
+        for r, f in zip(response, func):
+            count += 1
+            if r == msg.msg_dict['cancel']:
+                btn = Gtk.Button(css_name='sw_button_cancel', label=r)
+            else:
+                btn = Gtk.Button(css_name='sw_button', label=r)
+
+            btn.set_name(str(count))
+            btn.connect('clicked', cb_btn_response, dialog, f)
+            box_btn.append(btn)
+
+    box.append(scrolled)
+    box.append(box_btn)
+    dialog.set_default_size(420, 120)
+    dialog.set_size_request(width*0.25, height*0.15)
+    dialog.set_resizable(False)
+    dialog.present()
+
+def cb_btn_response(self, dialog, func):
+
+    if func is not None:
+        if isinstance(func, dict):
+            dialog.close()
+            f = list(func)[0]
+            args = func[f]
+            return f(args)
+
+        elif isinstance(func, tuple):
+            dialog.close()
+            f = func[0]
+            args = func[1]
+            return f(args)
+
+        elif isinstance(func, list):
+            dialog.close()
+            f = func[0]
+            args = func
+            args.remove(f)
+            return f(args)
+        else:
+            dialog.close()
+            return func()
+    else:
+        return dialog.close()
+
+def dialog_directory(app, title):
+    '''___dialog window for choose directory___'''
+
+    dialog = Gtk.FileDialog()
+    dialog.set_accept_label('_OK')
+    file_filter = Gtk.FileFilter()
+    file_filter.set_name('folder')
+    file_filter.add_mime_type('inode/directory')
+    dialog.set_default_filter(file_filter)
+    file = Gio.File.new_for_commandline_arg(bytes(Path.home()))
+    dialog.set_initial_folder(file)
+    dialog.set_title(title)
+
+    return dialog
+
+#############################___APPLICATION___:
+
+class Crier(Gtk.Application):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args,
+                        #application_id="ru.project.Crier",
+                        flags=Gio.ApplicationFlags.FLAGS_NONE,
+                        **kwargs
+        )
+        GLib.set_prgname(program_name)
         try:
-            gc = Path(f"{sw_app_config}/.default")
-            gcread = gc.read_text().split('\n')
+            if argv[1] == f"-i":
+                self.connect('activate', info, argv[2], 'INFO')
 
-            for line in gcread:
-                sw_theme = line.replace('export SW_USE_THEME=', '')
-                if sw_theme in themes:
-                    css_name = f"{sw_css}/{sw_theme}/gtk-3.0/toggle.css"
+            elif argv[1] == f"-e":
+                self.connect('activate', info, argv[2], 'ERROR')
+
+            elif argv[1] == f"-w":
+                response = ['Accept', 'Cancel']
+                self.connect('activate', question, argv[2], 'WARNING', response)
+
+            elif argv[1] == f"-q":
+                if len(argv) == 4:
+                    response = argv[3].split(',')
+                else:
+                    response = None
+
+                self.connect('activate', question, argv[2], 'QUESTION', response)
+
+            elif argv[1] == f"-t":
+                self.connect('activate', text_info, Path(argv[2]))
+
+            elif argv[1] == f"-fl":
+                self.connect('activate', on_file)
+
+            elif argv[1] == f"-fd":
+                self.connect('activate', on_folder)
         except:
-            pass
+            on_helper()
 
-        if not window is None:
-            provider_window = Gtk.CssProvider()
-            provider_window.load_from_path(css_name)
-            window.get_style_context().add_provider(
-                provider_window, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+###########################___INFO___:
+
+def info(app, text_message, message_type):
+
+    def cb_btn_ok(self):
+        p = print(0)
+        dialog.close()
+        return p
+
+    header = Gtk.HeaderBar(
+                    css_name='sw_header_top',
+                    show_title_buttons=False,
+    )
+    label = Gtk.Label(
+                    css_name='sw_label',
+                    margin_top=8,
+                    margin_bottom=8,
+                    margin_start=8,
+                    margin_end=8,
+                    wrap=True,
+                    natural_wrap_mode=True,
+                    label=text_message,
+    )
+    btn_ok = Gtk.Button(
+                    css_name='sw_button_accept',
+                    label=msg.msg_dict['ok'],
+                    valign=Gtk.Align.CENTER,
+                    margin_start=4,
+                    margin_end=4,
+                    margin_bottom=4,
+                    margin_top=4,
+    )
+    btn_ok.set_size_request(96, 16)
+    box_content = Gtk.Box(
+                    css_name='sw_box',
+                    orientation=Gtk.Orientation.VERTICAL,
+                    spacing=8,
+    )
+    dialog = Gtk.Window(
+                    css_name='sw_window',
+                    application=app,
+                    titlebar=header,
+                    title=f'{program_name} {message_type}',
+                    child=box_content,
+                    default_height=120,
+                    default_width=420,
+    )
+    dialog.remove_css_class('background')
+    dialog.add_css_class('sw_background')
+    box_content.append(label)
+    header.pack_end(btn_ok)
+    btn_ok.connect('clicked', cb_btn_ok)
+    btn_ok.grab_focus()
+    dialog.set_default_size(420, 120)
+    dialog.set_size_request(420, 120)
+    dialog.set_resizable(False)
+    dialog.present()
+
+def alert(app, text_message):
+
+    window = Gtk.Window(css_name='sw_window', application=app)
+    window.remove_css_class('background')
+    window.add_css_class('sw_background')
+    dialog = Gtk.AlertDialog(
+                            buttons=('_OK', '_Cancel'),
+                            message=f"{program_name} INFO",
+                            detail=text_message,
+                            modal=False,
+                            )
+
+    dialog.set_default_button(0)
+    dialog.set_cancel_button(1)
+
+    def on_choose(self, res):
+        '''______'''
+        res = self.choose_finish(res)
+        print(res)
+        window.destroy()
+
+    dialog.choose(
+                parent=window,
+                cancellable=Gio.Cancellable(),
+                callback=on_choose
                 )
-
-        if not view is None:
-            provider_view = Gtk.CssProvider()
-            provider_view.load_from_path(css_name)
-            view.get_style_context().add_provider(
-                provider_view, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-                )
-
-        if not dialog is None:
-            provider_dialog = Gtk.CssProvider()
-            provider_dialog.load_from_path(css_name)
-            dialog.get_style_context().add_provider(
-                provider_dialog, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-                )
-
-        if not filechooser is None:
-            provider_filechooser = Gtk.CssProvider()
-            provider_filechooser.load_from_path(css_name)
-            filechooser.get_style_context().add_provider(
-                provider_filechooser, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-                )
-
-def on_theme():
-
-    try:
-        gc = Path(f"{sw_app_config}/.default")
-        gcread = gc.read_text().split('\n')
-
-        for line in gcread:
-            sw_theme = line.replace('export SW_USE_THEME=', '')
-            if sw_theme in themes:
-                css_name = f"{sw_css}/{sw_theme}/gtk-3.0/gtk.css"
-                get_css(css_name)
-    except:
-        pass
-
-on_theme()
-
-class sw_crier():
-
-###################___INFO___:
-
-    def on_info(i):
-
-        text_info = i
-        dialog = Gtk.MessageDialog(
-            flags=0,
-            message_type=Gtk.MessageType.INFO,
-            buttons=Gtk.ButtonsType.OK,
-            text=f"{crier_title} INFO",
-        )
-        get_gradient_css(window, dialog, view, filechooser)
-
-        dialog.format_secondary_text(
-            text_info
-        )
-        dialog.set_default_size(320, 120)
-        dialog.run()
-        print('<< INFO_dialog_closed >>')
-
-        dialog.destroy()
-
-    if m == str("-i"):
-        i = str(sys.argv[2])
-        on_info(i)
-
-####################___ERROR___:
-
-    def on_error(e):
-        text_error = e
-        dialog = Gtk.MessageDialog(
-            flags=0,
-            message_type=Gtk.MessageType.ERROR,
-            buttons=Gtk.ButtonsType.CANCEL,
-            text=f"{crier_title} ERROR",
-        )
-        get_gradient_css(window, dialog, view, filechooser)
-
-        dialog.format_secondary_text(
-            text_error
-        )
-        dialog.set_default_size(320, 120)
-        dialog.run()
-        print('<< ERROR_dialog_closed >>')
-
-        dialog.destroy()
-
-    if m == str("-e"):
-        e = str(sys.argv[2])
-        on_error(e)
-
-###################___WARNING___:
-
-    def on_warn(w):
-        text_warn = w
-        dialog = Gtk.MessageDialog(
-            flags=0,
-            message_type=Gtk.MessageType.WARNING,
-            buttons=Gtk.ButtonsType.OK_CANCEL,
-            text=f"{crier_title} WARNING",
-        )
-        get_gradient_css(window, dialog, view, filechooser)
-
-        dialog.format_secondary_text(
-            text_warn
-        )
-        dialog.set_default_size(320, 120)
-        response = dialog.run()
-
-        if response == Gtk.ResponseType.OK:
-            p = print("0")
-            return p
-        elif response == Gtk.ResponseType.CANCEL:
-            p = print("1")
-            return p
-
-        dialog.destroy()
-
-    if m == str("-w"):
-        w = str(sys.argv[2])
-        on_warn(w)
 
 #######################___QUESTION___:
 
-    def on_question(q):
-        text_quest = q
-        dialog = Gtk.MessageDialog(
-            flags=0,
-            message_type=Gtk.MessageType.QUESTION,
-            buttons=Gtk.ButtonsType.YES_NO,
-            text=f"{crier_title} QUESTION",
-        )
-        get_gradient_css(window, dialog, view, filechooser)
+def question(app, text_message, message_type, response):
 
-        dialog.format_secondary_text(
-            text_quest
-        )
-        dialog.set_default_size(320, 120)
-        response = dialog.run()
+    def cb_btn_yes(self):
+        dialog.close()
+        p = print("0")
+        return p
 
-        if response == Gtk.ResponseType.YES:
-            p = print("0")
-            request = "0"
-            dialog.destroy()
-            return request
-        elif response == Gtk.ResponseType.NO:
-            p = print("1")
-            request = "1"
-            dialog.destroy()
-            return request
+    def cb_btn_no(self):
+        dialog.close()
+        p = print("1")
+        return p
 
-        dialog.destroy()
+    if response is None:
+        response = [msg.msg_dict['yes'], msg.msg_dict['no']]
 
-    if m == str("-q"):
-        q = str(sys.argv[2])
-        on_question(q)
+    header = Gtk.HeaderBar(
+                    css_name='sw_header_top',
+                    show_title_buttons=False,
+    )
+    label = Gtk.Label(
+                    css_name='sw_label',
+                    margin_top=8,
+                    margin_bottom=8,
+                    margin_start=8,
+                    margin_end=8,
+                    wrap=True,
+                    natural_wrap_mode=True,
+                    label=text_message,
+    )
+    btn_yes = Gtk.Button(
+                    css_name='sw_button_accept',
+                    label=response[0],
+                    valign=Gtk.Align.CENTER,
+                    margin_start=4,
+                    margin_end=4,
+                    margin_bottom=4,
+                    margin_top=4,
+    )
+    btn_yes.set_size_request(96, 16)
 
-#######################___TEXT_INFO___:
+    btn_no = Gtk.Button(
+                    css_name='sw_button_cancel',
+                    label=response[1],
+                    valign=Gtk.Align.CENTER,
+                    margin_start=4,
+                    margin_end=4,
+                    margin_bottom=4,
+                    margin_top=4,
+    )
+    btn_no.set_size_request(96, 16)
 
-    def text_info(text_edit_name):
+    box_content = Gtk.Box(
+                    css_name='sw_box',
+                    orientation=Gtk.Orientation.VERTICAL,
+                    spacing=8,
+    )
+    dialog = Gtk.Window(
+                    css_name='sw_window',
+                    application=app,
+                    titlebar=header,
+                    title=f'{program_name} {message_type}',
+                    child=box_content,
+                    default_height=120,
+                    default_width=420,
+    )
+    dialog.remove_css_class('background')
+    dialog.add_css_class('sw_background')
+    box_content.append(label)
+    header.pack_end(btn_yes)
+    header.pack_start(btn_no)
+    btn_yes.connect('clicked', cb_btn_yes)
+    btn_yes.grab_focus()
+    btn_no.connect('clicked', cb_btn_no)
+    dialog.set_default_size(420, 120)
+    dialog.set_size_request(420, 120)
+    dialog.set_resizable(False)
+    dialog.present()
 
-        def on_response(dialog, response):
+########################___TEXT_INFO___:
 
-            if response == Gtk.ResponseType.OK:
-                p = print("0")
-                startIter, endIter = buffer.get_bounds()
-                get_text = buffer.get_text(startIter, endIter, False)
-                text_edit_name.write_text(get_text)
-                return p
-            else:
-                print('<< Text_Info_closed >>')
+def text_info(app, text_edit_name):
 
-        dialog = Gtk.Dialog()
-        get_title = str(Path(text_edit_name.stem))
-        dialog.set_title(get_title)
-        dialog.set_default_size(960, 540)
-        dialog.add_button("_SAVE", Gtk.ResponseType.OK)
-        dialog.connect("response", on_response)
-        view = Gtk.TextView()
-        view.set_top_margin(16)
-        view.set_left_margin(16)
-        view.set_right_margin(16)
-        view.set_bottom_margin(16)
-        text = text_edit_name.read_text()
-        buffer = view.get_buffer()
-        buffer.set_text(text)
-        view.set_vexpand(True)
-        view.set_hexpand(True)
-        scrolled = Gtk.ScrolledWindow()
-        scrolled.add(view)
-        dialog.vbox.add(scrolled)
-        dialog.connect("destroy", Gtk.main_quit)
-        dialog.show_all()
-        get_gradient_css(window, dialog, view, filechooser)
-        Gtk.main()
+    def cb_btn_save(self):
 
-    if m == str("-t"):
-        text_edit_name = Path(sys.argv[2])
-        text_info(text_edit_name)
+        startIter, endIter = buffer.get_bounds()
+        get_text = buffer.get_text(startIter, endIter, False)
+        Path(text_edit_name).write_text(get_text)
+        p = print("0")
+        return p
 
-####################___FILE_CHOOSER_WINDOW___:
+    def cb_btn_cancel(self):
+        p = print("1")
+        dialog.close()
+        return p
 
-    def on_file(fl):
+    header = Gtk.HeaderBar(
+                        css_name='sw_header_top',
+                        show_title_buttons=False
+    )
+    dialog = Gtk.Window(
+                    css_name='sw_window',
+                    application=app,
+                    titlebar=header,
+                    title=str(Path(text_edit_name).stem),
+    )
+    dialog.remove_css_class('background')
+    dialog.add_css_class('sw_background')
+    dialog.set_default_size(960, 540)
 
-        path = fl
+    btn_save = Gtk.Button(
+                    css_name="sw_button_accept",
+                    label=msg.msg_dict['save'],
+                    valign=Gtk.Align.CENTER,
+    )
+    btn_save.set_size_request(120, 16),
 
-        def add_filters(filechooser):
+    btn_cancel = Gtk.Button(
+                    css_name="sw_button_cancel",
+                    label=msg.msg_dict['cancel'],
+                    valign=Gtk.Align.CENTER,
+    )
+    btn_cancel.set_size_request(120, 16),
 
-            filter_text = Gtk.FileFilter()
-            filter_text.set_name("Exe files")
-            filter_text.add_mime_type("application/x-ms-dos-executable")
-            filechooser.add_filter(filter_text)
+    textview = Gtk.TextView(
+                    css_name='sw_textview',
+                    vexpand=True,
+                    hexpand=True,
+                    wrap_mode=Gtk.WrapMode.WORD,
+                    left_margin=16,
+    )
+    textview.remove_css_class('view')
+    textview.add_css_class('text')
+    text = Path(text_edit_name).read_text()
+    buffer = Gtk.TextBuffer()
+    textview.set_buffer(buffer)
+    buffer.set_text(text)
 
-            filter_text = Gtk.FileFilter()
-            filter_text.set_name("Text files")
-            filter_text.add_mime_type("text/plain")
-            filechooser.add_filter(filter_text)
+    scrolled = Gtk.ScrolledWindow(
+                                css_name='sw_scrolledwindow',
+                                propagate_natural_height=True,
+                                propagate_natural_width=True,
+    )
+    btn_save.connect('clicked', cb_btn_save)
+    btn_cancel.connect('clicked', cb_btn_cancel)
+    header.pack_end(btn_save)
+    header.pack_start(btn_cancel)
+    scrolled.set_child(textview)
+    dialog.set_child(scrolled)
+    dialog.present()
 
-            filter_py = Gtk.FileFilter()
-            filter_py.set_name("Python files")
-            filter_py.add_mime_type("text/x-python")
-            filechooser.add_filter(filter_py)
+#####################___FILE_CHOOSER_WINDOW___:
 
-            filter_any = Gtk.FileFilter()
-            filter_any.set_name("Any files")
-            filter_any.add_pattern("*")
-            filechooser.add_filter(filter_any)
+def on_file(self):
 
-        filechooser = Gtk.FileChooserDialog(
-            title = f"{crier_title}",
-            action=Gtk.FileChooserAction.OPEN
-            )
-        filechooser.add_buttons(
-            Gtk.STOCK_CANCEL,
-            Gtk.ResponseType.CANCEL,
-            Gtk.STOCK_OPEN,
-            Gtk.ResponseType.OK
-            )
+    def add_filters(dialog):
 
-        get_gradient_css(window, dialog, view, filechooser)
+        filter_text = Gtk.FileFilter()
+        filter_text.set_name("Exe files")
+        filter_text.add_mime_type("application/x-ms-dos-executable")
+        filechooser.add_filter(filter_text)
 
-        add_filters(filechooser)
-        filechooser.set_current_folder(path)
-        filechooser.set_default_size(960, 540)
+        filter_text = Gtk.FileFilter()
+        filter_text.set_name("Text files")
+        filter_text.add_mime_type("text/plain")
+        filechooser.add_filter(filter_text)
 
-        response = filechooser.run()
+        filter_py = Gtk.FileFilter()
+        filter_py.set_name("Python files")
+        filter_py.add_mime_type("text/x-python")
+        filechooser.add_filter(filter_py)
 
-        if response == Gtk.ResponseType.OK:
-            app_path = filechooser.get_filename()
+        filter_any = Gtk.FileFilter()
+        filter_any.set_name("Any files")
+        filter_any.add_pattern("*")
+        filechooser.add_filter(filter_any)
+
+    parent = Gtk.Window(css_name='sw_window')
+    parent.remove_css_class('background')
+    parent.add_css_class('sw_background')
+    filechooser = Gtk.FileChooserDialog(
+                                    application=app,
+                                    title="Please choose a file",
+                                    action=Gtk.FileChooserAction.OPEN
+                                    )
+    filechooser.set_transient_for(parent)
+    filechooser.set_decorated(False)
+    filechooser.add_buttons(
+                        "_Cancel", Gtk.ResponseType.CANCEL,
+                        "_Open", Gtk.ResponseType.ACCEPT
+                        )
+
+    add_filters(filechooser)
+    path = Gio.File.new_for_commandline_arg(argv[2])
+    filechooser.set_current_folder(path)
+    filechooser.present()
+
+    def on_buttons(self, response):
+
+        if response == Gtk.ResponseType.ACCEPT:
+            app_path = filechooser.get_file().get_path()
             filechooser.destroy()
             return app_path
 
@@ -350,469 +631,439 @@ class sw_crier():
             filechooser.destroy()
             return app_path
 
-        filechooser.destroy()
+    filechooser.connect("response", on_buttons)
 
-    if m == str("-fl"):
-        fl = str(sys.argv[2])
-        on_file(fl)
+def on_folder(self):
 
-    def on_folder(fd):
+    path = text_message
+    parent = Gtk.Window(css_name='sw_window')
+    parent.remove_css_class('background')
+    parent.add_css_class('sw_background')
 
-        path = fd
+    filechooser = Gtk.FileChooserDialog(
+                                    application=app,
+                                    title="Please choose a folder",
+                                    action=Gtk.FileChooserAction.SELECT_FOLDER,
+                                    )
+    filechooser.set_transient_for(parent)
+    filechooser.set_decorated(False)
+    filechooser.add_buttons(
+                        "_Cancel", Gtk.ResponseType.CANCEL,
+                        "_Select", Gtk.ResponseType.ACCEPT
+    )
 
-        def add_filters(filechooser):
-            filter_text = Gtk.FileFilter()
-            filter_text.set_name("Any files")
-            filter_text.add_mime_type("*")
-            filechooser.add_filter(filter_text)
+    path = Gio.File.new_for_commandline_arg(argv[2])
+    filechooser.set_current_folder(path)
+    filechooser.present()
 
-        filechooser = Gtk.FileChooserDialog(
-            title = f"{crier_title}",
-            action=Gtk.FileChooserAction.SELECT_FOLDER
-            )
-        filechooser.add_buttons(
-            Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, "Select", Gtk.ResponseType.OK
-            )
-        filechooser.set_current_folder(path)
-
-        get_gradient_css(window, dialog, view, filechooser)
-
-        response = filechooser.run()
+    def on_buttons(self, response):
 
         if response == Gtk.ResponseType.OK:
-            app_folder = filechooser.get_filename()
+            app_folder = filechooser.get_file().get_path()
             filechooser.destroy()
             return app_folder
+
         elif response == Gtk.ResponseType.CANCEL:
             app_folder = ''
             filechooser.destroy()
             return app_folder
 
-    if m == str("-fd"):
-        fd = str(sys.argv[2])
-        on_folder(fd)
+    filechooser.connect("response", on_buttons)
 
-############################___DOWNLOAD___:
+################################___DOWNLOAD___:
 
-    def download(url, filename):
-        window = progressbar = label = quit = None
-        event = Event()
-        def reporthook(blocknum, blocksize, totalsize):
-            nonlocal quit
-            if blocknum == 0:
-                def guiloop():
-                    nonlocal window, progressbar, label
-                    window = Gtk.Window(default_height=80, default_width=320)
-                    window.set_title(f"{crier_title}")
-                    window.set_role('task_dialog')
-                    progressbar = Gtk.ProgressBar(show_text=True)
-                    progressbar.set_hexpand(True)
-                    label = Gtk.Label()
-                    name = str(list(filename.replace('/','\n').split())[-1])
-                    label.set_label(name)
-                    box1 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-                    box1.pack_start(label, False, True, 16)
-                    box2 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-                    box2.pack_start(progressbar, False, True, 16)
-                    grid = Gtk.Grid()
-                    grid.set_row_spacing(16)
-                    grid.attach(box1, 0, 0, 1, 1)
-                    grid.attach(box2, 0, 1, 1, 1)
-                    window.add(grid)
-                    window.connect("destroy", Gtk.main_quit)
-                    window.show_all()
-                    event.set()
-                    get_gradient_css(window, dialog, view, filechooser)
-                    Gtk.main()
-                Thread(target=guiloop).start()
-            event.wait(1)
+def download(url, filename):
 
-            percent = blocknum * blocksize / totalsize
+    def request_urlopen(url, dest):
 
-            if quit is None:
-                def bar():
-                    if blocksize == 0:
-                        progressbar.set_show_text(False)
-                        progressbar.pulse()
-                        return True
-                    else:
-                        progressbar.set_fraction(percent)
-                GLib.timeout_add(50, bar)
-            if percent >= 1:
-                print(f'<< download_completed_successfully >>')
-                quit = GLib.timeout_add(100, Gtk.main_quit)
+        request_headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36",
+            "Accept-Language": "fr-FR,fr;q=0.8,en-US;q=0.6,en;q=0.4",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Connection": "keep-alive",
+            "Accept-Charset": "ISO-8859-1,utf-8;q=0.7,*;q=0.3",
+        }
 
         try:
-            urllib.request.urlretrieve(url, filename, reporthook)
-
-        except IOError as e:
-            print(e)
-
-            try:
-                urllib.request.urlretrieve(url, filename, reporthook)
-
-            except HTTPError as e:
-                print(e)
-                print(f'<< try_sending_a_request_with_headers >>')
-
-                url_rq = Request(url, headers={"User-Agent": "Mozilla/5.0"})
-
-                with urllib.request.urlopen(url_rq) as response, open(filename, 'wb') as out_file:
-
-                    totalsize = response.length
-                    blocknum = 0
-                    blocksize = 0
-                    tmp_file = filename
-
-                    reporthook(blocknum, blocksize, totalsize)
-                    shutil.copyfileobj(response, out_file)
-
-                    print(f'<< download_completed_successfully >>')
-
-                    quit = GLib.timeout_add(100, Gtk.main_quit)
-
-    if m == str("-d"):
-        url = str(sys.argv[2])
-        filename = str(sys.argv[3])
-
-        try:
-            download(url, filename)
+            response = urlopen(Request(url, headers=request_headers))
         except HTTPError as e:
             print(e)
+            try:
+                urllib.request.urlretrieve(url, filename)
+            except HTTPError as e:
+                print(e)
+                exit(1)
+            else:
+                exit(0)
+        else:
+            with response as res, open(dest, 'wb') as out:
+                shutil.copyfileobj(res, out)
+                res.close()
+                exit(0)
+
+    return request_urlopen(url, filename)
+
+class ProgressBar(Gtk.Application):
+
+    def __init__(self, url, filename):
+        super().__init__(
+                        #application_id="ru.project.Crier",
+                        flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
+        )
+        GLib.set_prgname(program_name)
+        self.percent = 0
+        self.quit = None
+        self.url = url
+        self.filename = filename
+        self.totalsize = urlopen(url).length
+        self.program_name = f"StartWine"
+        self.connect('activate', self.activate)
+        GLib.timeout_add(1000, self.update)
+
+    def activate(self, root):
+
+        self.window = Gtk.Window(
+                            css_name='sw_window',
+                            application=self,
+                            default_height=80,
+                            default_width=320
+                            )
+        self.window.remove_css_class('background')
+        self.window.add_css_class('sw_background')
+        self.window.set_title(f"{self.program_name}")
+        self.header = Gtk.HeaderBar(
+                            css_name='sw_header_top',
+                            show_title_buttons=False,
+                            )
+        self.progressbar = Gtk.ProgressBar(
+                                    css_name='sw_progressbar',
+                                    show_text=True
+                                    )
+        self.progressbar.set_hexpand(True)
+        self.progressbar.set_vexpand(True)
+        self.progressbar.set_margin_bottom(32)
+        self.label = Gtk.Label(css_name='sw_label')
+        self.name = str(list(filename.replace('/','\n').split())[-1])
+        self.label.set_label(self.name)
+        self.grid = Gtk.Grid()
+        self.grid.set_margin_start(8)
+        self.grid.set_margin_end(8)
+        self.grid.set_margin_bottom(8)
+        self.grid.set_margin_top(8)
+        self.grid.set_row_spacing(8)
+        self.grid.attach(self.label, 0, 0, 1, 1)
+        self.grid.attach(self.progressbar, 0, 1, 1, 1)
+        self.window.set_titlebar(self.header)
+        self.window.set_child(self.grid)
+        self.add_window(self.window)
+        self.window.present()
+
+    def update(self):
+
+        if Path(self.filename).exists():
+            current = Stat(self.filename).st_size
+            self.percent = current / self.totalsize
+
+            if self.quit is None:
+                self.progressbar.set_fraction(self.percent)
+
+            if self.percent >= 1:
+                print(f'___download_completed_successfully___')
+                self.quit = self.window.close()
+
+        return True
 
 ##############################___EXTRACTION___:
 
-############___extract_tar___:
+class ExtractBar(Gtk.Application):
 
-    def extract_tar(filename, path):
-        window = progressbar = label = quit = None
-        event = Event()
+    def __init__(self, filename, path):
+        super().__init__(
+                        #application_id="prg.project.Crier",
+                        flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
+        )
+        GLib.set_prgname(program_name)
+        self.quit = None
+        self.filename = filename
+        self.path = path
+        self.program_name = f"StartWine"
+        self.connect('activate', self.activate)
+        GLib.timeout_add(100, self.update)
 
-        def tar_file():
-            nonlocal quit
-            if Path(filename).exists():
-                taro = tarfile.open(filename)
+    def activate(self, root):
 
-                def guiloop():
-                    nonlocal window, progressbar, label
-                    window = Gtk.Window(default_height=80, default_width=320)
-                    window.set_title(f"{crier_title}")
-                    window.set_role('task_dialog')
-                    progressbar = Gtk.ProgressBar(show_text=True)
-                    progressbar.set_hexpand(True)
-                    label = Gtk.Label()
-                    name = str("Extracting...")
-                    label.set_label(name)
-                    box1 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-                    box1.pack_start(label, False, True, 16)
-                    box2 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-                    box2.pack_start(progressbar, False, True, 16)
-                    grid = Gtk.Grid()
-                    grid.set_row_spacing(16)
-                    grid.attach(box1, 0, 0, 1, 1)
-                    grid.attach(box2, 0, 1, 1, 1)
-                    window.add(grid)
-                    window.connect("destroy", Gtk.main_quit)
-                    window.show_all()
-                    get_gradient_css(window, dialog, view, filechooser)
-                    event.set()
-                    Gtk.main()
-                Thread(target=guiloop).start()
-            event.wait(1)
+        self.window = Gtk.Window(
+                            css_name='sw_window',
+                            application=self,
+                            default_height=80,
+                            default_width=320
+                            )
+        self.window.remove_css_class('background')
+        self.window.add_css_class('sw_background')
+        self.window.set_title(f"{self.program_name}")
+        self.header = Gtk.HeaderBar(
+                            css_name='sw_header_top',
+                            show_title_buttons=False,
+                            )
+        self.progressbar = Gtk.ProgressBar(
+                                    css_name='sw_progressbar',
+                                    show_text=True
+                                    )
+        self.progressbar.set_hexpand(True)
+        self.progressbar.set_vexpand(True)
+        self.progressbar.set_margin_bottom(32)
+        self.progressbar.set_show_text(True)
+        self.progressbar.set_text(Path(self.filename).name)
+        self.label = Gtk.Label(css_name='sw_label')
+        self.name = str('Extraction...')
+        self.label.set_label(self.name)
+        self.grid = Gtk.Grid()
+        self.grid.set_margin_start(8)
+        self.grid.set_margin_end(8)
+        self.grid.set_margin_bottom(8)
+        self.grid.set_margin_top(8)
+        self.grid.set_row_spacing(8)
+        self.grid.attach(self.label, 0, 0, 1, 1)
+        self.grid.attach(self.progressbar, 0, 1, 1, 1)
+        self.window.set_titlebar(self.header)
+        self.window.set_child(self.grid)
+        self.add_window(self.window)
+        self.window.present()
 
-            if quit is None:
+    def update(self):
 
-                def bar():
-                    progressbar.pulse()
-                    return True
-                GLib.timeout_add(100, bar)
-
-            def tar_info():
-                try:
-                    progressbar.set_show_text(True)
-                    progressbar.set_text(filename)
-                    for member_info in taro.getmembers():
-                        print('<< extracting >>' + member_info.name)
-                        taro.extract(member_info, path=path)
-                    taro.close()
-                    print(f'<< extraction_completed_successfully >>')
-                    quit = GLib.timeout_add(100, Gtk.main_quit)
-                except:
-                    quit = GLib.timeout_add(100, Gtk.main_quit)
-            Thread(target=tar_info).start()
-        return tar_file()
-
-    if m == str("-tar"):
-        filename = str(sys.argv[2])
-        path = str(sys.argv[3])
-        extract_tar(filename, path)
-
-############___extract_zip___:
-
-    def extract_zip(filename, path):
-        window = progressbar = label = quit = None
-        event = Event()
-
-        def zip_file():
-            nonlocal quit
-            if Path(filename).exists():
-                zipo = zipfile.ZipFile(filename)
-
-                def guiloop():
-                    nonlocal window, progressbar, label
-                    window = Gtk.Window(default_height=80, default_width=320)
-                    window.set_title(f"{crier_title}")
-                    progressbar = Gtk.ProgressBar(show_text=True)
-                    progressbar.set_hexpand(True)
-                    label = Gtk.Label()
-                    name = str("Extracting...")
-                    label.set_label(name)
-                    box1 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-                    box1.pack_start(label, False, True, 16)
-                    box2 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-                    box2.pack_start(progressbar, False, True, 16)
-                    grid = Gtk.Grid()
-                    grid.set_row_spacing(16)
-                    grid.attach(box1, 0, 0, 1, 1)
-                    grid.attach(box2, 0, 1, 1, 1)
-                    window.add(grid)
-                    window.connect("destroy", Gtk.main_quit)
-                    window.show_all()
-                    get_gradient_css(window, dialog, view, filechooser)
-                    event.set()
-                    Gtk.main()
-                Thread(target=guiloop).start()
-            event.wait(1)
-
-            if quit is None:
-
-                def bar():
-                    progressbar.pulse()
-                    return True
-                GLib.timeout_add(200, bar)
-
-            def zip_info():
-                try:
-                    progressbar.set_show_text(True)
-                    progressbar.set_text(filename)
-                    for member_info in zipo.namelist():
-                        print('<< extracting >>' + member_info)
-                        zipo.extract(member_info, path=path)
-                    zipo.close()
-                    print(f'<< extraction_completed_successfully >>')
-                    quit = GLib.timeout_add(100, Gtk.main_quit)
-                except:
-                    quit = GLib.timeout_add(100, Gtk.main_quit)
-            Thread(target=zip_info).start()
-        return zip_file()
-
-    if m == str("-zip"):
-        filename = str(sys.argv[2])
-        path = str(sys.argv[3])
-
-        extract_zip(filename, path)
-
-    def gl_main():
-
-        vertices = (
-            (0.4, -0.4, -0.4),
-            (0.4, 0.4, -0.4),
-            (-0.4, 0.4, -0.4),
-            (-0.4, -0.4, -0.4),
-            (0.4, -0.4, 0.4),
-            (0.4, 0.4, 0.4),
-            (-0.4, -0.4, 0.4),
-            (-0.4, 0.4, 0.4)
-            )
-
-        edges = (
-            (0,1),(0,3),(0,4),(2,1),(2,3),(2,7),
-            (6,3),(6,4),(6,7),(5,1),(5,4),(5,7)
-            )
-
-        colors = (
-            (0.1, 0.1, 0.8),
-            (0.2, 0.2, 0.8),
-            (0.1, 0.2, 0.8),
-            (0.2, 0.1, 0.8),
-            (0.8, 0.1, 0.1),
-            (0.8, 0.2, 0.2),
-            (0.8, 0.1, 0.2),
-            (0.8, 0.2, 0.1),
-            (0.1, 0.8, 0.1),
-            (0.2, 0.8, 0.2),
-            (0.1, 0.8, 0.2),
-            (0.2, 0.8, 0.1),
-            )
-
-        surfaces = (
-            (0,1,2,3),(3,2,7,6),(6,7,5,4),
-            (4,5,1,0),(1,5,7,2),(4,0,3,6)
-            )
-
-        normals = [
-            ( 0,  0, -1),  # surface 0
-            (-1,  0,  0),  # surface 1
-            ( 0,  0,  1),  # surface 2
-            ( 1,  0,  0),  # surface 3
-            ( 0,  1,  0),  # surface 4
-            ( 0, -1,  0)   # surface 5
-            ]
-
-        textureCoordinates = ((0, 0), (0, 1), (1, 1), (1, 0))
-
-        ##############################___OPENGL_AREA_FUNC___:
-
-        def on_realize(gl_area):
-
-            ctx = gl_area.get_context()
-            gues = gl_area.get_use_es()
-            print('realized', ctx)
-            print('realized', gues)
-
-        def on_render(gl_area, ctx):
-
-            ctx.make_current()
-            glClearColor(0.05, 0.05, 0.05, 1.0)
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            glRotatef(4, 1, 0, 1)
-
-            num = 1
-            new_vertices = []
-
-            for vert in vertices:
-                new_vert = []
-                x = vert[0] * num
-                y = vert[1] * num
-                z = vert[2] * num
-                new_vert.append(x)
-                new_vert.append(y)
-                new_vert.append(z)
-                new_vertices.append(new_vert)
-
-            colored_cube(vertices)
-#            textured_cube(vertices)
-
-        def textured_cube(vertices):
-
-            image = Image.open(f'{sw_scripts}/image.png')
-            data = np.array(list(image.getdata()), np.uint8)
-
-            texture = glGenTextures(1)
-            glBindTexture(GL_TEXTURE_2D, texture)
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-            glEnable(GL_TEXTURE_2D)
-
-            glColor3f(1, 1, 1)
-
-            glBegin(GL_QUADS)
-
-            for i_surface, surface in enumerate(surfaces):
-                x = 0
-                glNormal3fv(normals[i_surface])
-                for i_vertex, vertex in enumerate(surface):
-                    x+=1
-                    glTexCoord2fv(textureCoordinates[i_vertex])
-                    glVertex3fv(vertices[vertex])
-            glEnd()
-
-            glColor3fv(colors[0])
-
-            glBegin(GL_LINES)
-
-            for edge in edges:
-                for vertex in edge:
-                    glVertex3fv(vertices[vertex])
-            glEnd()
-
-        def colored_cube(vertices):
-
-            glBegin(GL_LINES)
-            for edge in edges:
-                x = 0
-                for vertex in edge:
-                    x += 1
-                    glColor3fv(colors[x])
-                    glVertex3fv(vertices[vertex])
-            glEnd()
-
-            glBegin(GL_QUADS)
-            for surface in surfaces:
-                x = 0
-                for vertex in surface:
-                    x += 2
-                    glColor3fv(colors[x])
-                    glVertex3fv(vertices[vertex])
-            glEnd()
-
-        ######################___REFRESH_AREA___:
-
-        def refresh_gl_area():
-
-            glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
-            gl_area.queue_draw()
+        if self.quit is None:
+            self.progressbar.pulse()
             return True
-
-        GLib.timeout_add(1, refresh_gl_area)
-
-        def on_hide(widget, event):
-            global gl_switch
-            if event.keyval and event.keyval != Gdk.KEY_Escape:
-                gl_switch = 'hide'
-                gl_window.close()
-            else:
-                gl_window.stop_emission_by_name("close")
-                gl_switch = 'hide'
-                gl_window.close()
-                return True
-
-        #######################___BUILDER___:
-        gl_window = Gtk.Dialog()
-        gl_window.set_title("Preview")
-        gl_window.set_default_size(640, 640)
-        gl_window.set_decorated(False)
-        gl_window.set_modal(True)
-        gl_area = Gtk.GLArea()
-        gl_area.set_use_es(-1)
-        gl_area.set_auto_render(True)
-        gl_area.set_has_depth_buffer(True)
-        gl_area.set_has_stencil_buffer(True)
-        gl_area.set_hexpand(True)
-        gl_area.set_vexpand(True)
-        gl_window.vbox.add(gl_area)
-        gl_area.connect("render", on_render)
-        gl_area.connect("realize", on_realize)
-        gl_window.connect("key-press-event", on_hide)
-        gl_window.show_all()
-        gl_window.connect("destroy", Gtk.main_quit)
-        Gtk.main()
-
-    if m == str("-opengl"):
-        try:
-            from OpenGL.GL import shaders
-        except:
-            e = "python3 opengl, numpy, pillow packages required"
-            on_error(e)
         else:
-            gl_main()
+            self.window.close()
+            return False
 
-    def helper():
-        print("-i    'text'                                   Info dialog window\n"
-            "-e    'text'                                   Error dialog window\n"
-            "-w    'text'                                   Warning dialog window\n"
-            "-q    'text'                                   Question dialog window\n"
-            "-t    'path to text file'                      Text dialog window\n"
-            "-fl   'path to directory'                      File chooser dialog window\n"
-            "-fd   'path to directory'                      Directory chooser dialog window\n"
-            "-d    'url' 'filename'                         Download progressbar window\n"
-            "-tar  'file name, path'                        Extraction tar archive progressbar window\n"
-            "-zip  'file name, path'                        Extraction zip archive progressbar window\n"
-            "-opengl                                        Rotating cube in OpenGL window,\n"
-            "                                               press (Ctrl_L + q) for exit or any key for hide"
+    def extract_tar(self, filename, path):
+
+        if Path(filename).exists():
+            taro = tarfile.open(filename)
+
+            for member_info in taro.getmembers():
+                taro.extract(member_info, path=path)
+                print("Extracting: " + member_info.name)
+            else:
+                taro.close()
+                print(f'Extraction_completed_successfully.')
+                self.quit = 1
+
+    def extract_zip(self, filename, path):
+
+        if Path(filename).exists():
+            zipo = zipfile.ZipFile(filename)
+
+            for member_info in zipo.namelist():
+                print("Extracting: " + member_info)
+                zipo.extract(member_info, path=path)
+            else:
+                zipo.close()
+                print(f'Extraction_completed_successfully.')
+                self.quit = 1
+
+class ExtractIcon():
+    def __init__(self, filename=None, data=None):
+        '''Loads an executable from the given filename or data (raw bytes).'''
+
+        self._pefile = pefile.PE(name=filename, data=data, fast_load=True)
+        self._pefile.parse_data_directories(pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_RESOURCE'])
+
+        if not hasattr(self._pefile, 'DIRECTORY_ENTRY_RESOURCE'):
+            raise RuntimeError("File has no icon")
+
+        res = {r.id: r for r in reversed(self._pefile.DIRECTORY_ENTRY_RESOURCE.entries)}
+
+        self.rt_group_icon = res.get(pefile.RESOURCE_TYPE["RT_GROUP_ICON"])
+        if not self.rt_group_icon:
+            raise RuntimeError("File has no group icon resources")
+
+        self.rt_icon = res.get(pefile.RESOURCE_TYPE["RT_ICON"])
+
+    def list_group_icons(self):
+        '''Returns all group icon entries as a list of (name, offset) tuples.'''
+
+        return [(e.struct.Name, e.struct.OffsetToData)
+                for e in self.rt_group_icon.directory.entries]
+
+    def _get_group_icon_entries(self, num=0):
+        '''Returns the group icon entries for the specified group icon in the executable.'''
+
+        group_icon = self.rt_group_icon.directory.entries[num]
+        if group_icon.struct.DataIsDirectory:
+            group_icon = group_icon.directory.entries[0]
+
+        rva = group_icon.data.struct.OffsetToData
+        size = group_icon.data.struct.Size
+        data = self._pefile.get_data(rva, size)
+        file_offset = self._pefile.get_offset_from_rva(rva)
+
+        grp_icon_dir = self._pefile.__unpack_data__(ICON_DIR_FORMAT, data, file_offset)
+
+        if grp_icon_dir.Reserved:
+            raise  RuntimeError("Invalid group icon definition (got Reserved=%s instead of 0)" % hex(grp_icon_dir.Reserved))
+
+        grp_icons = []
+        icon_offset = grp_icon_dir.sizeof()
+        for idx in range(grp_icon_dir.Count):
+            grp_icon = self._pefile.__unpack_data__(ICON_DIR_ENTRY_FORMAT, data[icon_offset:], file_offset+icon_offset)
+            icon_offset += grp_icon.sizeof()
+            grp_icons.append(grp_icon)
+
+        return grp_icons
+
+    def _get_icon_data(self, icon_ids):
+        '''Return a list of raw icon images corresponding to the icon IDs given.'''
+
+        icons = []
+        entry_list = {e.id: e for e in self.rt_icon.directory.entries}
+        for idx in icon_ids:
+            entry_lst = entry_list[idx]
+            icon_entry = entry_lst.directory.entries[0]
+            rva = icon_entry.data.struct.OffsetToData
+            size = icon_entry.data.struct.Size
+            data = self._pefile.get_data(rva, size)
+            icons.append(data)
+
+        return icons
+
+    def _write_ico(self, fd, num=0):
+        '''Writes ICO data to a file descriptor.'''
+
+        group_icons = self._get_group_icon_entries(num=num)
+        icon_images = self._get_icon_data([g.ID for g in group_icons])
+        icons = list(zip(group_icons, icon_images))
+        assert len(group_icons) == len(icon_images)
+        fd.write(b"\x00\x00")
+        fd.write(struct.pack("<H", 1))
+        fd.write(struct.pack("<H", len(icons)))
+
+        data_offset = 6 + (len(icons) * 16)
+        for i in icons:
+            group_icon, icon_data = i
+            fd.write(group_icon.__pack__()[:12])
+            fd.write(struct.pack("<I", data_offset))
+            data_offset += len(icon_data)
+
+        for i in icons:
+            group_icon, icon_data = i
+            fd.write(icon_data)
+
+    def extract_icon(self, fname, num=0):
+        '''Writes ICO data of the requested group icon ID to fname.'''
+
+        with open(fname, 'wb') as f:
+            self._write_ico(f, num=num)
+
+    def get_icon(self, num=0):
+        '''Returns ICO data as a BytesIO() instance, containing the requested group icon ID.'''
+
+        f = io.BytesIO()
+        self._write_ico(f, num=num)
+        return f
+
+class HudSize():
+    '''Get font size for mangohud config.'''
+
+    def __init__(self):
+        self._get_hud_size()
+
+    def _get_hud_size(self):
+        '''Get font size for mangohud config.'''
+        try:
+            mh_ratio = int(os.getenv('MANGOHUD_FONT_SIZE_RATION'))
+        except:
+            mh_ratio = 55
+
+        display = Gdk.Display().get_default()
+
+        try:
+            monitor = display.get_monitors()[0]
+        except:
+            height = 720
+        else:
+            height = monitor.get_geometry().height
+
+        print(int(height / mh_ratio))
+
+################___HELP_INFO___:
+
+def on_helper():
+    print('''
+    -h    '--help'                                 Show help info
+    -i    'text'                                   Info dialog window
+    -e    'text'                                   Error dialog window
+    -w    'text'                                   Warning dialog window
+    -q    'text' 'button_name1,button_name2'       Question dialog window
+    -t    'file'                                   Open text file in dialog window
+    -fl   'path'                                   File chooser dialog window
+    -fd   'path'                                   Directory chooser dialog window
+    -d    'url' 'filename'                         Download progressbar window
+    -tar  'filename, path'                         Extraction tar archive progressbar window
+    -zip  'filename, path'                         Extraction zip archive progressbar window
+    -ico  'input_file, output_file'                Extraction ico from dll or exe file
+    -hud                                           Show mangohud font size
+'''
+    )
+
+##########################___SYSTEM_ARGUMENTS___:
+
+if __name__ == "__main__":
+    app = Crier()
+
+    if len(argv) > 1:
+        if str(argv[1]) == str("-d"):
+            url = str(argv[2])
+            filename = str(argv[3])
+            process = mp.Process(target=download, args=[url, filename])
+            process.start()
+            app = ProgressBar(url, filename)
+            app.run()
+
+        elif str(argv[1]) == str("-tar"):
+            filename = str(argv[2])
+            path = str(argv[3])
+            app = ExtractBar(filename, path)
+            Thread(target=app.extract_tar, args=[filename, path]).start()
+            app.run()
+
+        elif str(argv[1]) == str("-zip"):
+            filename = str(argv[2])
+            path = str(argv[3])
+            app = ExtractBar(filename, path)
+            Thread(target=app.extract_zip, args=[filename, path]).start()
+            app.run()
+
+        elif str(argv[1]) == str("-ico"):
+
+            import io
+            import struct
+            import pefile
+
+            ICON_DIR_ENTRY_FORMAT = ('GRPICONDIRENTRY',
+                ('B,Width', 'B,Height','B,ColorCount','B,Reserved',
+                 'H,Planes','H,BitCount','I,BytesInRes','H,ID')
             )
+            ICON_DIR_FORMAT = ('GRPICONDIR', ('H,Reserved', 'H,Type','H,Count'))
 
-    if m == str("-h") or m == str("--help"):
-        helper()
+            input_file = str(argv[2])
+            output_file = str(argv[3])
+            num = 0
+            app = ExtractIcon(input_file)
+            app.extract_icon(output_file, num=num)
 
+        elif str(argv[1]) == str("-hud"):
+            import psutil
+            HudSize()
+
+        elif str(argv[1]) == str("-h") or str(argv[1]) == str("--help"):
+            on_helper()
+
+        elif len(argv) >= 3:
+            text_message = argv[2]
+            app.run()
+        else:
+            on_helper()
