@@ -5,6 +5,8 @@
 # **StartWine Guide**
 **English** - [Русский](doc/README-RU.md)
 
+⚠️ **This manual is outdated with the release of StartWine version 400. There will be a completely new manual very soon, this does not mean that there is nothing useful in the manual. It's just that most of the information is already outdated!** ⚠️
+
 ## Review
 
 1. [Preparing for installation](#preparing-for-installation)
