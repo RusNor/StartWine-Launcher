@@ -36,6 +36,7 @@ If you need quick access to folders or to add your own folder to a bookmark, cli
 https://github.com/RusNor/StartWine-Launcher/assets/81373196/d784f430-357c-49f8-bdcc-90fcd5add1c9
 
 StartWine Screenshots (Doubtful, but okeey)
+
 ![sw_image1](/handbook/en/sw_image1.png)
 ![sw_image2](/handbook/en/sw_image2.png)
 ![sw_image3](/handbook/en/sw_image3.png)
