@@ -28,7 +28,8 @@ Make the file executable and launch it with a double click
 ## GUI
 
 Video demonstration of StartWine interface
-![sw_video0](/handbook/en/video/sw_video0_en.mp4)
+
+https://github.com/RusNor/StartWine-Launcher/assets/81373196/2aa73e3c-87ed-4e99-a110-5112a7cd128a
 
 If you need quick access to folders or to add your own folder to a bookmark, click on the corresponding icon as shown in the video demonstration.
 
