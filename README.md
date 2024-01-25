@@ -32,7 +32,7 @@ Video demonstration of StartWine interface
 
 If you need quick access to folders or to add your own folder to a bookmark, click on the corresponding icon as shown in the video demonstration.
 
-![sw_video2](/handbook/en/video/sw_video2_en.mp4)
+https://github.com/RusNor/StartWine-Launcher/assets/81373196/d784f430-357c-49f8-bdcc-90fcd5add1c9
 
 StartWine Screenshots (Doubtful, but okeey)
 ![sw_image1](/handbook/en/sw_image1.png)
@@ -51,7 +51,7 @@ If you click "NO" in the choice to create a prefix for .exe and other windup for
 
 Otherwise, just hit the start button and the game will launch
 
-![sw_video1](/handbook/en/video/sw_video1_en.mp4)
+https://github.com/RusNor/StartWine-Launcher/assets/81373196/e4424939-dcf0-4e7b-be05-28f22d6e925c
 
 Note that StartWine has a ``StartWine-Run.desktop`` that is used by default in file managers such as [dolphin](https://en.wikipedia.org/wiki/Dolphin_(file_manager)), [Nautilus](https://en.wikipedia.org/wiki/GNOME_Files) etc. to run a .exe file without the StartWine interface in addition to the usual interface shortcut
 
