@@ -30,7 +30,7 @@ Discord > [Click](https://discord.gg/jjY3auVdfm)
 
 Если вам надо быстрый доступ к папкам или добавить в закладку свою папку, то нажиме на соотвествующий значок как показано в видеодемонстариции
 
-![sw_video2](/handbook/ru/video/sw_video2_ru.mp4)
+https://github.com/RusNor/StartWine-Launcher/assets/81373196/54c14c12-05f8-48e2-86db-83a62c573054
 
 Скришоты StartWine (Сомнительно, но окееей)
 ![sw_image1](/handbook/ru/sw_image1.png)
@@ -49,7 +49,7 @@ Discord > [Click](https://discord.gg/jjY3auVdfm)
 
 В ином случае просто нажимайте кнопку "Пуск" и игра запустится
 
-![sw_video1](/handbook/ru/video/sw_video1_ru.mp4)
+https://github.com/RusNor/StartWine-Launcher/assets/81373196/75562e00-94e6-439d-aee9-eca7ce4a12a5
 
 Обратите внимание, что у StartWine помимо обычного ярлыка с интерфейсом существует ```StartWine-Run.desktop``` который по умолчанию используется в файловых менежерах таких как [dolphin](https://ru.wikipedia.org/wiki/Dolphin_(%D1%84%D0%B0%D0%B9%D0%BB%D0%BE%D0%B2%D1%8B%D0%B9_%D0%BC%D0%B5%D0%BD%D0%B5%D0%B4%D0%B6%D0%B5%D1%80)), [Nautilus](https://ru.wikipedia.org/wiki/GNOME_Files) и т.д для запуска .exe файла без интерфейса StartWine
 
