@@ -4431,7 +4431,7 @@ class Shaders(Enum):
 
     #define zoom   0.800
     #define tile   0.850
-    #define speed  0.010 
+    #define speed  0.003
 
     #define brightness 0.0015
     #define darkmatter 0.300
@@ -4447,8 +4447,8 @@ class Shaders(Enum):
         float time=iTime*speed+.25;
 
         //mouse rotation
-        float a1=.5+iMouse.x/iResolution.x*2.;
-        float a2=.8+iMouse.y/iResolution.y*2.;
+        float a1=.5+iMouse.x/iResolution.x*0.02;
+        float a2=.8+iMouse.y/iResolution.y*0.02;
         mat2 rot1=mat2(cos(a1),sin(a1),-sin(a1),cos(a1));
         mat2 rot2=mat2(cos(a2),sin(a2),-sin(a2),cos(a2));
         dir.xz*=rot1;

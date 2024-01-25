@@ -2,9 +2,10 @@
 ################################
 
 # Core modules.
-from os import environ, pathsep
+from os import environ, pathsep, getenv
 from sys import argv, orig_argv
 from pathlib import Path
+import shutil
 import json
 #import csv
 
@@ -20,7 +21,6 @@ from sw_shaders import Shaders as sdr
 ################################
 
 sw_program_name = 'StartWine'
-sw_version = '4.0.0'
 
 ################################
 
@@ -85,8 +85,10 @@ sw_runlib = Path(f"{sw_scripts}/sw_runlib")
 sw_tray = Path(f"{sw_scripts}/sw_tray.py")
 sw_cube = Path(f"{sw_scripts}/sw_cube.py")
 sw_localedir = Path(f"{sw_scripts}/locale")
+sw_version = Path(f'{sw_scripts}/version')
 
 sw_path = Path(sw_scripts).parent.parent
+sw_default_path = Path(f"{Path.home()}/.local/share/StartWine")
 sw_data_dir = Path(f"{sw_path}/data")
 sw_app_config = Path(f"{sw_data_dir}/app_config")
 sw_app_patches = Path(f"{sw_data_dir}/app_patches")
@@ -105,6 +107,7 @@ sw_pfx = Path(f"{sw_data_dir}/pfx")
 sw_pfx_default = Path(f"{sw_pfx}/pfx_default")
 sw_pfx_backup = Path(f"{sw_data_dir}/pfx_backup")
 sw_tmp = Path(f"{sw_data_dir}/tmp")
+sw_logs = Path(f"{sw_tmp}/logs")
 sw_tools = Path(f"{sw_data_dir}/tools")
 sw_wine = Path(f"{sw_data_dir}/wine")
 sw_wine_custom = Path(f"{sw_data_dir}/wine/wine_custom")
@@ -116,7 +119,10 @@ sw_local = Path(f"{Path.home()}/.local/share/applications")
 sw_css_dark = Path(f'{sw_link.parent}/img/sw_themes/css/dark/gtk.css')
 sw_css_light = Path(f'{sw_link.parent}/img/sw_themes/css/light/gtk.css')
 sw_css_custom = Path(f'{sw_link.parent}/img/sw_themes/css/custom/gtk.css')
-sw_fm_cache = Path(f'{Path.home()}/.cache/sw_fm/thumbnail')
+sw_fm_cache = Path(f'{Path.home()}/.cache/sw_fm')
+sw_fm_cache_thumbnail = Path(f'{Path.home()}/.cache/sw_fm/thumbnail')
+sw_fm_cache_database = Path(f'{Path.home()}/.cache/sw_fm/database')
+sw_fm_cache_donloads = Path(f'{Path.home()}/.cache/sw_fm/downloads')
 sw_runtime = Path(f"{sw_path}/data/runtime/sw_runtime")
 sw_appid_source = Path(f'{sw_scripts}/appid_source.json')
 sw_appid_json = Path(f'{sw_scripts}/appid.json')
@@ -133,17 +139,56 @@ sw_dxvk_shader_cache = Path(f'{sw_tmp}/dxvk_cache')
 sw_gst_cache = Path(f'{sw_tmp}/gstreamer-1.0')
 sw_gst_home_cache = Path(f'{Path.home()}/.cache/gstreamer-1.0')
 
+if not sw_shortcuts.exists():
+    try:
+        sw_shortcuts.mkdir(parents=True, exist_ok=True)
+    except Exception as e:
+        print(TermColors.RED, e, TermColors.END)
+
 dir_home = GLib.get_home_dir()
+if dir_home is None:
+    dir_home = f'{Path.home()}'
+
 dir_docs = GLib.get_user_special_dir(GLib.USER_DIRECTORY_DOCUMENTS)
+if dir_docs is None:
+    dir_docs = f'{Path.home()}/Documents'
+
 dir_desktop = GLib.get_user_special_dir(GLib.USER_DIRECTORY_DESKTOP)
+if dir_desktop is None:
+    dir_desktop = f'{Path.home()}/Desktop'
+
 dir_pics = GLib.get_user_special_dir(GLib.USER_DIRECTORY_PICTURES)
+if dir_pics is None:
+    dir_pics = f'{Path.home()}/Pictures'
+
 dir_videos = GLib.get_user_special_dir(GLib.USER_DIRECTORY_VIDEOS)
+if dir_videos is None:
+    dir_videos = f'{Path.home()}/Video'
+
 dir_music = GLib.get_user_special_dir(GLib.USER_DIRECTORY_MUSIC)
+if dir_music is None:
+    dir_music = f'{Path.home()}/Music'
+
 dir_downloads = GLib.get_user_special_dir(GLib.USER_DIRECTORY_DOWNLOAD)
+if dir_downloads is None:
+    dir_downloads = f'{Path.home()}/Downloads'
+
 dir_public = GLib.get_user_special_dir(GLib.USER_DIRECTORY_PUBLIC_SHARE)
+if dir_public is None:
+    dir_public = f'{Path.home()}/Public'
+
 dir_templates = GLib.get_user_special_dir(GLib.USER_DIRECTORY_TEMPLATES)
+if dir_templates is None:
+    dir_templates = f'{Path.home()}/Templates'
+
 xdg_config_home = GLib.get_user_config_dir()
+if xdg_config_home is None:
+    xdg_config_home = f'{Path.home()}/.config'
+
 user_name = GLib.get_user_name()
+if user_name is None:
+    user_name = getenv('USER')
+
 dir_autostart = f'{xdg_config_home}/autostart'
 sw_tray_autostart = Path(f'{xdg_config_home}/autostart/StartWine-Tray.desktop')
 
@@ -151,6 +196,12 @@ if Path(f'/usr/bin/vendor_perl/exiftool').exists() is True:
     sw_exiftool = Path(f'/usr/bin/vendor_perl/exiftool')
 else:
     sw_exiftool = Path(f'/usr/bin/exiftool')
+
+if sw_version.exists():
+    version = sw_version.read_text().splitlines()[0]
+    str_sw_version = '.'.join([e for e in version])
+else:
+    str_sw_version = ''
 
 ################################___Default_samples___:
 
@@ -171,6 +222,7 @@ default_bookmarks = str(
     + f'{sw_app_config}\n'
     + f'{sw_pfx_backup}\n'
     + f'{sw_wine}\n'
+    + f'{sw_tmp}/logs\n'
 )
 default_ini = '''
 {
@@ -195,8 +247,7 @@ default_ini = '''
 "sound": "on",
 "auto_stop": "on",
 "default_dir": "'''f"{Path.home()}"'''",
-"current_dir": "'''f"{Path.home()}"'''",
-"sound_dir": "'''f"{sw_sounds}"'''"
+"current_dir": "'''f"{Path.home()}"'''"
 }
 '''
 default_dark_css = '''
@@ -225,7 +276,6 @@ default_light_css = '''
 @define-color sw_pop_bg_color rgba(220,220,230,1);
 @import url("../default.css");
 '''
-
 default_custom_css_brown = '''
 /* Global color definitions */
 @define-color sw_text_color rgba(198,198,198,0.8);
@@ -239,7 +289,6 @@ default_custom_css_brown = '''
 @define-color sw_flow_bg_color @sw_view_bg_color;
 @import url("../default.css");
 '''
-
 default_custom_css_red = '''
 /* Global color definitions */
 @define-color sw_text_color rgba(199,189,189,0.8);
@@ -253,7 +302,6 @@ default_custom_css_red = '''
 @define-color sw_flow_bg_color @sw_view_bg_color;
 @import url("../default.css");
 '''
-
 default_custom_css_teal = '''
 /* Global color definitions */
 @define-color sw_text_color rgba(180,200,200,0.8);
@@ -267,7 +315,6 @@ default_custom_css_teal = '''
 @define-color sw_flow_bg_color @sw_view_bg_color;
 @import url("../default.css");
 '''
-
 default_custom_css_mint = '''
 /* Global color definitions */
 @define-color sw_text_color rgba(190,200,180,0.8);
@@ -281,7 +328,6 @@ default_custom_css_mint = '''
 @define-color sw_flow_bg_color @sw_view_bg_color;
 @import url("../default.css");
 '''
-
 default_custom_css_blue = '''
 /* Global color definitions */
 @define-color sw_text_color rgba(180,190,200,0.8);
@@ -295,7 +341,6 @@ default_custom_css_blue = '''
 @define-color sw_flow_bg_color @sw_view_bg_color;
 @import url("../default.css");
 '''
-
 default_custom_css_yellow = '''
 /* Global color definitions */
 @define-color sw_text_color rgba(200,200,180,0.8);
@@ -309,7 +354,6 @@ default_custom_css_yellow = '''
 @define-color sw_flow_bg_color @sw_view_bg_color;
 @import url("../default.css");
 '''
-
 default_custom_css_grey = '''
 /* Global color definitions */
 @define-color sw_text_color rgba(199,199,199,0.8);
@@ -323,7 +367,6 @@ default_custom_css_grey = '''
 @define-color sw_flow_bg_color @sw_view_bg_color;
 @import url("../default.css");
 '''
-
 default_custom_css_purple = '''
 /* Global color definitions */
 @define-color sw_text_color rgba(189,179,199,0.8);
@@ -348,7 +391,6 @@ MimeType=
 Categories=
 Icon=sample
 '''
-
 sample_tray_desktop = '''[Desktop Entry]
 Name=StartWine-Tray
 Exec=env "'''f"{sw_path}/data/scripts/sw_start"'''" -t %F
@@ -395,25 +437,48 @@ default_themes = {
 
 def check_cache_dir():
     '''___create file manager cache directory___'''
-    try:
-        sw_fm_cache.mkdir(parents=True, exist_ok=True)
-    except IOError as e:
-        print(f'{TermColors.VIOLET2}SW_FM_CACHE:  {TermColors.RED}{e}')
-    else:
-        print(f'{TermColors.VIOLET2}SW_FM_CACHE:  {TermColors.GREEN}create_cache_directory: done{TermColors.END}')
 
-if not sw_fm_cache.exists():
-    check_cache_dir()
+    if not sw_fm_cache.exists():
+        try:
+            sw_fm_cache.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            print(TermColors.RED, e, TermColors.END)
+
+    if not sw_fm_cache_thumbnail.exists():
+        try:
+            sw_fm_cache_thumbnail.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            print(TermColors.RED, e, TermColors.END)
+
+    if not sw_fm_cache_database.exists():
+        try:
+            sw_fm_cache_database.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            print(TermColors.RED, e, TermColors.END)
+
+    if not sw_fm_cache_donloads.exists():
+        try:
+            sw_fm_cache_donloads.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            print(TermColors.RED, e, TermColors.END)
+
+check_cache_dir()
 
 ####___Clear cache directory___.
 
 def clear_cache_dir():
     '''___clear file manager cache directory___'''
     for f in sw_fm_cache.iterdir():
-        try:
-            f.unlink()
-        except IOError as e:
-            print(f'{TermColors.RED}{e}{TermColors.END}')
+        if f.is_file():
+            try:
+                f.unlink()
+            except IOError as e:
+                print(f'{TermColors.RED}{e}{TermColors.END}')
+        else:
+            try:
+                shutil.rmtree(f)
+            except IOError as e:
+                print(f'{TermColors.RED}{e}{TermColors.END}')
     else:
         print(f'{TermColors.VIOLET2}SW_FM_CACHE: {TermColors.GREEN}clear_cache_directory: done{TermColors.END}')
 
@@ -595,7 +660,6 @@ sw_on_tray = dict_ini['on_tray']
 sw_lang = dict_ini['language']
 sw_default_dir = dict_ini['default_dir']
 sw_current_dir = dict_ini['current_dir']
-sw_sound_dir = dict_ini['sound_dir']
 
 ################################___Mangohud_csv___:
 
@@ -741,21 +805,23 @@ f_mon_event = list()
 global scheme
 scheme = ''
 
-if Path(sw_sound_dir).exists() is False:
-    set_menu_json_default()
-    try:
-        sound_list = sorted(list(Path(sw_sound_dir).iterdir()))
-        for i, x in enumerate(sound_list):
-            sound_dict[str(x)] = i
-    except IOError as e:
-        print(TermColors.RED, f'{e}', TermColors.END)
-else:
-    try:
-        sound_list = sorted(list(Path(sw_sound_dir).iterdir()))
-        for i, x in enumerate(sound_list):
-            sound_dict[str(x)] = i
-    except IOError as e:
-        print(TermColors.RED, f'{e}', TermColors.END)
+#if not Path(sw_sounds).exists():
+#    set_menu_json_default()
+#    try:
+#        sound_list = sorted(list(Path(sw_sounds).iterdir()))
+#    except IOError as e:
+#        print(TermColors.RED, f'{e}', TermColors.END)
+#    else:
+#        for i, x in enumerate(sound_list):
+#            sound_dict[str(x)] = i
+#else:
+#    try:
+#        sound_list = sorted(list(Path(sw_sounds).iterdir()))
+#    except IOError as e:
+#        print(TermColors.RED, f'{e}', TermColors.END)
+#    else:
+#        for i, x in enumerate(sound_list):
+#            sound_dict[str(x)] = i
 
 ################################___Themes___:
 
@@ -789,6 +855,7 @@ ctx_dict = dict(
     ('change_wine', _('Change wine')),
     ('winehq', _('Winehq')),
     ('protondb', _('Protondb')),
+    ('griddb', _('Search for an image')),
     ('staging', 'wine staging'),
     ('steam_proton', 'wine steam proton'),
     ('proton_ge', 'wine proton ge'),
@@ -811,43 +878,10 @@ ctx_dict = dict(
     ('desktop', _('Desktop')),
     ('copy_path', _('Copy current path')),
     ('add_bookmark', _('Add to bookmark')),
+    ('compress', _('Compress...')),
+    ('extract', _('Extract...')),
     ]
 )
-ctx_open = [
-    'Open',
-    'Open in new tab',
-    'Open in new window',
-    'To open with...',
-]
-ctx_create = [
-    'Text',
-    'Shell',
-    'Python',
-    'C',
-    'Cpp',
-    'Desktop',
-]
-ctx_edit = [
-    _('Cut'),
-    _('Copy'),
-    _('Paste'),
-    _('Select all'),
-    _('Move to trash'),
-    _('Remove'),
-]
-ctx_sw = [
-    _('Run'),
-    _('Open'),
-    _('App settings'),
-    _('Remove'),
-]
-ctx_wine = [
-    _('wine staging'),
-    _('wine steam proton'),
-    _('wine proton ge'),
-    _('wine lutris ge'),
-    _('wine lutris'),
-]
 str_sample = _('sample')
 
 ################################___View_widgets___:
@@ -863,8 +897,10 @@ view_widgets = [
     'files',
     'winetricks',
     'terminal',
-    'text_view'
+    'text_view',
+    'web_view'
 ]
+
 vw_dict = {}
 
 for w in view_widgets:
@@ -881,7 +917,8 @@ view_labels = [
     _('Files'),
     _('Winetricks'),
     _('Terminal'),
-    _('Text view')
+    _('Text view'),
+    _('Web view')
 ]
 vl_dict = {}
 
@@ -919,6 +956,7 @@ about_widgets = [
     'about_authors',
     'about_license',
     'about_donation',
+    'about_update',
     'about_code',
     'about_projects',
     'about_members',
@@ -934,6 +972,7 @@ about_labels = [
     _('Authors'),
     _('License'),
     _('Donations and help'),
+    _('Check for updates'),
     _('Code'),
     _('Projects'),
     _('Members'),
@@ -1024,11 +1063,42 @@ str_license = _(
 'See the GNU Lesser General Public License '
 'for more details.'
 )
+str_contribute = _('Contribute to the project')
+str_donation = _(
+'You can contribute to the project by spreading information about it, offering \
+for discussion any ideas related to improving the functionality and appearance \
+of the StartWine application. You can also help by contributing \
+to the development by submitting bug reports. And you can always donate any \
+amount to the development of the project using the link below.'
+)
+
 website_source='https://startwine-project.ru'
 github_source = 'https://github.com/RusNor'
 telegram_source = 'https://t.me/StartWine'
 discord_source = 'https://discord.com/invite/37FrGUpDEj'
 license_source = 'https://www.gnu.org/licenses/gpl-3.0.html'
+donation_source = 'https://my.qiwi.com/form/Nykyta-MhrLvGVgb3'
+str_btc = 'BTC: bc1q3h8lfs3l3r8jmt8ev0pwl9nueqttlep6ktvd02'
+winehq_source = 'https://www.winehq.org/search?q='
+protondb_source = 'https://www.protondb.com/search?q='
+griddb_source = 'https://www.steamgriddb.com/search/grids?term='
+griddb = 'https://www.steamgriddb.com'
+home_page = github_source
+
+url_source = {
+    'google': ['https://google.com', f'{sw_symbolic_icons}/google.png'],
+    'yandex': ['https://ya.ru', f'{sw_symbolic_icons}/yandex.png'],
+    'duckduckgo': ['https://duckduckgo.com', f'{sw_symbolic_icons}/duckduckgo.png'],
+    'startwine': ['https://startwine-project.ru', f'{sw_gui_icons}/sw_icon.png'],
+    'github': ['https://github.com/RusNor', f'{sw_symbolic_icons}/github.png'],
+    'telegram': ['https://t.me/StartWine', f'{sw_symbolic_icons}/telegram.png'],
+    'discord': ['https://discord.com/invite/37FrGUpDEj', f'{sw_symbolic_icons}/discord.png'],
+    'license': ['https://www.gnu.org/licenses/gpl-3.0.html', f'{sw_symbolic_icons}/gnu.png'],
+    #'donation': ['https://my.qiwi.com/form/Nykyta-MhrLvGVgb3', f'{sw_symbolic_icons}/qiwi.png'],
+    'winehq': ['https://www.winehq.org', f'{sw_symbolic_icons}/winehq.png'],
+    'protondb': ['https://www.protondb.com', f'{sw_symbolic_icons}/protondb.png'],
+    'griddb': ['https://www.steamgriddb.com', f'{sw_symbolic_icons}/griddb.png'],
+}
 
 ################################___Tools___:
 
@@ -1226,6 +1296,7 @@ bmark_dict = {
     str(sw_pfx): [IconPath.icon_toolbox, _('Prefixes')],
     str(sw_pfx_backup): [IconPath.icon_backup_restore, _('Backups')],
     str(sw_app_config): [IconPath.icon_settings, _('Prefix configurations')],
+    str(sw_logs): [IconPath.icon_regedit, _('Logs')],
 }
 
 ################################___Settings___:
@@ -1478,8 +1549,8 @@ switch_descriptions = [
     _('Using vkd3d version from wine-proton-ge'),
     _('Sytem monitoring for OpenGL mode'),
     _("Force use opengl, for applications that d'nt run in dxvk and vkd3d"),
-    _('System monitoring in dxvk and vkd3d'),
-    _('System monitoring in dxvk and vkd3d'),
+    _('System monitoring in opengl or vulkan (dxvk, vkd3d)'),
+    _('System monitoring in vulkan (dxvk, vkd3d)'),
     _('Set of optimisations be temporarily applied a game process'),
     _('Enable windows desktop emulation'),
     _('Improving frame rates and responsiveness with scheduling policies'),
@@ -1504,7 +1575,7 @@ switch_descriptions = [
     _('Forcibly disabling vsync solves performance issues in some apps'),
     _('Hides the definition of nvidia video cards. Required to run some applications'),
     _('To run games using directx 8 and below, in dxvk mode'),
-    _('Nvidia DLSS with DLSS to AMD FSR support. Advanced upscaling technologies for higher fps for higher frame rate per second'),
+    _('Nvidia DLSS - advanced upscaling technologies for higher fps for higher frame rate per second'),
     _('Disable prefix update on startup'),
     _('Enable or disable shader cache'),
 ]
@@ -1918,6 +1989,7 @@ comctl32
 comctl32ocx
 comdlg32ocx
 crypt32
+crypt32_winxp
 d3dcompiler_42
 d3dcompiler_43
 d3dcompiler_46
@@ -2069,6 +2141,8 @@ dxvk1102
 dxvk1103
 dxvk2000
 dxvk2010
+dxvk2020
+dxvk2030
 dxvk_nvapi0061
 esent
 faudio
@@ -2174,6 +2248,7 @@ shockwave
 speechsdk
 tabctl32
 ucrtbase2019
+uiribbon
 updspapi
 urlmon
 usp10
@@ -2230,6 +2305,7 @@ Reimplentation of ddraw for CnC games (CnCNet, 2021)
 MS common controls 5.80 (Microsoft, 2001)
 MS comctl32.ocx and mscomctl.ocx, comctl32 wrappers for VB6 (Microsoft, 2012)
 Common Dialog ActiveX Control for VB6 (Microsoft, 2012)
+MS crypt32 (Microsoft, 2011)
 MS crypt32 (Microsoft, 2004)
 MS d3dcompiler_42.dll (Microsoft, 2010)
 MS d3dcompiler_43.dll (Microsoft, 2010)
@@ -2264,7 +2340,7 @@ MS d3dx9_43.dll (Microsoft, 2010)
 MS d3dxof.dll from DirectX user redistributable (Microsoft, 2010)
 MS dbghelp (Microsoft, 2008)
 MS devenum.dll from DirectX user redistributable (Microsoft, 2010)
-MS dinput.dll; breaks mouse, use only on Rayman 2 eTermColors. (Microsoft, 2010)
+MS dinput.dll; breaks mouse, use only on Rayman 2 etc. (Microsoft, 2010)
 MS DirectInput 8 from DirectX user redistributable (Microsoft, 2010)
 The Dirac directshow filter v1.0.2 (Dirac, 2009)
 MS DirectMusic from DirectX user redistributable (Microsoft, 2010)
@@ -2382,6 +2458,8 @@ Vulkan-based D3D9/D3D10/D3D11 implementation for Linux / Wine (1.10.2) (Philip R
 Vulkan-based D3D9/D3D10/D3D11 implementation for Linux / Wine (1.10.3) (Philip Rebohle, 2022)
 Vulkan-based D3D9/D3D10/D3D11 implementation for Linux / Wine (2.0) (Philip Rebohle, 2022)
 Vulkan-based D3D9/D3D10/D3D11 implementation for Linux / Wine (2.1) (Philip Rebohle, 2023)
+Vulkan-based D3D9/D3D10/D3D11 implementation for Linux / Wine (2.2) (Philip Rebohle, 2023)
+Vulkan-based D3D9/D3D10/D3D11 implementation for Linux / Wine (2.3) (Philip Rebohle, 2023)
 Alternative NVAPI Vulkan implementation on top of DXVK for Linux / Wine (0.6.1) (Jens Peters, 2023)
 MS Extensible Storage Engine (Microsoft, 2011)
 FAudio (xaudio reimplementation, with xna support) builds for win32 (20.07) (Kron4ek, 2019)
@@ -2487,6 +2565,7 @@ Shockwave (Adobe, 2018)
 MS Speech SDK 5.1 (Microsoft, 2009)
 Microsoft Tabbed Dialog Control 6.0 (tabctl32.ocx) (Microsoft, 2012)
 Visual C++ 2019 library (ucrtbase.dll) (Microsoft, 2019)
+Windows UIRibbon (Microsoft, 2011)
 Windows Update Service API (Microsoft, 2004)
 MS urlmon (Microsoft, 2011)
 Uniscribe (Microsoft, 2011)
@@ -2526,7 +2605,7 @@ Microsoft XInput (Xbox controller support) (Microsoft, 2010)
 MS xmllite dll (Microsoft, 2011)
 MS XNA Framework Redistributable 3.1 (Microsoft, 2009)
 MS XNA Framework Redistributable 4.0 (Microsoft, 2010)
-Xvid Video Codec (xvid.org, 2009)
+Xvid Video Codec (xvid.org, 2019)
 '''
 
 dll_dict = {}
@@ -2686,6 +2765,7 @@ image_mime_types = [
     'image/x-icns',
     'image/x-quicktime',
     'image/qtif',
+    'image/webp',
 ]
 
 video_mime_types = [
@@ -2698,6 +2778,19 @@ iso_mime_types = [
     'application/x-cd-image',
     'image/x-panasonic-rw',
     'application/x-raw-disk-image'
+]
+
+archive_mime_types = [
+    'application/x-compressed-tar',
+    'application/x-xz-compressed-tar',
+    'application/x-zstd-compressed-tar',
+    'application/zstd',
+    'application/x-tar',
+    'application/zip',
+]
+
+archive_formats = [
+    'zip', 'gz', 'bz2', 'xz',
 ]
 
 ################################___Messages___:
@@ -2732,6 +2825,8 @@ class Msg:
         ('trash_completed', _('Move to trash completed successfully')),
         ('delete_completed', _('Deletion completed successfully')),
         ('rename_completed', _('Rename completed successfully')),
+        ('download_completed', _('Download completed successfully')),
+        ('compression_completed', _('Compression completed successfully')),
         ('choose', _('Choose an action')),
         ('choose_app', _('Choose the application to transfer settings')),
         ('reset_settings', _('Do you really want to reset settings?')),
@@ -2741,10 +2836,19 @@ class Msg:
         ('replace_override', _('Another file with the same name already exists. Replacing will overwrite content')),
         ('no_dll', _('You have not selected any libraries to install')),
         ('exist_desktop', _('Path not exist, try to create new shortcut')),
+        ('same_name', _('You already have an executable and a prefix with the same name. \
+To create a shortcut for this executable, rename it or delete the existing shortcut and prefix')),
         ('termination', _('Termination of active processes...')),
         ('equal_paths', _("You can't copy a directory to itself")),
         ('not_exists', _('not exists, do you want to download now?')),
         ('impossible_create', _('It is impossible to create a file in the current directory')),
+        ('correct_path', _('Path does not exist!!! Please select correct path')),
+        ('select_sw_path', _('Select the location of the StartWine directory')),
+        ('change_directory', _('Select directory')),
+        ('create_archive', _('Create a compressed archive')),
+        ('compression', _('Compression...')),
+        ('extraction', _('Extraction...')),
+        ('new_archive', _('New archive')),
     ])
 
     ################################___Tooltips___:
@@ -2756,7 +2860,7 @@ class Msg:
         ('back_main', _('Back to sidebar main menu')),
         ('resize_window', _('Change menu size')),
         ('change_theme', _('Change color scheme')),
-        ('resize_icons', _('Change icon size')),
+        ('resize_icons', _('Change icons size')),
         ('sidebar', _('Show or hide sidebar')),
         ('icon_position', _('Vertical or horizontal icons')),
         ('remove', _('Remove')),
@@ -2778,6 +2882,7 @@ class Msg:
         ('stop', _('Terminate all processes')),
         ('about', _('About')),
         ('choose_app', _('Choose the application to transfer settings')),
+        ('web', _('Show web entry')),
     ])
 
 ################################___Progress_and_file_ops___:
@@ -2870,18 +2975,7 @@ fragments_labels = [
 
 ################################___APPS_ID___:
 
-app_id = None
 url_app_id = 'https://api.steampowered.com/ISteamApps/GetAppList/v2/'
-url_app_logo_h = f'https://cdn.cloudflare.steamstatic.com/steam/apps/{app_id}/header.jpg'
-url_app_logo_v = f'https://cdn.cloudflare.steamstatic.com/steam/apps/{app_id}/library_600x900_2x.jpg'
-
-#key = f'9449a49ca770bed4e9769caedf570bb4'
-#url_app_id = 'https://www.steamgriddb.com/api/v2/grids/game/1332010?dimensions=600x900'
-#url_app_logo_v = f'{url_app_id}/grids/game/{app_id}?dimensions=600x900'
-#url_app_logo_h = f'{url_app_id}/grids/game/{app_id}?dimensions=600x900'
-#auth_headers = {
-#    "Authorization": f"Bearer {key}",
-#}
 
 request_headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36",
@@ -2935,7 +3029,7 @@ exclude_dirs = [
                 'PROGRAMDATA', 'APPDATA', 'USERS', 'LOCAL', 'BINARIES', 'PUBLIC',
                 'STEAMUSER', 'ROAMING', 'PORTAL', 'WIN32', 'WIN64', 'PROGRAMS',
                 'JAVA', 'SYSTEM', 'EN_US', 'CLIENT', 'PC', 'WIN64_SHIPPING_CLIENT',
-                'WIN64_SHIPPING',
+                'WIN64_SHIPPING', 'RETAIL',
                 user_name,
 ]
 
@@ -2994,6 +3088,8 @@ exclude_double_words = [
     ('Anniversary', ''),
     ('Edition', ''),
     ('Launcher', ''),
+    ('Config App', ''),
+    ('Single Player', ''),
 ]
 
 exclude_letters = [
@@ -3036,6 +3132,7 @@ romans = {
 
 def get_roman(number):
     roman = ''
+    number = int(number)
     for letter, value in roman_numbers.items():
         while number >= value:
             roman += letter

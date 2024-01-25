@@ -5,39 +5,36 @@ from os import stat as Stat
 import sys
 from sys import argv, exit
 from pathlib import Path
-from threading import Thread, Timer, Event
-import multiprocessing as mp
 from time import time
-import tarfile
-import zipfile
 import shutil
 from warnings import filterwarnings
 import json
+import urllib.request
+from urllib.request import Request, urlopen, urlretrieve
+from urllib.error import HTTPError
+from subprocess import run, Popen
+from threading import Thread
 
 import gi
 gi.require_version('Gtk', '4.0')
 gi.require_version('Gdk', '4.0')
 from gi.repository import Gdk, Gio, GLib, Gtk
-import urllib.request
-from urllib.request import Request, urlopen, urlretrieve
-from urllib.error import HTTPError
 
 from sw_data import Msg as msg
 filterwarnings("ignore")
 
-#############################___PATHS LINKS___:
+#############################___PATH_DATA___:
 
 program_name = 'StartWine'
 sw_scripts = Path(argv[0]).absolute().parent
 sw_path = Path(sw_scripts).parent.parent
+sw_default_path = Path(f"{Path.home()}/.local/share/StartWine")
 sw_menu_json = Path(f'{sw_scripts}/sw_menu.json')
-sw_img = Path(f'{sw_path}/data/img')
-sw_app_config = Path(f'{sw_path}/data/app_config')
 sw_css_dark = Path(f'{sw_path}/data/img/sw_themes/css/dark/gtk.css')
 sw_css_light = Path(f'{sw_path}/data/img/sw_themes/css/light/gtk.css')
 sw_css_custom = Path(f'{sw_path}/data/img/sw_themes/css/custom/gtk.css')
-sw_cube_png = f"{sw_img}/gui_icons/cube.png"
-sw_sounds = Path(f'{sw_img}/sw_themes/sounds')
+sw_logo = Path(f'{sw_path}/data/img/gui_icons/sw_large_light.svg')
+icon_folder = f'{sw_path}/data/img/gui_icons/hicolor/symbolic/apps/folder-symbolic.svg'
 
 #############################___DISPLAY___:
 
@@ -93,7 +90,7 @@ def media_play(media_file, samples, volume):
         media_file.set_volume(volume)
         media_file.play()
 
-def dialog_entry(app, title, text_message, response, func, num):
+def dialog_entry(app, title, text_message, response, func, num, string_list):
     '''___dialog window with entry row___'''
 
     headerbar = Gtk.HeaderBar(
@@ -147,6 +144,21 @@ def dialog_entry(app, title, text_message, response, func, num):
         )
         box.append(entry)
 
+    dropdown_menu = Gtk.DropDown(
+                                css_name='sw_dropdown',
+                                valign=Gtk.Align.CENTER,
+                                margin_end=8,
+                                show_arrow=True,
+    )
+    if string_list is not None:
+        model = Gtk.StringList()
+        for string in string_list:
+            model.append(string)
+
+        dropdown_menu.set_size_request(96, -1)
+        dropdown_menu.set_model(model)
+        box.append(dropdown_menu)
+
     dialog.set_default_size(500, 120)
     dialog.set_size_request(500, 120)
     dialog.set_resizable(False)
@@ -182,7 +194,7 @@ def dialog_question(app, title, text_message, response, func):
                                 max_content_height=height*0.33,
                                 child=label
     )
-    scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.NEVER)
+    scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
 
     headerbar = Gtk.HeaderBar(
                         css_name='sw_header_top',
@@ -192,7 +204,10 @@ def dialog_question(app, title, text_message, response, func):
                 css_name='sw_box',
                 orientation=Gtk.Orientation.VERTICAL,
                 spacing=8,
+                vexpand=True,
     )
+    box.append(scrolled)
+
     box_btn = Gtk.Box(
                 css_name='sw_box',
                 orientation=Gtk.Orientation.VERTICAL,
@@ -213,6 +228,7 @@ def dialog_question(app, title, text_message, response, func):
     )
     dialog.remove_css_class('background')
     dialog.add_css_class('sw_background')
+
     if response is None:
         response = [msg.msg_dict['yes'], msg.msg_dict['no']]
         btn_yes = Gtk.Button(
@@ -245,10 +261,8 @@ def dialog_question(app, title, text_message, response, func):
             btn.set_name(str(count))
             btn.connect('clicked', cb_btn_response, dialog, f)
             box_btn.append(btn)
+            box.append(box_btn)
 
-    box.append(scrolled)
-    box.append(box_btn)
-    dialog.set_default_size(420, 120)
     dialog.set_size_request(width*0.25, height*0.15)
     dialog.set_resizable(False)
     dialog.present()
@@ -291,9 +305,180 @@ def dialog_directory(app, title):
     dialog.set_default_filter(file_filter)
     file = Gio.File.new_for_commandline_arg(bytes(Path.home()))
     dialog.set_initial_folder(file)
+    dialog.set_modal(True)
     dialog.set_title(title)
 
     return dialog
+
+def dialog_folder(app, parent, func, data):
+
+    filechooser = Gtk.FileChooserDialog(
+                                    application=app,
+                                    title="Please choose a folder",
+                                    action=Gtk.FileChooserAction.SELECT_FOLDER,
+                                    )
+    filechooser.set_transient_for(parent)
+    filechooser.set_decorated(False)
+    filechooser.add_buttons(
+                        "_Cancel", Gtk.ResponseType.CANCEL,
+                        "_Select", Gtk.ResponseType.ACCEPT
+    )
+    path = Gio.File.new_for_path(f'{Path.home()}')
+    filechooser.set_current_folder(path)
+    filechooser.present()
+    filechooser.connect("response", func, data)
+
+class StartPathManager(Gtk.Application):
+
+    def __init__(self, source_path):
+        super().__init__(flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
+        self.source_path = source_path
+        self.connect('activate', self.activate)
+
+    def activate(self, app):
+
+        self.window = Gtk.Window(
+                        application=app,
+                        css_name='sw_window',
+                        default_height=320,
+                        default_width=640,
+        )
+        self.window.remove_css_class('background')
+        self.window.add_css_class('sw_background')
+        self.window.set_resizable(False)
+
+        self.label_btn_ok = Gtk.Label(css_name='sw_label', label=msg.msg_dict['ok'])
+        self.btn_ok = Gtk.Button(css_name='sw_button_accept')
+        self.btn_ok.set_valign(Gtk.Align.CENTER)
+        self.btn_ok.set_child(self.label_btn_ok)
+        self.btn_ok.set_size_request(96, 16)
+        self.btn_ok.connect('clicked', self._accept_response)
+
+        self.headerbar = Gtk.HeaderBar(
+                        css_name='sw_header_top',
+                        show_title_buttons=False,
+        )
+        self.headerbar.pack_end(self.btn_ok)
+        self.headerbar.set_title_widget(Gtk.Label())
+
+        self.entry_main = Gtk.Entry(
+                                    css_name='sw_entry',
+                                    margin_start=8,
+                                    margin_end=8,
+                                    hexpand=True,
+                                    valign=Gtk.Align.CENTER,
+                                    text=str(self.source_path),
+        )
+        self.label_main =Gtk.Label(css_name='sw_label', label=msg.msg_dict['select_sw_path'])
+
+        self.image = Gtk.Picture(css_name='sw_picture')
+        self.image.set_content_fit(Gtk.ContentFit.COVER)
+        self.image.set_margin_start(64)
+        self.image.set_margin_end(64)
+        self.image.set_size_request(-1, 128)
+        self.paintable_icon = Gtk.IconPaintable.new_for_file(
+                                Gio.File.new_for_path(f'{sw_logo}'), 1024, 1
+        )
+        self.image.set_paintable(self.paintable_icon)
+
+        self.image_folder = Gtk.Image(css_name='sw_image')
+        self.image_folder.set_from_file(icon_folder)
+
+        self.btn_main = Gtk.Button(css_name='sw_button')
+        self.btn_main.set_halign(Gtk.Align.END)
+        self.btn_main.set_child(self.image_folder)
+        self.btn_main.set_tooltip_markup(msg.msg_dict['select_sw_path'])
+        self.btn_main.connect('clicked', self._select_path)
+
+        self.box_entry = Gtk.Box(css_name='sw_box', orientation=Gtk.Orientation.HORIZONTAL)
+        self.box_entry.append(self.entry_main)
+        self.box_entry.append(self.btn_main)
+
+        self.grid_content = Gtk.Grid(css_name='sw_grid')
+        self.grid_content.set_row_spacing(16)
+        self.grid_content.set_column_spacing(32)
+        self.grid_content.set_margin_top(32)
+        self.grid_content.set_margin_bottom(32)
+        self.grid_content.set_margin_start(32)
+        self.grid_content.set_margin_end(32)
+        self.grid_content.attach(self.image, 0, 1, 1, 1)
+        self.grid_content.attach(self.label_main, 0, 2, 1, 1)
+        self.grid_content.attach(self.box_entry, 0, 3, 1, 1)
+
+        self.window.set_titlebar(self.headerbar)
+        self.window.set_child(self.grid_content)
+        self.window.present()
+
+    def _select_path(self, button):
+
+        title = msg.msg_dict['change_directory']
+        dialog = dialog_directory(self, title)
+        dialog.select_folder(
+                    parent=self.window,
+                    cancellable=Gio.Cancellable(),
+                    callback=self._get_folder,
+                    user_data=dialog,
+        )
+
+    def _get_folder(self, dialog, res, data):
+
+        try:
+            result = dialog.select_folder_finish(res)
+        except GLib.GError as e:
+            result = None
+        else:
+            self.entry_main.set_text(str(result.get_path()))
+
+    def _accept_response(self, button):
+
+        dest_path = Path(self.entry_main.get_text())
+
+        if not str(dest_path).endswith('StartWine'):
+            if dest_path.exists():
+                dest_path = Path(f'{dest_path}/StartWine')
+            else:
+                self.label_main.add_css_class('warning')
+                self.label_main.set_label(msg.msg_dict['correct_path'])
+
+        if dest_path == Path(self.source_path):
+            print('set default path...')
+            self.window.close()
+            print('run StartWine...')
+            run(f'"{dest_path}/data/scripts/sw_menu.py"', shell=True, start_new_session=True)
+        else:
+            if dest_path.exists():
+                print('path exists, skip...')
+                self.window.close()
+                print('run StartWine...')
+                run(f'"{dest_path}/data/scripts/sw_menu.py"', shell=True, start_new_session=True)
+            else:
+                self.window.close()
+                if str(dest_path).endswith('StartWine'):
+                    print('move StartWine...')
+                    try:
+                        shutil.move(self.source_path, dest_path)
+                    except Exception as e:
+                        print(e)
+                    else:
+                        if not Path(f'{Path.home()}/.config').exists():
+                            Path(f'{Path.home()}/.config').mkdir(parents=True, exist_ok=True)
+                            with open(f'{Path.home()}/.config/swrc', 'w') as f:
+                                f.write(f'{dest_path}')
+                                f.close()
+                        else:
+                            with open(f'{Path.home()}/.config/swrc', 'w') as f:
+                                f.write(f'{dest_path}')
+                                f.close()
+
+def run_menu():
+
+    if Path(f'{Path.home()}/.config/swrc').exists():
+        with open(f'{Path.home()}/.config/swrc', 'r') as f:
+            dest_path = f.read().splitlines()[0]
+            f.close()
+        run(f'{dest_path}/data/scripts/sw_menu.py', start_new_session=True)
+    else:
+        print(f'{Path.home()}/.config/swrc not found...exit')
 
 #############################___APPLICATION___:
 
@@ -314,7 +499,7 @@ class Crier(Gtk.Application):
                 self.connect('activate', info, argv[2], 'ERROR')
 
             elif argv[1] == f"-w":
-                response = ['Accept', 'Cancel']
+                response = [msg.msg_dict['accept'], msg.msg_dict['cancel']]
                 self.connect('activate', question, argv[2], 'WARNING', response)
 
             elif argv[1] == f"-q":
@@ -683,7 +868,6 @@ def download(url, filename):
             "Connection": "keep-alive",
             "Accept-Charset": "ISO-8859-1,utf-8;q=0.7,*;q=0.3",
         }
-
         try:
             response = urlopen(Request(url, headers=request_headers))
         except HTTPError as e:
@@ -714,8 +898,13 @@ class ProgressBar(Gtk.Application):
         self.percent = 0
         self.quit = None
         self.url = url
+
+        try:
+            self.totalsize = urlopen(url).length
+        except Exception as e:
+            self.totalsize = None
+
         self.filename = filename
-        self.totalsize = urlopen(url).length
         self.program_name = f"StartWine"
         self.connect('activate', self.activate)
         GLib.timeout_add(1000, self.update)
@@ -760,6 +949,11 @@ class ProgressBar(Gtk.Application):
 
     def update(self):
 
+        if self.totalsize is None:
+            print(f'Impossible to determine total size. URL not found...Exit')
+            self.quit = self.window.close()
+            exit(1)
+
         if Path(self.filename).exists():
             current = Stat(self.filename).st_size
             self.percent = current / self.totalsize
@@ -768,7 +962,7 @@ class ProgressBar(Gtk.Application):
                 self.progressbar.set_fraction(self.percent)
 
             if self.percent >= 1:
-                print(f'___download_completed_successfully___')
+                print(f'Download_completed_successfully.')
                 self.quit = self.window.close()
 
         return True
@@ -779,7 +973,7 @@ class ExtractBar(Gtk.Application):
 
     def __init__(self, filename, path):
         super().__init__(
-                        #application_id="prg.project.Crier",
+                        #application_id="ru.project.Crier",
                         flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
         )
         GLib.set_prgname(program_name)
@@ -850,7 +1044,11 @@ class ExtractBar(Gtk.Application):
             else:
                 taro.close()
                 print(f'Extraction_completed_successfully.')
-                self.quit = 1
+                self.quit = 0
+        else:
+            print(f'{filename} not exists...Exit.')
+            self.quit = 1
+            exit(1)
 
     def extract_zip(self, filename, path):
 
@@ -863,9 +1061,14 @@ class ExtractBar(Gtk.Application):
             else:
                 zipo.close()
                 print(f'Extraction_completed_successfully.')
-                self.quit = 1
+                self.quit = 0
+        else:
+            print(f'{filename} not exists...Exit.')
+            self.quit = 1
+            exit(1)
 
 class ExtractIcon():
+
     def __init__(self, filename=None, data=None):
         '''Loads an executable from the given filename or data (raw bytes).'''
 
@@ -1016,6 +1219,7 @@ if __name__ == "__main__":
 
     if len(argv) > 1:
         if str(argv[1]) == str("-d"):
+            import multiprocessing as mp
             url = str(argv[2])
             filename = str(argv[3])
             process = mp.Process(target=download, args=[url, filename])
@@ -1024,6 +1228,9 @@ if __name__ == "__main__":
             app.run()
 
         elif str(argv[1]) == str("-tar"):
+            import tarfile
+            from threading import Thread
+
             filename = str(argv[2])
             path = str(argv[3])
             app = ExtractBar(filename, path)
@@ -1031,6 +1238,9 @@ if __name__ == "__main__":
             app.run()
 
         elif str(argv[1]) == str("-zip"):
+            import zipfile
+            from threading import Thread
+
             filename = str(argv[2])
             path = str(argv[3])
             app = ExtractBar(filename, path)
@@ -1038,7 +1248,6 @@ if __name__ == "__main__":
             app.run()
 
         elif str(argv[1]) == str("-ico"):
-
             import io
             import struct
             import pefile
@@ -1058,6 +1267,19 @@ if __name__ == "__main__":
         elif str(argv[1]) == str("-hud"):
             import psutil
             HudSize()
+
+        elif str(argv[1]) == str("-p"):
+            if len(argv) > 2:
+                path = argv[2]
+            else:
+                path = sw_default_path
+
+            app = StartPathManager(path)
+            app.run()
+            run_menu()
+
+        elif str(argv[1]) == str("-py"):
+            run_menu()
 
         elif str(argv[1]) == str("-h") or str(argv[1]) == str("--help"):
             on_helper()

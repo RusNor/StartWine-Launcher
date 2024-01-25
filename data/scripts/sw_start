@@ -13,6 +13,7 @@ import shutil
 
 sw_scripts = Path(argv[0]).absolute().parent
 sw_path = sw_scripts.parent.parent
+sw_default_path = Path(f'{Path.home()}/.local/share')
 sw_tools = Path(f"{sw_path}/data/tools")
 sw_menu = Path(f"{sw_scripts}/sw_menu.py")
 sw_crier = Path(f"{sw_scripts}/sw_crier.py")
@@ -95,6 +96,7 @@ def on_helper():
     -d or --dialog ('-h' for print help)  run dialogs window with message
     -n or --no-runtime                    run StartWine without runtime
     -r or --runtime                       run runtime container without StartWine
+    -p or --path                          run StartWine path chooser
     -h or --help                          print this help info
     '''
     print(sw_start_help)
@@ -128,6 +130,16 @@ if __name__ == '__main__':
 
         elif argv[1] == '--runtime' or argv[1] == '-r':
             on_runtime()
+
+        elif argv[1] == '--path' or argv[1] == '-p':
+            if len(argv) > 2:
+                args = '-p ' + str(argv[2])
+                on_crier(args)
+            elif len(argv) == 2:
+                args = '-p ' + str(sw_default_path)
+                on_crier(args)
+            else:
+                on_helper()
 
         elif argv[1] == '--help' or argv[1] == '-h':
             on_helper()

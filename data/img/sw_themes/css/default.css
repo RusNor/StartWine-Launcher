@@ -200,10 +200,12 @@ sw_label.separator {
 sw_label>selection {
     color: @sw_text_hover_color;
     background-color: rgba(255, 255, 255, 0.2);
+    background-image: image(rgba(255, 255, 255, 0.2));
 }
 
 sw_label:disabled selection {
     background-color: rgba(255, 255, 255, 0.1);
+    background-image: image(rgba(255, 255, 255, 0.1));
 }
 
 /*___HEADERBARS___*/
@@ -243,6 +245,7 @@ sw_header_bottom {
 
 sw_window.sw_background.csd {
     transition: box-shadow 150ms cubic-bezier(0, 0, 0.2, 1);
+    border: 1px solid @sw_header_bg_color;
     border-radius: 12px;
 /*    box-shadow: 0 3px 3px 0 rgba(36, 36, 36, 0.1),*/
 /*                0 8px 8px 0 rgba(36, 36, 36, 0.1),*/
@@ -1779,6 +1782,11 @@ sw_entry>text {
 
 sw_entry>text selection {
     background-color: @sw_accent_bg_color;
+    background-image: image(rgba(255, 255, 255, 0.2));
+}
+
+selection {
+    background-image: image(rgba(255, 255, 255, 0.2));
 }
 
 sw_entry sw_button_path>label {

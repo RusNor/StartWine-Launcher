@@ -94,6 +94,9 @@ msgstr ""
 msgid "Protondb"
 msgstr ""
 
+msgid "Search for an image"
+msgstr "Поиск изображения"
+
 #: sw_data.py:769 sw_data.py:822
 msgid "wine staging"
 msgstr ""
@@ -145,6 +148,12 @@ msgstr "Вставить"
 #: sw_data.py:781 sw_data.py:811
 msgid "Select all"
 msgstr "Выделить все"
+
+msgid "Compress..."
+msgstr "Сжать..."
+
+msgid "Extract..."
+msgstr "Извлечь..."
 
 #: sw_data.py:782 sw_data.py:812
 msgid "Move to trash"
@@ -262,6 +271,9 @@ msgstr "Лицензия"
 msgid "Donations and help"
 msgstr "Помощь проекту"
 
+msgid "Check for updates"
+msgstr "Проверить наличие обновлений"
+
 #: sw_data.py:913
 msgid "Code"
 msgstr "Код"
@@ -356,6 +368,20 @@ msgstr ""
 "либо версия 3 лицензии, либо (по вашему выбору) - любая более поздняя "
 "версия. Start Wine распространяется без каких-либо гарантий. Смотрите GNU "
 "Lesser General Public License для получения более подробной информации."
+
+msgid "Contribute to the project"
+msgstr "Внести свой вклад в проект"
+
+msgid "You can contribute to the project by spreading information about it, "
+"offering for discussion any ideas related to improving the functionality "
+"and appearance of the StartWine application. You can also help by contributing "
+"to the development by submitting bug reports. And you can always donate any "
+"amount to the development of the project using the link below."
+msgstr "Вы можете внести свой вклад в проект, распространяя информацию о нем, "
+"предлагая к обсуждению любые идеи, связанные с улучшением функциональности "
+"и внешнего вида приложения StartWine. Вы также можете помочь, внося свой вклад "
+"в разработку, отправляя отчеты об ошибках. А пожертвовать любую сумму на "
+"развитие проекта вы всегда можете по ссылке ниже."
 
 #: sw_data.py:1045
 msgid "Start"
@@ -529,6 +555,9 @@ msgstr "Резервные копии"
 msgid "Prefix configurations"
 msgstr "Конфигурации префиксов"
 
+msgid "Logs"
+msgstr "Логи"
+
 #: sw_data.py:1209
 msgid "Move settings"
 msgstr "Переместить настройки"
@@ -662,8 +691,11 @@ msgstr ""
 "dxvk и vkd3d"
 
 #: sw_data.py:1443
-msgid "System monitoring in dxvk and vkd3d"
-msgstr "Мониторинг системы в dxvk и vkd3d"
+msgid "System monitoring in opengl or vulkan (dxvk, vkd3d)"
+msgstr "Мониторинг системы в режимах opengl или vulkan (dxvk, vkd3d)"
+
+msgid "System monitoring in vulkan (dxvk, vkd3d)"
+msgstr "Мониторинг системы в режиме vulkan (dxvk, vkd3d)"
 
 #: sw_data.py:1444
 msgid "Set of optimisations be temporarily applied a game process"
@@ -806,11 +838,11 @@ msgstr "Для запуска игр с использованием directx 8 �
 
 #: sw_data.py:1468
 msgid ""
-"Nvidia DLSS with DLSS to AMD FSR support. Advanced upscaling technologies "
-"for higher fps for higher frame rate per second"
+"Nvidia DLSS - advanced upscaling technologies for higher fps for higher frame "
+"rate per second"
 msgstr ""
-"Nvidia DLSS с поддержкой DLSS для AMD FSR. Передовые технологии "
-"масштабирования обеспечивают более высокую частоту кадров в секунду"
+"Nvidia DLSS - передовая технология масштабирования, обеспечивающая более "
+"высокую частоту кадров в секунду"
 
 #: sw_data.py:1469
 msgid "Disable prefix update on startup"
@@ -1894,6 +1926,12 @@ msgstr "Удаление успешно завершено"
 msgid "Rename completed successfully"
 msgstr "Переименование успешно завершено"
 
+msgid "Download completed successfully"
+msgstr "Загрузка успешно завершена"
+
+msgid "Compression completed successfully"
+msgstr "Сжатие успешно завершено"
+
 #: sw_data.py:2668
 msgid "Choose an action"
 msgstr "Выберите действие"
@@ -1934,6 +1972,13 @@ msgstr "Вы не выбрали ни одной библиотеки для у�
 msgid "Path not exist, try to create new shortcut"
 msgstr "Путь не существует, попробуйте создать новый ярлык"
 
+msgid "You already have an executable and a prefix with the same name. "
+"To create a shortcut for this executable, rename it or delete the existing "
+"shortcut and prefix"
+msgstr "У вас уже есть исполняемый файл и префикс с таким же именем. "
+"Чтобы создать ярлык для этого исполняемого файла, переименуйте его или удалите "
+"существующий ярлык и префикс."
+
 #: sw_data.py:2676
 msgid "Termination of active processes..."
 msgstr "Прекращение активных процессов..."
@@ -1949,6 +1994,27 @@ msgstr "не существует, хотите загрузить сейчас?
 #: sw_data.py:2679
 msgid "It is impossible to create a file in the current directory"
 msgstr "Невозможно создать файл в текущем каталоге"
+
+msgid "Path does not exist!!! Please select correct path"
+msgstr "Путь не существует!!! Пожалуйста, выберите правильный путь"
+
+msgid "Select the location of the StartWine directory"
+msgstr "Выберите расположение каталога StartWine"
+
+msgid "Select directory"
+msgstr "Выберите каталог"
+
+msgid "Create a compressed archive"
+msgstr "Создать сжатый архив"
+
+msgid "Compression..."
+msgstr "Сжатие..."
+
+msgid "Extraction..."
+msgstr "Извлечение..."
+
+msgid "New archive"
+msgstr "Новый архив"
 
 #: sw_data.py:2685
 msgid "Go to the home directory"
@@ -1975,8 +2041,8 @@ msgid "Change color scheme"
 msgstr "Изменить цветовую схему"
 
 #: sw_data.py:2691
-msgid "Change icon size"
-msgstr "Изменить размер значка"
+msgid "Change icons size"
+msgstr "Изменить размер значков"
 
 #: sw_data.py:2692
 msgid "Show or hide sidebar"
@@ -2364,7 +2430,7 @@ msgstr "Переустановка префикса завершена успе�
 
 #, sh-format
 msgid ""
-"You have a backup of the default prefix whith recommended libraries. "
+"You have a backup of the default prefix with recommended libraries. "
 "Use it to create a new prefix?"
 msgstr ""
 "У вас есть резервная копия префикса по умолчанию с рекомендуемыми библиотеками. "
@@ -2377,6 +2443,12 @@ msgstr "Вы действительно хотите удалить префик
 #, sh-format
 msgid "Do you really want to reinstall the prefix?"
 msgstr "Вы действительно хотите переустановить префикс?"
+
+msgid "Do you really want to reinstall the default prefix?"
+msgstr "Вы действительно хотите переустановить префикс по умолчанию?"
+
+msgid "You can not overwrite the default prefix backup"
+msgstr "Вы не можете перезаписать резервную копию префикса по умолчанию"
 
 #, sh-format
 msgid "Shortcut and prefix ${SW_GAME_NAME} removed"
@@ -2401,6 +2473,9 @@ msgstr "Резервное копирование успешно заверше�
 #, sh-format
 msgid "Do you really want to restore the prefix?"
 msgstr "Вы действительно хотите восстановить префикс?"
+
+msgid "Do you really want to restore the default prefix?"
+msgstr "Вы действительно хотите восстановить префикс по умолчанию?"
 
 #, sh-format
 msgid "You do not have a backup create it first"

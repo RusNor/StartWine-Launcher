@@ -11,7 +11,7 @@ export SW_USE_GALLIUM_HUD=0
 export SW_USE_OPENGL=0
 export SW_USE_MANGOHUD=1
 export SW_USE_MESA_OVERLAY_HUD=0
-export SW_USE_GAMEMODE=1
+export SW_USE_GAMEMODE=0
 export SW_USE_VIRTUAL_DESKTOP=0
 export SW_USE_FSYNC=1
 export SW_USE_ESYNC=0
@@ -45,7 +45,7 @@ export SW_USE_VKD3D_VER="2.11"
 export SW_USE_VKBASALT_EFFECTS="cas:Tonemap:Colourfulness:"
 export SW_USE_VKBASALT_CAS="0.4"
 export SW_USE_FPS_LIMIT="0.0"
-export SW_USE_MANGOHUD_CONFIG="core_load,gamemode,vkbasalt,resolution,wine,time,vram,ram,gpu_core_clock,gpu_temp,cpu_mhz,cpu_temp"
+export SW_USE_MANGOHUD_CONFIG="cpu_temp,ram,core_load,cpu_mhz,wine,gpu_temp,gpu_core_clock,vram"
 export SW_USE_WINE="wine_proton_ge"
 export SW_USE_PFX="pfx_launcher"
 ################################################################################

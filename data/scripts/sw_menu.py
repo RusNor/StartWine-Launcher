@@ -29,12 +29,14 @@ import re
 import json
 import codecs
 import shutil
-import tempfile
+import tarfile
+import zipfile
 
 ####__Export backend for OpenGL
 
 filterwarnings("ignore")
 ls_gpu_in_use = "lspci -nnk | grep -i vga -A3 | grep 'in use' | cut -d ' ' -f5-100"
+environ['WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS'] = '1'
 
 try:
     gpu_in_use = run(ls_gpu_in_use, shell=True, stdout=PIPE, encoding='UTF-8').stdout.splitlines()[0]
@@ -101,10 +103,12 @@ else:
 import gi
 gi.require_version('Gtk', '4.0')
 gi.require_version('Gdk', '4.0')
+gi.require_version('WebKit', '6.0')
 gi.require_version('Notify', '0.7')
 gi.require_version('Vte', '3.91')
 
-from gi.repository import Gtk, Gdk, Gio, GLib, Pango, GObject
+from gi.repository import Gtk, Gdk, Gio, GLib, Pango, GObject, Graphene
+from gi.repository import WebKit
 from gi.repository import GdkPixbuf
 from gi.repository import Notify
 from gi.repository import Vte
@@ -160,7 +164,7 @@ def set_print_id_info(g_app, show):
 
         print(
             f'\n{tc.SELECTED + tc.BEIGE}'
-            +f'--------------< STARTWINE {sw_version} >-------------{tc.END}\n'
+            +f'--------------< STARTWINE {str_sw_version} >-------------{tc.END}\n'
         )
         print(
             f'{tc.VIOLET2}APPLICATION_ID: {tc.GREEN}{g_app.get_application_id()}\n'
@@ -350,17 +354,17 @@ def start_tray():
             if f"{sw_rsh}" in line:
                 pid = int(line.split()[1])
                 kill(pid, 9)
+
+        sw_tray_log = f'{sw_logs}/sw_tray.log'
         try:
-            tray = f"{sw_tray} {app_path}"
-            sw_tray_log = f'{sw_tmp}/log/sw_tray.log'
             sys_stderr = open(sw_tray_log, 'w')
-        except OSError as e:
-            print(tc.RED, 'SW_TRAY: failed', tc.END)
+        except Exception as e:
+            sys_stderr = None
         else:
-            Popen(tray, shell=True, stderr=sys_stderr)
+            Popen([sw_tray, app_path], stderr=sys_stderr)
             print(tc.SELECTED + tc.VIOLET2)
             print('-----------------< SW_TRAY >------------------', tc.END)
-            print(f'\n{tc.VIOLET2}SW_TRAY: {tc.GREEN}done', tc.END)
+            print(f'\n {tc.VIOLET2}SW_TRAY: {tc.GREEN}done', tc.END)
 
 def get_pfx_path():
     '''___get current prefix path___'''
@@ -459,13 +463,13 @@ def preload_runlib(enable_env: bool):
 
     if enable_env:
         for k, v in env_dict.items():
-            print(tc.BLUE + f'{k}={tc.GREEN}{v}')
+            print(tc.BLUE, f'{k}={tc.GREEN}{v}')
             environ[f'{k}'] = f'{v}'
 
     cmd = f"{sw_scripts}/sw_runlib {app_name}"
     run(cmd, shell=True)
 
-    print(f'{tc.RED}Preload sw_runlib...')
+    print(tc.VIOLET2, f'PRELOAD: {tc.YELLOW}sw_runlib...{tc.END}')
 
 def get_exe_icon():
     '''___get icon from exe file___'''
@@ -523,7 +527,7 @@ def try_get_appid_json():
             f.write(json.dumps(filter_data, indent=0))
             f.close()
 
-            print(f'{tc.RED}Write app id json data...')
+            print(f'{tc.RED}Write app id json data...{tc.END}')
 
 def convert_image(in_file, out_file, width, height):
     '''___generate thumbnail for image mime type files___'''
@@ -545,15 +549,27 @@ def convert_image(in_file, out_file, width, height):
             image.save(out_file, 'jpeg')
             return True
 
-def request_urlopen(url, dest):
+def request_urlopen(url, dest, auth):
 
-    request_headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36",
-        "Accept-Language": "fr-FR,fr;q=0.8,en-US;q=0.6,en;q=0.4",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Connection": "keep-alive",
-        "Accept-Charset": "ISO-8859-1,utf-8;q=0.7,*;q=0.3",
-    }
+    key = f'9bd57c167c0f9b466539d0c8f9bdbd70'
+
+    if auth:
+        request_headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36",
+            "Accept-Language": "fr-FR,fr;q=0.8,en-US;q=0.6,en;q=0.4",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Connection": "keep-alive",
+            "Accept-Charset": "ISO-8859-1,utf-8;q=0.7,*;q=0.3",
+            "Authorization": f"Bearer {key}",
+        }
+    else:
+        request_headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36",
+            "Accept-Language": "fr-FR,fr;q=0.8,en-US;q=0.6,en;q=0.4",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Connection": "keep-alive",
+            "Accept-Charset": "ISO-8859-1,utf-8;q=0.7,*;q=0.3",
+        }
     try:
         response = urlopen(Request(url, headers=request_headers))
     except HTTPError as e:
@@ -567,37 +583,45 @@ def request_urlopen(url, dest):
             shutil.copyfileobj(res, out)
             res.close()
 
-def try_download_logo(app_id, app_name, original_name):
+def try_download_logo(app_id, app_name, original_name, orientation):
     '''___try download application logo by id___'''
 
-    if (not str(app_id) in str([x.name for x in list(sw_app_hicons.iterdir())])
-        and not str(app_id) in str([x.name for x in list(sw_app_vicons.iterdir())])):
+    if orientation == 'horizontal':
+        if not str(app_id) in str([x.name for x in list(sw_app_hicons.iterdir())]):
+            app_name_isalnum = ''.join(e for e in app_name if e.isalnum())
+            file_hicon = f'{sw_app_hicons}/{app_name_isalnum}_horizontal_{original_name}_{app_id}.jpg'
 
-        app_name_isalnum = ''.join(e for e in app_name if e.isalnum())
-        file_hicon = f'{sw_app_hicons}/{app_name_isalnum}_horizontal_{original_name}_{app_id}.jpg'
-        file_vicon = f'{sw_app_icons}/tmp/{app_name_isalnum}_vertical_{original_name}_{app_id}.jpg'
-
-        try:
-            url_app_logo = f'https://cdn.cloudflare.steamstatic.com/steam/apps/{app_id}/header.jpg'
-            urllib.request.urlretrieve(url_app_logo, file_hicon)
-            #request_urlopen(url_app_logo, file_hicon)
-        except:
-            print(f'{tc.RED} Download: {HTTPError} {tc.END}')
-            return False
+            try:
+                url_app_logo = f'https://cdn.cloudflare.steamstatic.com/steam/apps/{app_id}/header.jpg'
+                urllib.request.urlretrieve(url_app_logo, file_hicon)
+                #request_urlopen(url_app_logo, file_hicon)
+            except Exception as e:
+                print(f'{tc.RED} Download: {e} {tc.END}')
+                return False
+            else:
+                print(f'{tc.GREEN} Download horizontal icon complete: {tc.YELLOW} {app_id} {tc.RED} {original_name} {tc.END}')
+                return True
         else:
-            print(f'{tc.GREEN} Download horizontal icon complete: {tc.YELLOW} {app_id} {tc.RED} {original_name} {tc.END}')
+            print(f'{tc.RED} Download horizontal icon: Skip {tc.END}')
+            return True
+
+    elif orientation == 'vertical':
+        if not str(app_id) in str([x.name for x in list(sw_app_vicons.iterdir())]):
+
+            app_name_isalnum = ''.join(e for e in app_name if e.isalnum())
+            file_vicon = f'{sw_app_icons}/tmp/{app_name_isalnum}_vertical_{original_name}_{app_id}.jpg'
             try:
                 url_app_logo = f'https://cdn.cloudflare.steamstatic.com/steam/apps/{app_id}/library_600x900_2x.jpg'
                 urllib.request.urlretrieve(url_app_logo, file_vicon)
                 #request_urlopen(url_app_logo, file_vicon)
-            except:
-                print(f'{tc.RED} Download: {HTTPError} {tc.END}')
+            except Exception as e:
+                print(f'{tc.RED} Download: {e} {tc.END}')
                 return False
             else:
                 print(f'{tc.GREEN} Download vertical icon complete: {tc.YELLOW} {app_id} {tc.RED} {original_name} {tc.END}')
                 file_out = f'{sw_app_vicons}/{app_name_isalnum}_vertical_{original_name}_{app_id}.jpg'
-                converted = convert_image(file_vicon, file_out, 300, 450)
-                if converted:
+                converted = convert_image(file_vicon, file_out, 480, 720)
+                if not converted:
                     shutil.copy2(file_vicon, file_out)
                     print(f'{tc.GREEN} Copy vertical icon: {tc.YELLOW} {app_id} {tc.RED} {original_name} {tc.END}')
                 else:
@@ -607,11 +631,15 @@ def try_download_logo(app_id, app_name, original_name):
                     Path(f'{file_vicon}').unlink()
 
                 return True
+        else:
+            print(f'{tc.RED} Download vertical icon: Skip {tc.END}')
+            return True
     else:
-        print(f'{tc.RED} Download: Skip {tc.END}')
+        print(f'{tc.RED} Download icon: Skip {tc.END}')
         return False
 
-def compare_name(x_name, y_name, z_name, a_name, app_name, info_list):
+def compare_name(orig_name, orig_name_, desc_name, desc_name_,
+                dir_name, dir_name_, exe_name, exe_name_, app_name, info_list):
     '''___compare application metadata info with app id data___'''
 
     app_id_dict.clear()
@@ -624,6 +652,7 @@ def compare_name(x_name, y_name, z_name, a_name, app_name, info_list):
 
     for app in app_data:
         key_name = str(app['name'])
+
         for word in exclude_double_words:
             if word[0] in key_name:
                 key_name = key_name.replace(word[0], word[1])
@@ -631,47 +660,258 @@ def compare_name(x_name, y_name, z_name, a_name, app_name, info_list):
             key_name = ''.join(e for e in key_name.upper() if  e.isalnum())
             key_name = str_to_roman(key_name)
 
-        if x_name is not None:
-            if x_name.upper() == key_name:
+        if orig_name is not None:
+            if orig_name.upper() == key_name:
                 app_id = app['appid']
                 name = app['name']
                 app_id_dict[f'original_{app_id}'] = app_id
                 name_dict[f'original_{app_id}'] = name
                 print(tc.BEIGE + f'match = {info_list[0]}: ' + str(app) + tc.END)
 
-        if y_name is not None:
-            if y_name.upper() == key_name:
+        if desc_name is not None:
+            if desc_name.upper() == key_name:
                 app_id = app['appid']
                 name = app['name']
                 app_id_dict['description_{app_id}'] = app_id
                 name_dict['description_{app_id}'] = name
                 print(tc.BEIGE + f'match = {info_list[1]}: ' + str(app) + tc.END)
 
-        if z_name is not None:
-            if z_name.upper() == key_name:
+        if dir_name is not None:
+            if dir_name.upper() == key_name:
                 app_id = app['appid']
                 name = app['name']
                 app_id_dict['directory_{app_id}'] = app_id
                 name_dict['directory_{app_id}'] = name
                 print(tc.BEIGE + f'match = {info_list[2]}: ' + str(app) + tc.END)
 
-        if a_name is not None:
-            if a_name.upper() == key_name:
+        if exe_name is not None:
+            if exe_name.upper() == key_name:
                 app_id = app['appid']
                 name = app['name']
                 app_id_dict['exe_{app_id}'] = app_id
                 name_dict['exe_{app_id}'] = name
                 print(tc.BEIGE + f'match = {info_list[3]}: ' + str(app) + tc.END)
     else:
-        return check_download_logo(app_id_dict, app_name, name_dict)
+        print(f'{tc.GREEN}Check and download vertical sgdb icon {tc.END}')
+        if orig_name_ is not None:
+            check_db_vert = check_download_sgdb(orig_name_, app_name, '600', '900', 'vertical')
+            if check_db_vert is None:
+                check_db_vert = check_download_sgdb(orig_name_, app_name, '660', '930', 'vertical')
+        else:
+            check_db_vert = None
 
-def check_download_logo(app_id_dict, app_name, name_dict):
+        if check_db_vert is None:
+            if desc_name_ is not None:
+                check_db_vert = check_download_sgdb(desc_name_, app_name, '600', '900', 'vertical')
+                if check_db_vert is None:
+                    check_db_vert = check_download_sgdb(desc_name_, app_name, '660', '930', 'vertical')
+            else:
+                check_db_vert = None
+
+            if check_db_vert is None:
+                if dir_name_ is not None:
+                    check_db_vert = check_download_sgdb(dir_name_, app_name, '600', '900', 'vertical')
+                    if check_db_vert is None:
+                        check_db_vert = check_download_sgdb(dir_name_, app_name, '660', '930', 'vertical')
+                else:
+                    check_db_vert = None
+
+                if check_db_vert is None:
+                    if exe_name_ is not None:
+                        check_db_vert = check_download_sgdb(exe_name_, app_name, '600', '900', 'vertical')
+                        if check_db_vert is None:
+                            check_db_vert = check_download_sgdb(exe_name_, app_name, '660', '930', 'vertical')
+                    else:
+                        check_db_vert = None
+
+                    if check_db_vert is None:
+                        check_db_vert = check_download_sgdb(app_name, app_name, '600', '900', 'vertical')
+                        if check_db_vert is None:
+                            check_db_vert = check_download_sgdb(app_name, app_name, '660', '930', 'vertical')
+                            if check_db_vert is None:
+                                check_db_vert = download_steam_vert = check_download_logo(app_id_dict, app_name, name_dict, 'vertical')
+
+        print(f'{tc.GREEN}Check and download horizontal sgdb icon {tc.END}')
+        if orig_name_ is not None:
+            check_db_horiz = check_download_sgdb(orig_name_, app_name, '460', '215', 'horizontal')
+            if check_db_horiz is None:
+                check_db_horiz = check_download_sgdb(orig_name_, app_name, '920', '430', 'horizontal')
+        else:
+            check_db_horiz = None
+
+        if check_db_horiz is None:
+            if desc_name_ is not None:
+                check_db_horiz = check_download_sgdb(desc_name_, app_name, '460', '215', 'horizontal')
+                if check_db_horiz is None:
+                    check_db_horiz = check_download_sgdb(desc_name_, app_name, '920', '430', 'horizontal')
+            else:
+                check_db_horiz = None
+
+            if check_db_horiz is None:
+                if dir_name_ is not None:
+                    check_db_horiz = check_download_sgdb(dir_name_, app_name, '460', '215', 'horizontal')
+                    if check_db_horiz is None:
+                        check_db_horiz = check_download_sgdb(dir_name_, app_name, '920', '430', 'horizontal')
+                else:
+                    check_db_horiz = None
+
+                if check_db_horiz is None:
+                    if exe_name_ is not None:
+                        check_db_horiz = check_download_sgdb(exe_name_, app_name, '460', '215', 'horizontal')
+                        if check_db_horiz is None:
+                            check_db_horiz = check_download_sgdb(exe_name_, app_name, '920', '430', 'horizontal')
+                    else:
+                        check_db_horiz = None
+
+                    if check_db_horiz is None:
+                        check_db_horiz = check_download_sgdb(app_name, app_name, '460', '215', 'horizontal')
+                        if check_db_horiz is None:
+                            check_db_horiz = check_download_sgdb(app_name, app_name, '920', '430', 'horizontal')
+                            if check_db_horiz is None:
+                                download_steam_horiz = check_download_logo(app_id_dict, app_name, name_dict, 'horizontal')
+
+def check_download_sgdb(cur_name, app_name, width, height, orientation):
+
+    if cur_name is not None:
+        app_name_isalnum = ''.join(e for e in app_name if e.isalnum())
+
+        length = len(cur_name)
+        is_lower_around = (lambda: cur_name[i-1].islower() or 
+                           length > (i + 1) and cur_name[i + 1].islower()
+        )
+        count = 0
+        parts = []
+        for i in range(1, length):
+            if cur_name[i].isupper() and is_lower_around():
+                parts.append(cur_name[count: i])
+                count = i
+        parts.append(cur_name[count:])
+
+        edited_name = '_'.join(parts)
+
+        print(f'++++++++++++++++++++++++++++++++++++++++++++++++ {edited_name}')
+        url_search = f'https://www.steamgriddb.com/api/v2/search/autocomplete/{edited_name}'
+        try:
+            request_urlopen(url_search, f'{sw_fm_cache_database}/{edited_name}.json', True)
+        except Exception as e:
+            print(e)
+        else:
+            with open(f'{sw_fm_cache_database}/{edited_name}.json', mode='r', encoding='utf-8') as f:
+                json_data = json.load(f)
+                data = json_data['data']
+                app_id_list = list()
+                name_list = list()
+                if len(data) > 0:
+                    for app in data:
+                        key_name = str(app['name'])
+                        key_name = re.sub(r'[ЁёА-я]', '', key_name)
+
+                        for l in exclude_letters:
+                            key_name = key_name.replace(l[0], l[1])
+
+                        for word in exclude_double_words:
+                            if word[0] in key_name:
+                                key_name = key_name.replace(word[0], word[1])
+                        else:
+                            key_name = ''.join(e for e in key_name.upper() if e.isalnum())
+                            key_name = str_to_roman(key_name)
+
+                            cur_name = ''.join(e for e in cur_name.upper() if e.isalnum())
+                            cur_name = str_to_roman(cur_name)
+
+                        if cur_name.upper() == key_name:
+                            app_id_list.append(app['id'])
+                            name_list.append(app['name'])
+                    else:
+                        if len(app_id_list) > 0:
+                            print(app_id_list, name_list)
+                            app_id = app_id_list[0]
+                            data_name = name_list[0]
+                        else:
+                            app_id = None
+                            data_name = None
+                else:
+                    app_id = None
+                    data_name = None
+
+                f.close()
+
+            if app_id is not None:
+                url_app_id = f'https://www.steamgriddb.com/api/v2/grids/game/{app_id}?dimentions={width}x{height}'
+
+                try:
+                    request_urlopen(url_app_id, f'{sw_fm_cache_database}/{app_name_isalnum}_{orientation}_{app_id}.json', True)
+                except Exception as e:
+                    print(e)
+                else:
+                    with open(f'{sw_fm_cache_database}/{app_name_isalnum}_{orientation}_{app_id}.json', mode='r', encoding='utf-8') as f:
+                        json_data = json.load(f)
+
+                        url_icon = []
+                        if len(json_data['data']) > 0:
+                            for value in json_data['data']:
+                                if int(value['width']) == int(width):
+                                    url_icon.append(value['url'])
+                                    break
+
+                        f.close()
+
+                    if len(url_icon) > 0:
+                        print(url_icon)
+
+                        try:
+                            request_urlopen(url_icon[0], f'{sw_fm_cache_database}/{app_name_isalnum}_{orientation}_{data_name}_{app_id}.jpg', False)
+                        except Exception as e:
+                            print(e)
+                        else:
+                            file_hicon = f'{sw_app_hicons}/{app_name_isalnum}_horizontal_{data_name}_{app_id}.jpg'
+                            file_vicon = f'{sw_app_vicons}/{app_name_isalnum}_vertical_{data_name}_{app_id}.jpg'
+                            cache_icon = f'{sw_fm_cache_database}/{app_name_isalnum}_{orientation}_{data_name}_{app_id}.jpg'
+
+                            if orientation == 'horizontal':
+                                try:
+                                    converted = convert_image(cache_icon, file_hicon, 460, 215)
+                                except:
+                                    shutil.copy2(cache_icon, file_hicon)
+                                    print(f'{tc.GREEN} Copy horizontal icon: {tc.YELLOW} {app_id} {tc.RED} {data_name} {tc.END}')
+                                else:
+                                    print(f'{tc.GREEN} Convert horizontal icon: {tc.YELLOW} {app_id} {tc.RED} {data_name} {tc.END}')
+
+                            elif orientation == 'vertical':
+                                try:
+                                    converted = convert_image(cache_icon, file_vicon, 480, 720)
+                                except:
+                                    shutil.copy2(cache_icon, file_vicon)
+                                    print(f'{tc.GREEN} Copy vertical icon: {tc.YELLOW} {app_id} {tc.RED} {data_name} {tc.END}')
+                                else:
+                                    print(f'{tc.GREEN} Convert vertical icon: {tc.YELLOW} {app_id} {tc.RED} {data_name} {tc.END}')
+                            else:
+                                print(f'{tc.GREEN} icon not found {tc.YELLOW} {app_id} {tc.RED} {data_name} {tc.END}')
+
+                            if Path(f'{cache_icon}').exists():
+                                for path in Path(f'{sw_fm_cache_database}').iterdir():
+                                    if path.is_file():
+                                        path.unlink()
+
+                            print('done')
+                            return 0
+                    else:
+                        print('icon not found...')
+                        return None
+            else:
+                print('icon not found...')
+                return None
+    else:
+        print('icon not found...')
+        return None
+
+def check_download_logo(app_id_dict, app_name, name_dict, orientation):
 
     if len(list(app_id_dict)) > 0:
         for key, name in zip(list(app_id_dict), list(name_dict)):
             if 'original' in key:
                 print(tc.VIOLET2 + f'Try download by OriginalName: {app_id_dict[key]} {name_dict[name]}' + tc.END)
-                check_io = try_download_logo(app_id_dict[key], app_name, name_dict[name])
+                check_io = try_download_logo(app_id_dict[key], app_name, name_dict[name], orientation)
                 if check_io:
                     break
             else:
@@ -681,7 +921,7 @@ def check_download_logo(app_id_dict, app_name, name_dict):
                 for key, name in zip(list(app_id_dict), list(name_dict)):
                     if 'description' in key:
                         print(tc.VIOLET2 + f'Try download by Description: {app_id_dict[key]} {name_dict[name]}' + tc.END)
-                        check_io = try_download_logo(app_id_dict[key], app_name, name_dict[name])
+                        check_io = try_download_logo(app_id_dict[key], app_name, name_dict[name], orientation)
                         if check_io:
                             break
                     else:
@@ -691,8 +931,8 @@ def check_download_logo(app_id_dict, app_name, name_dict):
                         for key, name in zip(list(app_id_dict), list(name_dict)):
                             if 'directory' in key:
                                 print(tc.VIOLET2 + f'Try download by DirectoryName: {app_id_dict[key]} {name_dict[name]}' + tc.END)
-                                check_io = try_download_logo(app_id_dict[key], app_name, name_dict[name])
-                                if check_io is True:
+                                check_io = try_download_logo(app_id_dict[key], app_name, name_dict[name], orientation)
+                                if check_io:
                                     break
                             else:
                                 check_io = False
@@ -701,8 +941,8 @@ def check_download_logo(app_id_dict, app_name, name_dict):
                                 for key, name in zip(list(app_id_dict), list(name_dict)):
                                     if 'exe' in key:
                                         print(tc.VIOLET2 + f'Try download by ExeName: {app_id_dict[key]} {name_dict[name]}' + tc.END)
-                                        check_io = try_download_logo(app_id_dict[key], app_name, name_dict[name])
-                                        if check_io is True:
+                                        check_io = try_download_logo(app_id_dict[key], app_name, name_dict[name], orientation)
+                                        if check_io:
                                             break
                                     else:
                                         check_io = False
@@ -791,19 +1031,28 @@ def get_exe_logo(app_name, app_path):
     app_dir_list = list()
     orig_name = None
     desc_name = None
+    orig_name_ = None
+    desc_name_ = None
+    exe_name_ = None
+    dir_name_ = None
 
     print(tc.SELECTED + tc.GREEN)
     print(f'-----------------< METADATA >-----------------' + tc.END)
     print(tc.YELLOW)
 
+    cmd = f'{sw_exiftool} -j {app_path}'
     try:
-        cmd = f'{sw_exiftool} -j {app_path}'
         out_cmd = run(cmd, shell=True, start_new_session=True, stdout=PIPE).stdout
-        metadata = json.loads(out_cmd)[0]
     except OSError as e:
         print(e)
     else:
-        md_prod = get_meta_prod(metadata)
+        try:
+            metadata = json.loads(out_cmd)[0]
+        except Exception as e:
+            print(e)
+            md_prod = None
+        else:
+            md_prod = get_meta_prod(metadata)
 
         if md_prod in ['BootstrapPackagedGame', None]:
             md_prod = get_meta_orig(app_name, app_path, metadata)
@@ -819,9 +1068,12 @@ def get_exe_logo(app_name, app_path):
                 md_prod = md_prod.replace(word[0], word[1])
 
             orig_name = ''.join(e for e in md_prod if e.isalnum())
+            orig_name_ = ''.join(e for e in md_prod if e.isalnum() or e == ' ')
+            orig_name_ = orig_name_.replace(' ', '_')
 
             if orig_name == '':
                 orig_name = None
+                orig_name_ = None
             else:
                 orig_name = str_to_roman(orig_name)
 
@@ -846,9 +1098,12 @@ def get_exe_logo(app_name, app_path):
                 md_desc = md_desc.replace(word[0], word[1])
 
             desc_name = ''.join(e for e in md_desc if e.isalnum())
+            desc_name_ = ''.join(e for e in md_desc if e.isalnum() or e == ' ')
+            desc_name_ = desc_name_.replace(' ', '_')
 
             if desc_name == '':
                 desc_name = None
+                desc_name_ = None
             else:
                 desc_name = str_to_roman(desc_name)
 
@@ -861,14 +1116,17 @@ def get_exe_logo(app_name, app_path):
     for word in exclude_single_words:
         a_name = a_name.replace(word[0], word[1])
 
-    a_name = ''.join(e for e in a_name if e.isalnum())
+    exe_name = ''.join(e for e in a_name if e.isalnum())
+    exe_name_ = ''.join(e for e in a_name if e.isalnum())
+    exe_name_ = exe_name_.replace(' ', '_')
 
-    if a_name == '':
-        a_name = None
+    if exe_name == '':
+        exe_name = None
+        exe_name_ = None
     else:
-        a_name = str_to_roman(a_name)
+        exe_name = str_to_roman(a_name)
 
-    print(f'<< ExeName: {a_name} >>')
+    print(f'<< ExeName: {exe_name} >>')
 
     ####___Filter directory name___.
 
@@ -880,10 +1138,12 @@ def get_exe_logo(app_name, app_path):
         for word in exclude_single_words:
             d = d.replace(word[0], word[1])
 
-        d = ''.join(e for e in d if e.isalnum())
+        dir_name = ''.join(e for e in d if e.isalnum())
+        dir_name_ = ''.join(e for e in d if e.isalnum() or e == ' ')
+        dir_name_ = dir_name_.replace(' ', '_')
 
-        if d != '':
-            app_dir_list.append(d)
+        if dir_name != '':
+            app_dir_list.append(dir_name)
 
     if len(app_dir_list) > 0:
         app_dir = str_to_roman(app_dir_list[-1])
@@ -895,11 +1155,8 @@ def get_exe_logo(app_name, app_path):
     ####___Сomparison of filtered strings___.
 
     compare_name(
-                orig_name,
-                desc_name,
-                app_dir,
-                a_name,
-                app_name,
+                orig_name, orig_name_, desc_name, desc_name_,
+                app_dir, dir_name_, exe_name, exe_name_, app_name,
                 ['OriginalName', 'Description', 'AppDirectory', 'ExeName']
                 )
 
@@ -946,7 +1203,7 @@ def echo_func_name(func_name):
     app_path = get_app_path()
     app_name = get_out()
 
-    app_log = f"{sw_path}/data/tmp/log/{app_name}.log"
+    app_log = f"{sw_logs}/{app_name}.log"
     sys_stderr = open(app_log, 'w')
 
     count = -1
@@ -989,7 +1246,7 @@ def echo_cs_name(wine_name, wine_download, app_name, app_path):
     wine_ver = wine_name
     func_cs = f"CREATE_SHORTCUT \"$@\""
 
-    g_log = f"{sw_path}/data/tmp/log/{app_name}.log"
+    g_log = f"{sw_logs}/{app_name}.log"
     sys_stderr = open(g_log, 'w')
 
     count = -1
@@ -1130,7 +1387,7 @@ def vulkan_info(q):
             cmd, shell=True, stderr=DEVNULL,
             stdout=PIPE, encoding='UTF-8'
             )
-    vulkan_dri = str(proc.stdout[0:]).splitlines()      #replace('\n', '').replace(' ', '')
+    vulkan_dri = str(proc.stdout[0:]).splitlines()
 
     for dri in vulkan_dri:
         d = dri.replace(' ', '')
@@ -1245,7 +1502,7 @@ class StartWine(Gtk.Application):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args,
-                        #application_id="ru.project.StartWine",
+                        application_id="ru.project.StartWine",
                         flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
                         **kwargs
         )
@@ -1400,42 +1657,50 @@ def sw_activate(app):
             and k_val[1] in (Gdk.KEY_x, Gdk.KEY_X)):
                 on_settings()
                 return set_settings_widget(
-                                    scrolled_launch_settings,
-                                    vw_dict['launch_settings'],
-                                    pref_group_title
-                                    )
+                                        scrolled_launch_settings,
+                                        vw_dict['launch_settings'],
+                                        pref_group_title
+                )
         if ((state & all_mask) == Gdk.ModifierType.ALT_MASK
             and k_val[1] in (Gdk.KEY_m, Gdk.KEY_M)):
                 on_settings()
                 return set_settings_widget(
-                                    scrolled_mangohud_settings,
-                                    vw_dict['mangohud_settings'],
-                                    pref_group_mh_title
-                                    )
+                                        scrolled_mangohud_settings,
+                                        vw_dict['mangohud_settings'],
+                                        pref_group_mh_title
+                )
         if ((state & all_mask) == Gdk.ModifierType.ALT_MASK
             and k_val[1] in (Gdk.KEY_v, Gdk.KEY_V)):
                 on_settings()
                 return set_settings_widget(
-                                    scrolled_vkbasalt_settings,
-                                    vw_dict['vkbasalt_settings'],
-                                    pref_group_vk_title
-                                    )
+                                        scrolled_vkbasalt_settings,
+                                        vw_dict['vkbasalt_settings'],
+                                        pref_group_vk_title
+                )
         if ((state & all_mask) == Gdk.ModifierType.ALT_MASK
             and k_val[1] in (Gdk.KEY_c, Gdk.KEY_C)):
                 on_settings()
                 return set_settings_widget(
-                                    scrolled_colors_settings,
-                                    vw_dict['colors_settings'],
-                                    colors_mh_title
-                                    )
+                                        scrolled_colors_settings,
+                                        vw_dict['colors_settings'],
+                                        colors_mh_title
+                )
         if ((state & all_mask) == Gdk.ModifierType.ALT_MASK
             and k_val[1] in (Gdk.KEY_g, Gdk.KEY_G)):
                 on_settings()
                 return set_settings_widget(
-                                    scrolled_global_settings,
-                                    vw_dict['global_settings'],
-                                    None
-                                    )
+                                        scrolled_global_settings,
+                                        vw_dict['global_settings'],
+                                        None
+                )
+        if ((state & all_mask) == Gdk.ModifierType.ALT_MASK
+            and k_val[1] in (Gdk.KEY_u, Gdk.KEY_U)):
+                on_webview(home_page)
+
+        if ((state & all_mask) == Gdk.ModifierType.ALT_MASK
+            and k_val[1] in (Gdk.KEY_n, Gdk.KEY_N)):
+                add_webview(home_page)
+
         if ((state & all_mask) == Gdk.ModifierType.ALT_MASK
             and keyval == Gdk.KEY_Up):
                 return back_up()
@@ -1570,15 +1835,20 @@ def sw_activate(app):
 
         pick = parent.pick(x, y, Gtk.PickFlags.DEFAULT)
 
+        if (revealer.get_reveal_child()
+            and reveal_stack.get_visible_child() != grid_web):
+                stack_search_path.set_visible_child(box_path)
+
         if stack_search_path.get_visible_child() == box_side:
             stack_search_path.set_visible_child(box_path)
 
         if (stack_search_path.get_visible_child() == box_search
-            and (reveal_stack.get_visible_child().get_first_child() == grid_view
-                or reveal_stack.get_visible_child().get_first_child() == scrolled_files)
-                    and pick.get_name().isdigit() is False):
-                        entry_search.set_text('')
-                        stack_search_path.set_visible_child(box_path)
+            or stack_search_path.get_visible_child() == box_web
+                and (reveal_stack.get_visible_child().get_first_child() == grid_view
+                    or reveal_stack.get_visible_child().get_first_child() == scrolled_files)
+                        and pick.get_name().isdigit() is False):
+                            entry_search.set_text('')
+                            stack_search_path.set_visible_child(box_path)
 
         if (terminal_revealer.get_reveal_child()
             and terminal_stack.get_visible_child() == terminal):
@@ -1636,7 +1906,7 @@ def sw_activate(app):
 
     ####___Progress_function___.
 
-    def progress_on_thread(bar, thread):
+    def progress_on_thread(bar, thread, info):
 
         if thread.is_alive():
             stack_progress_main.set_visible_child(progress_main_grid)
@@ -1656,6 +1926,9 @@ def sw_activate(app):
 
             if bar.get_name() == 'pfx_remove':
                 sw_rsh.write_text(f"env \"{sw_menu}\"")
+
+            if info is not None:
+                overlay_info(overlay, None, info, None, 3)
 
             start_mode()
             return False
@@ -1784,7 +2057,7 @@ def sw_activate(app):
                     thread_get_found.start()
                     progress_main.set_show_text(True)
                     progress_main.set_text(progress_dict['search'])
-                    GLib.timeout_add(100, progress_on_thread, progress_main, thread_get_found)
+                    GLib.timeout_add(100, progress_on_thread, progress_main, thread_get_found, None)
                     GLib.timeout_add(120, check_alive, thread_get_found, clear, None, None)
 
     def on_flowbox_search_filter(fb_child, data_labels):
@@ -1913,6 +2186,367 @@ def sw_activate(app):
             elif y == 1.0:
                 hadjustment_path.set_value(1000)
 
+    def create_web_view():
+
+        webview_network_session = WebKit.NetworkSession.new(
+                                    cache_directory=f'{sw_fm_cache_database}',
+                                    data_directory=f'{sw_fm_cache_database}'
+        )
+        webview_network_session.connect('download-started', cb_network_session_download_started)
+
+        web_data_manager = webview_network_session.get_website_data_manager()
+        web_data_manager.set_favicons_enabled(True)
+
+        favicon_database = web_data_manager.get_favicon_database()
+        favicon_database.connect('favicon-changed', cb_favicon_changed)
+
+        webview = WebKit.WebView(
+                            network_session=webview_network_session,
+                            automation_presentation_type=WebKit.AutomationBrowsingContextPresentation.TAB,
+        )
+        webview.connect('load-changed', cb_webview_load_changed)
+        webview.connect('decide-policy', cb_webview_decide_policy)
+        webview.connect('mouse-target-changed', cb_webview_mouse_target_changed)
+        webview.connect('resource-load-started', cb_web_resource_load_started)
+        webview.connect('permission-request', cb_web_permission_request)
+        webview.connect('create', cb_web_create)
+        #webview.connect('authenticate', cb_web_authenticate)
+        webview_settings = webview.get_settings()
+        webview_settings.set_enable_write_console_messages_to_stdout(True)
+        webview_settings.set_javascript_can_open_windows_automatically(True)
+        webview_settings.set_javascript_can_access_clipboard(True)
+        webview_settings.set_allow_modal_dialogs(True)
+        webview_settings.set_allow_file_access_from_file_urls(True)
+        webview_settings.set_allow_top_navigation_to_data_urls(True)
+        webview_settings.set_allow_universal_access_from_file_urls(True)
+        #webview_settings.set_enable_caret_browsing(True)
+        webview_settings.set_enable_spatial_navigation(True)
+        webview_settings.set_enable_media_capabilities(True)
+        webview_settings.set_enable_dns_prefetching(True)
+        webview_settings.set_enable_encrypted_media(False)
+        webview_settings.set_enable_webgl(False)
+        webview_settings.set_enable_webrtc(True)
+        webview_settings.set_enable_mock_capture_devices(True)
+
+        scrolled_webview = Gtk.ScrolledWindow(
+                                            css_name='sw_scrolledwindow',
+                                            name=vw_dict['web_view'],
+                                            vexpand=True,
+                                            hexpand=True,
+                                            valign=Gtk.Align.FILL,
+                                            halign=Gtk.Align.FILL,
+                                            child=webview,
+        )
+        title_box = Gtk.Box(css_name='sw_row', spacing=32, orientation=Gtk.Orientation.HORIZONTAL)
+        image = Gtk.Picture(css_name='sw_picture')
+        image.set_size_request(16, 16)
+        label = Gtk.Label(css_name='sw_label_info', label=str(home_page.split('/')[-1]))
+        button = Gtk.Button(css_name='sw_wc_close', valign=Gtk.Align.CENTER)
+        button.connect('clicked', cb_web_page_close, webview)
+        title_box.append(image)
+        title_box.append(label)
+        title_box.append(button)
+        stack_web.append_page(scrolled_webview, title_box)
+
+    def update_web_page_tab(url, load, favicon):
+
+        if stack_web.get_nth_page(0) is None:
+            create_web_view()
+
+        page_num = stack_web.get_current_page()
+        page = stack_web.get_nth_page(page_num)
+        webview = page.get_child().get_child()
+
+        title_box = Gtk.Box(
+                            css_name='sw_row',
+                            spacing=32,
+                            orientation=Gtk.Orientation.HORIZONTAL
+        )
+        if favicon is not None:
+            print(favicon)
+            image = Gtk.Picture(css_name='sw_picture')
+            image.new_for_paintable(favicon)
+            image.set_content_fit(Gtk.ContentFit.SCALE_DOWN)
+            image.set_size_request(16, 16)
+            title_box.append(image)
+
+        label = Gtk.Label(css_name='sw_label_info', label=str(url.split('/')[-1]))
+        button = Gtk.Button(css_name='sw_wc_close', valign=Gtk.Align.CENTER)
+        button.connect('clicked', cb_web_page_close, webview)
+        title_box.append(label)
+        title_box.append(button)
+
+        stack_web.set_tab_label(page, title_box)
+
+        if load is not None:
+            webview.load_uri(url)
+
+    def on_webview(url):
+
+        if stack_web.get_nth_page(0) is None:
+            create_web_view()
+
+        webview = stack_web.get_nth_page(0).get_child().get_child()
+        webview.load_uri(url)
+        stack_search_path.set_visible_child(box_web)
+        entry_web.grab_focus()
+        return set_settings_widget(
+                                grid_web,
+                                vw_dict['web_view'],
+                                None
+        )
+
+    def add_webview(url):
+
+        create_web_view()
+        num_pages = stack_web.get_n_pages()
+        stack_web.set_current_page(num_pages-1)
+        webview = stack_web.get_nth_page(num_pages-1).get_child().get_child()
+        webview.load_uri(url)
+
+    def cb_btn_add_webview(self):
+
+        url = self.get_name()
+        add_webview(url)
+
+    def cb_web_resource_load_started(self, resource, request):
+        '''___signal emmited when a new resource is going to be loaded___'''
+
+        print('Request uri:', request.get_uri())
+
+    def cb_web_permission_request(self, request):
+        '''___signal is emitted when WebKit is requesting the client to decide 
+        about a permission request___'''
+
+        request.allow()
+
+    def cb_authenticated(self, credential):
+        '''___signal is emitted when the user authentication request succeeded___'''
+
+        print('Authenticated succeeded:', credential)
+
+    def cb_cancelled(self):
+        '''___signal is emitted when the user authentication request cancelled___'''
+
+        print('Authenticate cancelled')
+
+    def cb_web_authenticate(self, request):
+
+        credential = WebKit.Credential.new(username, password, WebKit.CredentialPersistence.SESSION)
+        request.connect('authenticated', cb_authenticated)
+        request.connect('authenticated', cb_cancelled)
+        request.authenticate(credential)
+
+    def cb_web_create(self, navigation_action):
+        '''___emitted when the creation of a new WebKitWebView is requested___'''
+        
+
+    def cb_entry_web_activate(self):
+
+        buffer = self.get_buffer()
+        url = buffer.get_text()
+        if not '://' in url:
+            url = 'https://www.google.com/search?q=' + url
+            #url = 'https://' + url
+            if url.endswith('/'):
+                url = url.rstrip('/')
+
+        update_web_page_tab(url, True, None)
+
+    def cb_webview_load_changed(self, load_event):
+        '''___handler for changing the loading state of a web page___'''
+
+        url = self.get_uri()
+        if url.endswith('/'):
+            url = url.rstrip('/')
+
+        format_url = WebKit.uri_for_display(url)
+        entry_web.set_text(url)
+        favicon = self.get_favicon()
+
+        if favicon is not None:
+            update_web_page_tab(format_url, None, favicon)
+        else:
+            update_web_page_tab(format_url, None, None)
+
+    def cb_favicon_get(self, res, data):
+        '''___returns changed favicon from the database___'''
+        try:
+            result = self.get_favicon_finish(res)
+        except Exception as e:
+            print(e)
+            result = None
+        else:
+            print('++++++++++', result)
+
+    def cb_favicon_changed(self, page_uri, favicon_uri):
+        '''___signal emitted when the favicon URI of page_uri has been changed
+         to favicon_uri in the database___'''
+
+        self.get_favicon(
+                        page_uri=page_uri,
+                        cancellable=Gio.Cancellable(),
+                        callback=cb_favicon_get,
+                        user_data=favicon_uri,
+        )
+
+    def cb_network_session_download_started(self, download):
+        '''___signal emitted when download started___'''
+
+        if download is not None:
+            uri = download.get_web_view().get_uri()
+            name = download.get_web_view().get_uri().split('/')[-1]
+
+            if 'steamgriddb' in uri:
+                download.set_destination(f'{sw_fm_cache_donloads}/{name}')
+
+            download.set_allow_overwrite(True)
+            #download.connect('decide-destination', cb_download_decide_destination)
+            download.connect('created-destination', cb_download_create_destination)
+            download.connect('received-data', cb_download_received_data)
+            download.connect('failed', cb_download_failed)
+            download.connect('finished', cb_download_finished)
+
+    def cb_download_finished(self):
+        '''___signal emitted when download finished___'''
+
+        current_image_path = Path(image_start_mode.get_name())
+        parent_path = current_image_path.parent
+        cache = self.get_destination()
+        gfile = Gio.File.new_for_path(cache)
+        ginfo = gfile.query_info('*', Gio.FileQueryInfoFlags.NONE)
+        gtype = ginfo.get_content_type()
+
+        if gtype in image_mime_types:
+            app_name = get_out().replace('_', ' ')
+            app_name_isalnum = ''.join(e for e in app_name if e.isalnum())
+            app_id = Path(cache).stem
+            length = len(app_name)
+            is_lower_around = (lambda: app_name[i-1].islower() or 
+                               length > (i + 1) and app_name[i + 1].islower()
+            )
+            count = 0
+            parts = []
+            for i in range(1, length):
+                if app_name[i].isupper() and is_lower_around():
+                    parts.append(app_name[count: i])
+                    count = i
+
+            parts.append(app_name[count:])
+            edited_name = ' '.join(parts)
+            dict_ini = read_menu_conf()
+            name = current_image_path.name
+
+            if dict_ini['icon_position'] == 'vertical':
+                name = name.replace('_horizontal_', '_vertical_')
+                destination = f'{sw_app_vicons}/{name}'
+                if Path(f'{sw_app_vicons}/{name}').exists():
+                    shutil.move(f'{sw_app_vicons}/{name}', f'{sw_app_vicons}/old_{name}')
+                else:
+                    name = f'{app_name_isalnum}_vertical_{edited_name}_{app_id}.jpg'
+                    destination = f'{sw_app_vicons}/{name}'
+                try:
+                    converted = convert_image(cache, destination, 480, 720)
+                except:
+                    shutil.move(cache, destination)
+                    print(f'{tc.GREEN} Copy vertical icon: {tc.YELLOW}{destination} {tc.END}')
+                else:
+                    print(f'{tc.GREEN} Convert vertical icon: {tc.YELLOW}{destination} {tc.END}')
+            else:
+                name = name.replace('_vertical_', '_horizontal_')
+                destination = f'{sw_app_hicons}/{name}'
+                if Path(f'{sw_app_hicons}/{name}').exists():
+                    shutil.move(f'{sw_app_hicons}/{name}', f'{sw_app_hicons}/old_{name}')
+                else:
+                    name = f'{app_name_isalnum}_horizontal_{edited_name}_{app_id}.jpg'
+                    destination = f'{sw_app_hicons}/{name}'
+
+                try:
+                    converted = convert_image(cache, destination, 460, 215)
+                except:
+                    shutil.move(cache, destination)
+                    print(f'{tc.GREEN} Copy horizontal icon: {tc.YELLOW}{destination} {tc.END}')
+                else:
+                    print(f'{tc.GREEN} Convert horizontal icon: {tc.YELLOW} {destination} {tc.END}')
+
+            get_sm_icon(app_name)
+
+        message = f'Download to {self.get_destination()} completed'
+        return overlay_info(overlay, None, message, None, 5)
+
+    def cb_download_failed(self, error):
+        '''___signal is emitted when an error occurs during the download operation___'''
+
+        if error:
+            return overlay_info(overlay, None, error, None, 5)
+
+    def cb_download_create_destination(self, destination):
+        '''___Notify that destination file has been created successfully at destination___'''
+
+        print(f'{tc.VIOLET}CREATE_DOWNLAOD_DESTINATION: {tc.GREEN}{destination}{tc.END}')
+
+    def cb_download_received_data(self, data_length):
+        '''___ signal is emitted after response is received, 
+        every time new data has been written to the destination___'''
+
+        fraction = self.get_estimated_progress()
+        progress_main.set_visible(True)
+        progress_main.set_show_text(True)
+        progress_main.set_fraction(fraction)
+        if fraction >= 1:
+            fraction = 0
+            progress_main.set_fraction(0.0)
+            progress_main.set_show_text(False)
+            progress_main.set_visible(False)
+
+    def cb_decide_destination(self, res, webkit_download):
+        '''___response callback to the selected destination___'''
+        try:
+            result = self.select_folder_finish(res)
+        except GLib.GError as e:
+            result = None
+        else:
+            url_name = str(entry_web.get_text()).split('/')[-1]
+            path = str(result.get_path()) + '/' + url_name
+            webkit_download.set_destination(path)
+            print(f'{tc.VIOLET}SET_DOWNLAOD_DESTINATION: {tc.GREEN}{path}{tc.END}')
+
+    def cb_download_decide_destination(self, suggested_filename):
+        '''___a response has been received to decide a destination for the download___'''
+
+        title = 'Change Directory'
+        dialog = dialog_directory(app, title)
+        dialog.select_folder(
+                    parent=parent,
+                    cancellable=Gio.Cancellable(),
+                    callback=cb_decide_destination,
+                    user_data=self,
+        )
+
+    def cb_webview_decide_policy(self, decision, decision_type):
+        '''___requesting the client to decide a policy decision___'''
+
+        if decision_type == WebKit.PolicyDecisionType.RESPONSE:
+            if not decision.is_mime_type_supported():
+                decision.download()
+
+    def cb_webview_mouse_target_changed(self, hit_test, modifiers):
+        '''___when the mouse cursor moves over an web page element___'''
+
+        if hit_test.get_link_uri() is not None:
+            label_overlay.set_visible(True)
+            label_overlay.set_label(hit_test.get_link_uri())
+        else:
+            label_overlay.set_visible(False)
+
+    def cb_web_page_close(self, webview):
+        '''___closing a web page tab___'''
+
+        webview.terminate_web_process()
+        webview.try_close()
+        page_num = stack_web.get_current_page()
+        stack_web.remove_page(page_num)
+
     def on_files(path):
         '''___show files list view___'''
 
@@ -1929,7 +2563,7 @@ def sw_activate(app):
         reveal_stack.set_visible_child(files_view_grid)
 
         scrolled_files.set_min_content_width(width*0.2)
-        scrolled_files.set_min_content_height(height*0.3)
+        scrolled_files.set_min_content_height(250)
 
         set_parent_size()
         update_color_scheme()
@@ -1959,7 +2593,7 @@ def sw_activate(app):
             scrolled_gvol.set_visible(True)
             terminal_stack.set_visible_child(scrolled_gvol)
             scrolled_gvol.set_min_content_width(width*0.2)
-            scrolled_gvol.set_min_content_height(height*0.25)
+            scrolled_gvol.set_min_content_height(250)
             terminal_revealer.set_reveal_child(True)
             update_color_scheme()
 
@@ -2031,25 +2665,35 @@ def sw_activate(app):
             sw_rsh.write_text(f"env \"{sw_menu}\" \"{x_path}\"")
             write_app_conf(x_path)
             app_name = get_out()
-            start_mode()
 
             if Path(f'{sw_shortcuts}/{app_name}.desktop').exists():
-                label_frame_create_shortcut.set_label(msg.msg_dict['cw'])
-                response = [
-                            msg.msg_dict['run'].title(),
-                            msg.msg_dict['cw'].title(),
-                            msg.msg_dict['cancel'].title(),
-                            ]
+                app_dict = app_info(Path(f'{sw_shortcuts}/{app_name}.desktop'))
+                app_exec = app_dict['Exec'].replace(f'env "{sw_start}" ', '').strip('"')
+
+                if str(x_path) == str(app_exec):
+                    label_frame_create_shortcut.set_label(msg.msg_dict['cw'])
+                    response = [
+                                msg.msg_dict['run'].title(),
+                                msg.msg_dict['cw'].title(),
+                                msg.msg_dict['cancel'].title(),
+                    ]
+                    start_mode()
+                    title = msg.msg_dict['choose']
+                    func = [on_start, on_message_cs, None]
+                    dialog_question(app, title, None, response, func)
+                else:
+                    overlay_info(overlay, None, msg.msg_dict['same_name'], None, None)
             else:
                 label_frame_create_shortcut.set_label(msg.msg_dict['cs'])
                 response = [
                             msg.msg_dict['run'].title(),
                             msg.msg_dict['cs'].title(),
                             msg.msg_dict['cancel'].title(),
-                            ]
-            title = msg.msg_dict['choose']
-            func = [(on_start, None), on_message_cs, None]
-            dialog_question(app, title, None, response, func)
+                ]
+                start_mode()
+                title = msg.msg_dict['choose']
+                func = [on_start, on_message_cs, None]
+                dialog_question(app, title, None, response, func)
 
         elif f_type in app_mime_types:
 
@@ -2064,38 +2708,37 @@ def sw_activate(app):
                 else:
                     return overlay_info(overlay, None, msg.msg_dict['exist_desktop'], None, 3)
             else:
+                fl = Gtk.FileLauncher()
+                fl.set_file(item)
                 try:
-                    fl = Gtk.FileLauncher()
-                    fl.set_file(item)
                     fl.launch()
-                except:
-                    print('<< There is no registered app to handle this file >>')
+                except Exception as e:
+                    print(tc.RED, e, tc.END)
 
         elif f_type in bin_mime_types:
+            new_app = Gio.AppInfo.create_from_commandline(
+                                            bytes(Path(f'\"{item_path}\"')),
+                                            f'\"{item_path}\"',
+                                            Gio.AppInfoCreateFlags.SUPPORTS_URIS
+            )
             try:
-                print('<< Trying to create new app info from commanline...>>')
-                new_app = Gio.AppInfo.create_from_commandline(
-                    bytes(Path(item_path)),
-                    item_path,
-                    Gio.AppInfoCreateFlags.SUPPORTS_URIS
-                    )
                 new_app.launch_uris()
-            except:
-                print('<< There is no registered app to handle this file >>')
+            except Exception as e:
+                print(tc.RED, e, tc.END)
 
         elif str(sw_launchers) in str(item_path):
             bar = progress_main
             bar.set_name('install_launchers')
             t = Thread(target=run_install_launchers, args=[item_path])
             t.start()
-            GLib.timeout_add(100, progress_on_thread, bar, t)
+            GLib.timeout_add(100, progress_on_thread, bar, t, None)
         else:
             fl = Gtk.FileLauncher()
             fl.set_file(item)
             try:
                 fl.launch()
-            except IOError as e:
-                print(f'{tc.RED}{e}{tc.END}')
+            except Exception as e:
+                print(tc.RED, e, tc.END)
 
     def get_dll_info(x_path):
         '''___get installed dll list from winetricks log___'''
@@ -2216,7 +2859,7 @@ def sw_activate(app):
             and not x_info.get_content_type() in app_mime_types):
                 pass
 
-        elif (x_path.parent == Path(sw_launchers)
+        if (x_path.parent == Path(sw_launchers)
             and not x_info.get_content_type() in image_mime_types):
                 pass
         else:
@@ -2293,7 +2936,7 @@ def sw_activate(app):
             else:
                 if x_info.get_content_type() in video_mime_types:
                     count += delay
-                    out_file = f'{sw_fm_cache}/{x_file.get_basename()}.png'
+                    out_file = f'{sw_fm_cache_thumbnail}/{x_file.get_basename()}.png'
 
                     if not Path(out_file).exists():
                         GLib.timeout_add(
@@ -2311,7 +2954,7 @@ def sw_activate(app):
 
                 elif x_info.get_content_type() in image_mime_types:
                     count += delay
-                    out_file = f'{sw_fm_cache}/{x_file.get_basename()}'
+                    out_file = f'{sw_fm_cache_thumbnail}/{x_file.get_basename()}'
                     in_type = 'image'
 
                     if x_info.get_content_type() == 'image/svg+xml':
@@ -2600,6 +3243,7 @@ def sw_activate(app):
         write_parent_state()
         revealer.set_reveal_child(False)
         revealer.set_visible(False)
+        stack_sidebar.set_size_request(320, -1)
         gl_cover.set_size_request(320, 540)
         parent.set_default_size(320, 540)
         parent.set_resizable(False)
@@ -2737,7 +3381,7 @@ def sw_activate(app):
         reveal_stack.set_visible_child(files_view_grid)
 
         scrolled_files.set_min_content_width(width*0.2)
-        scrolled_files.set_min_content_height(height*0.3)
+        scrolled_files.set_min_content_height(250)
 
         set_parent_size()
         update_color_scheme()
@@ -3004,11 +3648,11 @@ def sw_activate(app):
             except GLib.GError as e:
                 print(e)
 
-        title = msg.msg_dict['create_dir'].title()
-        text_message = [msg.msg_dict['new_dir'].title()]
-        button_name = msg.msg_dict['create'].title()
+        title = msg.msg_dict['create_dir'].capitalize()
+        text_message = [msg.msg_dict['new_dir'].capitalize()]
+        button_name = msg.msg_dict['create'].capitalize()
         func = [(create_dir, None), None]
-        dialog = dialog_entry(app, title, text_message, button_name, func, 1)
+        dialog = dialog_entry(app, title, text_message, button_name, func, 1, None)
         entry_name = dialog.get_child().get_first_child()
         entry_name.connect('activate', cb_dialog_entry, dialog, create_dir, None)
 
@@ -3073,6 +3717,7 @@ def sw_activate(app):
             {'name': ctx_dict['copy'], 'func': on_cb_file_copy},
             {'name': ctx_dict['rename'], 'func': on_cb_file_rename},
             {'name': ctx_dict['link'], 'func': on_cb_file_link},
+            {'name': ctx_dict['compress'], 'func': on_cb_file_compress},
         ]
 
         context_remove = [
@@ -3385,25 +4030,25 @@ def sw_activate(app):
         '''___run a file from the context menu___'''
 
         x_path = g_file.get_path()
-
+        new_app = Gio.AppInfo.create_from_commandline(
+                                        bytes(Path(f'\"{x_path}\"')),
+                                        f'\"{x_path}\"',
+                                        Gio.AppInfoCreateFlags.SUPPORTS_URIS
+        )
         try:
-            new_app = Gio.AppInfo.create_from_commandline(
-                                            bytes(Path(x_path)),
-                                            x_path,
-                                            Gio.AppInfoCreateFlags.SUPPORTS_URIS
-                                            )
             new_app.launch_uris()
-        except:
-            print(tc.RED, 'There is no registered app to handle this file', tc.END)
+        except Exception as e:
+            print(tc.RED, e, tc.END)
 
     def on_file_open(g_file):
         '''___open a file from the context menu___'''
+
+        fl = Gtk.FileLauncher()
+        fl.set_file(g_file)
         try:
-            fl = Gtk.FileLauncher()
-            fl.set_file(g_file)
             fl.launch()
-        except:
-            print(tc.RED, 'There is no registered app to handle this file', tc.END)
+        except Exception as e:
+            print(tc.RED, e , tc.END)
 
     def on_file_open_location(g_file):
         '''___open a file location from the context menu___'''
@@ -3418,7 +4063,7 @@ def sw_activate(app):
         x_path = Path(data[0].get_path())
         sw_rsh.write_text(f"env \"{sw_menu}\" \"{x_path}\"")
         write_app_conf(x_path)
-        return on_start(None)
+        return on_start()
 
     def on_cb_file_run(action_name, parameter, data):
         '''___run a x-executable file from the context menu___'''
@@ -3621,14 +4266,14 @@ def sw_activate(app):
             edit_name = x_info.get_attribute_as_string("standard::edit-name")
 
             if not Path(x_file.get_path()).is_file():
-                title = msg.msg_dict['rename_dir'].title()
+                title = msg.msg_dict['rename_dir'].capitalize()
             else:
-                title = msg.msg_dict['rename_file'].title()
+                title = msg.msg_dict['rename_file'].capitalize()
 
             text_message = [edit_name]
-            button_name = msg.msg_dict['rename'].title()
+            button_name = msg.msg_dict['rename'].capitalize()
             func = [(rename, None), None]
-            dialog = dialog_entry(app, title, text_message, button_name, func, 1)
+            dialog = dialog_entry(app, title, text_message, button_name, func, 1, None)
             entry_rename = dialog.get_child().get_first_child()
             entry_rename.connect('activate', cb_dialog_entry, dialog, rename, None)
 
@@ -3656,14 +4301,14 @@ def sw_activate(app):
             else:
                 dialog.destroy()
 
-        title = (msg.msg_dict['rename'].title()
+        title = (msg.msg_dict['rename'].capitalize()
                 + f' {len(x_files)} '
                 + msg.msg_dict['files'].lower()
                 )
         text_message = [msg.msg_dict['original_name'].title() + '1, 2, 3...']
-        button_name = msg.msg_dict['rename'].title()
+        button_name = msg.msg_dict['rename'].capitalize()
         func = [(rename, None), None]
-        dialog = dialog_entry(app, title, text_message, button_name, func, 1)
+        dialog = dialog_entry(app, title, text_message, button_name, func, 1, None)
         entry_rename = dialog.get_child().get_first_child()
         entry_rename.connect('activate', cb_dialog_entry, dialog, rename, text_message[0])
 
@@ -3680,6 +4325,78 @@ def sw_activate(app):
             link_path = Path(f'{parent_path}/{str_symbolic_link} {Path(x.get_path()).name}')
             x_file = Gio.File.new_for_commandline_arg(bytes(link_path))
             x_file.make_symbolic_link(bytes(Path(x.get_path())))
+
+    def on_cb_file_compress(action_name, parameter, data):
+        '''___create a compressed archive from file or files___'''
+
+        return on_file_compress(data)
+
+    def on_file_compress(data):
+        '''___create a compressed archive___'''
+
+        def create_archive(src):
+            '''___create new file compressed archive___'''
+
+            archive_name = entry_name.get_text()
+            selected_type = dropdown.get_selected_item()
+
+            if selected_type is not None:
+                archive_type = selected_type.get_string()
+            else:
+                archive_type = 'xz'
+
+            count = int()
+            x_path = Path(f'{parent_path}/{archive_name}')
+
+            while Path(f'{x_path}.tar.xz').exists():
+                count += 1
+                x_path = Path(f'{parent_path}/{archive_name}({count})')
+
+            if archive_type != 'zip':
+                tar_thread = Thread(target=tar_compress, args=[x_path, data, archive_type])
+                tar_thread.start()
+                info = msg.msg_dict['compression_completed']
+                progress_main.set_show_text(True)
+                progress_main.set_text(msg.msg_dict['compression'] + f'{archive_name}')
+                GLib.timeout_add(100, progress_on_thread, progress_main, tar_thread, info)
+            else:
+                info = msg.msg_dict['compression_completed']
+                progress_main.set_show_text(True)
+                progress_main.set_text(msg.msg_dict['compression'] + f'{archive_name}')
+                zip_thread = Thread(target=zip_compress, args=[x_path, data])
+                zip_thread.start()
+                GLib.timeout_add(100, progress_on_thread, progress_main, zip_thread, info)
+
+        if len(data) > 1:
+            filename = msg.msg_dict['new_archive']
+        else:
+            filename = data[0].get_basename()
+
+        parent_path = get_parent_path()
+        title = msg.msg_dict['create_archive'].capitalize()
+        text_message = [filename]
+        button_name = msg.msg_dict['create'].capitalize()
+        func = [(create_archive, None), None]
+        dialog = dialog_entry(app, title, text_message, button_name, func, 1, archive_formats)
+        entry_name = dialog.get_child().get_first_child()
+        entry_name.connect('activate', cb_dialog_entry, dialog, create_archive, None)
+        dropdown = dialog.get_child().get_last_child()
+
+    def tar_compress(x_path, data, archive_type):
+
+        with tarfile.open(f'{x_path}.tar.{archive_type}', f'w:{archive_type}') as tar:
+            for file in data:
+                tar.add(file.get_basename())
+            else:
+                tar.close()
+
+    def zip_compress(x_path, data):
+
+        with zipfile.ZipFile(f'{x_path}.zip','w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as fzip:
+            for file in data:
+                fzip.write(file.get_basename())
+            else:
+                fzip.close()
 
     def on_cb_file_remove(action_name, parameter, x_path):
         '''___activate context button and remove changed file___'''
@@ -4011,10 +4728,18 @@ def sw_activate(app):
         image_protondb.set_halign(Gtk.Align.START)
         image_protondb.set_from_file(IconPath.icon_protondb)
 
+        image_griddb = Gtk.Image(css_name='sw_image')
+        image_griddb.set_halign(Gtk.Align.START)
+        image_griddb.set_from_file(IconPath.icon_search)
+
         label_winehq = Gtk.Label(css_name='sw_label_popover', label=ctx_dict['winehq'])
         label_winehq.set_xalign(0)
+
         label_protondb = Gtk.Label(css_name='sw_label_popover', label=ctx_dict['protondb'])
         label_protondb.set_xalign(0)
+
+        label_griddb = Gtk.Label(css_name='sw_label_popover', label=ctx_dict['griddb'])
+        label_griddb.set_xalign(0)
 
         btn_winehq = Gtk.LinkButton(css_name='sw_link')
         btn_winehq.set_child(label_winehq)
@@ -4023,6 +4748,11 @@ def sw_activate(app):
         btn_protondb = Gtk.LinkButton(css_name='sw_link')
         btn_protondb.set_child(label_protondb)
         btn_protondb.connect("activate-link", cb_btn_protondb, file, shortcut_context)
+
+        btn_griddb = Gtk.LinkButton(css_name='sw_link')
+        btn_griddb.set_child(label_griddb)
+        btn_griddb.connect("clicked", cb_btn_web_view_griddb, file, shortcut_context)
+        #btn_griddb.connect("activate-link", cb_btn_griddb, file, shortcut_context)
 
         box_winehq = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         box_winehq.set_spacing(4)
@@ -4033,6 +4763,11 @@ def sw_activate(app):
         box_protondb.set_spacing(4)
         box_protondb.append(image_protondb)
         box_protondb.append(btn_protondb)
+
+        box_griddb = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        box_griddb.set_spacing(4)
+        box_griddb.append(image_griddb)
+        box_griddb.append(btn_griddb)
 
         ####___Switch buttons___.
 
@@ -4096,10 +4831,11 @@ def sw_activate(app):
         grid_context.set_column_spacing(8)
         grid_context.attach(box_winehq, 0,0,1,1)
         grid_context.attach(box_protondb, 0,1,1,1)
-        grid_context.attach(box_switch_0, 0,2,1,1)
-        grid_context.attach(box_switch_1, 0,3,1,1)
-        grid_context.attach(switch_0, 1,2,1,1)
-        grid_context.attach(switch_1, 1,3,1,1)
+        grid_context.attach(box_griddb, 0,2,1,1)
+        grid_context.attach(box_switch_0, 0,3,1,1)
+        grid_context.attach(box_switch_1, 0,4,1,1)
+        grid_context.attach(switch_0, 1,3,1,1)
+        grid_context.attach(switch_1, 1,4,1,1)
 
         ####___Custom context menu widgets___.
 
@@ -4162,7 +4898,7 @@ def sw_activate(app):
         app_exec = app_dict['Exec'].replace(f'env "{sw_start}" ', '').strip('"')
 
         if Path(app_exec).exists():
-            return on_start(None)
+            return on_start()
         else:
             return overlay_info(overlay, None, msg.msg_dict['exist_desktop'], None, 3)
 
@@ -4235,7 +4971,7 @@ def sw_activate(app):
     def cb_btn_winehq(self, file, widget):
 
         name = file.replace('.desktop', '')
-        self.set_uri(f"https://www.winehq.org/search?q={name}")
+        self.set_uri(f"{winehq_source}{name}")
 
     def cb_btn_protondb(self, file, widget):
         '''___search info on protondb web page by app name___'''
@@ -4244,10 +4980,41 @@ def sw_activate(app):
         app_id = str(Path(img_path).stem).split('_')[-1]
 
         if app_id != 'x256':
-            self.set_uri(f"https://www.protondb.com/app/{app_id}")
+            name = str(Path(img_path).stem).split('_')[-2]
+            self.set_uri(f"{protondb_source}{name}")
         else:
             name = file.replace('.desktop', '')
-            self.set_uri(f"https://www.protondb.com/search?q={name}")
+            self.set_uri(f"{protondb_source}{name}")
+
+        widget.popdown()
+
+    def cb_btn_griddb(self, file, widget):
+        '''___search info on griddb web page by app name___'''
+
+        img_path = image_start_mode.get_name()
+        app_id = str(Path(img_path).stem).split('_')[-1]
+
+        if app_id != 'x256':
+            name = str(Path(img_path).stem).split('_')[-2]
+            self.set_uri(f"{griddb_source}{name}")
+        else:
+            name = file.replace('.desktop', '')
+            self.set_uri(f"{griddb_source}{name}")
+
+        widget.popdown()
+
+    def cb_btn_web_view_griddb(self, file, widget):
+        '''___search info on griddb web page by app name___'''
+
+        img_path = image_start_mode.get_name()
+        app_id = str(Path(img_path).stem).split('_')[-1]
+
+        if app_id != 'x256':
+            name = str(Path(img_path).stem).split('_')[-2]
+            on_webview(f"{griddb_source}{name}")
+        else:
+            name = file.replace('.desktop', '')
+            on_webview(f"{griddb_source}{name}")
 
         widget.popdown()
 
@@ -4350,7 +5117,7 @@ def sw_activate(app):
             btn_back_main.set_visible(False)
             stack_sidebar.set_visible_child(frame_main)
 
-        if parent.get_width() < (width/2):
+        if parent.get_width() < 960:
             if sidebar_revealer.get_reveal_child():
                 on_sidebar()
 
@@ -4695,7 +5462,6 @@ def sw_activate(app):
 
             file_image = Gtk.Picture(css_name='sw_picture')
             file_image.set_content_fit(Gtk.ContentFit.COVER)
-#            file_image.set_size_request((size+48)*1.87, (size+48))
 
             dict_ini = read_menu_conf()
 
@@ -4931,7 +5697,7 @@ def sw_activate(app):
                                         + item.get_path() + tc.END)
                         ####___Image_mime_type___.
                         elif file_content_type in image_mime_types:
-                            out_file = f'{sw_fm_cache}/{item.get_basename()}'
+                            out_file = f'{sw_fm_cache_thumbnail}/{item.get_basename()}'
                             if Path(out_file).exists():
                                 file_icon = Gtk.IconPaintable.new_for_file(
                                                 Gio.File.new_for_path(out_file),
@@ -4965,7 +5731,7 @@ def sw_activate(app):
                                                         + item.get_path() + tc.END)
                         ####___Video_mime_type___.
                         elif file_content_type in video_mime_types:
-                            out_file = f'{sw_fm_cache}/{item.get_basename()}.png'
+                            out_file = f'{sw_fm_cache_thumbnail}/{item.get_basename()}.png'
                             if Path(out_file).exists():
                                 file_icon = Gtk.IconPaintable.new_for_file(
                                                 Gio.File.new_for_path(f'{out_file}'),
@@ -5608,7 +6374,8 @@ def sw_activate(app):
         '''___wine download request___'''
 
         def on_thread_wine():
-            Thread(target=echo_func_name, args=(func_name,)).start()
+            t = Thread(target=echo_func_name, args=(func_name,))
+            t.start()
 
         func_wine = wine_download_dict[wine]
         func_name = f"WINE_OK=1 {func_wine} && RUN_VULKAN"
@@ -5616,12 +6383,50 @@ def sw_activate(app):
         func = [on_thread_wine, on_stop]
         dialog_question(app, None, text_message, None, func)
 
+    def parent_back(s_time):
+        '''___restore the menu after exiting a running application___'''
+
+        on_stop()
+        parent.set_visible(True)
+        parent.set_hide_on_close(False)
+        time_in = round(time() - s_time, 2)
+        time_val = 'seconds'
+
+        if time_in > 60:
+            time_in = round(time_in / 60, 2)
+            time_val = 'minutes'
+        elif time_in > 3600:
+            time_in = round(time_in / 60, 2)
+            time_val = 'hours'
+
+        print(f'{tc.VIOLET2}TIME_IN_THE_APP: {tc.GREEN}{time_in} {time_val}{tc.END}')
+
+    def check_winedevice(winedevice):
+        '''___Check winedevice process___'''
+
+        found = None
+        while found is None:
+            winedevice = ([p.info['name'] for p in psutil.process_iter(['pid', 'name'])
+                if 'winedevice' in p.info['name']]
+            )
+            if winedevice == []:
+                sleep(1)
+            else:
+                found = 1
+        else:
+            while winedevice != []:
+                winedevice = ([p.info['name'] for p in psutil.process_iter(['pid', 'name'])
+                    if 'winedevice' in p.info['name']]
+                )
+                print(winedevice)
+                sleep(1)
+
     def cb_btn_start(self):
         '''___run application in vulkan or opengl mode___'''
 
-        return on_start(None)
+        return on_start()
 
-    def on_start(debug):
+    def on_start():
         '''___Running application in vulkan or opengl mode___'''
 
         dict_ini = read_menu_conf()
@@ -5645,35 +6450,21 @@ def sw_activate(app):
             def run_(q):
                 '''___Running the executable in vulkan or opengl mode___'''
 
-                def parent_back(s_time):
-                    '''___restore the menu after exiting a running application___'''
-
-                    on_stop()
-                    parent.set_visible(True)
-                    parent.set_hide_on_close(False)
-                    time_in = round(time() - s_time, 2)
-                    time_val = 'seconds'
-
-                    if time_in > 60:
-                        time_in = round(time_in / 60, 2)
-                        time_val = 'minutes'
-                    elif time_in > 3600:
-                        time_in = round(time_in / 60, 2)
-                        time_val = 'hours'
-
-                    print(f'{tc.VIOLET2}TIME_IN_THE_APP: {tc.GREEN}{time_in} {time_val}{tc.END}')
-
                 vulkan_dri = q[0]
                 vulkan_dri2 = q[1]
                 app_path = get_app_path()
                 app_name = get_out()
                 app_suffix = get_suffix()
+                app_conf = Path(f"{sw_app_config}/" + str(app_name))
+                app_conf_dict = app_conf_info(app_conf, switch_labels)
+                debug = app_conf_dict['WINEDBG_DISABLE'].split('=')[1]
 
                 if (str(vulkan_dri) == str('')
                     and str(vulkan_dri2) == str('')):
-                        if debug is None:
-                            thread_start = Thread(target=run_opengl)
-                            thread_start.start()
+                        if (debug is None
+                            or debug == '1'):
+                                thread_start = Thread(target=run_opengl)
+                                thread_start.start()
                         else:
                             thread_start = Thread(target=debug_opengl)
                             thread_start.start()
@@ -5687,9 +6478,10 @@ def sw_activate(app):
 
                 elif (str(vulkan_dri) == str('llvmpipe')
                     and str(vulkan_dri2) == str('llvmpipe')):
-                        if debug is None:
-                            thread_start = Thread(target=run_opengl)
-                            thread_start.start()
+                        if (debug is None
+                            or debug == '1'):
+                                thread_start = Thread(target=run_opengl)
+                                thread_start.start()
                         else:
                             thread_start = Thread(target=debug_opengl)
                             thread_start.start()
@@ -5701,9 +6493,10 @@ def sw_activate(app):
                             s_time = time()
                             GLib.timeout_add(1000, check_alive, thread_start, parent_back, s_time, None)
                 else:
-                    if debug is None:
-                        thread_start = Thread(target=run_vulkan)
-                        thread_start.start()
+                    if (debug is None
+                        or debug == '1'):
+                            thread_start = Thread(target=run_vulkan)
+                            thread_start.start()
                     else:
                         thread_start = Thread(target=debug_vulkan)
                         thread_start.start()
@@ -5718,26 +6511,6 @@ def sw_activate(app):
                     if dict_ini['restore_menu'] == 'on':
                         s_time = time()
                         GLib.timeout_add(1000, check_alive, thread_check_winedevice, parent_back, s_time, None)
-
-            def check_winedevice(winedevice):
-                '''___Check winedevice process___'''
-
-                found = None
-                while found is None:
-                    winedevice = ([p.info['name'] for p in psutil.process_iter(['pid', 'name'])
-                        if 'winedevice' in p.info['name']]
-                    )
-                    if winedevice == []:
-                        sleep(1)
-                    else:
-                        found = 1
-                else:
-                    while winedevice != []:
-                        winedevice = ([p.info['name'] for p in psutil.process_iter(['pid', 'name'])
-                            if 'winedevice' in p.info['name']]
-                        )
-                        print(winedevice)
-                        sleep(1)
 
             def wait_exe_proc(bar, app_suffix):
                 '''___Waiting for the executing process to close the menu___'''
@@ -5763,6 +6536,15 @@ def sw_activate(app):
                 app_name = get_out()
                 app_suffix = get_suffix()
                 request_wine(wine)
+
+                if dict_ini['restore_menu'] == 'on':
+                    winedevice = []
+                    thread_check_winedevice = Thread(target=check_winedevice, args=[winedevice])
+                    thread_check_winedevice.start()
+                    s_time = time()
+                    parent.set_hide_on_close(True)
+                    GLib.timeout_add(1000, check_alive, thread_check_winedevice, parent_back, s_time, None)
+
                 t_info = GLib.timeout_add(100, wait_exe_proc, progress_main, app_suffix)
                 timeout_list.append(t_info)
             else:
@@ -5804,20 +6586,31 @@ def sw_activate(app):
             ctx = mp.get_context('spawn')
             p = ctx.Process(target=get_exe_logo, args=(app_name, app_path))
             p.start()
+            GLib.timeout_add(100, check_alive, p, get_sm_icon, app_name, None)
 
         if (Path(f'{sw_shortcuts}/{app_name}.desktop').exists()
             and Path(f'{get_pfx_path()}').exists()):
-                write_changed_wine(func_wine)
-                start_mode()
-                if stack_sidebar.get_visible_child() == frame_create_shortcut:
+                app_dict = app_info(Path(f'{sw_shortcuts}/{app_name}.desktop'))
+                app_exec = app_dict['Exec'].replace(f'env "{sw_start}" ', '').strip('"')
+
+                if app_exec == app_path.strip('"'):
+                    write_changed_wine(func_wine)
+                    start_mode()
+                    if stack_sidebar.get_visible_child() == frame_create_shortcut:
+                        btn_back_main.set_visible(False)
+                        stack_sidebar.set_visible_child(frame_main)
+                else:
                     btn_back_main.set_visible(False)
-                    stack_sidebar.set_visible_child(frame_main)
+                    t = Thread(target=cs_path, args=(func_wine, app_name, app_path))
+                    t.start()
+                    progress_main.set_name(func_wine)
+                    GLib.timeout_add(100, progress_on_thread, progress_main, t, None)
         else:
             btn_back_main.set_visible(False)
             t = Thread(target=cs_path, args=(func_wine, app_name, app_path))
             t.start()
             progress_main.set_name(func_wine)
-            GLib.timeout_add(100, progress_on_thread, progress_main, t)
+            GLib.timeout_add(100, progress_on_thread, progress_main, t, None)
 
     def cb_btn_cs_wine(self):
         '''___create shortcut with changed wine___'''
@@ -6015,7 +6808,7 @@ def sw_activate(app):
         bar.set_name('pfx_remove')
         t = Thread(target=on_pfx_remove)
         t.start()
-        timeout_info = GLib.timeout_add(100, progress_on_thread, bar, t)
+        timeout_info = GLib.timeout_add(100, progress_on_thread, bar, t, None)
         timeout_list.append(timeout_info)
 
     def on_pfx_remove():
@@ -6031,7 +6824,7 @@ def sw_activate(app):
         bar.set_name('pfx_clear')
         t = Thread(target=on_pfx_clear)
         t.start()
-        timeout_info = GLib.timeout_add(100, progress_on_thread, bar, t)
+        timeout_info = GLib.timeout_add(100, progress_on_thread, bar, t, None)
         timeout_list.append(timeout_info)
 
     def on_pfx_clear():
@@ -6047,7 +6840,7 @@ def sw_activate(app):
         bar.set_name('pfx_reinstall')
         t = Thread(target=on_pfx_reinstall)
         t.start()
-        timeout_info = GLib.timeout_add(100, progress_on_thread, bar, t)
+        timeout_info = GLib.timeout_add(100, progress_on_thread, bar, t, None)
         timeout_list.append(timeout_info)
 
     def on_pfx_reinstall():
@@ -6064,7 +6857,7 @@ def sw_activate(app):
 
         t = Thread(target=on_pfx_backup)
         t.start()
-        timeout_info = GLib.timeout_add(100, progress_on_thread, bar, t)
+        timeout_info = GLib.timeout_add(100, progress_on_thread, bar, t, None)
         timeout_list.append(timeout_info)
 
     def on_pfx_backup():
@@ -6080,7 +6873,7 @@ def sw_activate(app):
         bar.set_name('pfx_restore')
         t = Thread(target=on_pfx_restore)
         t.start()
-        timeout_info = GLib.timeout_add(100, progress_on_thread, bar, t)
+        timeout_info = GLib.timeout_add(100, progress_on_thread, bar, t, None)
         timeout_list.append(timeout_info)
 
     def on_pfx_restore():
@@ -6096,7 +6889,7 @@ def sw_activate(app):
         bar.set_name('pfx_full_backup')
         t = Thread(target=on_pfx_full_backup)
         t.start()
-        timeout_info = GLib.timeout_add(100, progress_on_thread, bar, t)
+        timeout_info = GLib.timeout_add(100, progress_on_thread, bar, t, None)
         timeout_list.append(timeout_info)
 
     def on_pfx_full_backup():
@@ -6113,7 +6906,7 @@ def sw_activate(app):
 
         t = Thread(target=on_pfx_full_restore)
         t.start()
-        timeout_info = GLib.timeout_add(100, progress_on_thread, bar, t)
+        timeout_info = GLib.timeout_add(100, progress_on_thread, bar, t, None)
         timeout_list.append(timeout_info)
 
     def on_pfx_full_restore():
@@ -6255,7 +7048,7 @@ def sw_activate(app):
 
         thread = Thread(target=on_winecfg)
         thread.start()
-        GLib.timeout_add(100, progress_on_thread, bar, thread)
+        GLib.timeout_add(100, progress_on_thread, bar, thread, None)
 
     def on_winecfg():
         '''___run wine settings___'''
@@ -6270,7 +7063,7 @@ def sw_activate(app):
         bar.set_name('wineconsole')
         thread = Thread(target=on_wineconsole)
         thread.start()
-        GLib.timeout_add(100, progress_on_thread, bar, thread)
+        GLib.timeout_add(100, progress_on_thread, bar, thread, None)
 
     def on_wineconsole():
         '''___run wine console___'''
@@ -6285,7 +7078,7 @@ def sw_activate(app):
         bar.set_name('regedit')
         thread = Thread(target=on_regedit)
         thread.start()
-        GLib.timeout_add(100, progress_on_thread, bar, thread)
+        GLib.timeout_add(100, progress_on_thread, bar, thread, None)
 
     def on_regedit():
         '''___run wine regedit___'''
@@ -6301,7 +7094,7 @@ def sw_activate(app):
 
         thread = Thread(target=on_explorer)
         thread.start()
-        GLib.timeout_add(100, progress_on_thread, bar, thread)
+        GLib.timeout_add(100, progress_on_thread, bar, thread, None)
 
     def on_explorer():
         '''___run wine file explorer___'''
@@ -6316,7 +7109,7 @@ def sw_activate(app):
         bar.set_name('uninstaller')
         thread = Thread(target=on_uninstaller)
         thread.start()
-        GLib.timeout_add(100, progress_on_thread, bar, thread)
+        GLib.timeout_add(100, progress_on_thread, bar, thread, None)
 
     def on_uninstaller():
         '''___run wine uninstaller___'''
@@ -6422,7 +7215,7 @@ def sw_activate(app):
         else:
             t = Thread(target=install_dll, args=[dll_list])
             t.start()
-            GLib.timeout_add(100, progress_on_thread, bar, t)
+            GLib.timeout_add(100, progress_on_thread, bar, t, None)
 
     def install_dll(dll_list):
         '''___install changed dll from winetricks list___'''
@@ -6575,7 +7368,7 @@ def sw_activate(app):
         reveal_stack.set_visible_child(files_view_grid)
 
         scrolled_files.set_min_content_width(width*0.2)
-        scrolled_files.set_min_content_height(height*0.3)
+        scrolled_files.set_min_content_height(250)
 
         set_parent_size()
         update_color_scheme()
@@ -6680,12 +7473,14 @@ def sw_activate(app):
 
             if visible_name in view_widgets and visible_name != view_widget:
                 reveal_stack.set_visible_child(widget)
-                widget.set_min_content_width(width*0.2)
+                if widget == Gtk.ScrolledWindow():
+                    widget.set_min_content_width(width*0.2)
                 set_parent_size()
         else:
             revealer.set_reveal_child(True)
             reveal_stack.set_visible_child(widget)
-            widget.set_min_content_width(width*0.2)
+            if widget == Gtk.ScrolledWindow():
+                widget.set_min_content_width(width*0.2)
             set_parent_size()
 
         update_color_scheme()
@@ -7481,6 +8276,7 @@ def sw_activate(app):
                     app_conf_dict[self.get_name()].replace('0','1')
                 )
             )
+#            environ[f'{self.get_name()}'] = '1'
 
         elif not self.get_active():
             app_conf.write_text(
@@ -7489,6 +8285,7 @@ def sw_activate(app):
                     app_conf_dict[self.get_name()].replace('1','0')
                 )
             )
+#            environ[f'{self.get_name()}'] = '0'
 
 ####___Mangohud_settings___.
 
@@ -7746,10 +8543,10 @@ def sw_activate(app):
 
         try:
             result = self.select_folder_finish(res)
-            entry_def_dir.set_text(str(result.get_path()))
         except GLib.GError as e:
             result = None
         else:
+            entry_def_dir.set_text(str(result.get_path()))
             on_def_dir()
 
         window.destroy()
@@ -7786,7 +8583,6 @@ def sw_activate(app):
                 write_menu_conf(dict_ini)
         else:
             text_message = str_wrong_path
-
             samples = f'{sw_sounds}/dialog/dialog-warning.oga'
             if Path(samples).exists():
                 try:
@@ -7965,15 +8761,24 @@ def sw_activate(app):
 
 ####___About___.
 
+    def check_sw_update():
+
+        func_name = f"try_update_sw"
+        echo_func_name(func_name)
+
     def cb_btn_about(self):
         '''___show_about_submenu___'''
 
-        stack_sidebar.set_visible_child(frame_stack)
-        grid = stack_about.get_child_by_name(self.get_name())
-        btn_back_about.unparent()
-        label_back_about.set_label(about_dict[self.get_name()])
-        grid.attach(btn_back_about,0,0,1,1)
-        stack_about.set_visible_child_name(self.get_name())
+        if self.get_name() == 'about_update':
+            t = Thread(target=check_sw_update)
+            t.start()
+        else:
+            stack_sidebar.set_visible_child(frame_stack)
+            grid = stack_about.get_child_by_name(self.get_name())
+            btn_back_about.unparent()
+            label_back_about.set_label(about_dict[self.get_name()])
+            grid.attach(btn_back_about,0,0,1,1)
+            stack_about.set_visible_child_name(self.get_name())
 
     def cb_btn_back_about(self):
         '''___back to main about submenu page___'''
@@ -8012,6 +8817,10 @@ def sw_activate(app):
         '''___open web page about license___'''
         self.set_uri(license_source)
 
+    def cb_btn_donation(self):
+        '''___open web page about donation___'''
+        self.set_uri(donation_source)
+
 ####___Debug___.
 
     def cb_btn_debug(self):
@@ -8022,7 +8831,7 @@ def sw_activate(app):
     def on_debug():
         '''___run application in debug mode___'''
 
-        on_start('debug')
+        on_start()
 
     def debug_vulkan():
         '''___run application in vulkan debug mode___'''
@@ -8046,6 +8855,13 @@ def sw_activate(app):
                                 if 'winedevice' in p.info['name']]
         )
         for proc in winedevices:
+            psutil.Process(proc).kill()
+
+        webkits = ([p.info['pid'] for p in psutil.process_iter(['pid', 'name'])
+                                if 'WebKitNetworkProcess' in p.info['name']]
+        )
+        print(webkits)
+        for proc in webkits:
             psutil.Process(proc).kill()
 
         timeout_list_clear(None)
@@ -8241,7 +9057,7 @@ def sw_activate(app):
 
         global flap_locked
 
-        if parent.get_width() < (width/2):
+        if parent.get_width() < 960:
             if not sidebar_revealer.get_reveal_child():
                 flap_locked = True
                 sidebar_revealer.set_reveal_child(True)
@@ -8674,8 +9490,9 @@ def sw_activate(app):
                 btn_gmount.set_visible(True)
                 btn_bookmarks.set_visible(True)
                 btn_popover_scale.set_visible(True)
-                if Path(entry_path.get_name()) == sw_shortcuts:
-                    btn_icon_position.set_visible(True)
+                if (Path(entry_path.get_name()) == sw_shortcuts
+                    or Path(entry_path.get_name()) == sw_launchers):
+                        btn_icon_position.set_visible(True)
                 else:
                     btn_icon_position.set_visible(False)
         else:
@@ -8686,7 +9503,7 @@ def sw_activate(app):
 
         h = parent.get_height()
 
-        if h > 720:
+        if h >= 720:
             environ['sm_image'] = 'vertical'
             if stack_sidebar.get_visible_child() == frame_main:
                 app_name =get_out()
@@ -8698,7 +9515,7 @@ def sw_activate(app):
                                 if (not str(sw_app_vicons) in str(img)
                                     and Path(f'{sw_app_vicons}/{img.name}').exists()):
                                         get_sm_icon(app_name)
-        elif h <= 720:
+        elif h < 720:
             environ['sm_image'] = 'horizontal'
             if stack_sidebar.get_visible_child() == frame_main:
                 app_name = get_out()
@@ -8730,7 +9547,7 @@ def sw_activate(app):
             sidebar_width = sidebar_scale_width
             stack_sidebar.set_size_request(sidebar_scale_width, -1)
 
-        if allocation.width <= (width / 2):
+        if allocation.width <= 960:
             if revealer.get_reveal_child():
                 if not flap_locked:
                     widget.set_reveal_child(False)
@@ -8740,7 +9557,7 @@ def sw_activate(app):
                 empty_box.set_size_request(sidebar_width, -1)
                 empty_box.set_visible(True)
 
-        elif allocation.width > (width / 2):
+        elif allocation.width > 960:
             if revealer.get_reveal_child():
                 if not flap_locked:
                     widget.set_reveal_child(True)
@@ -8863,17 +9680,25 @@ def sw_activate(app):
     except:
         width = 1280
         height = 720
+        print(tc.RED, f'MONITOR_SIZE: not found, set {width}x{height}{tc.END}')
     else:
         width = monitor.get_geometry().width
         height = monitor.get_geometry().height
         env_dict['SW_HUD_SIZE'] = f'{int(height / 55)}'
+        print(tc.VIOLET, f'MONITOR_SIZE: {tc.YELLOW}{width}x{height}{tc.END}')
 
     clipboard = display.get_clipboard()
     css_provider = Gtk.CssProvider()
     gtk_settings = Gtk.Settings.get_for_display(display)
 
-    xft_dpi = (gtk_settings.props.gtk_xft_dpi / 1024) / 96
-    #print(xft_dpi, gtk_settings.props.gtk_xft_dpi)
+    if gtk_settings.props.gtk_xft_dpi is not None:
+        xft_dpi = (gtk_settings.props.gtk_xft_dpi / 1024) / 96
+        if xft_dpi < 1.0:
+            xft_dpi = 1.0
+    else:
+        xft_dpi = 1.0
+
+    print(tc.VIOLET, 'XFT_DPI:', tc.YELLOW, xft_dpi, gtk_settings.props.gtk_xft_dpi, tc.END)
 
     icon_theme = Gtk.IconTheme.get_for_display(display)
     icon_theme.add_resource_path(f'{sw_gui_icons}')
@@ -8901,6 +9726,14 @@ def sw_activate(app):
                                 )
     entry_search.connect('search-changed', cb_entry_search_changed)
 
+    entry_web = Gtk.Entry(
+                        css_name='sw_entry',
+                        placeholder_text='url...',
+                        valign=Gtk.Align.CENTER,
+                        hexpand=True,
+                        )
+    entry_web.connect('activate', cb_entry_web_activate)
+
     entry_path = Gtk.Entry(
                         name = str(sw_default_dir),
                         css_name='sw_entry',
@@ -8913,6 +9746,9 @@ def sw_activate(app):
     image_search = Gtk.Image(css_name='sw_image')
     image_search.set_from_file(IconPath.icon_search)
 
+    image_web = Gtk.Image(css_name='sw_image')
+    image_web.set_from_file(IconPath.icon_global)
+
     image_path = Gtk.Image(css_name='sw_image')
     image_path.set_from_file(IconPath.icon_folder)
 
@@ -8924,6 +9760,12 @@ def sw_activate(app):
     btn_search.set_tooltip_markup(msg.tt_dict['search'])
     btn_search.set_child(image_search)
     btn_search.connect('clicked', cb_btn_search)
+
+    btn_web = Gtk.Button(css_name='sw_button_header', name='btn_path')
+    btn_web.set_valign(Gtk.Align.CENTER)
+    btn_web.set_tooltip_markup(msg.tt_dict['web'])
+    btn_web.set_child(image_web)
+    btn_web.set_sensitive(False)
 
     btn_path = Gtk.Button(css_name='sw_button_header', name='btn_path')
     btn_path.set_valign(Gtk.Align.CENTER)
@@ -8955,7 +9797,7 @@ def sw_activate(app):
                         spacing=4,
                         valign=Gtk.Align.CENTER,
                         hexpand=True,
-                        )
+    )
     hadjustment_path = Gtk.Adjustment()
 
     scrolled_path = Gtk.ScrolledWindow(
@@ -8965,7 +9807,7 @@ def sw_activate(app):
                         min_content_width=width*0.25,
                         max_content_width=width*0.66,
                         propagate_natural_width=True,
-                        )
+    )
     scrolled_path.set_policy(Gtk.PolicyType.EXTERNAL, Gtk.PolicyType.NEVER)
     scrolled_path.set_hadjustment(hadjustment_path)
     scrolled_path.set_child(box_scrolled)
@@ -8990,12 +9832,23 @@ def sw_activate(app):
     box_search.append(btn_path)
     box_search.append(entry_search)
 
+    box_web = Gtk.Box(
+                    name='box_web',
+                    orientation=Gtk.Orientation.HORIZONTAL,
+                    spacing=4,
+                    valign=Gtk.Align.CENTER,
+                    hexpand=True,
+                    )
+    box_web.append(btn_web)
+    box_web.append(entry_web)
+
     stack_search_path = Gtk.Stack()
     stack_search_path.set_hexpand(True)
     stack_search_path.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
     stack_search_path.add_child(box_path)
     stack_search_path.add_child(box_side)
     stack_search_path.add_child(box_search)
+    stack_search_path.add_child(box_web)
     stack_search_path.set_visible(False)
 
     ####___Navigate_headerbar_buttons___.
@@ -9089,7 +9942,7 @@ def sw_activate(app):
     wc_resize.set_valign(Gtk.Align.CENTER)
     wc_resize.set_tooltip_markup(msg.tt_dict['resize_window'])
     wc_resize.set_child(image_wc_resize)
-    wc_resize.connect('clicked', on_parent_resize)
+    #wc_resize.connect('clicked', on_parent_resize)
 
     wc_close = Gtk.Button(css_name='sw_wc_close')
     wc_close.connect('clicked', on_parent_close)
@@ -9100,7 +9953,7 @@ def sw_activate(app):
     wc_maximize = Gtk.Button(css_name='sw_wc_maximize')
     wc_maximize.connect('clicked', on_parent_maximize)
 
-    top_headerbar_end_box.append(wc_resize)
+    #top_headerbar_end_box.append(wc_resize)
     top_headerbar_end_box.append(wc_minimize)
     top_headerbar_end_box.append(wc_maximize)
     top_headerbar_end_box.append(wc_close)
@@ -9170,7 +10023,7 @@ def sw_activate(app):
     media_file = Gtk.MediaFile.new()
     media_controls = Gtk.MediaControls(css_name="sw_media_controls")
     media_controls.set_media_stream(media_file)
-    media_controls.set_size_request(240,-1)
+    media_controls.set_size_request(200,-1)
 
     stack_progress_main = Gtk.Stack(
                             transition_duration=250,
@@ -9330,6 +10183,7 @@ def sw_activate(app):
                                     orientation=Gtk.Orientation.HORIZONTAL,
                                     hexpand=True,
                                     halign=Gtk.Align.CENTER,
+                                    baseline_position=Gtk.BaselinePosition.CENTER,
                                     )
 
     bottom_headerbar_end_box = Gtk.Box(
@@ -9512,13 +10366,13 @@ def sw_activate(app):
     image_start_mode.set_hexpand(True)
     image_start_mode.set_vexpand(True)
     image_start_mode.set_valign(Gtk.Align.START)
-    image_start_mode.set_size_request(-1,128)
+    image_start_mode.set_size_request(-1, 128)
 
     image_shortcuts = Gtk.Image(css_name='sw_image')
     image_shortcuts.set_from_file(IconPath.icon_shortcuts)
 
     image_create_shortcut = Gtk.Image(css_name='sw_image')
-    image_create_shortcut.set_from_file(IconPath.icon_create)
+    image_create_shortcut.set_from_file(IconPath.icon_folder)
 
     label_shortcuts = Gtk.Label(
                                 css_name='sw_label',
@@ -9526,7 +10380,7 @@ def sw_activate(app):
     )
     label_create_shortcut = Gtk.Label(
                                     css_name='sw_label',
-                                    label=btn_dict['create_shortcut']
+                                    label=vl_dict['files']
     )
     label_prefix_mode = Gtk.Label(css_name='sw_label_desc')
     label_prefix_mode.set_xalign(0)
@@ -9727,7 +10581,7 @@ def sw_activate(app):
     btn_debug.set_tooltip_markup(f"{msg.tt_dict['debug']}")
     btn_debug.set_name(btn_dict['debug'])
     btn_debug.set_child(image_btn_debug)
-    btn_debug.connect('clicked', cb_btn_debug)
+    #btn_debug.connect('clicked', cb_btn_debug)
 
     btn_about =  Gtk.Button(css_name='sw_button')
     btn_about.set_tooltip_markup(msg.tt_dict['about'])
@@ -9740,7 +10594,7 @@ def sw_activate(app):
     grid_compact.attach(btn_about,0,0,1,1)
     grid_compact.attach(btn_download,1,0,1,1)
     grid_compact.attach(btn_install,2,0,1,1)
-    grid_compact.attach(btn_debug,3,0,1,1)
+    #grid_compact.attach(btn_debug,3,0,1,1)
 
     grid_start_mode.attach(grid_btn_tools,0,2,1,1)
     grid_main_btn.attach(grid_compact, 0,1,1,1)
@@ -11598,7 +12452,7 @@ def sw_activate(app):
                         css_name='sw_label',
                         label=sw_program_name.upper()
                         )
-    about_version = Gtk.Label(css_name='sw_label', label=sw_version)
+    about_version = Gtk.Label(css_name='sw_label', label=str_sw_version)
 
     box_about_version = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
     box_about_version.set_spacing(12)
@@ -11649,7 +12503,7 @@ def sw_activate(app):
     for l, w in zip(about_labels, about_widgets):
         count += 1
 
-        if count < 6:
+        if count < 7:
 
             label_a = Gtk.Label(
                                 css_name='sw_label',
@@ -11660,6 +12514,9 @@ def sw_activate(app):
             btn_a.set_child(label_a)
             btn_a.set_name(w)
             btn_a.connect('clicked', cb_btn_about)
+
+            if w == 'about_update':
+                btn_a.set_visible(False)
 
             pref_group_about.append(btn_a)
 
@@ -11684,6 +12541,7 @@ def sw_activate(app):
     grid_about_authors = stack_about.get_child_by_name(list(about_dict)[2])
     grid_about_license = stack_about.get_child_by_name(list(about_dict)[3])
     grid_about_donation = stack_about.get_child_by_name(list(about_dict)[4])
+    grid_about_update = stack_about.get_child_by_name(list(about_dict)[5])
 
     ####___About_news___.
 
@@ -11694,7 +12552,7 @@ def sw_activate(app):
 
     title_news = Gtk.Label(
                             css_name='sw_label',
-                            label=sw_program_name + ' ' + sw_version,
+                            label=sw_program_name + ' ' + str_sw_version,
                             )
     title_news.set_xalign(0)
 
@@ -11939,12 +12797,50 @@ def sw_activate(app):
     pref_group_about_license.append(title_license)
     pref_group_about_license.append(label_license)
 
-    grid_about_license.attach(pref_group_about_license, 0,1,1,1)
-    grid_about_license.attach(btn_license, 0,2,1,1)
+    grid_about_license.attach(pref_group_about_license, 0, 1, 1, 1)
+    grid_about_license.attach(btn_license, 0, 2, 1, 1)
 
     ####___About_donation___.
 
-    
+    label_btn_donation = Gtk.Label(
+                                css_name='sw_label',
+                                label=about_dict['about_donation']
+    )
+    btn_donation = Gtk.LinkButton(css_name='sw_link')
+    btn_donation.set_child(label_btn_donation)
+    btn_donation.connect('activate-link', cb_btn_donation)
+
+    label_donation = Gtk.Label(
+                            css_name='sw_label_desc',
+                            label=str_donation,
+                            xalign=0,
+                            wrap=True,
+                            wrap_mode=Pango.WrapMode.WORD,
+    )
+    label_btc = Gtk.Label(
+                        css_name='sw_label_desc',
+                        label=str_btc,
+                        xalign=0,
+                        wrap=True,
+                        wrap_mode=Pango.WrapMode.CHAR,
+                        selectable=True,
+    )
+    title_donation = Gtk.Label(
+                            css_name='sw_label',
+                            label=str_contribute,
+                            xalign=0,
+    )
+    pref_group_about_donation = Gtk.Box(
+                                    css_name='sw_action_row',
+                                    orientation=Gtk.Orientation.VERTICAL
+    )
+    pref_group_about_donation.set_size_request(280,-1)
+    pref_group_about_donation.append(title_donation)
+    pref_group_about_donation.append(label_donation)
+
+    grid_about_donation.attach(pref_group_about_donation, 0, 1, 1, 1)
+    grid_about_donation.attach(btn_donation, 0, 2, 1, 1)
+    grid_about_donation.attach(label_btc, 0, 3, 1, 1)
 
 ####___Vte_terminal___.
 
@@ -12487,6 +13383,50 @@ def sw_activate(app):
                                     halign=Gtk.Align.FILL,
                                     child=view_fonts,
     )
+    box_web_bar = Gtk.Box(
+                        orientation=Gtk.Orientation.HORIZONTAL,
+                        spacing=4,
+                        valign=Gtk.Align.CENTER,
+                        hexpand=True,
+    )
+    for key, value in url_source.items():
+        label_web_page = Gtk.Label(css_name='sw_label_info', label=key.capitalize())
+        icon_web_page = Gtk.Picture.new_for_filename(value[1])
+        icon_web_page.set_content_fit(Gtk.ContentFit.SCALE_DOWN)
+        icon_web_page.set_size_request(16, 16)
+        box_web_page = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        box_web_page.append(icon_web_page)
+        box_web_page.append(label_web_page)
+        btn_web_page = Gtk.Button(css_name='sw_button_path', name=value[0])
+        btn_web_page.set_child(box_web_page)
+        btn_web_page.connect('clicked', cb_btn_add_webview)
+        box_web_bar.append(btn_web_page)
+
+    scrolled_web_bar = Gtk.ScrolledWindow(
+                                        css_name='sw_scrolledwindow',
+                                        valign=Gtk.Align.CENTER,
+                                        hexpand=True,
+                                        min_content_width=width*0.25,
+                                        max_content_width=width*0.66,
+                                        propagate_natural_width=True,
+                                        child=box_web_bar,
+    )
+    scrolled_web_bar.set_policy(Gtk.PolicyType.EXTERNAL, Gtk.PolicyType.NEVER)
+    stack_web = Gtk.Notebook(css_name='sw_stack')
+    overlay_web = Gtk.Overlay(css_name='sw_overlay')
+    overlay_web.set_child(stack_web)
+    label_overlay = Gtk.Label(
+                            css_name='sw_row',
+                            visible=False,
+                            valign=Gtk.Align.END,
+                            halign=Gtk.Align.START,
+                            margin_bottom=8,
+                            )
+    overlay_web.add_overlay(label_overlay)
+
+    grid_web = Gtk.Grid()
+    grid_web.attach(scrolled_web_bar, 0, 0, 1, 1)
+    grid_web.attach(overlay_web, 0, 1, 1, 1)
 
 ####___Winetricks_Tabs___.
 
@@ -12727,6 +13667,7 @@ def sw_activate(app):
     reveal_stack.add_child(scrolled_global_settings)
     reveal_stack.add_child(files_view_grid)
     reveal_stack.add_child(scrolled_winetricks)
+    reveal_stack.add_child(grid_web)
 
     ####___Overlay___.
 
