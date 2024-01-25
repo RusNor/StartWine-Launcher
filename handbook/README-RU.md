@@ -26,7 +26,8 @@ Discord > [Click](https://discord.gg/jjY3auVdfm)
 ## Интерфейс
 
 Видео демнстарция интерфейса StartWine
-![sw_video0](/handbook/ru/video/sw_video0_ru.mp4)
+
+https://github.com/RusNor/StartWine-Launcher/assets/81373196/d3b1bafd-8feb-40b0-aed3-062345d1ee45
 
 Если вам надо быстрый доступ к папкам или добавить в закладку свою папку, то нажиме на соотвествующий значок как показано в видеодемонстариции
 
