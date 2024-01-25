@@ -34,6 +34,7 @@ https://github.com/RusNor/StartWine-Launcher/assets/81373196/d3b1bafd-8feb-40b0-
 https://github.com/RusNor/StartWine-Launcher/assets/81373196/54c14c12-05f8-48e2-86db-83a62c573054
 
 Скришоты StartWine (Сомнительно, но окееей)
+
 ![sw_image1](/handbook/ru/sw_image1.png)
 ![sw_image2](/handbook/ru/sw_image2.png)
 ![sw_image3](/handbook/ru/sw_image3.png)
