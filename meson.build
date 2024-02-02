@@ -1,6 +1,6 @@
 project('StartWine',
-	version : '384',
-	license : 'GPL-3.0'
+	version: '401',
+	license: 'GPL-3.0'
 )
 
 # Convert .po to .mo for make opensource happy
@@ -10,9 +10,9 @@ convert_po = [find_program('msgfmt'), ru_po, '-o', ru_mo]
 run_command(convert_po)
 
 # Install icon
-install_data('data/img/gui_icons/SW_Launcher_x256.png',
-	install_dir: join_paths(get_option('datadir'), 'pixmaps'),
-	rename: 'startwine.png'
+install_data('data/img/gui_icons/sw_icon.svg',
+	install_dir: join_paths(get_option('datadir'), 'icons', 'hicolor', 'scalable', 'apps'),
+	rename: 'startwine.svg'
 )
 
 # Prepare and install start file
