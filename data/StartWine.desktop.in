@@ -7,6 +7,6 @@ Comment[ru]=Запуск приложений Windows в операционны�
 Exec=startwine %F
 Icon=startwine
 StartupNotify=false
-Terminal=false
+Terminal=true
 Categories=Game;
 MimeType=application/x-wine-extension-msp;application/x-msi;application/x-ms-dos-executable;

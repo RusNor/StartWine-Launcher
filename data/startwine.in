@@ -3,7 +3,7 @@
 
 export SW_GIT_VER="@VERSION@"
 export UTILS_GIT_VER="2.5"
-export RUNTIME_GIT_VER="0.2"
+export RUNTIME_GIT_VER="0.3"
 
 [ ! -d "$HOME/.config" ] && \
     mkdir -p "$HOME/.config"
@@ -190,6 +190,44 @@ try_download () {
 
 }
 
+try_get_wine_ver () {
+
+    url_list=(
+        "https://api.github.com/repos/Kron4ek/Wine-Builds/releases"
+        "https://api.github.com/repos/RusNor/Wine-Steam-Proton/releases"
+        "https://api.github.com/repos/GloriousEggroll/proton-ge-custom/releases"
+        "https://api.github.com/repos/GloriousEggroll/wine-ge-custom/releases"
+    )
+
+    grep_url() { grep 'browser_download_url'|grep -iEo 'https.*download.*\.tar\.gz|https.*download.*\.tar\.xz|https.*download.*\.tar\.zst'|sed "s/.*-x86.tar.xz//g" ; }
+
+    export staging_ver=$(curl -s "${url_list[0]}"|grep_url|tr -d '"'|tr '\n' ' ')
+    export steam_proton_ver=$(curl -s "${url_list[1]}"|grep_url|tr -d '"'|tr '\n' ' ')
+    export proton_ge_ver=$(curl -s "${url_list[2]}"|grep_url|tr -d '"'|tr '\n' ' ')
+    export lutris_ge_ver=$(curl -s "${url_list[3]}"|grep_url|tr -d '"'|tr '\n' ' ')
+
+    for staging in $staging_ver ; do
+        [[ $staging == *"staging-amd64"* && $staging != *"rc1"* ]] && \
+            staging_list+="$staging "
+        [[ $staging == *"staging-tkg-amd64"* && $staging != *"rc1"* ]] && \
+            staging_tkg_list+="$staging "
+    done
+
+    for lutris_ge in $lutris_ge_ver ; do
+        [[ "$lutris_ge" != *"LoL"* && "$lutris_ge" != *"lol"* ]] && \
+            lutris_ge_list+="$lutris_ge "
+    done
+
+    echo "{" > "${START_WINE_PATH}/data/scripts/wine_version.json"
+    echo "\"wine_staging\": \"${staging_list[*]}\"," >> "${START_WINE_PATH}/data/scripts/wine_version.json"
+    echo "\"wine_steam_proton\": \"$steam_proton_ver\"," >> "${START_WINE_PATH}/data/scripts/wine_version.json"
+    echo "\"wine_proton_ge\": \"$proton_ge_ver\"," >> "${START_WINE_PATH}/data/scripts/wine_version.json"
+    echo "\"wine_staging_tkg\": \"${staging_tkg_list[*]}\"," >> "${START_WINE_PATH}/data/scripts/wine_version.json"
+    echo "\"wine_lutris_ge\": \"${lutris_ge_list[*]}\"" >> "${START_WINE_PATH}/data/scripts/wine_version.json"
+    echo "}" >> "${START_WINE_PATH}/data/scripts/wine_version.json"
+
+}
+
 if [[ "$UTILS_VER" -lt "$UTILS_FORMAT_VER" ]]; then
     [ -d "${START_WINE_PATH}/data/tools/utils" ] && \
         rm -rf "${START_WINE_PATH}/data/tools/utils"
@@ -198,8 +236,8 @@ fi
 if [[ "$RUNTIME_VER" -lt "$RUNTIME_FORMAT_VER" ]]; then
 
     export URL_RUNTIME_LIST=(
-       "https://huggingface.co/SudoNano/sw_repo/resolve/main/runtime/sw_runtime_v$RUNTIME_GIT_VER.tar.xz?download=true"
-       "https://github.com/RusNor/sw_runtime/releases/download/sw_runtime_v$RUNTIME_GIT_VER/sw_runtime_v$RUNTIME_GIT_VER.tar.xz"
+       "https://huggingface.co/SudoNano/sw_repo/resolve/main/runtime/sw_runtime_v$RUNTIME_GIT_VER.tar.zst?download=true"
+       "https://github.com/RusNor/sw_runtime/releases/download/sw_runtime_v$RUNTIME_GIT_VER/sw_runtime_v$RUNTIME_GIT_VER.tar.zst"
     )
 
     [ ! -d "${START_WINE_PATH}/data/runtime" ] && \
@@ -210,13 +248,13 @@ if [[ "$RUNTIME_VER" -lt "$RUNTIME_FORMAT_VER" ]]; then
 
     echo "${RUNTIME_GIT_VER}" > "${START_WINE_PATH}/data/runtime/version"
 
-    try_download "${URL_RUNTIME_LIST[0]}" "${START_WINE_PATH}/data/tmp/sw_runtime_v${RUNTIME_GIT_VER}.tar.xz" \
-    || try_download "${URL_RUNTIME_LIST[1]}" "${START_WINE_PATH}/data/tmp/sw_runtime_v${RUNTIME_GIT_VER}.tar.xz" &&
-    tar -xf "${START_WINE_PATH}/data/tmp/sw_runtime_v${RUNTIME_GIT_VER}.tar.xz" --checkpoint=.100 -C "${START_WINE_PATH}/data/runtime" &&
+    try_download "${URL_RUNTIME_LIST[0]}" "${START_WINE_PATH}/data/tmp/sw_runtime_v${RUNTIME_GIT_VER}.tar.zst" \
+    || try_download "${URL_RUNTIME_LIST[1]}" "${START_WINE_PATH}/data/tmp/sw_runtime_v${RUNTIME_GIT_VER}.tar.zst" &&
+    tar -I zstd -xvf "${START_WINE_PATH}/data/tmp/sw_runtime_v${RUNTIME_GIT_VER}.tar.zst" -C "${START_WINE_PATH}/data/runtime" &&
     chmod +x "${START_WINE_PATH}/data/runtime/sw_runtime"
 
-    [ -f "${START_WINE_PATH}/data/tmp/sw_runtime_v${RUNTIME_GIT_VER}.tar.xz" ] && \
-        rm -rf "${START_WINE_PATH}/data/tmp/sw_runtime_v${RUNTIME_GIT_VER}.tar.xz"
+    [ -f "${START_WINE_PATH}/data/tmp/sw_runtime_v${RUNTIME_GIT_VER}.tar.zst" ] && \
+        rm -rf "${START_WINE_PATH}/data/tmp/sw_runtime_v${RUNTIME_GIT_VER}.tar.zst"
 
 fi
 
@@ -257,6 +295,11 @@ if [[ "$SCRIPT_VER" -lt "$SW_GIT_VER" ]]; then
 
     export START_WINE_EXTRACT="$(dirname "${START_WINE_PATH}")"
 
+    export URL_VER="https://github.com/RusNor/StartWine-Launcher/releases/download/StartWine_v$SW_GIT_VER/StartWine_v$SW_GIT_VER.tar.xz"
+
+#    try_download "${URL_VER}" "${START_WINE_PATH}/data/tmp/StartWine_v$SW_GIT_VER.tar.xz" &&
+#
+#    tar -xvf "${START_WINE_PATH}/data/tmp/StartWine_v$SW_GIT_VER.tar.xz" -C "${START_WINE_EXTRACT}" &&
     cp -rf /usr/share/startwine/data "${START_WINE_EXTRACT}/StartWine" &&
 
     [ -f "${START_WINE_PATH}/data/tmp/sw_menu.json" ] && \
@@ -264,6 +307,14 @@ if [[ "$SCRIPT_VER" -lt "$SW_GIT_VER" ]]; then
 
     [ -f "${START_WINE_PATH}/data/tmp/sw_menu.json" ] && \
         rm -rf "${START_WINE_PATH}/data/tmp/sw_menu.json"
+
+    [ -d "${START_WINE_PATH}/data/tmp/StartWine" ] && \
+        rm -rf "${START_WINE_PATH}/data/tmp/StartWine"
+
+    [ -f "${START_WINE_PATH}/data/tmp/StartWine_v$GIT_VER.tar.xz" ] && \
+        rm -rf "${START_WINE_PATH}/data/tmp/StartWine_v$GIT_VER.tar.xz"
+
+    try_get_wine_ver
 
     if [ $DIRECTORY_EXIST == "true" ]; then
         "${START_WINE_PATH}/data/scripts/sw_start" "$@" ; exit 0
