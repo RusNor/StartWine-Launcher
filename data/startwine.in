@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 ################################################################################
 
-export SW_GIT_VER="401"
+export SW_GIT_VER="@VERSION@"
 export UTILS_GIT_VER="2.5"
 export RUNTIME_GIT_VER="0.2"
 
