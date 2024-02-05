@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+export START_WINE_PATH="$(cd "$(dirname "$(realpath "$0")")"/../../ && pwd)"
+
+get_wine_ver () {
+
+    url_list=(
+        "https://api.github.com/repos/Kron4ek/Wine-Builds/releases"
+        "https://api.github.com/repos/RusNor/Wine-Steam-Proton/releases"
+        "https://api.github.com/repos/GloriousEggroll/proton-ge-custom/releases"
+        "https://api.github.com/repos/GloriousEggroll/wine-ge-custom/releases"
+    )
+
+    grep_url() { grep 'browser_download_url'|grep -iEo 'https.*download.*\.tar\.gz|https.*download.*\.tar\.xz|https.*download.*\.tar\.zst'|sed "s/.*-x86.tar.xz//g" ; }
+
+    export staging_ver=$(curl -s "${url_list[0]}"|grep_url|tr -d '"'|tr '\n' ' ')
+    export steam_proton_ver=$(curl -s "${url_list[1]}"|grep_url|tr -d '"'|tr '\n' ' ')
+    export proton_ge_ver=$(curl -s "${url_list[2]}"|grep_url|tr -d '"'|tr '\n' ' ')
+    export lutris_ge_ver=$(curl -s "${url_list[3]}"|grep_url|tr -d '"'|tr '\n' ' ')
+
+    for staging in $staging_ver ; do
+        [[ $staging == *"staging-amd64"* && $staging != *"rc1"* ]] && \
+            staging_list+="$staging "
+        [[ $staging == *"staging-tkg-amd64"* && $staging != *"rc1"* ]] && \
+            staging_tkg_list+="$staging "
+    done
+
+    for lutris_ge in $lutris_ge_ver ; do
+        [[ "$lutris_ge" != *"LoL"* && "$lutris_ge" != *"lol"* ]] && \
+            lutris_ge_list+="$lutris_ge "
+    done
+
+    echo "{" > "${START_WINE_PATH}/data/scripts/wine_version.json"
+    echo "\"wine_staging\": \"${staging_list[*]}\"," >> "${START_WINE_PATH}/data/scripts/wine_version.json"
+    echo "\"wine_steam_proton\": \"$steam_proton_ver\"," >> "${START_WINE_PATH}/data/scripts/wine_version.json"
+    echo "\"wine_proton_ge\": \"$proton_ge_ver\"," >> "${START_WINE_PATH}/data/scripts/wine_version.json"
+    echo "\"wine_staging_tkg\": \"${staging_tkg_list[*]}\"," >> "${START_WINE_PATH}/data/scripts/wine_version.json"
+    echo "\"wine_lutris_ge\": \"${lutris_ge_list[*]}\"" >> "${START_WINE_PATH}/data/scripts/wine_version.json"
+    echo "}" >> "${START_WINE_PATH}/data/scripts/wine_version.json"
+
+}
+
+get_wine_ver

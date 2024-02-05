@@ -27,6 +27,7 @@ export SW_USE_DXVK_ASYNC=1
 export SW_USE_ENABLE_VKBASALT=1
 export SW_USE_FSR=1
 export SW_USE_FSR_MODE="ultra"
+export SW_USE_LANG_MODE="en_US"
 export SW_USE_GSTREAMER=1
 export SW_USE_DRI_PRIME=0
 export SW_USE_WINE_MONO=1
@@ -46,6 +47,6 @@ export SW_USE_VKBASALT_EFFECTS="cas:Tonemap:Colourfulness:"
 export SW_USE_VKBASALT_CAS="0.4"
 export SW_USE_FPS_LIMIT="0.0"
 export SW_USE_MANGOHUD_CONFIG="cpu_temp,ram,core_load,cpu_mhz,wine,gpu_temp,gpu_core_clock,vram"
-export SW_USE_WINE="wine_proton_ge"
+export SW_USE_WINE="GE-Proton8-30"
 export SW_USE_PFX="pfx_gfclient"
 ################################################################################

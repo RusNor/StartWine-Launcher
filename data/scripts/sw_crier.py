@@ -444,13 +444,20 @@ class StartPathManager(Gtk.Application):
             print('set default path...')
             self.window.close()
             print('run StartWine...')
-            run(f'"{dest_path}/data/scripts/sw_menu.py"', shell=True, start_new_session=True)
+            if not Path(f'{Path.home()}/.config').exists():
+                Path(f'{Path.home()}/.config').mkdir(parents=True, exist_ok=True)
+                with open(f'{Path.home()}/.config/swrc', 'w') as f:
+                    f.write(f'{dest_path}')
+                    f.close()
+            else:
+                with open(f'{Path.home()}/.config/swrc', 'w') as f:
+                    f.write(f'{dest_path}')
+                    f.close()
         else:
             if dest_path.exists():
                 print('path exists, skip...')
                 self.window.close()
                 print('run StartWine...')
-                run(f'"{dest_path}/data/scripts/sw_menu.py"', shell=True, start_new_session=True)
             else:
                 self.window.close()
                 if str(dest_path).endswith('StartWine'):
@@ -859,33 +866,29 @@ def on_folder(self):
 
 def download(url, filename):
 
-    def request_urlopen(url, dest):
-
-        request_headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36",
-            "Accept-Language": "fr-FR,fr;q=0.8,en-US;q=0.6,en;q=0.4",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Connection": "keep-alive",
-            "Accept-Charset": "ISO-8859-1,utf-8;q=0.7,*;q=0.3",
-        }
+    request_headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36",
+        "Accept-Language": "fr-FR,fr;q=0.8,en-US;q=0.6,en;q=0.4",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Connection": "keep-alive",
+        "Accept-Charset": "ISO-8859-1,utf-8;q=0.7,*;q=0.3",
+    }
+    try:
+        response = urlopen(Request(url, headers=request_headers))
+    except HTTPError as e:
+        print(e)
         try:
-            response = urlopen(Request(url, headers=request_headers))
+            urllib.request.urlretrieve(url, filename)
         except HTTPError as e:
             print(e)
-            try:
-                urllib.request.urlretrieve(url, filename)
-            except HTTPError as e:
-                print(e)
-                exit(1)
-            else:
-                exit(0)
+            exit(1)
         else:
-            with response as res, open(dest, 'wb') as out:
-                shutil.copyfileobj(res, out)
-                res.close()
-                exit(0)
-
-    return request_urlopen(url, filename)
+            exit(0)
+    else:
+        with response as res, open(filename, 'wb') as out:
+            shutil.copyfileobj(res, out)
+            res.close()
+            exit(0)
 
 class ProgressBar(Gtk.Application):
 

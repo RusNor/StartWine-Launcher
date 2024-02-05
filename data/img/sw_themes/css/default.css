@@ -71,10 +71,41 @@ sw_picture.sw_blur {
 
 sw_picture {
     border-radius: 12px;
-/*    background-color: @sw_accent_bg_color;*/
     background-size: cover;
     background-position: center;
 }
+
+sw_picture.gridview {
+    background-position: center;
+    background-image: repeating-linear-gradient(@sw_bg_color, @sw_accent_fg_color);
+}
+
+/*sw_picture:hover {*/
+/*    transform: scale(1.1);*/
+/*    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);*/
+/*    animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);*/
+/*    transition-duration: 625ms;*/
+/*    filter: drop-shadow(alpha(@sw_accent_fg_color, 0.1) 1rem 1rem 40px);*/
+/*}*/
+
+/*___IMAGE___*/
+
+sw_image.sw_blur {
+    filter: blur(3px);
+}
+
+sw_image {
+    border-radius: 12px;
+    background-size: cover;
+    background-position: center;
+}
+
+/*sw_image.shadow {*/
+/*    box-shadow: 1px 2px 3px 4px rgba(255, 0, 0, 0.5),*/
+/*                3px 4px 6px 6px rgba(255, 0, 0, 0.3),*/
+/*                5px 6px 8px 8px rgba(255, 0, 0, 0.2),*/
+/*                7px 8px 10px 10px rgba(255, 0, 0, 0.1);*/
+/*}*/
 
 /*___LABELS___*/
 
@@ -87,7 +118,7 @@ sw_label {
 
 sw_label_title {
     font-weight: bold;
-    font-size: 13pt;
+    font-size: 14pt;
     color: @sw_text_color;
 /*    color: @sw_bg_color;*/
 /*    filter: invert(100%);*/
@@ -185,6 +216,13 @@ sw_label_warning {
     color: red;
 }
 
+sw_label.warning {
+    font-weight: 500;
+    font-variant: normal;
+    font-size: 11pt;
+    color: red;
+}
+
 sw_label.not.link>label {
     color: @sw_text_color;
 }
@@ -247,11 +285,6 @@ sw_window.sw_background.csd {
     transition: box-shadow 150ms cubic-bezier(0, 0, 0.2, 1);
     border: 1px solid @sw_header_bg_color;
     border-radius: 12px;
-/*    box-shadow: 0 3px 3px 0 rgba(36, 36, 36, 0.1),*/
-/*                0 8px 8px 0 rgba(36, 36, 36, 0.1),*/
-/*                0 16px 16px 0 rgba(36, 36, 36, 0.1),*/
-/*                0 0 0 2px rgba(36, 36, 36, 0.1),*/
-/*                0 0 0 1px rgba(36, 36, 36, 0.1);*/
     box-shadow: none;
     margin: 0;
 }
@@ -265,13 +298,13 @@ sw_window.sw_background {
 
 sw_window.sw_background.maximized,
 sw_window.sw_background.fullscreen {
-/*    border: none;*/
     border-radius: 0;
 }
 
 sw_window {
     font-weight: 500;
     font-size: 11pt;
+/*    box-shadow: 0px 0px 16px rgba(0, 0, 0, 0.5), 0px 2px 8px rgba(0, 0, 0, 0.3);*/
 }
 
 /*_______________________________________*/
@@ -514,6 +547,42 @@ sw_button {
     transition-duration: 225ms;
     animation-timing-function: ease-in-out;
     outline: 0 solid transparent;
+/*    box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.125);*/
+}
+
+sw_link.title {
+    font-size: 14pt;
+}
+
+sw_link.title sw_label_desc {
+    font-size: 12pt;
+}
+
+sw_button.install{
+    background-color: @sw_accent_fg_color;
+    background-image: image(@sw_accent_fg_color);
+}
+
+sw_button.install sw_label {
+    color: @sw_text_color;
+}
+
+sw_button.installing{
+    background-color: #ff9900;
+    background-image: image(#ff9900);
+}
+
+sw_button.installing sw_label {
+    color: white;
+}
+
+sw_button.installed{
+    background-color: #ff6060;
+    background-image: image(#ff6060);
+}
+
+sw_button.installed sw_label {
+    color: white;
 }
 
 sw_button:hover {
@@ -1007,6 +1076,19 @@ sw_box_view {
     border-radius: 12px;
 }
 
+sw_box_view_tabs {
+    margin-left: 8px;
+    margin-right: 8px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    border-color: @sw_bg_color;
+    border-width: 0px;
+    background-clip: padding-box;
+    background-color: transparent;
+    background-image: image(@sw_header_bg_color);
+    border-radius: 12px;
+}
+
 sw_box_overlay {
     padding: 4px;
     border-color: @sw_accent_bg_color;
@@ -1433,10 +1515,21 @@ sw_gridview {
     transition-property: outline, outline-width, outline-offset, outline-color;
     transition-duration: 225ms;
     animation-timing-function: ease-in-out;
-    margin-left: 20px;
-    margin-right: 20px;
-    margin-top: 20px;
-    margin-bottom: 20px;
+    padding: 24px;
+    border-color: @sw_bg_color;
+    border-width: 0px;
+    background-clip: padding-box;
+    border-radius: 12px;
+}
+
+sw_gridview.shortcuts {
+    color: @sw_text_color;
+    background-color:transparent;
+    background-image: none;
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    padding: 24px;
     border-color: @sw_bg_color;
     border-width: 0px;
     background-clip: padding-box;
@@ -1460,13 +1553,28 @@ sw_flowbox {
 }
 
 sw_gridview>child {
-    margin: 4px;
+    margin: 8px;
     transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
     border-radius: 12px;
     transition-property: outline, outline-width, outline-offset, outline-color;
     transition-duration: 225ms;
     animation-timing-function: ease-in-out;
     outline: 0 solid transparent;
+}
+
+sw_gridview.shortcuts>child {
+    margin: 12px;
+}
+
+sw_gridview.shortcuts>child:hover {
+    background-color: rgba(255, 255, 255, 0.125);
+    outline-color: rgba(255, 255, 255, 0.2);
+    background-image: none;
+    transform: translate(4px, 16px) scale(1.05);
+    animation-timing-function: cubic-bezier(0.25, 0.5, 0.75, 0.95);
+    transition: all 350ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition-duration: 350ms;
+    filter: drop-shadow(alpha(@sw_accent_fg_color, 0.5) 0rem 0rem 40px);
 }
 
 sw_flowboxchild {
@@ -1494,13 +1602,39 @@ sw_flowboxchild:hover {
 }
 
 sw_gridview>child:hover {
-    outline-color: lighter(@sw_accent_bg_color);
-    outline-width: 2px;
-    outline-offset: -1px;
-    background-color: rgba(163,163,163,0.3);
+    background-color: rgba(255, 255, 255, 0.125);
+    outline-color: rgba(255, 255, 255, 0.2);
+    background-image: none;
+    transform: translate(2px, 4px) scale(1.05);
+    animation-timing-function: cubic-bezier(0.25, 0.5, 0.75, 0.95);
+    transition: all 350ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition-duration: 350ms;
+    filter: drop-shadow(alpha(@sw_accent_fg_color, 0.5) 0rem 0rem 40px);
 }
 
-sw_flowboxchild:selected,
+sw_flowboxchild:selected {
+    animation: infinite alternate ease-in-out 0.75s;
+    background-repeat: no-repeat;
+    background-position: 50.00% 50.00%;
+    outline-color: @sw_accent_fg_color;
+    outline-width: 2px;
+    outline-offset: -1px;
+}
+
+sw_gridview.shortcuts>child:selected {
+    animation: infinite alternate ease-in-out 0.75s;
+    background-repeat: no-repeat;
+    background-position: 50.00% 50.00%;
+    outline-color: @sw_accent_fg_color;
+    outline-width: 2px;
+    outline-offset: -1px;
+    transform: scale(1.05);
+    animation-timing-function: cubic-bezier(0.25, 0.5, 0.75, 0.95);
+    transition: all 350ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition-duration: 350ms;
+    filter: drop-shadow(alpha(@sw_accent_fg_color, 0.5) 0rem 0rem 40px);
+}
+
 sw_gridview>child:selected {
     animation: infinite alternate ease-in-out 0.75s;
     background-repeat: no-repeat;
@@ -1508,6 +1642,33 @@ sw_gridview>child:selected {
     outline-color: @sw_accent_fg_color;
     outline-width: 2px;
     outline-offset: -1px;
+    transform: scale(1.05);
+    animation-timing-function: cubic-bezier(0.25, 0.5, 0.75, 0.95);
+    transition: all 350ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition-duration: 350ms;
+    filter: drop-shadow(alpha(@sw_accent_fg_color, 0.5) 0rem 0rem 40px);
+}
+
+sw_gridview>child.shortcuts.activatable:active {
+    background-color: alpha(@sw_accent_bg_color, 0.5);
+}
+
+sw_gridview>child.shortcuts.activatable:selected:hover {
+    background-color: alpha(@sw_accent_fg_color, 0.5);
+}
+
+sw_gridview>child.shortcuts.activatable:selected:active {
+    background-color: alpha(@sw_accent_bg_color, 0.5);
+}
+
+sw_gridview>child.shortcuts.activatable:selected:disabled {
+    background-color: alpha(@sw_accent_bg_color, 0.5);
+}
+
+sw_gridview>child.shortcuts.activatable:selected:disabled {
+    background-color: transparent;
+    background-image: none;
+    filter: opacity(0.5);
 }
 
 sw_gridview>child.activatable:active {
@@ -1755,11 +1916,30 @@ sw_entry {
     outline: 0 solid transparent;
 }
 
-sw_entry:hover {
-    outline-color: darker(@sw_accent_fg_color);
-    outline-width: 2px;
-    outline-offset: -1px;
+sw_entry_path {
+    min-height: 32px;
+    margin: 4px;
+    padding-left: 4px;
+    padding-right: 4px;
+    border: none;
+/*    border-radius: 12px;*/
+/*    border-spacing: 4px;*/
+/*    background-clip: padding-box;*/
+/*    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);*/
+/*    caret-color: currentColor;*/
+/*    transition-property: outline, outline-width, outline-offset, outline-color;*/
+/*    transition-duration: 225ms;*/
+/*    animation-timing-function: ease-in-out;*/
+/*    background-color: @sw_accent_bg_color;*/
+/*    color: @sw_accent_fg_color;*/
+/*    outline: 0 solid transparent;*/
 }
+
+/*sw_entry:hover {*/
+/*    outline-color: darker(@sw_accent_fg_color);*/
+/*    outline-width: 2px;*/
+/*    outline-offset: -1px;*/
+/*}*/
 
 sw_entry:focus-within {
     outline-color: @sw_accent_fg_color;
@@ -2454,4 +2634,45 @@ sw_scrolledwindow scrollbar>range.fine-tune>trough>slider:hover,
 sw_scrolledwindow scrollbar>range.fine-tune>trough>slider:active {
     background-color: transparent;
 }
+
+
+/*STACKSWITCHER*/
+
+
+sw_stackswitcher>button>label {
+    padding: 0px;
+    margin: 0 -6px;
+    min-width: 200px;
+}
+
+sw_stackswitcher>button>image {
+    padding: 3px 6px;
+    margin: -3px -6px;
+}
+
+sw_stackswitcher.tabs>button {
+    min-width: 200px;
+    background-image: image(red);
+}
+
+sw_stackswitcher.tabs.circular {
+    border-spacing: 12px;
+}
+
+sw_stackswitcher.circular>button.circular,
+sw_stackswitcher.circular>button.text-button.circular {
+    min-width: 32px;
+    min-height: 32px;
+    padding: 0;
+    background-image: image(red);
+}
+
+sw_stackswitcher :not(window):drop(active):focus,
+sw_stackswitcher :not(window):drop(active),
+expander-widget :not(window):drop(active):focus,
+expander-widget :not(window):drop(active) {
+    box-shadow: none;
+    background-image: image(red);
+}
+
 

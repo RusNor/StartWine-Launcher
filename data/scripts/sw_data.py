@@ -86,6 +86,7 @@ sw_tray = Path(f"{sw_scripts}/sw_tray.py")
 sw_cube = Path(f"{sw_scripts}/sw_cube.py")
 sw_localedir = Path(f"{sw_scripts}/locale")
 sw_version = Path(f'{sw_scripts}/version')
+sw_winever_json = Path(f'{sw_scripts}/wine_version.json')
 
 sw_path = Path(sw_scripts).parent.parent
 sw_default_path = Path(f"{Path.home()}/.local/share/StartWine")
@@ -216,7 +217,6 @@ default_bookmarks = str(
     + f'{dir_pics}\n'
     + f'{dir_music}\n'
     + f'{sw_shortcuts}\n'
-    + f'{sw_launchers}\n'
     + f'{sw_games}\n'
     + f'{sw_pfx}\n'
     + f'{sw_app_config}\n'
@@ -433,6 +433,18 @@ default_themes = {
     'yellow': default_custom_css_yellow,
 }
 
+def read_wine_ver_data():
+
+    if sw_winever_json.exists():
+        with open(sw_winever_json, 'r', encoding='utf-8') as f:
+            winever_data = json.load(f)
+            f.close()
+
+        return winever_data
+    else:
+        winever_dict = None
+        return winever_data
+
 ####___Create cache directory___.
 
 def check_cache_dir():
@@ -461,8 +473,6 @@ def check_cache_dir():
             sw_fm_cache_donloads.mkdir(parents=True, exist_ok=True)
         except Exception as e:
             print(TermColors.RED, e, TermColors.END)
-
-check_cache_dir()
 
 ####___Clear cache directory___.
 
@@ -498,9 +508,6 @@ def check_css_dark():
         else:
             print(f'{TermColors.VIOLET2}SW_CSS:  {TermColors.GREEN}create sw_css_dark: done')
 
-if not sw_css_dark.exists():
-    check_css_dark()
-
 def check_css_light():
     '''___create css colorscheme samples___'''
     try:
@@ -514,9 +521,6 @@ def check_css_light():
             print(f'{TermColors.VIOLET2}SW_CSS:  {TermColors.RED}{e}')
         else:
             print(f'{TermColors.VIOLET2}SW_CSS:  {TermColors.GREEN}create sw_css_light: done')
-
-if not sw_css_light.exists():
-    check_css_light()
 
 def check_css_custom():
     '''___create css colorscheme samples___'''
@@ -532,9 +536,6 @@ def check_css_custom():
         else:
             print(f'{TermColors.VIOLET2}SW_CSS:  {TermColors.GREEN}create sw_css_custom: done')
 
-if not sw_css_custom.exists():
-    check_css_custom()
-
 ####___Create bookmarks file___.
 
 def check_bookmarks():
@@ -547,9 +548,6 @@ def check_bookmarks():
         print(f'{TermColors.VIOLET2}SW_BOOKMARKS: {TermColors.RED}{e}' + TermColors.END)
     else:
         print(f'{TermColors.VIOLET2}SW_BOOKMARKS: {TermColors.GREEN}create bookmarks: done' + TermColors.END)
-
-if not sw_bookmarks.exists():
-    check_bookmarks()
 
 ####___Create application icons directory___.
 
@@ -567,11 +565,6 @@ def create_app_icons():
         Path(f'{sw_app_icons}/tmp').mkdir(parents=True, exist_ok=True)
     except IOError as e:
         print(f'{TermColors.RED}{e}{TermColors.END}')
-
-if (not sw_app_vicons.exists()
-    or not sw_app_hicons.exists()
-    or not Path(f'{sw_app_icons}/tmp').exists()):
-        create_app_icons()
 
 def clear_app_icons():
     '''___clear application icons directory___'''
@@ -605,9 +598,6 @@ def check_menu_json():
     else:
         print(f'{TermColors.VIOLET2}SW_MENU_JSON: {TermColors.GREEN}create sw_menu.json: done' + TermColors.END)
 
-if not sw_menu_json.exists():
-    check_menu_json()
-
 def set_menu_json_default():
     '''___reset menu configuration file to default___'''
     try:
@@ -624,10 +614,9 @@ def set_menu_json_default():
         else:
             print(f'{TermColors.VIOLET2}SW_MENU_JSON: {TermColors.GREEN}create sw_menu.json: done' + TermColors.END)
 
-####___configuration json file___.
-
 def read_menu_conf():
     '''___return dict from menu configuration file___'''
+
     with open(sw_menu_json, 'r', encoding='utf-8') as f:
         json_data = json.load(f)
         dict_ini = json_data
@@ -637,9 +626,97 @@ def read_menu_conf():
 
 def write_menu_conf(dict_ini):
     '''___write menu configuration file___'''
+
     with open(sw_menu_json, 'w') as f:
         f.write(json.dumps(dict_ini))
         f.close()
+
+def get_roman(number):
+    roman = ''
+    number = int(number)
+    for letter, value in roman_numbers.items():
+        while number >= value:
+            roman += letter
+            number -= value
+
+    return roman
+
+def str_to_roman(string):
+
+    for e in string:
+        if e.isdigit():
+            try:
+                arabic = int(e)
+            except:
+                pass
+            else:
+                roman = romans[int(e)]
+                string = string.replace(str(arabic), str(roman))
+
+    return string
+
+def get_print_mem_info(mapped):
+    '''___print used memory info___'''
+
+    mem_info = Process().memory_full_info()
+    mem_map = Process().memory_maps(grouped=True)
+
+    print(
+        TermColors.SELECTED + TermColors.YELLOW
+        + "\n----------------< MEMORY_INFO >----------------\n"
+        + TermColors.END, "\n",
+        TermColors.VIOLET2 + 'RSS MEMORY:    ' + TermColors.GREEN
+        + str(round(mem_info.rss / (1024**2), 2)) + TermColors.END, "\n",
+        TermColors.VIOLET2 + 'VMS_MEMORY:    ' + TermColors.GREEN
+        + str(round(mem_info.vms / (1024**2), 2)) + TermColors.END, "\n",
+        TermColors.VIOLET2 + 'TEXT_MEMORY:   ' + TermColors.GREEN
+        + str(round(mem_info.text / (1024**2), 2)) + TermColors.END, "\n",
+        TermColors.VIOLET2 + 'SHARED_MEMORY: ' + TermColors.GREEN
+        + str(round(mem_info.shared / (1024**2), 2)) + TermColors.END, "\n",
+        TermColors.VIOLET2 + 'LIB_MEMORY:    ' + TermColors.GREEN
+        + str(round(mem_info.lib / (1024**2), 2)) + TermColors.END, "\n",
+        TermColors.VIOLET2 + 'DATA_MEMORY:   ' + TermColors.GREEN
+        + str(round(mem_info.data / (1024**2), 2)) + TermColors.END, "\n",
+        TermColors.VIOLET2 + 'USS_MEMORY:    ' + TermColors.GREEN
+        + str(round(mem_info.uss / (1024**2), 2)) + TermColors.END, "\n",
+        TermColors.VIOLET2 + 'PSS_MEMORY:    ' + TermColors.GREEN
+        + str(round(mem_info.pss / (1024**2), 2)) + TermColors.END, "\n",
+        TermColors.VIOLET2 + 'SWAP_MEMORY:   ' + TermColors.GREEN
+        + str(round(mem_info.swap / (1024**2), 2)) + TermColors.END, "\n"
+        )
+
+    if mapped is True:
+        for x in mem_map:
+            try:
+                print(x[0], x[1])
+            except:
+                pass
+
+################################___Checking_config_files___:
+
+check_cache_dir()
+
+if not sw_css_dark.exists():
+    check_css_dark()
+
+if not sw_css_light.exists():
+    check_css_light()
+
+if not sw_css_custom.exists():
+    check_css_custom()
+
+if not sw_bookmarks.exists():
+    check_bookmarks()
+
+if (not sw_app_vicons.exists()
+    or not sw_app_hicons.exists()
+    or not Path(f'{sw_app_icons}/tmp').exists()):
+        create_app_icons()
+
+if not sw_menu_json.exists():
+    check_menu_json()
+
+################################___Menu_settings___:
 
 dict_ini = read_menu_conf()
 sw_view_mode = dict_ini['view_mode']
@@ -727,6 +804,7 @@ if sw_lang == 'en_US':
 
 class IconPath:
     icon_app = f'{sw_gui_icons}/sw_icon.png'
+    icon_sw_svg = f'{sw_gui_icons}/sw.svg'
     icon_playback = f'{sw_symbolic_icons}/media-playback-start-symbolic.svg'
     icon_settings = f'{sw_symbolic_icons}/application-menu-symbolic.svg'
     icon_next = f'{sw_symbolic_icons}/go-next-symbolic.svg'
@@ -771,7 +849,7 @@ class IconPath:
     icon_rm_bookmark = f'{sw_symbolic_icons}/bookmark-remove.svg'
     icon_home = f'{sw_symbolic_icons}/user-home-symbolic.svg'
     icon_desktop = f'{sw_symbolic_icons}/user-desktop-symbolic.svg'
-    icon_download = f'{sw_symbolic_icons}/folder-download-symbolic.svg'
+    icon_download = f'{sw_symbolic_icons}/document-save-symbolic.svg'
     icon_pictures = f'{sw_symbolic_icons}/folder-pictures-symbolic.svg'
     icon_video = f'{sw_symbolic_icons}/folder-video-symbolic.svg'
     icon_docs = f'{sw_symbolic_icons}/folder-documents-symbolic.svg'
@@ -779,8 +857,16 @@ class IconPath:
     icon_folder = f'{sw_symbolic_icons}/folder-symbolic.svg'
     icon_games = f'{sw_symbolic_icons}/folder-games-symbolic.svg'
     icon_regedit = f'{sw_symbolic_icons}/regedit.svg'
+    icon_harddisk = f'{sw_symbolic_icons}/drive-harddisk.svg'
+    icon_ssd = f'{sw_symbolic_icons}/drive-harddisk-solidstate.svg'
+    icon_usb = f'{sw_symbolic_icons}/drive-harddisk-usb.svg'
+    icon_cdrom = f'{sw_symbolic_icons}/cdrom.svg'
+    icon_home_color = f'{sw_symbolic_icons}/home.svg'
     icon_unchecked = f'{sw_css}/assets/radio-unchecked-symbolic.svg'
     icon_checked = f'{sw_css}/assets/check-menuitem@2.png'
+    icon_wine_staging = f'{sw_gui_icons}/wine_staging.jpg'
+    icon_wine_steam_proton = f'{sw_gui_icons}/wine_steam_proton.jpg'
+    icon_wine_proton_ge = f'{sw_gui_icons}/wine_proton_ge.jpg'
 
 ################################___Lists___:
 
@@ -852,6 +938,7 @@ ctx_dict = dict(
     ('remove', _('Remove')),
     ('app_to_menu', _('App to menu')),
     ('app_to_desktop', _('App to desktop')),
+    ('app_to_steam', _('App to Steam Deck menu')),
     ('change_wine', _('Change wine')),
     ('winehq', _('Winehq')),
     ('protondb', _('Protondb')),
@@ -860,7 +947,7 @@ ctx_dict = dict(
     ('steam_proton', 'wine steam proton'),
     ('proton_ge', 'wine proton ge'),
     ('lutris_ge', 'wine lutris ge'),
-    ('lutris', 'wine lutris'),
+    ('staging_tkg', 'wine staging tkg'),
     ('create', _('Create file')),
     ('create_dir', _('Create directory')),
     ('link', _('Create link')),
@@ -889,6 +976,7 @@ str_sample = _('sample')
 view_widgets = [
     'shortcuts',
     'install_launchers',
+    'install_wine',
     'launch_settings',
     'mangohud_settings',
     'vkbasalt_settings',
@@ -909,6 +997,7 @@ for w in view_widgets:
 view_labels = [
     _('Shortcuts'),
     _('Install launchers'),
+    _('Install Wine'),
     _('Launch settings'),
     _('Mangohud settings'),
     _('Vkbasalt settings'),
@@ -1015,6 +1104,7 @@ str_members = (
 'Андрей\n'
 '3y6HuK\n'
 'Alexandrdrdr\n'
+'Fanchji (Виталий)\n'
 'Huskysoul\n'
 'kazbek\n'
 'Kot41ru\n'
@@ -1027,11 +1117,9 @@ str_members = (
 list_projects = [
 'Winehq project',
 'ValveSoftware/Proton',
-'ValveSoftware/steam-runtime',
 'Kron4ek/Wine-Builds',
 'GloriousEggroll/proton-ge-custom',
 'GloriousEggroll/wine-ge-custom',
-'lutris/wine',
 'Winetricks/winetricks',
 'flightlessmango/MangoHud',
 'DadSchoorse/vkBasalt',
@@ -1091,6 +1179,7 @@ url_source = {
     'duckduckgo': ['https://duckduckgo.com', f'{sw_symbolic_icons}/duckduckgo.png'],
     'startwine': ['https://startwine-project.ru', f'{sw_gui_icons}/sw_icon.png'],
     'github': ['https://github.com/RusNor', f'{sw_symbolic_icons}/github.png'],
+    'vkontakte': [' https://vk.com/club213719866', f'{sw_symbolic_icons}/vk.png'],
     'telegram': ['https://t.me/StartWine', f'{sw_symbolic_icons}/telegram.png'],
     'discord': ['https://discord.com/invite/37FrGUpDEj', f'{sw_symbolic_icons}/discord.png'],
     'license': ['https://www.gnu.org/licenses/gpl-3.0.html', f'{sw_symbolic_icons}/gnu.png'],
@@ -1114,6 +1203,7 @@ prefix_tools_icons = [
     IconPath.icon_backup_restore,
 ]
 wine_tools_icons = [
+    IconPath.icon_download,
     IconPath.icon_settings,
     IconPath.icon_terminal,
     IconPath.icon_regedit,
@@ -1196,6 +1286,7 @@ for w, l in zip(prefix_tools_widgets, prefix_tools_labels):
     prefix_tools_dict[w] = l
 
 wine_tools_labels = [
+    _('Download wine'),
     _('Wine settings'),
     _('Wine console'),
     _('Regedit'),
@@ -1204,6 +1295,7 @@ wine_tools_labels = [
     _('Winetricks'),
 ]
 wine_tools_widgets = [
+    'download_wine',
     'wine_settings',
     'wine_console',
     'regedit',
@@ -1292,11 +1384,228 @@ bmark_dict = {
     str(sw_wine): [IconPath.icon_wine, None],
     str(sw_games): [IconPath.icon_games, _('Games')],
     str(sw_shortcuts): [IconPath.icon_shortcuts, _('Shortcuts')],
-    str(sw_launchers): [IconPath.icon_install, _('Install launchers')],
     str(sw_pfx): [IconPath.icon_toolbox, _('Prefixes')],
     str(sw_pfx_backup): [IconPath.icon_backup_restore, _('Backups')],
     str(sw_app_config): [IconPath.icon_settings, _('Prefix configurations')],
     str(sw_logs): [IconPath.icon_regedit, _('Logs')],
+}
+
+################################___Install_wine___:
+
+str_iw_title_desc = _('Wine (originally an acronym for "Wine Is Not an Emulator") \
+is a compatibility layer capable of running Windows applications on several \
+POSIX-compliant operating systems, such as Linux, macOS, & BSD. Instead of \
+simulating internal Windows logic like a virtual machine or emulator, Wine \
+translates Windows API calls into POSIX calls on-the-fly, eliminating the \
+performance and memory penalties of other methods and allowing you to cleanly \
+integrate Windows applications into your desktop.')
+
+str_iw_subtitle = _('List of wines to download and install')
+wine_descriptions = {
+    'wine_staging': _('Wine Staging contains bug fixes and features, which have \
+not been integrated into the development branch yet. The idea of Wine Staging \
+is to provide experimental features faster to end users and to give developers \
+the possibility to discuss and improve their patches before they are integrated \
+into the main branch.'),
+    'wine_staging_tkg': _('Staging-TkG is a Wine build with the Staging patchset \
+applied and with many additional useful patches. A complete list of patches is \
+in wine-tkg-config.txt inside the build directory.'),
+    'wine_steam_proton': _('Is a Wine build modified by Valve and other \
+contributors. It contains many useful patches (primarily for a better gaming \
+experience), some of them are unique and not present in other builds.'),
+    'wine_proton_ge': _("Proton with the most recent bleeding-edge Proton \
+Experimental WINE. Things it contains that Valve's Proton does not: Additional \
+media foundation patches for better video playback support, AMD FSR patches, \
+Nvidia CUDA support for PhysX and NVAPI, raw input mouse support and various \
+wine-staging patches applied as they become needed."),
+    'wine_lutris_ge': _('WINE based on/forked from the most recent bleeding-edge \
+proton experimental wine repo. This is meant to be used with non-steam games \
+outside of Steam.'),
+}
+
+wine_list = [
+    'wine_staging',
+    'wine_steam_proton',
+    'wine_proton_ge',
+    'wine_staging_tkg',
+    'wine_lutris_ge',
+]
+wine_custom_list = [
+    'wine_custom_1',
+    'wine_custom_2',
+    'wine_custom_3',
+    'wine_custom_4',
+    'wine_custom_5'
+]
+wine_labels = [
+    f'Wine Staging',
+    f'Wine Steam Proton',
+    f'Wine Proton GE',
+    f'Wine Staging TKG',
+    f'Wine Lutris GE'
+]
+str_sw_use_wine = 'SW_USE_WINE'
+
+wine_list_dict = {}
+
+for w, l in zip(wine_list, wine_labels):
+    wine_list_dict[l] = w
+
+wine_download_list = [
+    'WINE_1',
+    'WINE_2',
+    'WINE_3',
+    'WINE_4',
+    'WINE_5',
+]
+wine_source = [
+    'https://github.com/Kron4ek/Wine-Builds',
+    'https://github.com/RusNor/Wine-Steam-Proton/releases',
+    'https://github.com/GloriousEggroll/proton-ge-custom',
+    'https://github.com/Kron4ek/Wine-Builds',
+    'https://github.com/GloriousEggroll/wine-ge-custom',
+]
+wine_source_dict = {}
+
+for w, s in zip(wine_list, wine_source):
+    wine_source_dict[w] = s
+
+wine_dict = {}
+
+for w in wine_list:
+    wine_dict[w] = w
+
+wine_download_dict = {}
+for w, l in zip(wine_list, wine_download_list):
+    wine_download_dict[w] = l
+
+wine_image_list = [
+    IconPath.icon_wine_staging,
+    IconPath.icon_wine_steam_proton,
+    IconPath.icon_wine_proton_ge,
+    IconPath.icon_wine_staging,
+    IconPath.icon_wine_proton_ge,
+]
+
+winever_data = read_wine_ver_data()
+latest_wine_dict = dict()
+wine_lates_download_dict = dict()
+
+for wine, download_func in zip(wine_list, wine_download_list):
+    latest_wine_dict[wine] = Path(Path(winever_data[wine].split(' ')[0]).stem).stem
+    wine_lates_download_dict[Path(Path(winever_data[wine].split(' ')[0]).stem).stem] = download_func
+
+################################___Install_launchers___:
+
+str_il_subtitle = _('List of launchers and stores available for installation')
+launchers_list = [str(x) for x in sw_launchers.iterdir()]
+launchers_descriptions = {
+#    'Ankama': _("Ankama Launcher is a portal that lets you access all of Ankama's \
+#many universes with just a single click! Connect to our video games, VOD animations, \
+#webtoons, and even our livestreams! Download updates, stay up to date with the \
+#latest news, and chat with your friends!"),
+    'Anomaly_Zone': _('MMORPG, open world game, successor to "stalker online". \
+You can remain alone or conquer the Zone in the company of other daredevils, \
+playing online with friends. Play in a clan, take part in PvP and PvE battles, \
+use crafting, modifications, follow a large, interesting, global plot.'),
+    'Battle_Net': _('Battle.net is an online gaming service, including digital \
+distribution and social platform functions, developed by Blizzard Entertainment.'),
+#    'Battle_State_Games': _('Escape from Tarkov is a hardcore realistic story-driven \
+#massively multiplayer online game developed and published by Battlestate Games. \
+#Combines the features of the FPS/TPS, combat simulator and RPG genres with MMO elements.'),
+    'Caliber': _('Caliber is a third-person and first-person multiplayer online \
+game about modern special forces. The project belongs to the genre of tactical \
+team action, offering battles in PvP, PvE and PvPvE modes. "Caliber" is distributed \
+according to the free-to-play business model'),
+    'Crossout': _('Crossout is a computer multiplayer online game in the genre \
+of post-apocalyptic action with a third-person view. The core of the game is \
+session PvP battles in armored vehicles assembled by the players themselves.'),
+    'EA': _('EA app is Electronic Arts latest and most advanced PC platform where \
+you can play your favorite games without any hassle. The app features an improved \
+and optimized user interface, making it easy to find and play games in seconds.'),
+    'Epic_Games': _('Epic Games Store is an online digital distribution service \
+for computer games developed and managed by the American company Epic Games'),
+    'Eve': _('EVE Online is a space massively multiplayer online game developed \
+by the Icelandic company CCP Games. PvE and PvP battles, research, resource \
+extraction, production and a realistic economy.'),
+    'Galaxy': _('GOG GALAXY 2.0 is a program that will help you combine multiple \
+game libraries and communicate with friends regardless of the gaming platform, \
+including consoles! If you play with friends on different platforms and have \
+to use multiple launchers, GOG GALAXY 2.0 is for you!'),
+    'GameXP': _('Client online games (MMORPG) and browser games (BBMMORPG), as \
+well as games for mobile phones and tablets. RPG, Fantasy, Simulation, Adventure, \
+Strategy, there is even a real life simulator (a la Sims).'),
+    'Game_Center': _('VK Play is a platform for game lovers, developers and \
+content creators. VK Play combines all the services necessary for the gaming \
+community and offers entertainment for everyone: a catalog of games, cloud gaming, \
+streaming and e-sports and much more.'),
+#    'Gameforge': _('Online Gaming Platform. All Gameforge games in one place. \
+#The latest news and updates. Multi-account support.'),
+    'Genshin_Impact': _('Genshin Impact is an action-adventure computer game with \
+an open world and RPG elements, developed by the Chinese company miHoYo Limited. \
+The game is distributed through digital distribution using a free-to-play model, \
+but has an in-game store that uses real currency.'),
+#    'Itch': _('The itch.io app, itch, lets you effortlessly download and run games \
+#and software from itch.io. All of your downloads are kept in a single place and \
+#are automatically updated. Access your collections and purchases, or browse for \
+#new games via the in-app browser.'),
+    'Lesta_Games': _('Lesta Game Center is part of the platform distribution \
+(game launcher app) that brings together all your Lesta games, as well as read \
+news about upcoming features and functions, watch videos and get amazing discounts!'),
+    'Lineage': _('Game Coast is a client for Lineage 2 - classic free-to-play \
+MMORPG with a third-person perspective.'),
+    'Lost_Light': _('Lost Light is a highly realistic hardcore shooter, focused \
+on surviving and gathering loot with other players, as well as defending yourself from the unknown.'),
+    'Nintendo_Switch': _('Yuzu is a free and open source emulator of the \
+Nintendo Switch console. Developed since January 2018 by the team responsible for \
+Citra, a Nintendo 3DS emulator. Written in C++. The list of games compatible with \
+the emulator is on the official website.'),
+    'Osu': _('Osu! is a free and open source music game developed and published \
+by Dean Herbert. The gameplay is based on various popular games including Osu! Tatakae!'),
+    'Path_of_Exile': _('Path of Exile is an online action role-playing game \
+developed and published by Grinding Gear Games. The game is based on: a powerful \
+barter economy, rich customization options for heroes, exciting PvP battles and \
+races for ratings. The game is completely free.'),
+    'Plarium_Play': _('Plarium Play is a Light and Secure Desktop Game Launcher \
+for PC. Play Free Games with Blazing HD Graphics and a Worldwide Gaming Community.'),
+    'Popcotime': _('Popcorn Time is a cross-platform free BitTorrent client that \
+includes a media player. Watch popular series and series for people unfamiliar \
+with movie file sharing technologies and accustomed to video streaming services.'),
+    'RPG_Club': _('The project www.RPG-club.net is a voluntary non-profit \
+association of fans of RPG games. Our site does not aim to distribute any RPG games, \
+but is a means of communication for all interested legal owners of licensed versions of games.'),
+    'Riot_Games': _('Client for League of Legends, abbreviated as LoL, is a \
+multiplayer computer game in the MOBA genre developed and published by the \
+American company Riot Games.'),
+#    'Roblox_Player': _('Roblox Player'),
+    'Rockstar_Games': _('Rockstar Games Launcher is an application that allows \
+you to quickly and easily manage your collection of Rockstar PC games, both \
+digital and physical versions, including those purchased from various digital \
+stores. You can also use this app to purchase new games from Rockstar.'),
+    'Stalcraft': _('EXBO launcher for StalCraft - bright and promising adaptation \
+of a familiar setting in the format of a massive online first-person shooter. \
+Successfully combining the complete freedom of PvP and interesting PvE elements.'),
+    'Stalker_Online': _('Stalker Online is an MMORPG with shooter elements, \
+which is based on the spirit of stalking - exploration of mysterious, forgotten \
+and abandoned areas of the planet by humanity.'),
+    'Star_Wars_TOR': _('Star Wars: The Old Republic is a story-driven massively \
+multiplayer online role-playing game developed by BioWare.'),
+    'Steam': _('Steam is an online digital distribution service for computer \
+games and programs developed and maintained by Valve. Steam serves as a technical \
+copyright protection tool, a multiplayer gaming and streaming platform, and a \
+social network for gamers.'),
+    'Ubisoft_Connect': _('Ubisoft Connect is a digital game distribution, DRM, \
+online gaming and communication service created by Ubisoft. Supports the \
+achievement/trophy system used in other similar services.'),
+    'Wargaming': _('Wargaming.net Game Center is part of a digital distribution \
+platform (game launcher app) that allows you to keep all your Wargaming games \
+in one place, get the latest news on upcoming features, watch videos and easily find great deals!'),
+    'World_of_Sea_Battle': _('Client for World of Sea Battle - A large-scale \
+online game with an open world in the setting of the Age of Sail! \
+Become a pirate or merchant, team up with other players.'),
+    'Zona': _('Zona is a BitTorrent client for watching streaming video content. \
+In addition to on-demand movies and television series, Zona offers streaming music, \
+live television channels, news, live sports, and games'),
 }
 
 ################################___Settings___:
@@ -1351,6 +1660,7 @@ lp_combo_list = [
     _('DXVK_VER'),
     _('VKD3D_VER'),
     _('FSR_MODE'),
+    _('LANG_MODE'),
 ]
 str_fps_limit = _('FPS_LIMIT')
 export_fps_limit = 'export SW_USE_FPS_LIMIT'
@@ -1371,6 +1681,7 @@ lp_list = [
     'dxvk_ver',
     'vkd3d_ver',
     'fsr_mode',
+    'lang_mode',
     'fps_limit',
     'cpu_topology',
 ]
@@ -1383,6 +1694,7 @@ lp_title = [
     _('DXVK_VER'),
     _('VKD3D_VER'),
     _('FSR_MODE'),
+    _('LANG_MODE'),
     _('FPS_LIMIT'),
     _('CPU_TOPOLOGY'),
 ]
@@ -1400,6 +1712,7 @@ lp_desc = [
     _('Set dxvk version'),
     _('Set vkd3d version'),
     _('Set AMD FSR scaling mode'),
+    _('Set the language for the game or application'),
     _('Limit frame rate, value "0" - no limit'),
     _('Limit cpu core, value "0" - no limit'),
 ]
@@ -1407,63 +1720,6 @@ lp_desc_dict = {}
 
 for t, d in zip(lp_list, lp_desc):
     lp_desc_dict[t] = d
-
-wine_list = [
-    'wine_staging',
-    'wine_steam_proton',
-    'wine_proton_ge',
-    'wine_lutris',
-    'wine_lutris_ge',
-]
-wine_custom_list = [
-    'wine_custom_1',
-    'wine_custom_2',
-    'wine_custom_3',
-    'wine_custom_4',
-    'wine_custom_5'
-]
-wine_labels = [
-    f'wine staging',
-    f'wine steam proton',
-    f'wine proton ge',
-    f'wine lutris',
-    f'wine lutris ge'
-]
-str_sw_use_wine = 'SW_USE_WINE'
-
-wine_list_dict = {}
-
-for w, l in zip(wine_list, wine_labels):
-    wine_list_dict[l] = w
-
-wine_download_list = [
-    'WINE_1',
-    'WINE_2',
-    'WINE_3',
-    'WINE_4',
-    'WINE_5'
-]
-wine_source = [
-    'https://github.com/Kron4ek/Wine-Builds',
-    'https://github.com/RusNor/Wine-Steam-Proton/releases',
-    'https://github.com/GloriousEggroll/proton-ge-custom',
-    'https://github.com/lutris/wine',
-    'https://github.com/GloriousEggroll/wine-ge-custom',
-]
-wine_source_dict = {}
-
-for w, s in zip(wine_list, wine_source):
-    wine_source_dict[w] = s
-
-wine_dict = {}
-
-for w in wine_list:
-    wine_dict[w] = w
-
-wine_download_dict = {}
-
-for w, l in zip(wine_list, wine_download_list):
-    wine_download_dict[w] = l
 
 winarch = [
     '64 bit architecture', '32 bit architecture'
@@ -1505,6 +1761,8 @@ vkd3d_ver = [
 ]
 combo_list = winarch + winver + reg_patches + dxvk_ver + vkd3d_ver
 fsr_mode = [_('Ultra'), _('Quality'), _('Balanced'), _('Performance')]
+
+lang_mode = ['en_US', 'ru_RU.UTF-8']
 
 ################################___Switch_check___:
 
@@ -2719,7 +2977,8 @@ exe_mime_types = [
 ]
 
 bin_mime_types = [
-    'application/x-executable'
+    'application/x-executable',
+    'application/vnd.appimage'
 ]
 
 script_mime_types = [
@@ -2796,7 +3055,6 @@ archive_formats = [
 ################################___Messages___:
 
 class Msg:
-
     msg_dict = dict([
         ('yes', _('Yes')),
         ('no', _('No')),
@@ -2808,6 +3066,8 @@ class Msg:
         ('open', _('Open')),
         ('save', _('Save')),
         ('run', _('Run')),
+        ('install', _('Install')),
+        ('installed', _('Installed')),
         ('cs', _('Create shortcut')),
         ('cw', _('Change wine')),
         ('rename', _('Rename')),
@@ -2849,6 +3109,16 @@ To create a shortcut for this executable, rename it or delete the existing short
         ('compression', _('Compression...')),
         ('extraction', _('Extraction...')),
         ('new_archive', _('New archive')),
+        ('launch_error', _('Launch error')),
+        ('remove', _('Remove')),
+        ('install_title', _('Install')),
+        ('install_desc', _('Launchers and game stores')),
+        ('device_name', _('Volume name')),
+        ('device_id', _('Device ID')),
+        ('device_uuid', _('Device UUID')),
+        ('device_drive', _('Drive name')),
+        ('device_size', _('Device size')),
+        ('mount_options', _('Mount options')),
     ])
 
     ################################___Tooltips___:
@@ -2876,7 +3146,7 @@ To create a shortcut for this executable, rename it or delete the existing short
         ('apply', _('Apply')),
         ('registry', _('registry patch')),
         ('download_wine', _('Download wine')),
-        ('install_launchers', _('Install launchers')),
+        ('install_launchers', _('Install launchers and game stores')),
         ('settings', _('Settings')),
         ('debug', _('Debug')),
         ('stop', _('Terminate all processes')),
@@ -2892,6 +3162,7 @@ progress_dict = dict([
     ('app_loaded', _('Loaded successfully')),
     ('app_loading', _('The app is loading...')),
     ('squashfs', _('Squashfs...')),
+    ('install_launchers', _('installation in progress please wait...'))
 ])
 
 str_deletion = _('Deletion')
@@ -2997,10 +3268,10 @@ remove_json_list = [
 ]
 
 disk_parts = psutil.disk_partitions()
-mount_points = list()
+mount_dirs = list()
 
 for x in disk_parts:
-    mount_points += list(Path(x[1]).parts)
+    mount_dirs += list(Path(x[1]).parts)
 
 dir_docs_parts = list(Path(dir_docs).parts)
 dir_desktop_parts = list(Path(dir_desktop).parts)
@@ -3034,7 +3305,7 @@ exclude_dirs = [
 ]
 
 exclude_names = (
-                mount_points
+                mount_dirs
                 + exclude_dirs
                 + special_dirs
 )
@@ -3129,65 +3400,4 @@ romans = {
     0: 'X', 9: 'IX', 8: 'VIII', 7: 'VII', 6: 'VI',
     5: 'V', 4: 'IV', 3: 'III', 2: 'II', 1:'I'
 }
-
-def get_roman(number):
-    roman = ''
-    number = int(number)
-    for letter, value in roman_numbers.items():
-        while number >= value:
-            roman += letter
-            number -= value
-
-    return roman
-
-def str_to_roman(string):
-
-    for e in string:
-        if e.isdigit():
-            try:
-                arabic = int(e)
-            except:
-                pass
-            else:
-                roman = romans[int(e)]
-                string = string.replace(str(arabic), str(roman))
-
-    return string
-
-def get_print_mem_info(mapped):
-    '''___print used memory info___'''
-
-    mem_info = Process().memory_full_info()
-    mem_map = Process().memory_maps(grouped=True)
-
-    print(
-        TermColors.SELECTED + TermColors.YELLOW
-        + "\n----------------< MEMORY_INFO >----------------\n"
-        + TermColors.END, "\n",
-        TermColors.VIOLET2 + 'RSS MEMORY:    ' + TermColors.GREEN
-        + str(round(mem_info.rss / (1024**2), 2)) + TermColors.END, "\n",
-        TermColors.VIOLET2 + 'VMS_MEMORY:    ' + TermColors.GREEN
-        + str(round(mem_info.vms / (1024**2), 2)) + TermColors.END, "\n",
-        TermColors.VIOLET2 + 'TEXT_MEMORY:   ' + TermColors.GREEN
-        + str(round(mem_info.text / (1024**2), 2)) + TermColors.END, "\n",
-        TermColors.VIOLET2 + 'SHARED_MEMORY: ' + TermColors.GREEN
-        + str(round(mem_info.shared / (1024**2), 2)) + TermColors.END, "\n",
-        TermColors.VIOLET2 + 'LIB_MEMORY:    ' + TermColors.GREEN
-        + str(round(mem_info.lib / (1024**2), 2)) + TermColors.END, "\n",
-        TermColors.VIOLET2 + 'DATA_MEMORY:   ' + TermColors.GREEN
-        + str(round(mem_info.data / (1024**2), 2)) + TermColors.END, "\n",
-        TermColors.VIOLET2 + 'USS_MEMORY:    ' + TermColors.GREEN
-        + str(round(mem_info.uss / (1024**2), 2)) + TermColors.END, "\n",
-        TermColors.VIOLET2 + 'PSS_MEMORY:    ' + TermColors.GREEN
-        + str(round(mem_info.pss / (1024**2), 2)) + TermColors.END, "\n",
-        TermColors.VIOLET2 + 'SWAP_MEMORY:   ' + TermColors.GREEN
-        + str(round(mem_info.swap / (1024**2), 2)) + TermColors.END, "\n"
-        )
-
-    if mapped is True:
-        for x in mem_map:
-            try:
-                print(x[0], x[1])
-            except:
-                pass
 
