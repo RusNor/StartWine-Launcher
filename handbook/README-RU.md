@@ -72,47 +72,27 @@ https://github.com/RusNor/StartWine-Launcher/assets/81373196/75562e00-94e6-439d-
 StartWine был написан с нуля, но с использованием уже готовых компонентов без которых сама программа не появилась
 > Список 
 
-[GTK 4](https://www.gtk.org/)
-
-[Wine](https://www.winehq.org/)
-
-[Wine-Staging](https://github.com/Kron4ek/Wine-Builds)
-
-[Wine GE](https://github.com/GloriousEggroll/wine-ge-custom)
-
-[Proton GE](https://github.com/GloriousEggroll/proton-ge-custom)
-
-[Steam Proton](https://github.com/ValveSoftware/Proton)
-
-[Lutris](https://github.com/lutris/wine)
-
-[Lutris GE](https://github.com/GloriousEggroll/proton-ge-custom)
-
-[DXVK](https://github.com/doitsujin/dxvk)
-
-[DXVK GE](https://github.com/GloriousEggroll/wine-ge-custom)
-
-[VK3D](https://github.com/HansKristian-Work/vkd3d-proton)
-
-[VK3D GE](https://github.com/GloriousEggroll/wine-ge-custom)
-
-[MangoHud](https://github.com/flightlessmango/MangoHud) (Спасибо [VHSgunzo](https://github.com/VHSgunzo) за патч для работы на видеокарт Nvidia!)
-
-[vkBasalt](https://github.com/DadSchoorse/vkBasalt)
-
-[gamemode](https://github.com/FeralInteractive/gamemode)
-
-[Mesa](https://www.mesa3d.org/)
-
-[Runimage](https://github.com/VHSgunzo/runimage)
-
-[Runimage nvidia drivers](https://github.com/VHSgunzo/runimage-nvidia-drivers)
-
-[AMD FSR](https://github.com/GPUOpen-Effects/FidelityFX-FSR2)
-
-[dgVoodoo2](http://dege.freeweb.hu/dgVoodoo2/dgVoodoo2/)
-
-[DLSS](https://www.nvidia.com/en-us/geforce/technologies/dlss/)
+* [GTK 4](https://www.gtk.org/)
+* [Wine](https://www.winehq.org/)
+* [Wine-Staging](https://github.com/Kron4ek/Wine-Builds)
+* [Wine GE](https://github.com/GloriousEggroll/wine-ge-custom)
+* [Proton GE](https://github.com/GloriousEggroll/proton-ge-custom)
+* [Steam Proton](https://github.com/ValveSoftware/Proton)
+* [Lutris](https://github.com/lutris/wine)
+* [Lutris GE](https://github.com/GloriousEggroll/proton-ge-custom)
+* [DXVK](https://github.com/doitsujin/dxvk)
+* [DXVK GE](https://github.com/GloriousEggroll/wine-ge-custom)
+* [VK3D](https://github.com/HansKristian-Work/vkd3d-proton)
+* [VK3D GE](https://github.com/GloriousEggroll/wine-ge-custom)
+* [MangoHud](https://github.com/flightlessmango/MangoHud) (Спасибо [VHSgunzo](https://github.com/VHSgunzo) за патч для работы на видеокарт Nvidia!)
+* [vkBasalt](https://github.com/DadSchoorse/vkBasalt)
+* [gamemode](https://github.com/FeralInteractive/gamemode)
+* [Mesa](https://www.mesa3d.org/)
+* [Runimage](https://github.com/VHSgunzo/runimage)
+* [Runimage nvidia drivers](https://github.com/VHSgunzo/runimage-nvidia-drivers)
+* [AMD FSR](https://github.com/GPUOpen-Effects/FidelityFX-FSR2)
+* [dgVoodoo2](http://dege.freeweb.hu/dgVoodoo2/dgVoodoo2/)
+* [DLSS](https://www.nvidia.com/en-us/geforce/technologies/dlss/)
 
 ## Благодарность!
 
