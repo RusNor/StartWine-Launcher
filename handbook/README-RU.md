@@ -136,7 +136,7 @@ Wilk
 
 Веб-сайт > [Клик](https://startwine-project.ru/)
 
-Телеграм > [Telegram](https://t.me/StartWine) + [чат](https://t.me/StartWineChat)
+Телеграм > [Клик](https://t.me/StartWine)
 
 Дискорд сервер > [Discord](https://discord.gg/jjY3auVdfm)
 
