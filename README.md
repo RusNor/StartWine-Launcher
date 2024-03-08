@@ -138,7 +138,7 @@ The author of the manual > [Lintech](https://www.youtube.com/c/Lintech8)
 
 Website > [Click](https://startwine-project.ru/)
 
-Telegram > [Telegram](https://t.me/StartWine) + [chat](https://t.me/StartWineChat)
+Telegram > [Click](https://t.me/StartWine)
 
 Discord server > [Discord](https://discord.gg/jjY3auVdfm)
 
