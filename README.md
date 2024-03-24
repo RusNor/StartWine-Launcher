@@ -63,7 +63,7 @@ https://github.com/RusNor/StartWine-Launcher/assets/81373196/e4424939-dcf0-4e7b-
 
 Note that StartWine has a ``StartWine-Run.desktop`` that is used by default in file managers such as [dolphin](https://en.wikipedia.org/wiki/Dolphin_(file_manager)), [Nautilus](https://en.wikipedia.org/wiki/GNOME_Files) etc. to run a .exe file without the StartWine interface in addition to the usual interface shortcut
 
-Совет!
+Tip!
 
 * In some cases, it may turn out that the installation is going, but the percentages are not going, and the culprit is in my or maybe you have it [NTFS](https://en.wikipedia.org/wiki/NTFS) the partition of the disk from which you started the installer. The fact is that if you have a so-called [dualbut](https://en.wikipedia.org/wiki/Multi-booting) or multi-boot, call it as you like, then if you have not booted from Windows, then Windows will safely take away your rights to any actions on files.
 What should I do in this case?
