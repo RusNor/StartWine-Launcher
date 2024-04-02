@@ -1,0 +1,12 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\Software\CCP\EVE]
+"DeviceIdV2"="48d5ffa7-234b-4fdd-8d08-2ba7fc35bf83"
+
+[HKEY_CURRENT_USER\Software\Classes\evelauncher]
+@="URL:evelauncher"
+"URL Protocol"=""
+
+[HKEY_CURRENT_USER\Software\Classes\eveonline]
+@="URL:eveonline"
+"URL Protocol"=""

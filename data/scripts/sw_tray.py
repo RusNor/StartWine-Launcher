@@ -5,16 +5,16 @@
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gdk', '3.0')
-from gi.repository import Gtk, GLib, Gdk
+from gi.repository import Gtk, GLib, Gdk, Gio
 
 import os
 from sys import argv
 from pathlib import Path
 from subprocess import Popen, PIPE, run
 
-from sw_data import (str_tray_open, str_tray_run,
-    str_tray_exit, str_tray_stop, str_tray_shortcuts
-    )
+from sw_data import (str_tray_open, str_tray_hide, str_tray_run, str_tray_shortcuts,
+                    str_tray_stop, str_tray_shutdown
+)
 
 sw_link = Path(argv[0]).absolute().parent
 sw_scripts = f"{sw_link}"
@@ -51,51 +51,145 @@ DIRPATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 def tray_main():
 
-    ####___STARTWINE_RUN___:
-
     def on_startwine(_):
+        '''___Show or hide StartWine window___'''
 
-        Popen(f'"{sw_menu}"', shell=True)
+        if _.get_label() == str_tray_open:
+            _.set_label(str_tray_hide)
+        else:
+            _.set_label(str_tray_open)
 
-    ####___SHORTCUTS_RUN___:
+        try:
+            ret_var = proxy.call_sync(
+                    "ShowHide", None, Gio.DBusCallFlags.NO_AUTO_START, 500, None
+            )
+        except Exception as e:
+            Popen(f'{sw_menu}', shell=True)
 
     def on_shortcuts_fr_item(_):
+        '''___Show shortcuts list for run app___'''
 
         fr_label = _.get_label()
         fr_name = _.get_name()
 
         if fr_label != f'StartWine':
-            read_path = Path(fr_name).read_text().split('\n')[2].split('=')[1].split('"')[3]
-            sw_rsh.write_text(f'env "{sw_menu}" "{read_path}"')
-            run_cmd = f'env "{sw_run}" "{read_path}"'
-            Popen(run_cmd, shell=True)
+            d_exec = [x.split('=')[1] for x in Path(fr_name).read_text().splitlines() if 'Exec=' in x]
+            if len(d_exec) > 0:
+                exe = [x for x in d_exec[0].split('"') if '.exe' in x.lower()]
+                msi = [x for x in d_exec[0].split('"') if '.msi' in x.lower()]
+                bat = [x for x in d_exec[0].split('"') if '.bat' in x.lower()]
+                lnk = [x for x in d_exec[0].split('"') if '.lnk' in x.lower()]
 
-    ####___SHORTCUTS_OPEN___:
+                if len(exe) > 0:
+                    x_path = exe[0]
+
+                elif len(msi) > 0:
+                    x_path = msi[0]
+
+                elif len(bat) > 0:
+                    x_path = bat[0]
+
+                elif len(lnk) > 0:
+                    x_path = lnk[0]
+
+                else:
+                    x_path = None
+
+                if x_path is not None and Path(x_path).exists():
+                    sw_rsh.write_text(f'env "{sw_menu}" "{x_path}"')
+                    try:
+                        ret_var = proxy.call_sync(
+                                "Run", None, Gio.DBusCallFlags.NO_AUTO_START, 500, None
+                        )
+                    except Exception as e:
+                        pass
+                else:
+                    try:
+                        text = 'lnk_error'
+                        message = GLib.Variant("(s)", (text,))
+                        ret_var = proxy.call_sync(
+                                "Message", message, Gio.DBusCallFlags.NO_AUTO_START, 500, None
+                        )
+                    except Exception as e:
+                        pass
 
     def on_shortcuts_sc_item(_):
+        '''___Show shortcuts list for open app___'''
 
         sc_label = _.get_label()
         sc_name = _.get_name()
+        cmd_startwine.set_label(str_tray_hide)
 
         if sc_label == f'StartWine':
-            run(str(sw_menu), shell=True)
+            sw_rsh.write_text(f'env "{sw_menu}"')
+            try:
+                ret_var = proxy.call_sync(
+                        "Show", None, Gio.DBusCallFlags.NO_AUTO_START, 500, None
+                )
+            except Exception as e:
+                pass
         else:
-            read_path = Path(sc_name).read_text().split('\n')[2].split('=')[1].split('"')[3]
-            sw_rsh.write_text(f'env "{sw_menu}" "{read_path}"')
-            Popen(str(sw_rsh), shell=True)
+            d_exec = [x.split('=')[1] for x in Path(sc_name).read_text().splitlines() if 'Exec=' in x]
+            if len(d_exec) > 0:
+                exe = [x for x in d_exec[0].split('"') if '.exe' in x.lower()]
+                msi = [x for x in d_exec[0].split('"') if '.msi' in x.lower()]
+                bat = [x for x in d_exec[0].split('"') if '.bat' in x.lower()]
+                lnk = [x for x in d_exec[0].split('"') if '.lnk' in x.lower()]
 
-    ####___STOP___:
+                if len(exe) > 0:
+                    x_path = exe[0]
 
-    def kill(_):
+                elif len(msi) > 0:
+                    x_path = msi[0]
+
+                elif len(bat) > 0:
+                    x_path = bat[0]
+
+                elif len(lnk) > 0:
+                    x_path = lnk[0]
+
+                else:
+                    x_path = None
+
+                if x_path is not None and Path(x_path).exists():
+                    sw_rsh.write_text(f'env "{sw_menu}" "{x_path}"')
+                    try:
+                        ret_var = proxy.call_sync(
+                                "Show", None, Gio.DBusCallFlags.NO_AUTO_START, 500, None
+                        )
+                    except Exception as e:
+                        pass
+                else:
+                    try:
+                        text = 'lnk_error'
+                        message = GLib.Variant("(s)", (text,))
+                        ret_var = proxy.call_sync(
+                                "Message", message, Gio.DBusCallFlags.NO_AUTO_START, 500, None
+                        )
+                    except Exception as e:
+                        pass
+
+    def stop(_):
+        '''___Stop all wine processes___'''
 
         cmd = f"{sw_scripts}/sw_stop"
         Popen(cmd, shell=True)
 
-    ####___EXIT___:
+    def shutdown(_):
+        '''___StartWine shutdown___'''
 
-    def quit(_):
-
-        Gtk.main_quit()
+        try:
+            ret_var = proxy.call_sync(
+                            "Shutdown", None, Gio.DBusCallFlags.NO_AUTO_START, 500, None
+            )
+        except Exception as e:
+            cmd = f"{sw_scripts}/sw_stop"
+            Popen(cmd, shell=True)
+            Gtk.main_quit()
+        else:
+            cmd = f"{sw_scripts}/sw_stop"
+            Popen(cmd, shell=True)
+            Gtk.main_quit()
 
     def on_check_sc(_):
 
@@ -134,18 +228,26 @@ def tray_main():
 
     ####___MAIN_MENU___:
 
+    bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+    proxy = Gio.DBusProxy.new_sync(
+                                    bus,
+                                    Gio.DBusProxyFlags.NONE,
+                                    None,
+                                    "ru.project.StartWine",
+                                    "/ru/project/StartWine",
+                                    "ru.project.StartWine",
+                                    None,
+    )
     indicator = appindicator.Indicator.new(
-        APPINDICATOR_ID, DIRPATH + "/img/gui_icons/sw.svg",
-        appindicator.IndicatorCategory.APPLICATION_STATUS
-        )
-    indicator.set_status(
-        appindicator.IndicatorStatus.ACTIVE
-        )
+                            APPINDICATOR_ID, DIRPATH + "/img/gui_icons/sw.svg",
+                            appindicator.IndicatorCategory.APPLICATION_STATUS
+    )
+    indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
 
     menu = Gtk.Menu()
     indicator.set_menu(menu)
 
-    cmd_startwine = Gtk.MenuItem.new_with_label(str_tray_open)
+    cmd_startwine = Gtk.MenuItem.new_with_label(str_tray_hide)
     cmd_startwine.connect('activate', on_startwine)
     menu.append(cmd_startwine)
 
@@ -177,13 +279,13 @@ def tray_main():
         sc_item.connect('activate', on_shortcuts_sc_item)
         sc_submenu.append(sc_item)
 
-    cmd_kill = Gtk.MenuItem.new_with_label(str_tray_stop)
-    cmd_kill.connect('activate', kill)
-    menu.append(cmd_kill)
+    cmd_stop = Gtk.MenuItem.new_with_label(str_tray_stop)
+    cmd_stop.connect('activate', stop)
+    menu.append(cmd_stop)
 
-    cmd_quit = Gtk.MenuItem.new_with_label(str_tray_exit)
-    cmd_quit.connect('activate', quit)
-    menu.append(cmd_quit)
+    cmd_shutdown = Gtk.MenuItem.new_with_label(str_tray_shutdown + ' StartWine')
+    cmd_shutdown.connect('activate', shutdown)
+    menu.append(cmd_shutdown)
 
     GLib.timeout_add(1000, on_menu_restruct, sc_menu_item)
     GLib.timeout_add(1000, on_menu_restruct, fr_menu_item)
@@ -191,6 +293,7 @@ def tray_main():
     Gtk.main()
 
 if __name__ == "__main__":
+
     if appind == 1:
         tray_main()
     else:

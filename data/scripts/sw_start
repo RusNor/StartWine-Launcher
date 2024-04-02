@@ -1,90 +1,160 @@
 #!/usr/bin/env python3
 
 import os
-from os import environ as env
-from os import getenv
 from sys import argv
 from pathlib import Path
-from subprocess import Popen, run, PIPE
-from threading import Thread
-import shutil
+from subprocess import run, PIPE
+from multiprocessing import Process
+import time
 
 #######################___PATHS__:
 
-sw_scripts = Path(argv[0]).absolute().parent
-sw_path = sw_scripts.parent.parent
 sw_default_path = Path(f'{Path.home()}/.local/share')
-sw_tools = Path(f"{sw_path}/data/tools")
+swrc = Path(f'{Path.home()}/.config/swrc')
+
+if swrc.exists():
+    swrc_path = swrc.read_text().splitlines()[0]
+    sw_scripts = Path(f'{swrc_path}/data/scripts')
+else:
+    if Path(f'{sw_default_path}/StartWine/data/scripts').exists():
+        sw_scripts = Path(f'{sw_default_path}/StartWine/data/scripts')
+    else:
+        sw_scripts = Path(argv[0]).absolute().parent
+
+sw_path = sw_scripts.parent.parent
 sw_menu = Path(f"{sw_scripts}/sw_menu.py")
 sw_crier = Path(f"{sw_scripts}/sw_crier.py")
 sw_cube = Path(f"{sw_scripts}/sw_cube.py")
 sw_tray =  Path(f"{sw_scripts}/sw_tray.py")
-sw_runtime = Path(f"{sw_path}/data/runtime/sw_runtime")
+sw_rsh = Path(f"{sw_scripts}/sw_run.sh")
+sw_run = Path(f"{sw_scripts}/sw_run")
+sw_start_local = Path(f'{sw_default_path}/StartWine/data/scripts/sw_start')
+sw_start_bin = Path(f'/usr/bin/sw_start')
+sw_start_rc = Path(f'{sw_scripts}/sw_start')
 
 ################################___START___:
 
-def init_icon_theme():
+def silent_start(arg):
 
-    cmd = "gsettings get org.gnome.desktop.interface icon-theme"
-    p = Popen(cmd, shell=True, stdout=PIPE, encoding='UTF-8')
-    out, err = p.communicate()
-    gtk_icon_theme_name = out.splitlines()[0].strip("'")
-    env['SW_GTK_ICON_THEME'] = gtk_icon_theme_name
+    run(f'"{sw_menu}" "--silent"', shell=True)
 
-def copy_icon_theme():
+def _run(arg, cmd_run):
 
-    icon_theme_name = getenv('SW_GTK_ICON_THEME').split('-')[0]
-    sys_icons = Path(f'/usr/share/icons/{icon_theme_name}')
-    local_icons = Path(f'{Path.home()}/.local/share/icons/{icon_theme_name}')
+    if arg is not None and arg != '%F':
+        if Path(arg).suffix == '.desktop':
+            arg = [x.split('=')[1] for x in Path(arg).read_text().splitlines() if 'Exec=' in x]
+            if len(arg) > 0:
+                exe = [x for x in arg[0].split('"') if '.exe' in x.lower()]
+                msi = [x for x in arg[0].split('"') if '.msi' in x.lower()]
+                bat = [x for x in arg[0].split('"') if '.bat' in x.lower()]
+                lnk = [x for x in arg[0].split('"') if '.lnk' in x.lower()]
+                if len(exe) > 0:
+                    sw_rsh.write_text(f'env "{sw_menu}" "{exe[0]}"')
+                elif len(msi) > 0:
+                    sw_rsh.write_text(f'env "{sw_menu}" "{msi[0]}"')
+                elif len(bat) > 0:
+                    sw_rsh.write_text(f'env "{sw_menu}" "{bat[0]}"')
+                elif len(lnk) > 0:
+                    sw_rsh.write_text(f'env "{sw_menu}" "{lnk[0]}"')
+                else:
+                    sw_rsh.write_text(f'env "{sw_menu}"')
+            else:
+                sw_rsh.write_text(f'env "{sw_menu}"')
+        else:
+            sw_rsh.write_text(f'env "{sw_menu}" "{arg}"')
+    else:
+        sw_rsh.write_text(f'env "{sw_menu}"')
 
-    if (not local_icons.exists()
-        and sys_icons.exists()):
-            for icons in sys_icons.parent.iterdir():
-                if (icons.is_dir()
-                    and icon_theme_name in icons.name):
-                        target = Path(f'{local_icons.parent}/{icons.name}')
-                        if not target.exists():
-                            shutil.copytree(icons, target, symlinks=True, dirs_exist_ok=True)
-                            print(icons.name)
+    return run(f'/bin/bash -c "{cmd_run}" 2>/dev/null', shell=True)
 
-def on_start():
+def _show(arg, cmd_show):
 
-    try:
-        arg = argv[1]
-        Popen(f'"{sw_runtime}" "{sw_menu}" "{arg}"', shell=True, start_new_session=True)
-    except IndexError as e:
-        Popen(f'"{sw_runtime}" "{sw_menu}"', shell=True, start_new_session=True)
+    if arg is not None and arg != '%F':
+        if Path(arg).suffix == '.desktop':
+            arg = [x.split('=')[1].strip('"') for x in Path(arg).read_text().splitlines() if 'Exec=' in x]
+            if len(arg) > 0:
+                exe = [x for x in arg[0].split('"') if '.exe' in x.lower()]
+                msi = [x for x in arg[0].split('"') if '.msi' in x.lower()]
+                bat = [x for x in arg[0].split('"') if '.bat' in x.lower()]
+                lnk = [x for x in arg[0].split('"') if '.lnk' in x.lower()]
+                if len(exe) > 0:
+                    sw_rsh.write_text(f'env "{sw_menu}" "{exe[0]}"')
+                elif len(msi) > 0:
+                    sw_rsh.write_text(f'env "{sw_menu}" "{msi[0]}"')
+                elif len(bat) > 0:
+                    sw_rsh.write_text(f'env "{sw_menu}" "{bat[0]}"')
+                elif len(lnk) > 0:
+                    sw_rsh.write_text(f'env "{sw_menu}" "{lnk[0]}"')
+                else:
+                    sw_rsh.write_text(f'env "{sw_menu}"')
+            else:
+                sw_rsh.write_text(f'env "{sw_menu}"')
+        else:
+            sw_rsh.write_text(f'env "{sw_menu}" "{arg}"')
+    else:
+        sw_rsh.write_text(f'env "{sw_menu}"')
 
-def on_start_():
+    return run(f'/bin/bash -c "{cmd_show}" 2>/dev/null', shell=True)
 
-    try:
-        arg = argv[1]
-        Popen(f'"{sw_menu}" "{arg}"', shell=True, start_new_session=True)
-    except IndexError as e:
-        Popen(f'"{sw_menu}"', shell=True, start_new_session=True)
+def on_start(arg, cmd):
 
-def on_runtime():
+    cmd_show = 'gdbus call -e \
+--dest ru.project.StartWine \
+--object-path /ru/project/StartWine \
+--method ru.project.StartWine.Show'
 
-    run(f'"{sw_runtime}" "bash"', shell=True, start_new_session=True)
+    cmd_run = 'gdbus call -e \
+--dest ru.project.StartWine \
+--object-path /ru/project/StartWine \
+--method ru.project.StartWine.Run'
+
+    cmd_active = 'gdbus call -e \
+--dest ru.project.StartWine \
+--object-path /ru/project/StartWine \
+--method ru.project.StartWine.Active \
+"active"'
+
+    out = run(
+            f'/bin/bash -c "{cmd_active}" 2>/dev/null',
+            shell=True, stdout=PIPE, encoding='UTF-8'
+    )
+    if out.stdout == '':
+        p = Process(target=silent_start, args=(arg,))
+        p.start()
+        out = ''
+        while out == '':
+            out = run(f'/bin/bash -c "{cmd_active}" 2>/dev/null',
+                        shell=True, stdout=PIPE, encoding='UTF-8').stdout
+            time.sleep(0.1)
+        else:
+            if cmd == '--run':
+                Process(target=_run, args=(arg, cmd_run)).start()
+            else:
+                Process(target=_show, args=(arg, cmd_show)).start()
+    else:
+        if cmd == '--run':
+            Process(target=_run, args=(arg, cmd_run)).start()
+        else:
+            Process(target=_show, args=(arg, cmd_show)).start()
 
 def on_cube():
 
     try:
-        run(f'"{sw_runtime}" mangohud --dlsym "{sw_cube}" -v', shell=True)
+        run(f'mangohud --dlsym cube -v', shell=True)
     except IOError as e:
         print(f'{e}')
 
 def on_tray():
 
     try:
-        run(f'"{sw_runtime}" "{sw_tray}"', shell=True, start_new_session=True)
+        run(f'"{sw_tray}"', shell=True, start_new_session=True)
     except IOError as e:
         print(f'{e}')
 
 def on_crier(args):
 
     try:
-        run(f"{sw_runtime} {sw_crier} {args}", shell=True, start_new_session=True)
+        run(f"{sw_crier} {args}", shell=True, start_new_session=True)
     except IOError as e:
         print(f'{e}')
 
@@ -94,8 +164,6 @@ def on_helper():
     -c or --cube                          run opengl cube
     -t or --tray                          run StartWine in tray
     -d or --dialog ('-h' for print help)  run dialogs window with message
-    -n or --no-runtime                    run StartWine without runtime
-    -r or --runtime                       run runtime container without StartWine
     -p or --path                          run StartWine path chooser
     -h or --help                          print this help info
     '''
@@ -104,9 +172,7 @@ def on_helper():
 if __name__ == '__main__':
 
     if len(argv) <= 1:
-        init_icon_theme()
-        Thread(target=copy_icon_theme).start()
-        on_start()
+        on_start(None, None)
 
     elif len(argv) > 1:
 
@@ -123,14 +189,6 @@ if __name__ == '__main__':
             else:
                 on_helper()
 
-        elif argv[1] == '--no-runtime' or argv[1] == '-n':
-            init_icon_theme()
-            Thread(target=copy_icon_theme).start()
-            on_start_()
-
-        elif argv[1] == '--runtime' or argv[1] == '-r':
-            on_runtime()
-
         elif argv[1] == '--path' or argv[1] == '-p':
             if len(argv) > 2:
                 args = '-p ' + str(argv[2])
@@ -145,7 +203,10 @@ if __name__ == '__main__':
             on_helper()
 
         else:
-            init_icon_theme()
-            Thread(target=copy_icon_theme).start()
-            on_start()
+            arg = argv[1]
+            if len(argv) > 2:
+                cmd = argv[2]
+                on_start(arg, cmd)
+            else:
+                on_start(arg, None)
 

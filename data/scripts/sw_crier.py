@@ -217,6 +217,8 @@ def dialog_question(app, title, text_message, response, func):
                 margin_top=16,
                 margin_bottom=16,
     )
+    box.append(box_btn)
+
     dialog = Gtk.Window(
                         css_name='sw_window',
                         application=app,
@@ -261,7 +263,6 @@ def dialog_question(app, title, text_message, response, func):
             btn.set_name(str(count))
             btn.connect('clicked', cb_btn_response, dialog, f)
             box_btn.append(btn)
-            box.append(box_btn)
 
     dialog.set_size_request(width*0.25, height*0.15)
     dialog.set_resizable(False)

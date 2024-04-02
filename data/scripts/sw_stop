@@ -16,4 +16,4 @@ done
 
 notify-send -t 1500 -a "StartWine" "$(eval_gettext "Termination of active processes...")"
 
-exit
+exit 0

@@ -206,6 +206,26 @@ else:
 
 ################################___Default_samples___:
 
+gdbus_node_sample = (
+    "<node>"
+    "  <interface name='ru.project.StartWine'>"
+    "    <method name='Message'>"
+    "      <arg type='s' name='msg' direction='in'>"
+    "      </arg>"
+    "    </method>"
+    "    <method name='Active'>"
+    "      <arg type='s' name='question' direction='in'/>"
+    "      <arg type='s' name='answer' direction='out'/>"
+    "    </method>"
+    "    <method name='Terminal'/>"
+    "    <method name='Run'/>"
+    "    <method name='Show'/>"
+    "    <method name='ShowHide'/>"
+    "    <method name='Shutdown'/>"
+    "  </interface>"
+    "</node>"
+)
+
 fshread = sw_fsh.read_text().split('\n')
 
 default_bookmarks = str(
@@ -393,7 +413,7 @@ Icon=sample
 '''
 sample_tray_desktop = '''[Desktop Entry]
 Name=StartWine-Tray
-Exec=env "'''f"{sw_path}/data/scripts/sw_start"'''" -t %F
+Exec=env '''f'"{sw_runtime}" "{sw_start}"'''' -t %F
 Comment=StartWine-Launcher
 Type=Application
 MimeType=text/x-python3
@@ -432,6 +452,16 @@ default_themes = {
     'teal': default_custom_css_teal,
     'yellow': default_custom_css_yellow,
 }
+
+def check_sw_version():
+
+    if sw_version.exists():
+        version = sw_version.read_text().splitlines()[0]
+        str_sw_version = '.'.join([e for e in version])
+    else:
+        str_sw_version = ''
+
+    return str_sw_version
 
 def read_wine_ver_data():
 
@@ -867,6 +897,8 @@ class IconPath:
     icon_wine_staging = f'{sw_gui_icons}/wine_staging.jpg'
     icon_wine_steam_proton = f'{sw_gui_icons}/wine_steam_proton.jpg'
     icon_wine_proton_ge = f'{sw_gui_icons}/wine_proton_ge.jpg'
+    icon_menu = f'{sw_symbolic_icons}/menu.svg'
+    icon_taxes = f'{sw_symbolic_icons}/taxes-finances.svg'
 
 ################################___Lists___:
 
@@ -921,11 +953,25 @@ theme_dict = dict(
 
 ################################___Tray___:
 
-str_tray_open = _('Open StartWine')
-str_tray_run = _('Fast run')
+str_tray_open = _('Show/Hide StartWine')
+str_tray_hide = _('Show/Hide StartWine')
+str_tray_run = _('Run...')
 str_tray_shortcuts = _('Shortcuts')
-str_tray_stop = _('Stop processes')
-str_tray_exit = _('Exit Tray')
+str_tray_stop = _('Stop wine processes')
+str_tray_shutdown = _('Shutdown')
+
+#str_tray_open = _('Be or not to be...')
+#str_tray_run = _('Run Forest run...')
+#str_tray_shortcuts = _('My Minions')
+#str_tray_stop = _('Drink all the wine')
+#str_tray_exit = _("I'll be back'")
+
+#str_tray_open = _('Гюльчатай, открой личико')
+#str_tray_hide = _('Оставь меня, старушка, я в печали...')
+#str_tray_run = _('Ну ты это... Заходи если что')
+#str_tray_shortcuts = _('Огласите весь список, пожалуйста')
+#str_tray_stop = _('И тебя вылечат, и меня вылечат… Всех вылечат!')
+#str_tray_exit = _('Все, кина не будет, электричество кончилось')
 
 ################################___Contexts___:
 
@@ -933,6 +979,7 @@ ctx_dict = dict(
     [
     ('run', _('Run')),
     ('open', _('Open')),
+    ('open_with', _('Open with...')),
     ('open_location', _('Open file location')),
     ('app_settings', _('App settings')),
     ('remove', _('Remove')),
@@ -967,6 +1014,11 @@ ctx_dict = dict(
     ('add_bookmark', _('Add to bookmark')),
     ('compress', _('Compress...')),
     ('extract', _('Extract...')),
+    ('show_hidden_files', (_('Hidden files'), 'Ctrl+H')),
+    ('show_hotkeys', (_('Hotkeys'), 'Ctrl+K')),
+    ('about', (_('About'), 'F3')),
+    ('help', (_('Help'), 'F1')),
+    ('shutdown', (_('Shutdown'), 'Ctrl+Shift+END')),
     ]
 )
 str_sample = _('sample')
@@ -1082,13 +1134,30 @@ str_about = _(
 'Includes many features, extensions, and fixes '
 'to improve performance, visuals, and usability.'
 )
-str_news = _(
-'This release adds the following features:\n'
-'- Added a way to export fonts.\n'
-'- Better support for monospace fonts.\n'
-'- Added a way to preview italic text.\n'
-'- Bug fixes and performance improvements.\n'
-'- Translation updates.'
+str_news = _('''This release adds the following features, updates, and fixes:
+Bug fixes and performance improvements.
+Updated locales.
+Updated prefix configurations.
+Updated wine version list.
+Updated libraries, drivers in the sw_runtime container.
+Auto-installation updated for Eve Online and Yuzu.
+Added extended support for executable files (.bat, .lnk, .appimage).
+Changed the type of shortcuts for installed applications.
+Changed interaction with the tray, management in one process to speed up interaction and menu access.
+Added header menu.
+Added keyboard shortcuts to open the About, Help and others.
+Added regedit patches.
+Added fix for detecting SDROM when installing applications.
+Added resources for faster Wine downloading.
+Added auto suggestion to launch and create a shortcut when opening an executable .exe file from the system file manager.
+Added Open with... option to the file manager context menu.
+Added fixes to prefix structure.
+Added vkd3d shader cache distribution for each application.
+Fixed multiple launches of the sw_runtime container and incorrect termination of the process.
+Fixed installation error on NixOS and Astra Linux.
+Fixed an error in downloading an uninstalled version of Wine when launching applications.
+Fixed a bug when deleting shortcuts from the desktop and system menu when removing the application prefix.
+Fixed incorrect display of the Cyrillic alphabet in some applications.'''
 )
 str_authors = _(
 'Rustam Normatov\n'
@@ -1160,33 +1229,39 @@ to the development by submitting bug reports. And you can always donate any \
 amount to the development of the project using the link below.'
 )
 
+donation_source = {
+    _('Card'): _('The service is unavailable.'),
+    'BTC': 'bc1q3h8lfs3l3r8jmt8ev0pwl9nueqttlep6ktvd02',
+}
+
 website_source='https://startwine-project.ru'
 github_source = 'https://github.com/RusNor'
 telegram_source = 'https://t.me/StartWine'
 discord_source = 'https://discord.com/invite/37FrGUpDEj'
 license_source = 'https://www.gnu.org/licenses/gpl-3.0.html'
-donation_source = 'https://my.qiwi.com/form/Nykyta-MhrLvGVgb3'
+#donation_source = 'https://my.qiwi.com/form/Nykyta-MhrLvGVgb3'
 str_btc = 'BTC: bc1q3h8lfs3l3r8jmt8ev0pwl9nueqttlep6ktvd02'
 winehq_source = 'https://www.winehq.org/search?q='
 protondb_source = 'https://www.protondb.com/search?q='
 griddb_source = 'https://www.steamgriddb.com/search/grids?term='
 griddb = 'https://www.steamgriddb.com'
 home_page = github_source
+home_html = f'file://{sw_scripts}/StartWine-Launcher_handbook_README-RU.md at main · RusNor_StartWine-Launcher · GitHub.html'
 
 url_source = {
-    'google': ['https://google.com', f'{sw_symbolic_icons}/google.png'],
-    'yandex': ['https://ya.ru', f'{sw_symbolic_icons}/yandex.png'],
-    'duckduckgo': ['https://duckduckgo.com', f'{sw_symbolic_icons}/duckduckgo.png'],
-    'startwine': ['https://startwine-project.ru', f'{sw_gui_icons}/sw_icon.png'],
-    'github': ['https://github.com/RusNor', f'{sw_symbolic_icons}/github.png'],
-    'vkontakte': [' https://vk.com/club213719866', f'{sw_symbolic_icons}/vk.png'],
-    'telegram': ['https://t.me/StartWine', f'{sw_symbolic_icons}/telegram.png'],
-    'discord': ['https://discord.com/invite/37FrGUpDEj', f'{sw_symbolic_icons}/discord.png'],
-    'license': ['https://www.gnu.org/licenses/gpl-3.0.html', f'{sw_symbolic_icons}/gnu.png'],
-    #'donation': ['https://my.qiwi.com/form/Nykyta-MhrLvGVgb3', f'{sw_symbolic_icons}/qiwi.png'],
-    'winehq': ['https://www.winehq.org', f'{sw_symbolic_icons}/winehq.png'],
-    'protondb': ['https://www.protondb.com', f'{sw_symbolic_icons}/protondb.png'],
-    'griddb': ['https://www.steamgriddb.com', f'{sw_symbolic_icons}/griddb.png'],
+#    'google': ['https://google.com', f'{sw_symbolic_icons}/google.png'],
+#    'yandex': ['https://ya.ru', f'{sw_symbolic_icons}/yandex.png'],
+#    'duckduckgo': ['https://duckduckgo.com', f'{sw_symbolic_icons}/duckduckgo.png'],
+#    'startwine': ['https://startwine-project.ru', f'{sw_gui_icons}/sw_icon.png'],
+#    'github': ['https://github.com/RusNor', f'{sw_symbolic_icons}/github.png'],
+#    'vkontakte': [' https://vk.com/club213719866', f'{sw_symbolic_icons}/vk.png'],
+#    'telegram': ['https://t.me/StartWine', f'{sw_symbolic_icons}/telegram.png'],
+#    'discord': ['https://discord.com/invite/37FrGUpDEj', f'{sw_symbolic_icons}/discord.png'],
+#    'license': ['https://www.gnu.org/licenses/gpl-3.0.html', f'{sw_symbolic_icons}/gnu.png'],
+#    'donation': ['https://my.qiwi.com/form/Nykyta-MhrLvGVgb3', f'{sw_symbolic_icons}/qiwi.png'],
+#    'winehq': ['https://www.winehq.org', f'{sw_symbolic_icons}/winehq.png'],
+#    'protondb': ['https://www.protondb.com', f'{sw_symbolic_icons}/protondb.png'],
+#    'griddb': ['https://www.steamgriddb.com', f'{sw_symbolic_icons}/griddb.png'],
 }
 
 ################################___Tools___:
@@ -1451,7 +1526,7 @@ wine_list_dict = {}
 for w, l in zip(wine_list, wine_labels):
     wine_list_dict[l] = w
 
-wine_download_list = [
+wine_func_list = [
     'WINE_1',
     'WINE_2',
     'WINE_3',
@@ -1475,9 +1550,9 @@ wine_dict = {}
 for w in wine_list:
     wine_dict[w] = w
 
-wine_download_dict = {}
-for w, l in zip(wine_list, wine_download_list):
-    wine_download_dict[w] = l
+wine_func_dict = {}
+for w, f in zip(wine_list, wine_func_list):
+    wine_func_dict[w] = f
 
 wine_image_list = [
     IconPath.icon_wine_staging,
@@ -1489,11 +1564,14 @@ wine_image_list = [
 
 winever_data = read_wine_ver_data()
 latest_wine_dict = dict()
-wine_lates_download_dict = dict()
+wine_download_dict = dict()
 
-for wine, download_func in zip(wine_list, wine_download_list):
+for wine, func in zip(wine_list, wine_func_list):
     latest_wine_dict[wine] = Path(Path(winever_data[wine].split(' ')[0]).stem).stem
-    wine_lates_download_dict[Path(Path(winever_data[wine].split(' ')[0]).stem).stem] = download_func
+
+    for x in winever_data[wine].split(' '):
+        x = Path(Path(x).stem).stem
+        wine_download_dict[x] = func
 
 ################################___Install_launchers___:
 
@@ -1504,7 +1582,7 @@ launchers_descriptions = {
 #many universes with just a single click! Connect to our video games, VOD animations, \
 #webtoons, and even our livestreams! Download updates, stay up to date with the \
 #latest news, and chat with your friends!"),
-    'Anomaly_Zone': _('MMORPG, open world game, successor to "stalker online". \
+    'Anomaly_Zone': _('Anomaly Zone - MMORPG, open world game, successor to "stalker online". \
 You can remain alone or conquer the Zone in the company of other daredevils, \
 playing online with friends. Play in a clan, take part in PvP and PvE battles, \
 use crafting, modifications, follow a large, interesting, global plot.'),
@@ -1574,7 +1652,7 @@ with movie file sharing technologies and accustomed to video streaming services.
     'RPG_Club': _('The project www.RPG-club.net is a voluntary non-profit \
 association of fans of RPG games. Our site does not aim to distribute any RPG games, \
 but is a means of communication for all interested legal owners of licensed versions of games.'),
-    'Riot_Games': _('Client for League of Legends, abbreviated as LoL, is a \
+    'Riot_Games': _('Riot Games - client for League of Legends, abbreviated as LoL, is a \
 multiplayer computer game in the MOBA genre developed and published by the \
 American company Riot Games.'),
 #    'Roblox_Player': _('Roblox Player'),
@@ -1588,8 +1666,8 @@ Successfully combining the complete freedom of PvP and interesting PvE elements.
     'Stalker_Online': _('Stalker Online is an MMORPG with shooter elements, \
 which is based on the spirit of stalking - exploration of mysterious, forgotten \
 and abandoned areas of the planet by humanity.'),
-    'Star_Wars_TOR': _('Star Wars: The Old Republic is a story-driven massively \
-multiplayer online role-playing game developed by BioWare.'),
+#    'Star_Wars_TOR': _('Star Wars: The Old Republic is a story-driven massively \
+#multiplayer online role-playing game developed by BioWare.'),
     'Steam': _('Steam is an online digital distribution service for computer \
 games and programs developed and maintained by Valve. Steam serves as a technical \
 copyright protection tool, a multiplayer gaming and streaming platform, and a \
@@ -1753,16 +1831,16 @@ reg_patches = [''] + [
 ]
 dxvk_ver = [
     '1.9', '1.9.1', '1.9.2', '1.9.3', '1.9.4', '1.10', '1.10.1', '1.10.2',
-    '1.10.3', '2.0', '2.1', '2.2', '2.3',
+    '1.10.3', '2.0', '2.1', '2.2', '2.3', '2.3.1',
 ]
 vkd3d_ver = [
     '2.0', '2.1', '2.2', '2.3', '2.3.1', '2.4', '2.5', '2.6', '2.7', '2.8',
-    '2.9', '2.10', '2.11','2.11.1',
+    '2.9', '2.10', '2.11', '2.11.1', '2.12',
 ]
 combo_list = winarch + winver + reg_patches + dxvk_ver + vkd3d_ver
 fsr_mode = [_('Ultra'), _('Quality'), _('Balanced'), _('Performance')]
 
-lang_mode = ['en_US', 'ru_RU.UTF-8']
+lang_mode = ['', 'en_US', 'ru_RU.UTF-8']
 
 ################################___Switch_check___:
 
@@ -2090,7 +2168,7 @@ str_title_lang = _('Language')
 str_subtitle_lang = _('Change the interface language')
 
 str_title_autostart = _('Autostart')
-str_subtitle_autostart = _('Run startwine in the tray at system startup')
+str_subtitle_autostart = _('Run StartWine in the tray at system startup')
 
 str_title_restore_menu = _('Restore menu')
 str_subtitle_restore_menu = _('Restore the menu after exiting a game or application')
@@ -2105,7 +2183,7 @@ str_title_menu_size = _('Compact mode')
 str_subtitle_menu_size = _('Always run the menu in compact size mode')
 
 str_title_def_dir = _('Default directory')
-str_subtitle_def_dir = _('The default directory in which files will be opened in the startwine file manager')
+str_subtitle_def_dir = _('The default directory in which files will be opened in the StartWine file manager')
 
 str_title_opengl = _('OpenGL background')
 str_subtitle_opengl = _('Live background (opengl animation based on selected shaders). '
@@ -2121,14 +2199,16 @@ str_wrong_path = _('Wrong path, path does not exist, specify the correct path to
 
 hotkey_list = [
     ['Ctrl', 'K', ''],
+    ['F1', '', ''],
+    ['F3', '', ''],
     ['R_Shift', 'F12', ''],
     ['R_Shift','F11',''],
     ['HOME', '', ''],
     ['Ctrl', 'Shift', 'Q'],
+    ['Ctrl', 'Escape', ''],
     ['Ctrl', 'R', ''],
     ['Ctrl', '+', ''],
     ['Ctrl', '-', ''],
-    ['Ctrl', 'U', ''],
     ['F5', '', ''],
     ['Ctrl', 'H', ''],
     ['Ctrl', 'L', ''],
@@ -2161,14 +2241,16 @@ hotkey_list = [
 
 hotkey_desc = [
     _('show hotkey settings window'),
+    _('show help'),
+    _('about StartWine'),
     _('enable / disable mangohud overlay in the game'),
     _('toggle mangohud overlay postion in the game'),
     _('enable / disable vkbasalt effects in the game'),
-    _('close startwine window'),
+    _('shutdown StartWine'),
+    _('close StartWine window'),
     _('change the window size mode'),
     _('increase the size of the icons and shortcuts'),
     _('reduce the size of the icons and shortcuts'),
-    _('update files or shortcuts list view'),
     _('update files or shortcuts list view'),
     _('to display or not to display hidden files'),
     _('show current directory path string'),
@@ -2971,6 +3053,8 @@ dir_mime_types = [
 
 exe_mime_types = [
     'application/x-ms-dos-executable',
+    'application/x-ms-shortcut',
+    'application/x-bat',
     'application/x-msi',
     'application/x-msdownload',
     'application/vnd.microsoft.portable-executable'
@@ -2989,6 +3073,10 @@ script_mime_types = [
 
 app_mime_types = [
     'application/x-desktop',
+]
+
+swd_mime_types = [
+    '.swd',
 ]
 
 text_mime_types = [
@@ -3056,6 +3144,7 @@ archive_formats = [
 
 class Msg:
     msg_dict = dict([
+        ('good_day_is', _('A good day is like a good wine...')),
         ('yes', _('Yes')),
         ('no', _('No')),
         ('ok', _('Ok')),
@@ -3100,7 +3189,8 @@ class Msg:
 To create a shortcut for this executable, rename it or delete the existing shortcut and prefix')),
         ('termination', _('Termination of active processes...')),
         ('equal_paths', _("You can't copy a directory to itself")),
-        ('not_exists', _('not exists, do you want to download now?')),
+        ('not_exists', _('is not installed, download it now?')),
+        ('is_not_installed', _('is not installed')),
         ('impossible_create', _('It is impossible to create a file in the current directory')),
         ('correct_path', _('Path does not exist!!! Please select correct path')),
         ('select_sw_path', _('Select the location of the StartWine directory')),
@@ -3119,6 +3209,9 @@ To create a shortcut for this executable, rename it or delete the existing short
         ('device_drive', _('Drive name')),
         ('device_size', _('Device size')),
         ('mount_options', _('Mount options')),
+        ('app_conf_incorrect', _('Incorrect launch parameters')),
+        ('app_conf_reset', _('Reset the application settings?')),
+        ('lnk_error', _('The path to the executable file was not found, launch is impossible'))
     ])
 
     ################################___Tooltips___:
@@ -3153,6 +3246,7 @@ To create a shortcut for this executable, rename it or delete the existing short
         ('about', _('About')),
         ('choose_app', _('Choose the application to transfer settings')),
         ('web', _('Show web entry')),
+        ('view_menu', _('Menu')),
     ])
 
 ################################___Progress_and_file_ops___:

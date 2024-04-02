@@ -309,17 +309,18 @@ sw_window {
 
 /*_______________________________________*/
 
-sw_wc_resize {
+sw_wc_menu {
+    min-width: 16px;
+    min-height: 16px;
     padding: 0px;
     margin-right: 4px;
-    border-radius: 10px;
+/*    border-radius: 10px;*/
     background-color: transparent;
-    border-radius: 10px;
     transition: 200ms;
 }
 
-sw_wc_resize:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+sw_wc_menu:hover {
+    background-color: rgba(255, 255, 255, 0.2);
 }
 
 sw_wc_close,

@@ -13,7 +13,7 @@ import os
 from os import environ, getenv, pathsep, kill, walk, scandir
 from os.path import join
 from os import stat as Stat
-from sys import argv
+from sys import argv, exit
 from sys import stdout as sys_stdout
 from sys import stderr as sys_stderr
 from subprocess import Popen, run, PIPE, STDOUT, DEVNULL
@@ -293,6 +293,99 @@ def get_suffix():
 
     return app_suffix
 
+def get_lnk_data(lnk_path):
+
+    lnk_path = lnk_path.strip('"')
+
+    with open(lnk_path, 'rb') as f:
+        text = f.read().decode(errors='replace')
+        f.close()
+
+    try:
+        decode_string = [x for x in text.split(':') if '.exe' in x.lower()]
+    except Exception as e:
+        return None, None, None
+    else:
+        if len(decode_string) > 0:
+            decode_exe = decode_string[-1].replace('\\', '/')
+            re_suffix = '.exe'
+        else:
+            try:
+                decode_string = [x for x in text.split(':') if '.bat' in x.lower()]
+            except Exception as e:
+                return None, None, None
+            else:
+                if len(decode_string) > 0:
+                    decode_exe = decode_string[-1].replace('\\', '/')
+                    re_suffix = '.bat'
+                else:
+                    try:
+                        decode_string = [x for x in text.split(':') if '.msi' in x.lower()]
+                    except Exception as e:
+                        return None, None, None
+                    else:
+                        if len(decode_string) > 0:
+                            decode_exe = decode_string[-1].replace('\\', '/')
+                            re_suffix = '.msi'
+                        else:
+                            decode_exe = None
+                            re_suffix = None
+
+        if decode_exe is not None:
+            parent_path = Path(decode_exe).parent
+            if str(parent_path).startswith('/'):
+                parent_path = Path(str(parent_path).lstrip('/'))
+
+            format_name = Path(decode_exe).stem
+            suffix = Path(decode_exe).suffix
+            suffix = '.' + ''.join([e for e in suffix if e.isalpha()])
+            trash_symbols = re.sub(f'(?i){re_suffix}', '', suffix)
+            format_suffix = suffix.replace(trash_symbols, '')
+            format_path = Path(f'{parent_path}/{format_name}{format_suffix}')
+
+            print(
+                f'APP_NAME={format_name}\n'
+                + f'APP_SUFFIX={format_suffix}\n'
+                + f'APP_PATH={format_path}'
+            )
+            return format_name, format_suffix, format_path
+        else:
+            return None, None, None
+
+def write_lnk_data(app_name, app_suffix, app_lnk_path):
+
+    pfx_path = get_pfx_path()
+    app_path = get_app_path()
+
+    if app_lnk_path is None:
+        text_message = msg.msg_dict['lnk_error']
+        return dialog_info(app, text_message, 'ERROR')
+
+    if app_name is None:
+        text_message = msg.msg_dict['lnk_error']
+        return dialog_info(app, text_message, 'ERROR')
+
+    if app_suffix is None:
+        text_message = msg.msg_dict['lnk_error']
+        return dialog_info(app, text_message, 'ERROR')
+
+    if f'{app_lnk_path}' in f'{Path(app_path.strip('"')).parent}/{app_name}{app_suffix}':
+        app_path = f'{Path(app_path.strip('"')).parent}/{app_name}{app_suffix}'
+        sw_rsh.write_text(f'env "{sw_menu}" "{app_path}"')
+    else:
+        if f'{pfx_path}' == f'{sw_pfx}/pfx_default':
+            for r, d, f in walk(pfx_path.strip('"')):
+                for x in f:
+                    if f'{app_name}{app_suffix}'.lower() in x.lower():
+                        app_path = f'{Path(join(r, x))}'
+                        sw_rsh.write_text(f'env "{sw_menu}" "{app_path}"')
+        else:
+            for r, d, f in walk(f'{sw_pfx}/pfx_{app_name}'):
+                for x in f:
+                    if f'{app_name}{app_suffix}'.lower() in x.lower():
+                        app_path = f'{Path(join(r, x))}'
+                        sw_rsh.write_text(f'env "{sw_menu}" "{app_path}"')
+
 def create_app_conf():
     '''___create application config___'''
 
@@ -334,7 +427,7 @@ def clear_tmp():
     if sw_tmp.exists():
         for x in scandir(path=sw_tmp):
             if x.is_file():
-                if '.desktop' in str(x):
+                if '.swd' in str(x):
                     Path(x).unlink()
 
 def start_tray():
@@ -345,26 +438,30 @@ def start_tray():
         p = Popen(['ps', '-AF'], stdout=PIPE, encoding='UTF-8')
         out, err = p.communicate()
 
+        is_active = []
         for line in out.splitlines():
             if str('sw_tray.py') in line:
-                pid = int(line.split()[1])
-                kill(pid, 9)
+#                pid = int(line.split()[1])
+#                kill(pid, 9)
+                is_active.append('1')
 
         for line in out.splitlines():
             if f"{sw_rsh}" in line:
-                pid = int(line.split()[1])
-                kill(pid, 9)
+#                pid = int(line.split()[1])
+#                kill(pid, 9)
+                pass
 
-        sw_tray_log = f'{sw_logs}/sw_tray.log'
-        try:
-            sys_stderr = open(sw_tray_log, 'w')
-        except Exception as e:
-            sys_stderr = None
-        else:
-            Popen([sw_tray, app_path], stderr=sys_stderr)
-            print(tc.SELECTED + tc.VIOLET2)
-            print('-----------------< SW_TRAY >------------------', tc.END)
-            print(f'\n {tc.VIOLET2}SW_TRAY: {tc.GREEN}done', tc.END)
+        if len(is_active) == 0:
+            sw_tray_log = f'{sw_logs}/sw_tray.log'
+            try:
+                sys_stderr = open(sw_tray_log, 'w')
+            except Exception as e:
+                sys_stderr = None
+            else:
+                Popen([sw_tray, app_path], stderr=sys_stderr)
+                print(tc.SELECTED + tc.VIOLET2)
+                print('-----------------< SW_TRAY >------------------', tc.END)
+                print(f'\n {tc.VIOLET2}SW_TRAY: {tc.GREEN}done', tc.END)
 
 def get_pfx_path():
     '''___get current prefix path___'''
@@ -1226,7 +1323,6 @@ def echo_func_name(func_name):
                         + shortcut_name+ '\n' + shortcut_path + '\n' + func
                     )
                     run(f"{sw_fsh} {app_path}", shell=True)
-                    #start_tray()
         else:
             print(tc.YELLOW)
             sw_fsh.write_text(
@@ -1236,7 +1332,6 @@ def echo_func_name(func_name):
                 f"{sw_fsh} {app_path}",
                 shell=True,
                 start_new_session=True,
-                #stdout=PIPE,
                 stderr=sys_stderr,
                 encoding='UTF-8'
             )
@@ -1258,7 +1353,6 @@ def echo_cs_name(wine_name, wine_download, app_name, app_path):
             if count > 1:
                 sw_fsh.write_text(
                     sw_fsh.read_text().replace(fshread[count], ''))
-
     except IOError as e:
         print(e)
     else:
@@ -1268,13 +1362,13 @@ def echo_cs_name(wine_name, wine_download, app_name, app_path):
                 wine_ok = f"export WINE_OK=1"
                 func_download = f"{wine_download} \"$@\""
                 sw_fsh.write_text(
-                    fshread[0] + '\n' + fshread[1] + '\n' + wine_ok + '\n' + func_download + '\n' + func_cs
+                                fshread[0] + '\n' + fshread[1] + '\n' + wine_ok
+                                + '\n' + func_download + '\n' + func_cs
                 )
                 run(
                     f"{sw_fsh} {app_path}",
                     shell=True,
                     start_new_session=True,
-                    #stdout=PIPE,
                     stderr=sys_stderr,
                     encoding='UTF-8'
                 )
@@ -1287,7 +1381,6 @@ def echo_cs_name(wine_name, wine_download, app_name, app_path):
                 f"{sw_fsh} {app_path}",
                 shell=True,
                 start_new_session=True,
-                #stdout=PIPE,
                 stderr=sys_stderr,
                 encoding='UTF-8'
             )
@@ -1354,14 +1447,12 @@ def cs_wine(wine_name, wine_download, app_name, app_path):
 def cs_path(func_wine, app_name, app_path):
     '''___create shortcut with changed wine___'''
 
-    wine_name = func_wine
-
     if func_wine in wine_list:
-        wine_download = wine_download_dict[wine_name]
+        wine_download = wine_func_dict[func_wine]
     else:
         wine_download = None
 
-    cs_wine(wine_name, wine_download, app_name, app_path)
+    cs_wine(func_wine, wine_download, app_name, app_path)
 
 def check_alive(thread, func, args, parent):
     '''___run the function when thread it completes___'''
@@ -1522,22 +1613,113 @@ class StartWine(Gtk.Application):
         g_app.register()
         set_print_id_info(g_app, True)
 
-        ####___start_tray___.
+        self.connection = g_app.get_dbus_connection()
+        self.gdbus_node = Gio.DBusNodeInfo.new_for_xml(gdbus_node_sample)
         self.tray = start_tray()
 
-        ####___send_notification___
+#        ####___send_notification___
 #        try:
 #            Notify.init(sw_program_name)
-#        except:
+#        except Exception as e:
 #            pass
 #        else:
-#            msg = 'A good day is like a good wine...'
+#            msg = msg.msg_dict['good_day_is']
 #            ntf = Notify.Notification.new(sw_program_name, msg, sw_default_icon)
 #            ntf.show()
 #            Timer(3, ntf.close).start()
 
 def sw_activate(app):
     '''___build and activate application___'''
+
+    def gdbus_method_call(
+                        connection, sender, object_path, interface_name,
+                        method_name, params, invocation):
+
+        if method_name == "Message":
+            parm = params.unpack()[0]
+
+            if parm == 'lnk_error':
+                text_message = msg.msg_dict['lnk_error']
+            else:
+                text_message = None
+
+            if text_message is not None:
+                print(f'{sender} : {text_message}')
+                dialog_info(app, text_message, 'INFO')
+                invocation.return_value(None)
+
+        elif method_name == "Active":
+            name = params.unpack()[0]
+            print(f'{sender} : {name}')
+            answer = GLib.Variant(
+                "(s)", ("True",)
+            )
+            invocation.return_value(answer)
+
+        elif method_name == "Run":
+            start_mode()
+            on_start()
+
+        elif method_name == "Terminal":
+            window = app.get_active_window()
+            window.set_hide_on_close(False)
+            window.set_visible(True)
+            window.unminimize()
+            on_terminal()
+            terminal.feed_child(f'neofetch\n'.encode("UTF-8"))
+            invocation.return_value(None)
+
+        elif method_name == "Show":
+            window = app.get_active_window()
+            window.set_hide_on_close(False)
+            window.set_visible(True)
+            window.unminimize()
+
+            app_name = get_out()
+            app_path = get_app_path()
+            start_mode()
+
+            if (app_name != 'StartWine'
+                and not Path(f'{sw_shortcuts}/{app_name}.swd').exists()):
+                    on_files(Path(Path(app_path.strip('"')).parent))
+
+                    label_frame_create_shortcut.set_label(msg.msg_dict['cs'])
+                    response = [
+                                msg.msg_dict['run'].title(),
+                                msg.msg_dict['cs'].title(),
+                                msg.msg_dict['cancel'].title(),
+                    ]
+                    title = msg.msg_dict['choose']
+                    func = [on_start, on_message_cs, None]
+                    dialog_question(app, title, None, response, func)
+
+            invocation.return_value(None)
+
+        elif method_name == "ShowHide":
+            window = app.get_active_window()
+
+            if window.get_visible():
+                window = app.get_active_window()
+                window.set_hide_on_close(True)
+                window.close()
+                invocation.return_value(None)
+            else:
+                window.set_hide_on_close(False)
+                window.set_visible(True)
+                window.unminimize()
+                invocation.return_value(None)
+
+        elif method_name == "Shutdown":
+            Popen(f"{sw_scripts}/sw_stop", shell=True)
+            app.connection.flush(callback=flush_connection, user_data=None)
+            invocation.return_value(None)
+
+    def flush_connection(self, res, data):
+        '''___Async close dbus connection'''
+
+        result = self.flush_finish(res)
+        print(result)
+        app.quit()
 
     def cb_ctrl_key_pressed(ctrl_key_press, keyval, keycode, state, parent):
         '''___key pressed events handler___'''
@@ -1582,6 +1764,10 @@ def sw_activate(app):
                                 entry_search.set_text(number)
                                 entry_search.set_position(-1)
 
+        if keyval == Gdk.KEY_F1:
+            return on_webview(home_page + '/StartWine-Launcher')
+            #return on_webview(home_html)
+
         if keyval == Gdk.KEY_F2:
             selected = get_selected_item_gfile()
             if len(selected) > 1:
@@ -1590,6 +1776,16 @@ def sw_activate(app):
                 return on_file_rename(selected[0])
             else:
                 print('oops! not selected files')
+
+        if keyval == Gdk.KEY_F3:
+            return on_about()
+
+        if keyval == Gdk.KEY_F5:
+            path = entry_path.get_name()
+            try:
+                update_grid_view(path)
+            except PermissionError as e:
+                overlay_info(overlay, None, e, None, 3)
 
         if ((state & all_mask) == Gdk.ModifierType.SHIFT_MASK
             and keyval == Gdk.KEY_Delete):
@@ -1719,7 +1915,7 @@ def sw_activate(app):
         if ((state & all_mask) == (
             Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SHIFT_MASK)
             and k_val[1] in (Gdk.KEY_q, Gdk.KEY_Q)):
-                parent.close()
+                on_shutdown()
 
         if ((state & all_mask) == Gdk.ModifierType.CONTROL_MASK
             and k_val[1] in (Gdk.KEY_a, Gdk.KEY_A)):
@@ -1744,14 +1940,6 @@ def sw_activate(app):
         if ((state & all_mask) == Gdk.ModifierType.CONTROL_MASK
             and k_val[1] in (Gdk.KEY_d, Gdk.KEY_D)):
                 parent.set_interactive_debugging(True)
-
-        if ((state & all_mask) == Gdk.ModifierType.CONTROL_MASK
-            and k_val[1] in (Gdk.KEY_u, Gdk.KEY_U) or keyval == Gdk.KEY_F5):
-                path = entry_path.get_name()
-                try:
-                    update_grid_view(path)
-                except PermissionError as e:
-                    overlay_info(overlay, None, e, None, 3)
 
         if ((state & all_mask) == Gdk.ModifierType.CONTROL_MASK
             and k_val[1] in (Gdk.KEY_t, Gdk.KEY_T)):
@@ -1857,6 +2045,22 @@ def sw_activate(app):
                 terminal.set_visible(False)
                 terminal_revealer.set_reveal_child(False)
 
+    def cb_ctrl_fclick_parent(self, n_press, x, y):
+        '''___forward click on parent window___'''
+
+        print(self.get_button())
+
+        if btn_back_main.get_visible():
+            on_back_main()
+
+    def cb_ctrl_bclick_parent(self, n_press, x, y):
+        '''___back click on parent window___'''
+
+        print(self.get_button())
+
+        if btn_back_main.get_visible():
+            on_back_main()
+
     def cb_ctrl_key_term(ctrl_key_press, keyval, keycode, state, terminal):
         '''___key press events in terminal___'''
 
@@ -1931,6 +2135,7 @@ def sw_activate(app):
 
             if bar.get_name() == 'install_wine':
                 on_download_wine()
+                on_wine_tools()
 
             if bar.get_name() == 'pfx_remove':
                 sw_rsh.write_text(f"env \"{sw_menu}\"")
@@ -2294,6 +2499,7 @@ def sw_activate(app):
 
         webview = stack_web.get_nth_page(0).get_child().get_child()
         webview.load_uri(url)
+
         stack_search_path.set_visible_child(box_web)
         entry_web.grab_focus()
         return set_settings_widget(
@@ -2682,8 +2888,8 @@ def sw_activate(app):
             write_app_conf(x_path)
             app_name = get_out()
 
-            if Path(f'{sw_shortcuts}/{app_name}.desktop').exists():
-                app_dict = app_info(Path(f'{sw_shortcuts}/{app_name}.desktop'))
+            if Path(f'{sw_shortcuts}/{app_name}.swd').exists():
+                app_dict = app_info(Path(f'{sw_shortcuts}/{app_name}.swd'))
                 app_exec = app_dict['Exec'].replace(f'env "{sw_start}" ', '').strip('"')
 
                 if str(x_path) == str(app_exec):
@@ -2714,40 +2920,65 @@ def sw_activate(app):
         elif f_type in app_mime_types:
 
             if str(sw_shortcuts) in str(item_path):
-                app_dict = app_info(Path(item_path))
-                x_path = app_dict['Exec'].replace(f'env "{sw_start}" ', '').replace(f'env "{sw_runtime}" ', '').strip('"')
+                d_exec = [x.split('=')[1] for x in Path(item_path).read_text().splitlines() if 'Exec=' in x]
+                if len(d_exec) > 0:
+                    exe = [x for x in d_exec[0].split('"') if '.exe' in x.lower()]
+                    msi = [x for x in d_exec[0].split('"') if '.msi' in x.lower()]
+                    bat = [x for x in d_exec[0].split('"') if '.bat' in x.lower()]
+                    lnk = [x for x in d_exec[0].split('"') if '.lnk' in x.lower()]
 
-                gx_file = Gio.File.new_for_path(bytes(Path(x_path)))
-                gx_info = gx_file.query_info('*', Gio.FileQueryInfoFlags.NONE, None)
-                gx_type = gx_info.get_content_type()
+                    if len(exe) > 0:
+                        x_path = exe[0]
 
-                if gx_type in exe_mime_types:
-                    if Path(x_path).exists():
-                        sw_rsh.write_text(f"env \"{sw_menu}\" \"{x_path}\"")
-                        start_mode()
-                        cb_btn_start(btn_start)
+                    elif len(msi) > 0:
+                        x_path = msi[0]
+
+                    elif len(bat) > 0:
+                        x_path = bat[0]
+
+                    elif len(lnk) > 0:
+                        x_path = lnk[0]
+
                     else:
-                        return overlay_info(overlay, None, msg.msg_dict['exist_desktop'], None, 3)
+                        x_path = None
 
-                elif (gx_type in bin_mime_types
-                    or gx_type in script_mime_types):
-                        new_app = Gio.AppInfo.create_from_commandline(
-                                                        bytes(Path(f'\"{x_path}\"')),
-                                                        f'\"{x_path}\"',
-                                                        Gio.AppInfoCreateFlags.SUPPORTS_URIS
-                        )
-                        try:
-                            new_app.launch_uris()
-                        except Exception as e:
-                            print(tc.RED, e, tc.END)
-                else:
-                    fl = Gtk.FileLauncher()
-                    fl.set_file(item)
-                    try:
-                        fl.launch()
-                    except Exception as e:
-                        message = msg.msg_dict['launch_error'] + f': {e}'
-                        return overlay_info(overlay, None, message, None, 3)
+                    if x_path is not None:
+                        gx_file = Gio.File.new_for_path(bytes(Path(x_path)))
+                        gx_info = gx_file.query_info('*', Gio.FileQueryInfoFlags.NONE, None)
+                        gx_type = gx_info.get_content_type()
+
+                        if gx_type in exe_mime_types:
+                            if Path(x_path).exists():
+                                sw_rsh.write_text(f"env \"{sw_menu}\" \"{x_path}\"")
+                                start_mode()
+                                cb_btn_start(btn_start)
+                            else:
+                                return overlay_info(overlay, None, msg.msg_dict['exist_desktop'], None, 3)
+
+                        elif (gx_type in bin_mime_types
+                            or gx_type in script_mime_types):
+                                new_app = Gio.AppInfo.create_from_commandline(
+                                                                bytes(Path(f'\"{x_path}\"')),
+                                                                f'\"{x_path}\"',
+                                                                Gio.AppInfoCreateFlags.SUPPORTS_URIS
+                                )
+                                try:
+                                    new_app.launch_uris()
+                                except Exception as e:
+                                    print(tc.RED, e, tc.END)
+                                    message = msg.msg_dict['launch_error'] + f': {e}'
+                                    return overlay_info(overlay, None, message, None, 3)
+                        else:
+                            fl = Gtk.FileLauncher()
+                            fl.set_file(item)
+                            try:
+                                fl.launch()
+                            except Exception as e:
+                                message = msg.msg_dict['launch_error'] + f': {e}'
+                                return overlay_info(overlay, None, message, None, 3)
+                    else:
+                        text_message = msg.msg_dict['lnk_error']
+                        return dialog_info(app, text_message, 'ERROR')
             else:
                 fl = Gtk.FileLauncher()
                 fl.set_file(item)
@@ -2755,6 +2986,50 @@ def sw_activate(app):
                     fl.launch()
                 except Exception as e:
                     print(tc.RED, e, tc.END)
+                    message = msg.msg_dict['launch_error'] + f': {e}'
+                    return overlay_info(overlay, None, message, None, 3)
+
+        elif Path(item_path).suffix in swd_mime_types:
+
+            if str(sw_shortcuts) in str(item_path):
+                d_exec = [x.split('=')[1] for x in Path(item_path).read_text().splitlines() if 'Exec=' in x]
+                if len(d_exec) > 0:
+                    exe = [x for x in d_exec[0].split('"') if '.exe' in x.lower()]
+                    msi = [x for x in d_exec[0].split('"') if '.msi' in x.lower()]
+                    bat = [x for x in d_exec[0].split('"') if '.bat' in x.lower()]
+                    lnk = [x for x in d_exec[0].split('"') if '.lnk' in x.lower()]
+
+                    if len(exe) > 0:
+                        x_path = exe[0]
+
+                    elif len(msi) > 0:
+                        x_path = msi[0]
+
+                    elif len(bat) > 0:
+                        x_path = bat[0]
+
+                    elif len(lnk) > 0:
+                        x_path = lnk[0]
+
+                    else:
+                        x_path = None
+
+                    if x_path is not None:
+
+                        gx_file = Gio.File.new_for_path(bytes(Path(x_path)))
+                        gx_info = gx_file.query_info('*', Gio.FileQueryInfoFlags.NONE, None)
+                        gx_type = gx_info.get_content_type()
+
+                        if gx_type in exe_mime_types:
+                            if Path(x_path).exists():
+                                sw_rsh.write_text(f"env \"{sw_menu}\" \"{x_path}\"")
+                                start_mode()
+                                cb_btn_start(btn_start)
+                            else:
+                                return overlay_info(overlay, None, msg.msg_dict['exist_desktop'], None, 3)
+                    else:
+                        text_message = msg.msg_dict['lnk_error']
+                        return dialog_info(app, text_message, 'ERROR')
 
         elif f_type in bin_mime_types:
             new_app = Gio.AppInfo.create_from_commandline(
@@ -2766,6 +3041,8 @@ def sw_activate(app):
                 new_app.launch_uris()
             except Exception as e:
                 print(tc.RED, e, tc.END)
+                return dialog_info(app, f'(e)', 'ERROR')
+
         else:
             fl = Gtk.FileLauncher()
             fl.set_file(item)
@@ -2773,6 +3050,7 @@ def sw_activate(app):
                 fl.launch()
             except Exception as e:
                 print(tc.RED, e, tc.END)
+                return dialog_info(app, f'(e)', 'ERROR')
 
     def get_dll_info(x_path):
         '''___get installed dll list from winetricks log___'''
@@ -2889,13 +3167,23 @@ def sw_activate(app):
 
         x_path = Path(x_file.get_path())
 
-        if (x_path.parent == Path(sw_shortcuts)
-            and not x_info.get_content_type() in app_mime_types):
-                pass
+        if x_path.parent == Path(sw_shortcuts):
+            if x_info.get_content_type() in app_mime_types:
+                if x_info.has_attribute(attrs['rename']):
+                    edit_name = x_path.stem
+                    suffix = x_path.suffix
+                    try:
+                        x_file.set_display_name(edit_name + swd_mime_types[0])
+                    except GLib.GError as e:
+                        print(e)
+            else:
+                if not x_path.suffix in swd_mime_types:
+                    pass
 
         if (x_path.parent == Path(sw_launchers)
             and not x_info.get_content_type() in image_mime_types):
                 pass
+
         else:
             if x_hidden_files is None:
                 x_hidden = False
@@ -3103,9 +3391,66 @@ def sw_activate(app):
     def cb_btn_view_more(self):
         '''___activate headerbar context menu for current path___'''
         x = 0
-        y = 0
+        y = 32
         parent_path = get_parent_path()
         on_empty_context(x, y, self, parent_path)
+
+    def cb_btn_view_header_menu(self):
+        '''___activate headerbar context header menu___'''
+        x = 0
+        y = 32
+        parent_path = get_parent_path()
+        on_empty_context(x, y, self, parent_path)
+
+    def on_btn_header_menu(action_name, parameter, data):
+        '''___activate header menu button___'''
+
+        if action_name.get_name() == (
+                                ctx_dict['show_hidden_files'][0].replace(' ', '')
+                                + ctx_dict['show_hidden_files'][1].replace('+', '')
+            ):
+            return on_show_hidden_files()
+
+        if action_name.get_name() == (
+                                    ctx_dict['show_hotkeys'][0].replace(' ', '')
+                                    + ctx_dict['show_hotkeys'][1].replace('+', '')
+            ):
+            return on_show_hotkeys()
+
+        if action_name.get_name() == (
+                                    ctx_dict['about'][0].replace(' ', '')
+                                    + ctx_dict['about'][1].replace('+', '')
+            ):
+            return on_about()
+
+        if action_name.get_name() == (
+                                    ctx_dict['help'][0].replace(' ', '')
+                                    + ctx_dict['help'][1].replace('+', '')
+            ):
+            return on_webview(home_page + '/StartWine-Launcher')
+
+        if action_name.get_name() == (
+                                    ctx_dict['shutdown'][0].replace(' ', '')
+                                    + f'{sw_program_name}'
+            ):
+            on_shutdown()
+
+    def on_show_hidden_files():
+        '''___Show or not hidden files___'''
+
+        dict_ini = read_menu_conf()
+
+        if dict_ini['hidden_files'] == 'True':
+            dict_ini['hidden_files'] = 'False'
+        else:
+            dict_ini['hidden_files'] = 'True'
+
+        write_menu_conf(dict_ini)
+        path = entry_path.get_name()
+        try:
+            update_grid_view(path)
+        except PermissionError as e:
+            overlay_info(overlay, None, e, None, 3)
 
     def back_up():
         '''___return to the parent directory when user activated___'''
@@ -3117,7 +3462,12 @@ def sw_activate(app):
         )
 
     def cb_btn_back_main(self):
-        '''___back_to_main_menu___'''
+        '''___sidebar back to main menu___'''
+
+        on_back_main()
+
+    def on_back_main():
+        '''___sidebar back to main menu___'''
 
         btn_back_main.set_visible(False)
         stack_sidebar.set_visible_child(frame_main)
@@ -3348,6 +3698,7 @@ def sw_activate(app):
     def on_write_parent_state(self):
         '''___write parent window state in config___'''
 
+        parent.set_hide_on_close(True)
         return write_parent_state()
 
     def write_parent_state():
@@ -3486,6 +3837,19 @@ def sw_activate(app):
             {'name': ctx_dict['add_bookmark'], 'func': on_cb_empty_add_bookmark},
         ]
 
+        context_hidden_files = [
+            {'name': ' '.join(ctx_dict['show_hidden_files']), 'func': on_btn_header_menu},
+        ]
+
+        context_header_menu = [
+            {'name': ' '.join(ctx_dict['show_hotkeys']), 'func': on_btn_header_menu},
+            {'name': ' '.join(ctx_dict['about']), 'func': on_btn_header_menu},
+            {'name': ' '.join(ctx_dict['help']), 'func': on_btn_header_menu},
+        ]
+        context_shutdown = [
+            {'name': ctx_dict['shutdown'][0] + f' {sw_program_name}', 'func': on_btn_header_menu},
+        ]
+
         rect = Gdk.Rectangle()
         rect.x = x
         rect.y = y
@@ -3496,6 +3860,9 @@ def sw_activate(app):
         section_edit = Gio.Menu()
         section_property = Gio.Menu()
         section_more = Gio.Menu()
+        section_hidden_files = Gio.Menu()
+        section_header_menu = Gio.Menu()
+        section_shutdown = Gio.Menu()
 
         context_menu = Gtk.PopoverMenu(css_name='sw_popovermenu')
         context_menu.set_has_arrow(False)
@@ -3504,20 +3871,33 @@ def sw_activate(app):
         context_menu.set_name('empty_context_menu')
         context_menu.set_parent(widget)
 
-        if widget.get_name() == 'view_more':
-            menu.append_section(None, section_more)
-            context_connect(section_more, context_more, parent_path, 0)
+        if widget.get_name() == 'header_menu':
+            gmenu = Gio.Menu()
+            if reveal_stack.get_visible_child() == files_view_grid:
+                gmenu.insert_section(0, None, section_hidden_files)
+                context_connect(section_hidden_files, context_hidden_files, parent_path, 0)
 
-        menu.insert_submenu(1, ctx_dict['create'], menu_create)
-        menu.append_section(None, section_edit)
-        menu.append_section(None, section_property)
+            gmenu.insert_section(1, None, section_header_menu)
+            gmenu.append_section(None, section_shutdown)
 
-        context_connect(menu, context_dir, parent_path, 1)
-        context_connect(menu_create, context_create, parent_path, 0)
-        context_connect(section_edit, context_edit, parent_path, 0)
-        context_connect(section_property, context_property, parent_path, 0)
+            context_connect(section_header_menu, context_header_menu, parent_path, 0)
+            context_connect(section_shutdown, context_shutdown, parent_path, 0)
+            context_menu.set_menu_model(gmenu)
+        else:
+            if widget.get_name() == 'view_more':
+                menu.append_section(None, section_more)
+                context_connect(section_more, context_more, parent_path, 0)
 
-        context_menu.set_menu_model(menu)
+            menu.insert_submenu(1, ctx_dict['create'], menu_create)
+            menu.append_section(None, section_edit)
+            menu.append_section(None, section_property)
+
+            context_connect(menu, context_dir, parent_path, 1)
+            context_connect(menu_create, context_create, parent_path, 0)
+            context_connect(section_edit, context_edit, parent_path, 0)
+            context_connect(section_property, context_property, parent_path, 0)
+
+            context_menu.set_menu_model(menu)
 
         scrolled = context_menu.get_first_child().get_first_child()
         scrolled.set_propagate_natural_height(True)
@@ -3529,6 +3909,7 @@ def sw_activate(app):
         context_create.clear()
         context_edit.clear()
         context_property.clear()
+        context_header_menu.clear()
 
         return context_menu
 
@@ -3731,6 +4112,10 @@ def sw_activate(app):
             {'name': ctx_dict['open_location'], 'func': on_cb_file_open_location},
         ]
 
+        context_open_with = [
+            {'name': ctx_dict['open_with'], 'func': on_cb_file_open_with},
+        ]
+
         context_run = [
             {'name': ctx_dict['run'], 'func': on_cb_file_run},
             {'name': ctx_dict['open'], 'func': on_cb_file_open},
@@ -3791,6 +4176,9 @@ def sw_activate(app):
                                     None,
                                     )
         file_type = file_info.get_content_type()
+
+        if Path(x_files[0].get_path()).is_file():
+            context_connect(menu, context_open_with, x_files, 0)
 
         if len(entry_search.get_text()) > 1:
             context_connect(menu, context_open_location, x_files, 0)
@@ -4104,6 +4492,23 @@ def sw_activate(app):
 
         g_file = data[0]
         on_file_open_location(g_file)
+
+    def on_cb_file_open_with(action_name, parameter, data):
+        '''___open a file with program from context menu___'''
+
+        g_file = data[0]
+        on_file_open_with(g_file)
+
+    def on_file_open_with(g_file):
+        '''___open a file with program___'''
+
+        fl = Gtk.FileLauncher()
+        fl.set_always_ask(True)
+        fl.set_file(g_file)
+        try:
+            fl.launch()
+        except Exception as e:
+            print(tc.RED, e , tc.END)
 
     def on_cb_file_open(action_name, parameter, data):
         '''___open a file from the context menu___'''
@@ -4721,16 +5126,39 @@ def sw_activate(app):
 
         file = Path(x_path).name
         parent_path = get_parent_path()
+        shortcut_path = f'{parent_path}/{file}'
 
-        app_dict = app_info(f'{parent_path}/{file}')
-        exe_path = app_dict['Exec'].replace(f'env "{sw_start}" ', '').strip('"')
+        d_exec = [x.split('=')[1] for x in Path(shortcut_path).read_text().splitlines() if 'Exec=' in x]
+        if len(d_exec) > 0:
+            exe = [x for x in d_exec[0].split('"') if '.exe' in x.lower()]
+            msi = [x for x in d_exec[0].split('"') if '.msi' in x.lower()]
+            bat = [x for x in d_exec[0].split('"') if '.bat' in x.lower()]
+            lnk = [x for x in d_exec[0].split('"') if '.lnk' in x.lower()]
 
-        if Path(exe_path).exists():
-            sw_rsh.write_text(app_dict['Exec'].replace(str(sw_start), str(sw_menu)))
-            start_mode()
-            #start_tray()
-        else:
-            return overlay_info(overlay, None, msg.msg_dict['exist_desktop'], None, 3)
+            if len(exe) > 0:
+                app_exec = exe[0]
+
+            elif len(msi) > 0:
+                app_exec = msi[0]
+
+            elif len(bat) > 0:
+                app_exec = bat[0]
+
+            elif len(lnk) > 0:
+                app_exec = lnk[0]
+
+            else:
+                app_exec = None
+
+            if app_exec is not None:
+                if Path(app_exec).exists():
+                    sw_rsh.write_text(f'env "{sw_menu}" "{app_exec}"')
+                    start_mode()
+                else:
+                    return overlay_info(overlay, None, msg.msg_dict['exist_desktop'], None, 3)
+            else:
+                text_message = msg.msg_dict['lnk_error']
+                return dialog_info(app, text_message, 'ERROR')
 
         ####___Context buttons___.
 
@@ -5017,7 +5445,7 @@ def sw_activate(app):
 
     def cb_btn_winehq(self, file, widget):
 
-        name = file.replace('.desktop', '')
+        name = file.replace('.swd', '')
         self.set_uri(f"{winehq_source}{name}")
 
     def cb_btn_protondb(self, file, widget):
@@ -5030,7 +5458,7 @@ def sw_activate(app):
             name = str(Path(img_path).stem).split('_')[-2]
             self.set_uri(f"{protondb_source}{name}")
         else:
-            name = file.replace('.desktop', '')
+            name = file.replace('.swd', '')
             self.set_uri(f"{protondb_source}{name}")
 
         widget.popdown()
@@ -5045,7 +5473,7 @@ def sw_activate(app):
             name = str(Path(img_path).stem).split('_')[-2]
             self.set_uri(f"{griddb_source}{name}")
         else:
-            name = file.replace('.desktop', '')
+            name = file.replace('.swd', '')
             self.set_uri(f"{griddb_source}{name}")
 
         widget.popdown()
@@ -5175,7 +5603,7 @@ def sw_activate(app):
                     ctx.unmap()
                     ctx.unrealize()
 
-                elif '.desktop' in ctx.get_name():
+                elif '.swd' in ctx.get_name():
                     print(f'{tc.VIOLET2}{ctx} {tc.GREEN}unrealize{tc.END}')
                     ctx.get_menu_model().remove_all()
                     ctx.unparent()
@@ -5208,21 +5636,44 @@ def sw_activate(app):
                     if Path(parent_path) == Path(sw_shortcuts):
                         model.select_item(int(pos), True)
                         shortcut_path = Path(model.get_item(int(pos)).get_path())
-                        app_dict = app_info(f'{shortcut_path}')
-                        app_exec = app_dict['Exec'].replace(f'env "{sw_start}" ', '').strip('"')
 
-                        if (Path(f'{shortcut_path}').is_file()
-                            and Path(f'{app_exec}').exists()):
-                                try:
-                                    app_dict = app_info(f'{shortcut_path}')
-                                    sw_rsh.write_text(app_dict['Exec'].replace(str(sw_start), str(sw_menu)))
-                                except:
-                                    pass
+                        d_exec = [x.split('=')[1] for x in Path(shortcut_path).read_text().splitlines() if 'Exec=' in x]
+                        if len(d_exec) > 0:
+                            exe = [x for x in d_exec[0].split('"') if '.exe' in x.lower()]
+                            msi = [x for x in d_exec[0].split('"') if '.msi' in x.lower()]
+                            bat = [x for x in d_exec[0].split('"') if '.bat' in x.lower()]
+                            lnk = [x for x in d_exec[0].split('"') if '.lnk' in x.lower()]
+
+                            if len(exe) > 0:
+                                app_exec = exe[0]
+
+                            elif len(msi) > 0:
+                                app_exec = msi[0]
+
+                            elif len(bat) > 0:
+                                app_exec = bat[0]
+
+                            elif len(lnk) > 0:
+                                app_exec = lnk[0]
+
+                            else:
+                                app_exec = None
+
+                            if app_exec is not None:
+                                if (Path(f'{shortcut_path}').is_file()
+                                    and Path(f'{app_exec}').exists()):
+                                        try:
+                                            app_dict = app_info(f'{shortcut_path}')
+                                            sw_rsh.write_text(f'env "{sw_menu}" "{app_exec}"')
+                                        except:
+                                            pass
+                                        else:
+                                            start_mode()
                                 else:
-                                    start_mode()
-                                    #start_tray()
-                        else:
-                            return overlay_info(overlay, None, msg.msg_dict['exist_desktop'], None, 3)
+                                    return overlay_info(overlay, None, msg.msg_dict['exist_desktop'], None, 3)
+                            else:
+                                text_message = msg.msg_dict['lnk_error']
+                                return dialog_info(app, text_message, 'ERROR')
 
                     elif Path(parent_path) == Path(sw_launchers):
                         pass
@@ -5608,6 +6059,7 @@ def sw_activate(app):
         file_overlay = item_list.get_child()
         file_box = file_overlay.get_first_child()
         file_image = file_box.get_first_child()
+        file_label = None
         symlink_image = file_overlay.get_last_child()
         item = item_list.get_item()
         position = item_list.get_position()
@@ -5646,7 +6098,7 @@ def sw_activate(app):
                     ####___Set_shortcuts___.
                     if Path(item.get_path()).parent == Path(sw_shortcuts):
 
-                        if file_content_type in app_mime_types:
+                        if Path(item.get_path()).suffix in swd_mime_types:
                             dict_ini = read_menu_conf()
 
                             app_name = str(Path(item.get_path()).stem)
@@ -5741,7 +6193,6 @@ def sw_activate(app):
                     ####___Set_files___.
                     else:
                         file_label = file_image.get_next_sibling()
-                        ####___App_mime_type___.
                         if file_content_type in app_mime_types:
                             app_dict = app_info(item.get_path())
                             if not Path(app_dict["Icon"]).exists():
@@ -6506,12 +6957,42 @@ def sw_activate(app):
         def on_thread_wine():
             t = Thread(target=echo_func_name, args=(func_name,))
             t.start()
+            if dict_ini['restore_menu'] == 'on':
+                winedevice = []
+                thread_check_winedevice = Thread(target=check_winedevice, args=[winedevice])
+                thread_check_winedevice.start()
+                s_time = time()
+                parent.set_hide_on_close(True)
+                GLib.timeout_add(1000, check_alive, thread_check_winedevice, parent_back, s_time, None)
 
-        func_wine = wine_lates_download_dict[wine]
-        func_name = f"WINE_OK=1 {func_wine} && RUN_VULKAN"
-        text_message = f"{wine} {msg.msg_dict['not_exists']}"
-        func = [on_thread_wine, on_stop]
-        dialog_question(app, None, text_message, None, func)
+        wine_ver = wine.replace('-amd64', '').replace('-x86_64', '')
+        wine_ver = ''.join([e for e in wine_ver if not e.isalpha()]).strip('-')
+
+        try:
+            func_wine = wine_download_dict[wine]
+        except KeyError as e:
+            text_message = f'{wine} ' + msg.msg_dict['is_not_installed']
+            dialog_question(app, f'{sw_program_name} Info', text_message, [msg.msg_dict['cancel'],], [on_stop,])
+        else:
+            if func_wine == 'WINE_1':
+                name_ver = 'STAG_VER'
+
+            if func_wine == 'WINE_2':
+                name_ver = 'SP_VER'
+
+            if func_wine == 'WINE_3':
+                name_ver = 'GE_VER'
+
+            if func_wine == 'WINE_4':
+                name_ver = 'STAG_VER'
+
+            if func_wine == 'WINE_5':
+                name_ver = 'LUTRIS_GE_VER'
+
+            func_name = f'{name_ver}="{wine_ver}" WINE_OK=1 {func_wine} && RUN_VULKAN'
+            text_message = f"{wine} {msg.msg_dict['not_exists']}"
+            func = [on_thread_wine, on_stop]
+            dialog_question(app, None, text_message, None, func)
 
     def parent_back(s_time):
         '''___restore the menu after exiting a running application___'''
@@ -6588,6 +7069,11 @@ def sw_activate(app):
                 app_path = get_app_path()
                 app_name = get_out()
                 app_suffix = get_suffix()
+
+                if app_suffix == '.lnk':
+                    app_name, app_suffix, app_lnk_path = get_lnk_data(app_path)
+                    write_lnk_data(app_name, app_suffix, app_lnk_path)
+
                 app_conf = Path(f"{sw_app_config}/" + str(app_name))
                 app_conf_dict = app_conf_info(app_conf, switch_labels)
                 debug = app_conf_dict['WINEDBG_DISABLE'].split('=')[1]
@@ -6668,16 +7154,20 @@ def sw_activate(app):
             if wine is not None:
                 app_name = get_out()
                 app_suffix = get_suffix()
+
+                if app_suffix == '.lnk':
+                    app_name = get_lnk_name(app_path)
+                    app_suffix = get_lnk_suffix(app_path)
+
+                    if app_name is None:
+                        text_message = msg.msg_dict['lnk_error']
+                        return dialog_info(app, text_message, 'ERROR')
+
+                    if app_suffix is None:
+                        text_message = msg.msg_dict['lnk_error']
+                        return dialog_info(app, text_message, 'ERROR')
+
                 request_wine(wine)
-
-                if dict_ini['restore_menu'] == 'on':
-                    winedevice = []
-                    thread_check_winedevice = Thread(target=check_winedevice, args=[winedevice])
-                    thread_check_winedevice.start()
-                    s_time = time()
-                    parent.set_hide_on_close(True)
-                    GLib.timeout_add(1000, check_alive, thread_check_winedevice, parent_back, s_time, None)
-
                 t_info = GLib.timeout_add(100, wait_exe_proc, progress_main, app_suffix)
                 timeout_list.append(t_info)
             else:
@@ -6721,9 +7211,9 @@ def sw_activate(app):
             p.start()
             GLib.timeout_add(100, check_alive, p, get_sm_icon, app_name, None)
 
-        if (Path(f'{sw_shortcuts}/{app_name}.desktop').exists()
+        if (Path(f'{sw_shortcuts}/{app_name}.swd').exists()
             and Path(f'{get_pfx_path()}').exists()):
-                app_dict = app_info(Path(f'{sw_shortcuts}/{app_name}.desktop'))
+                app_dict = app_info(Path(f'{sw_shortcuts}/{app_name}.swd'))
                 app_exec = app_dict['Exec'].replace(f'env "{sw_start}" ', '').strip('"')
 
                 if app_exec == app_path.strip('"'):
@@ -6819,12 +7309,10 @@ def sw_activate(app):
 
         def update_wine_path(q):
 
-            cw_file = q[0]
+            cw_file = q
 
             if len(cw_file) > 0:
-                count = 0
                 for cw in cw_file:
-                    count += 2
                     cn = (str(Path(cw).parent.parent)
                             .replace(f'{sw_wine}/', '')
                                 .replace('/files', '')
@@ -7119,8 +7607,7 @@ def sw_activate(app):
                             .replace('/files', '')
                                 .replace('/dist', '')
                 )
-                cw = str(Path(cw).parent.parent).replace(f'{sw_wine}/', '')
-                label = Gtk.Label(label=cn, name=Path(cw))
+                label = Gtk.Label(label=cn, name=Path(cn))
                 change_wine_store.append(label)
 
         set_selected_wine()
@@ -7647,11 +8134,34 @@ def sw_activate(app):
             return cb_btn_clear_shader_cache()
 
     def set_settings_widget(widget, view_widget, title):
+        '''___activate settings submenu___'''
+
+        app_name = get_out()
+        try:
+            on_app_conf_activate(view_widget)
+        except KeyError as e:
+            text_message = (
+                            msg.msg_dict['app_conf_incorrect']
+                            + f' {app_name}. '
+                            + msg.msg_dict['app_conf_reset']
+            )
+            func = [{app_conf_reset_request : (widget, view_widget, title)}, None]
+            dialog_question(app, None, text_message, None, func)
+        else:
+            set_settings(widget, view_widget, title)
+
+    def app_conf_reset_request(args):
+        '''___Request for reset application settings___'''
+
+        widget, view_widget, title = args
+        on_app_conf_default()
+        set_settings(widget, view_widget, title)
+
+    def set_settings(widget, view_widget, title):
         '''___show settings submenu___'''
 
-        on_show_hidden_widgets(view_widget)
-        on_app_conf_activate(view_widget)
         app_name = get_out()
+        on_show_hidden_widgets(view_widget)
 
         if title is not None:
             if app_name == 'StartWine':
@@ -7703,6 +8213,7 @@ def sw_activate(app):
                 on_app_conf_activate(vw_dict['mangohud_settings'])
                 on_app_conf_activate(vw_dict['vkbasalt_settings'])
                 on_app_conf_activate(vw_dict['colors_settings'])
+                start_mode()
         else:
             try:
                 app_conf.write_text(launcher_conf.read_text())
@@ -7713,6 +8224,7 @@ def sw_activate(app):
                 on_app_conf_activate(vw_dict['mangohud_settings'])
                 on_app_conf_activate(vw_dict['vkbasalt_settings'])
                 on_app_conf_activate(vw_dict['colors_settings'])
+                start_mode()
 
     def cb_btn_app_conf_default():
         '''___request reset apllication config to default___'''
@@ -8442,7 +8954,7 @@ def sw_activate(app):
                     )
                 )
 
-        if 'GAME_LANG' in self.get_name():
+        if 'LANG_MODE' in self.get_name():
             if i in lang_mode:
                 app_conf.write_text(
                     app_conf.read_text().replace(
@@ -9044,13 +9556,23 @@ def sw_activate(app):
     def on_about():
         '''___show_about_menu___'''
 
+        str_sw_version = check_sw_version()
+        title_news.set_label(sw_program_name + ' ' + str_sw_version,)
+        about_version.set_label(str_sw_version)
+
         if top_headerbar_start_box.get_first_child() is not None:
             if top_headerbar_start_box.get_first_child().get_name() == 'btn_back_main':
                 btn_back_main.set_visible(True)
         else:
             top_headerbar_start_box.attach(btn_back_main, 0, 0, 1, 1)
 
-        stack_sidebar.set_visible_child(frame_about)
+        if stack_sidebar.get_visible_child() != frame_main:
+            stack_sidebar.set_visible_child(frame_main)
+            btn_back_main.set_visible(False)
+        else:
+            btn_back_main.set_visible(True)
+            stack_sidebar.set_visible_child(frame_about)
+
         update_color_scheme()
 
     def cb_btn_website(self):
@@ -9075,7 +9597,9 @@ def sw_activate(app):
 
     def cb_btn_donation(self):
         '''___open web page about donation___'''
-        self.set_uri(donation_source)
+
+        if self.get_name() != '':
+            self.set_uri(self.get_name())
 
 ####___Debug___.
 
@@ -9590,13 +10114,30 @@ def sw_activate(app):
 
         clear_tmp()
         dict_ini = read_menu_conf()
+        app_name = get_out()
+        app_path = get_app_path()
 
         if sw_expand_menu == 'True':
             if sw_compact_mode == 'False':
                 parent.set_resizable(True)
                 btn_popover_scale.set_visible(True)
 
-                if sw_view_widget == vw_dict['shortcuts']:
+                if (app_name != 'StartWine'
+                    and not Path(f'{sw_shortcuts}/{app_name}.swd').exists()):
+                        on_files(Path(Path(app_path.strip('"')).parent))
+
+                        label_frame_create_shortcut.set_label(msg.msg_dict['cs'])
+                        response = [
+                                    msg.msg_dict['run'].title(),
+                                    msg.msg_dict['cs'].title(),
+                                    msg.msg_dict['cancel'].title(),
+                        ]
+                        start_mode()
+                        title = msg.msg_dict['choose']
+                        func = [on_start, on_message_cs, None]
+                        dialog_question(app, title, None, response, func)
+
+                elif sw_view_widget == vw_dict['shortcuts']:
                     on_shortcuts()
 
                 elif sw_view_widget == vw_dict['install_launchers']:
@@ -9921,6 +10462,27 @@ def sw_activate(app):
                             gl_image = GdkPixbuf.Pixbuf.new_from_file(f'{x}')
         return gl_image
 
+    def on_shutdown():
+        '''___Shutdown all process and close application'''
+
+        Popen(f"{sw_scripts}/sw_stop", shell=True)
+
+        app_path = get_app_path()
+        p = Popen(['ps', '-AF'], stdout=PIPE, encoding='UTF-8')
+        out, err = p.communicate()
+
+        for line in out.splitlines():
+            if str('sw_tray.py') in line:
+                pid = int(line.split()[1])
+                kill(pid, 9)
+
+        for line in out.splitlines():
+            if f"{sw_rsh}" in line:
+                pid = int(line.split()[1])
+                kill(pid, 9)
+
+        app.connection.flush(callback=flush_connection, user_data=None)
+
 ####___Build_main_menu___.
 
 ####___Get_default_display___.
@@ -9964,6 +10526,14 @@ def sw_activate(app):
     parent.set_default_size(sw_width, sw_height)
     parent.set_resizable(True)
     parent.set_default_icon_name(sw_program_name)
+
+    app.connection.register_object(
+                            "/ru/project/StartWine",
+                            app.gdbus_node.interfaces[0],
+                            gdbus_method_call,
+                            None,
+                            None
+    )
 
 ####___Headerbars___.
 
@@ -10117,6 +10687,9 @@ def sw_activate(app):
     image_up = Gtk.Image(css_name='sw_image')
     image_up.set_from_file(IconPath.icon_up)
 
+    image_menu = Gtk.Image(css_name='sw_image')
+    image_menu.set_from_file(IconPath.icon_menu)
+
     btn_home = Gtk.Button(
                         name='btn_home',
                         css_name='sw_button_header',
@@ -10124,7 +10697,7 @@ def sw_activate(app):
                         tooltip_markup=msg.tt_dict['go_home'],
                         child=image_home,
                         visible=False,
-                        )
+    )
     btn_home.connect('clicked', cb_btn_home)
 
     btn_back_main = Gtk.Button(
@@ -10133,7 +10706,7 @@ def sw_activate(app):
                         valign=Gtk.Align.CENTER,
                         tooltip_markup=msg.tt_dict['back_main'],
                         child=image_back,
-                        )
+    )
     btn_back_main.set_visible(False)
     btn_back_main.connect('clicked', cb_btn_back_main)
 
@@ -10144,8 +10717,18 @@ def sw_activate(app):
                         tooltip_markup=msg.tt_dict['view_more'],
                         child=image_more,
                         visible=False,
-                        )
+    )
     btn_more.connect('clicked', cb_btn_view_more)
+
+    btn_header_menu = Gtk.Button(
+                        css_name='sw_wc_menu',
+                        name='header_menu',
+                        valign=Gtk.Align.CENTER,
+                        tooltip_markup=msg.tt_dict['view_menu'],
+                        child=image_menu,
+                        margin_end=8,
+    )
+    btn_header_menu.connect('clicked', cb_btn_view_header_menu)
 
     btn_back_up = Gtk.Button(
                         css_name='sw_button_header',
@@ -10153,7 +10736,7 @@ def sw_activate(app):
                         tooltip_markup=msg.tt_dict['back_up'],
                         child=image_up,
                         visible=False,
-                        )
+    )
     btn_back_up.connect('clicked', cb_btn_back_up)
 
     top_headerbar_start_box = Gtk.Grid(
@@ -10162,7 +10745,7 @@ def sw_activate(app):
                                 margin_top=4,
                                 margin_bottom=4,
                                 column_spacing=4,
-                                )
+    )
     top_headerbar_end_box = Gtk.Box(
                                 orientation=Gtk.Orientation.HORIZONTAL,
                                 valign=Gtk.Align.CENTER,
@@ -10170,7 +10753,7 @@ def sw_activate(app):
                                 margin_top=4,
                                 margin_bottom=4,
                                 spacing=4,
-                                )
+    )
     top_headerbar_center_box = Gtk.Box(
                                 orientation=Gtk.Orientation.HORIZONTAL,
                                 hexpand=True,
@@ -10181,7 +10764,7 @@ def sw_activate(app):
                                 spacing=4,
                                 margin_start=8,
                                 margin_end=8,
-                                )
+    )
     top_headerbar_center_box.append(btn_home)
     top_headerbar_center_box.append(stack_search_path)
     top_headerbar_center_box.append(btn_more)
@@ -10205,17 +10788,9 @@ def sw_activate(app):
     wc_maximize = Gtk.Button(css_name='sw_wc_maximize')
     wc_maximize.connect('clicked', on_parent_maximize)
 
-    image_about = Gtk.Image(css_name='sw_image')
-    image_about.set_from_file(IconPath.icon_info)
-    btn_about =  Gtk.Button(css_name='sw_button_header')
-    btn_about.set_tooltip_markup(msg.tt_dict['about'])
-    btn_about.set_name(btn_dict['about'])
-    btn_about.set_child(image_about)
-    btn_about.connect('clicked', cb_btn_main)
     top_headerbar_start_box.attach(btn_back_main, 0, 0, 1, 1)
-    top_headerbar_start_box.attach(btn_about, 1, 0, 1, 1)
 
-    #top_headerbar_end_box.append(wc_resize)
+    top_headerbar_end_box.append(btn_header_menu)
     top_headerbar_end_box.append(wc_minimize)
     top_headerbar_end_box.append(wc_maximize)
     top_headerbar_end_box.append(wc_close)
@@ -10834,7 +11409,6 @@ def sw_activate(app):
 
     btn_install = Gtk.Button(css_name='sw_button')
     btn_install.set_hexpand(True)
-    btn_install.set_tooltip_markup(msg.tt_dict['install_launchers'])
     btn_install.set_name(btn_dict['install_launchers'])
     btn_install.set_child(grid_label_install)
     btn_install.connect('clicked', cb_btn_main)
@@ -12346,7 +12920,8 @@ def sw_activate(app):
 
     colors_pref_theme = Gtk.Box(
                             css_name='sw_pref_box',
-                            orientation=Gtk.Orientation.VERTICAL
+                            orientation=Gtk.Orientation.VERTICAL,
+                            valign=Gtk.Align.START,
                             )
     colors_pref_theme.append(colors_theme_title_grid)
     colors_pref_theme.append(colors_flow_theme)
@@ -13060,9 +13635,6 @@ def sw_activate(app):
             btn_a.set_name(w)
             btn_a.connect('clicked', cb_btn_about)
 
-#            if w == 'about_update':
-#                btn_a.set_visible(False)
-
             pref_group_about.append(btn_a)
 
             grid_about_content = Gtk.Grid()
@@ -13077,10 +13649,6 @@ def sw_activate(app):
 
             stack_about.add_named(grid_about_content, w)
 
-            if count == 1:
-                btn_a.set_visible(False)
-                grid_about_content.set_visible(False)
-
     grid_about_news = stack_about.get_child_by_name(list(about_dict)[0])
     grid_about_details = stack_about.get_child_by_name(list(about_dict)[1])
     grid_about_authors = stack_about.get_child_by_name(list(about_dict)[2])
@@ -13089,8 +13657,8 @@ def sw_activate(app):
     grid_about_update = stack_about.get_child_by_name(list(about_dict)[5])
 
     ####___About_news___.
-
-    label_news = Gtk.Label(css_name='sw_label_desc', label=str_news)
+    format_news = '\n \u2022 '.join([s for s in str_news.splitlines()])
+    label_news = Gtk.Label(css_name='sw_label_desc', label=format_news)
     label_news.set_xalign(0)
     label_news.set_wrap(True)
     label_news.set_wrap_mode(Pango.WrapMode.WORD)
@@ -13346,14 +13914,24 @@ def sw_activate(app):
     grid_about_license.attach(btn_license, 0, 2, 1, 1)
 
     ####___About_donation___.
+    count = 1
+    for k, v in donation_source.items():
+        count += 1
 
-    label_btn_donation = Gtk.Label(
-                                css_name='sw_label',
-                                label=about_dict['about_donation']
-    )
-    btn_donation = Gtk.LinkButton(css_name='sw_link')
-    btn_donation.set_child(label_btn_donation)
-    btn_donation.connect('activate-link', cb_btn_donation)
+        label_btn_donation = Gtk.Label(
+                                    css_name='sw_label',
+                                    label=v,
+                                    xalign=0,
+                                    wrap=True,
+                                    wrap_mode=True,
+                                    max_width_chars=4,
+                                    natural_wrap_mode=True,
+                                    selectable=True,
+        )
+        btn_expander = Gtk.Expander(label=k)
+        btn_expander.set_child(label_btn_donation)
+
+        grid_about_donation.attach(btn_expander, 0, count, 1, 1)
 
     label_donation = Gtk.Label(
                             css_name='sw_label_desc',
@@ -13361,14 +13939,6 @@ def sw_activate(app):
                             xalign=0,
                             wrap=True,
                             wrap_mode=Pango.WrapMode.WORD,
-    )
-    label_btc = Gtk.Label(
-                        css_name='sw_label_desc',
-                        label=str_btc,
-                        xalign=0,
-                        wrap=True,
-                        wrap_mode=Pango.WrapMode.CHAR,
-                        selectable=True,
     )
     title_donation = Gtk.Label(
                             css_name='sw_label',
@@ -13384,8 +13954,6 @@ def sw_activate(app):
     pref_group_about_donation.append(label_donation)
 
     grid_about_donation.attach(pref_group_about_donation, 0, 1, 1, 1)
-    grid_about_donation.attach(btn_donation, 0, 2, 1, 1)
-    grid_about_donation.attach(label_btc, 0, 3, 1, 1)
 
 ####___Vte_terminal___.
 
@@ -13980,7 +14548,9 @@ def sw_activate(app):
                             )
     overlay_web.add_overlay(label_overlay)
 
-    grid_web = Gtk.Grid()
+    grid_web = Gtk.Grid(
+                        css_name='sw_grid', name='web_view'
+    )
     grid_web.attach(scrolled_web_bar, 0, 0, 1, 1)
     grid_web.attach(overlay_web, 0, 1, 1, 1)
 
@@ -14214,64 +14784,6 @@ def sw_activate(app):
     reveal_stack.add_child(scrolled_install_wine)
     reveal_stack.add_child(grid_web)
 
-#    def cb_switch_stack(self):
-
-#        #reveal_stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
-
-#        if self.get_name() == 'shortcuts':
-#            on_shortcuts()
-
-#        if self.get_name() == 'files':
-#            dict_ini = read_menu_conf()
-#            sw_current_dir = dict_ini['current_dir']
-#            on_files(sw_current_dir)
-
-#        if self.get_name() == 'install_launchers':
-#            on_install_launchers()
-
-#    btn_switch_stack_shortcuts = Gtk.Button(
-#                                        name='shortcuts',
-#                                        css_name='sw_button_header',
-#                                        label=vl_dict['shortcuts'],
-#    )
-#    btn_switch_stack_files = Gtk.Button(
-#                                        name='files',
-#                                        css_name='sw_button_header',
-#                                        label=vl_dict['files'],
-#    )
-#    btn_switch_stack_launchers = Gtk.Button(
-#                                        name='install_launchers',
-#                                        css_name='sw_button_header',
-#                                        label=msg.msg_dict['install_desc'],
-#    )
-#    btn_switch_stack_shortcuts.connect('clicked', cb_switch_stack)
-#    btn_switch_stack_files.connect('clicked', cb_switch_stack)
-#    btn_switch_stack_launchers.connect('clicked', cb_switch_stack)
-
-#    switchflow_reveal_stack = Gtk.Grid(
-#                                css_name='sw_flowbox',
-#                                orientation=Gtk.Orientation.HORIZONTAL,
-#                                hexpand=True,
-#                                #column_homogeneous=True,
-#    )
-#    hbox_reveal_stack = Gtk.Box(
-#                                css_name='sw_box_view_tabs',
-#                                orientation=Gtk.Orientation.HORIZONTAL,
-#                                halign=Gtk.Align.CENTER,
-#                                spacing=16,
-#                                homogeneous=True,
-#    )
-#    hbox_reveal_stack.set_size_request(480, -1)
-#    hbox_reveal_stack.append(btn_switch_stack_shortcuts)
-#    hbox_reveal_stack.append(btn_switch_stack_files)
-#    hbox_reveal_stack.append(btn_switch_stack_launchers)
-
-#    switchflow_reveal_stack.attach(hbox_reveal_stack, 1, 0, 1, 1)
-
-#    vbox_reveal_stack = Gtk.Box(css_name='sw_box', orientation=Gtk.Orientation.VERTICAL)
-#    vbox_reveal_stack.append(switchflow_reveal_stack)
-#    vbox_reveal_stack.append(reveal_stack)
-
     ####___Overlay___.
 
     overlay_image_next = Gtk.Image(css_name='sw_image')
@@ -14428,9 +14940,18 @@ def sw_activate(app):
     ####___Event_controllers___.
     ctrl_key = Gtk.EventControllerKey()
     ctrl_key.connect('key_pressed', cb_ctrl_key_pressed, parent)
+
     ctrl_lclick = Gtk.GestureClick()
     ctrl_lclick.connect('pressed', cb_ctrl_lclick_parent)
     ctrl_lclick.set_button(1)
+
+#    ctrl_forward_click = Gtk.GestureClick()
+#    ctrl_forward_click.connect('pressed', cb_ctrl_fclick_parent)
+#    ctrl_forward_click.set_button(4)
+
+#    ctrl_back_click = Gtk.GestureClick()
+#    ctrl_back_click.connect('pressed', cb_ctrl_bclick_parent)
+#    ctrl_back_click.set_button(5)
 
     ####___GL_Area_overlay___.
     gl_image = get_gl_image()
@@ -14442,13 +14963,17 @@ def sw_activate(app):
     parent.set_child(gl_cover)
     parent.add_controller(ctrl_key)
     parent.add_controller(ctrl_lclick)
+    #parent.add_controller(ctrl_forward_click)
+    #parent.add_controller(ctrl_back_click)
     parent.add_controller(ctrl_drop_target)
     parent.connect('close-request', on_write_parent_state)
 
     ####___Check_states___.
     check_reveal_flap()
     check_parent_state()
-    parent.present()
+
+    if not '--silent' in argv:
+        parent.present()
 
     ####___Reveal flap sidebar handler___.
     GLib.timeout_add(200, check_reveal_flap)
