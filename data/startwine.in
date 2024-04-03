@@ -3,7 +3,7 @@
 
 export SW_GIT_VER="@VERSION@"
 export UTILS_GIT_VER="2.5"
-export RUNTIME_GIT_VER="0.3"
+export RUNTIME_GIT_VER="0.4"
 
 [ ! -d "$HOME/.config" ] && \
     mkdir -p "$HOME/.config"
@@ -13,6 +13,8 @@ if [ -f "$HOME/.config/swrc" ]; then
 else
     export START_WINE_PATH="$HOME/.local/share/StartWine"
 fi
+
+export SW_RUNTIME="${START_WINE_PATH}/data/runtime/sw_runtime"
 
 if [ -d "${START_WINE_PATH}" ]; then
     export DIRECTORY_EXIST="true"
@@ -236,29 +238,40 @@ fi
 if [[ "$RUNTIME_VER" -lt "$RUNTIME_FORMAT_VER" ]]; then
 
     export URL_RUNTIME_LIST=(
-       "https://huggingface.co/SudoNano/sw_repo/resolve/main/runtime/sw_runtime_v$RUNTIME_GIT_VER.tar.zst?download=true"
-       "https://github.com/RusNor/sw_runtime/releases/download/sw_runtime_v$RUNTIME_GIT_VER/sw_runtime_v$RUNTIME_GIT_VER.tar.zst"
+       "https://huggingface.co/SudoNano/sw_repo/resolve/main/runtime/sw_runtime_v$RUNTIME_GIT_VER.iso?download=true"
+       "https://github.com/RusNor/sw_runtime/releases/download/sw_runtime_v$RUNTIME_GIT_VER/sw_runtime_v$RUNTIME_GIT_VER.iso"
     )
 
     [ ! -d "${START_WINE_PATH}/data/runtime" ] && \
         mkdir -p "${START_WINE_PATH}/data/runtime"
 
-    [ -f "${START_WINE_PATH}/data/runtime/sw_runtime" ] && \
-        rm -rf "${START_WINE_PATH}/data/runtime/sw_runtime"
+    [ -f "${SW_RUNTIME}" ] && \
+        rm -rf "${SW_RUNTIME}"
 
-    echo "${RUNTIME_GIT_VER}" > "${START_WINE_PATH}/data/runtime/version"
+    try_download "${URL_RUNTIME_LIST[0]}" "${SW_RUNTIME}" \
+    || try_download "${URL_RUNTIME_LIST[1]}" "${SW_RUNTIME}" &&
+    chmod +x "${SW_RUNTIME}"
 
-    try_download "${URL_RUNTIME_LIST[0]}" "${START_WINE_PATH}/data/tmp/sw_runtime_v${RUNTIME_GIT_VER}.tar.zst" \
-    || try_download "${URL_RUNTIME_LIST[1]}" "${START_WINE_PATH}/data/tmp/sw_runtime_v${RUNTIME_GIT_VER}.tar.zst" &&
-    tar -I zstd -xvf "${START_WINE_PATH}/data/tmp/sw_runtime_v${RUNTIME_GIT_VER}.tar.zst" -C "${START_WINE_PATH}/data/runtime" &&
-    chmod +x "${START_WINE_PATH}/data/runtime/sw_runtime"
-
-    [ -f "${START_WINE_PATH}/data/tmp/sw_runtime_v${RUNTIME_GIT_VER}.tar.zst" ] && \
-        rm -rf "${START_WINE_PATH}/data/tmp/sw_runtime_v${RUNTIME_GIT_VER}.tar.zst"
+    [ -f "${SW_RUNTIME}" ] && \
+        echo "${RUNTIME_GIT_VER}" > "${START_WINE_PATH}/data/runtime/version"
 
 fi
 
 if [[ "$SCRIPT_VER" -lt "$SW_GIT_VER" ]]; then
+
+    if [ -x "$(command -v gsettings)" ]; then
+
+        [ ! -d "$HOME/.local/share/icons" ] && \
+            mkdir -p "$HOME/.local/share/icons"
+
+        export THEME_NAME=$(gsettings get org.gnome.desktop.interface icon-theme | sed -r "s/'//g" | sed -r "s/-.*//g")
+        COPY_THEMES="$(ls -d "/usr/share/icons/$THEME_NAME"*)"
+        for COPY_THEME in $COPY_THEMES ; do
+            [ ! -d "$HOME/.local/share/icons/$(basename $COPY_THEME)" ] && \
+                cp -rf "$COPY_THEME" "$HOME/.local/share/icons" && \
+                echo "$(basename $COPY_THEME) Copy completed successfully"
+        done
+    fi
 
     [ -f "${START_WINE_PATH}/data/scripts/sw_menu.json" ] && \
         cp -f "${START_WINE_PATH}/data/scripts/sw_menu.json" "${START_WINE_PATH}/data/tmp"
@@ -298,32 +311,43 @@ if [[ "$SCRIPT_VER" -lt "$SW_GIT_VER" ]]; then
     export URL_VER="https://github.com/RusNor/StartWine-Launcher/releases/download/StartWine_v$SW_GIT_VER/StartWine_v$SW_GIT_VER.tar.xz"
 
 #    try_download "${URL_VER}" "${START_WINE_PATH}/data/tmp/StartWine_v$SW_GIT_VER.tar.xz" &&
-#
-#    tar -xvf "${START_WINE_PATH}/data/tmp/StartWine_v$SW_GIT_VER.tar.xz" -C "${START_WINE_EXTRACT}" &&
+#    echo "Download complete succsessfully."
     cp -rf /usr/share/startwine/data "${START_WINE_EXTRACT}/StartWine" &&
 
-    [ -f "${START_WINE_PATH}/data/tmp/sw_menu.json" ] && \
-        cp -f "${START_WINE_PATH}/data/tmp/sw_menu.json" "${START_WINE_PATH}/data/scripts"
+    if [ -f "${SW_RUNTIME}" ]; then
 
-    [ -f "${START_WINE_PATH}/data/tmp/sw_menu.json" ] && \
-        rm -rf "${START_WINE_PATH}/data/tmp/sw_menu.json"
+#        "${SW_RUNTIME}" tar -xvf "${START_WINE_PATH}/data/tmp/StartWine_v$SW_GIT_VER.tar.xz" -C "${START_WINE_EXTRACT}"
 
-    [ -d "${START_WINE_PATH}/data/tmp/StartWine" ] && \
-        rm -rf "${START_WINE_PATH}/data/tmp/StartWine"
+        [ -f "${START_WINE_PATH}/data/tmp/sw_menu.json" ] && \
+            cp -f "${START_WINE_PATH}/data/tmp/sw_menu.json" "${START_WINE_PATH}/data/scripts"
 
-    [ -f "${START_WINE_PATH}/data/tmp/StartWine_v$GIT_VER.tar.xz" ] && \
-        rm -rf "${START_WINE_PATH}/data/tmp/StartWine_v$GIT_VER.tar.xz"
+        [ -f "${START_WINE_PATH}/data/tmp/sw_menu.json" ] && \
+            rm -rf "${START_WINE_PATH}/data/tmp/sw_menu.json"
 
-    try_get_wine_ver
+        [ -d "${START_WINE_PATH}/data/tmp/StartWine" ] && \
+            rm -rf "${START_WINE_PATH}/data/tmp/StartWine"
 
-    if [ $DIRECTORY_EXIST == "true" ]; then
-        "${START_WINE_PATH}/data/scripts/sw_start" "$@" ; exit 0
+        [ -f "${START_WINE_PATH}/data/tmp/StartWine_v$SW_GIT_VER.tar.xz" ] && \
+            rm -rf "${START_WINE_PATH}/data/tmp/StartWine_v$SW_GIT_VER.tar.xz"
+
+        try_get_wine_ver
+
+        if [ $DIRECTORY_EXIST == "true" ]; then
+            "${SW_RUNTIME}" "${START_WINE_PATH}/data/scripts/sw_start" "$@" ; exit 0
+        else
+            "${SW_RUNTIME}" "${START_WINE_PATH}/data/scripts/sw_start" --path "${START_WINE_PATH}" "$@" 2>/dev/null ; exit 0
+        fi
     else
-        "${START_WINE_PATH}/data/scripts/sw_start" --path "${START_WINE_PATH}" "$@" 2>/dev/null ; exit 0
+        [ -d "${START_WINE_PATH}/data/tmp/StartWine" ] && \
+            rm -rf "${START_WINE_PATH}/data/tmp/StartWine"
+
+        [ -f "${START_WINE_PATH}/data/tmp/StartWine_v$SW_GIT_VER.tar.xz" ] && \
+            rm -rf "${START_WINE_PATH}/data/tmp/StartWine_v$SW_GIT_VER.tar.xz"
+
+        echo "ERROR: $SW_RUNTIME not exists!"
     fi
 else
-    "${START_WINE_PATH}/data/scripts/sw_start" "$@" ; exit 0
-
+    "${SW_RUNTIME}" "${START_WINE_PATH}/data/scripts/sw_start" "$@" ; exit 0
 fi
 
 ##############################--Archive--#######################################
