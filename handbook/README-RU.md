@@ -23,12 +23,6 @@ Discord > [Click](https://discord.gg/jjY3auVdfm)
 
 Сделайте файл исполняемым и запусте с двойным кликом
 
-Если у вас не запускается StartWine, введите данные команды
-```bash
-sudo sh -c 'echo kernel.pid_max=4194304 >> /etc/sysctl.d/98-pid_max.conf'
-sudo sh -c 'echo 4194304 > /proc/sys/kernel/pid_max'
-```
-
 ## Интерфейс
 
 Видео демнстарция интерфейса StartWine
