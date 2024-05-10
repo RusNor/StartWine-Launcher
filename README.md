@@ -25,12 +25,6 @@ Discord > [Click](https://discord.gg/jjY3auVdfm)
 
 Make the file executable and launch it with a double click
 
-If StartWine does not start, enter these commands
-```bash
-sudo sh -c 'echo kernel.pid_max=4194304 >> /etc/sysctl.d/98-pid_max.conf'
-sudo sh -c 'echo 4194304 > /proc/sys/kernel/pid_max'
-```
-
 ## GUI
 
 Video demonstration of StartWine interface
