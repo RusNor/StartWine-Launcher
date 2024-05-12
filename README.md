@@ -94,31 +94,31 @@ StartWine was written from scratch, but using already ready-made components with
 
 > **Developers**
 
-[Rustan Normatov](https://github.com/RusNor)
-[Nikita Maslov](https://github.com/nix-on-nix)
+- [Rustan Normatov](https://github.com/RusNor)
+- [Nikita Maslov](https://github.com/nix-on-nix)
 
 > **Created and helped write code**
 
-[Rustan Normatov](https://github.com/RusNor)
-[Nikita Maslov](https://github.com/nix-on-nix)
-[Maxim Tarasov](https://github.com/VHSgunzo)
+- [Rustan Normatov](https://github.com/RusNor)
+- [Nikita Maslov](https://github.com/nix-on-nix)
+- [Maxim Tarasov](https://github.com/VHSgunzo)
 
 > **Participants in the project**
 
-StartWine Community
-Андрей
-3y6HuK
-Alexandrdrdr
-Huskysoul
-kazbek
-Kot41ru
-Fanchji (Vitaly)
-Survolog
-Lex
-Lintech
-LinuxShef
-Sheridan
-Wilk
+- StartWine Community
+- Андрей
+- 3y6HuK
+- Alexandrdrdr
+- Huskysoul
+- kazbek
+- Kot41ru
+- Fanchji (Vitaly)
+- Survolog
+- Lex
+- Lintech
+- LinuxShef
+- Sheridan
+- Wilk
 
 > **Project design**
 
