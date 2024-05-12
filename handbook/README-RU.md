@@ -92,31 +92,31 @@ StartWine был написан с нуля, но с использование�
 
 > **Разработчики**
 
-[Рустам Норматов](https://github.com/RusNor)
-[Никита Маслов](https://github.com/nix-on-nix)
+- [Рустам Норматов](https://github.com/RusNor)
+- [Никита Маслов](https://github.com/nix-on-nix)
 
 > **Создавали и помогали в написании кода**
 
-[Рустам Норматов](https://github.com/RusNor)
-[Никита Маслов](https://github.com/nix-on-nix)
-[Максим Тарасов](https://github.com/VHSgunzo)
+- [Рустам Норматов](https://github.com/RusNor)
+- [Никита Маслов](https://github.com/nix-on-nix)
+- [Максим Тарасов](https://github.com/VHSgunzo)
 
 > **Участники проекта**
 
-StartWine Community
-Андрей
-3y6HuK
-Alexandrdrdr
-Huskysoul
-kazbek
-Kot41ru
-Fanchji (Виталий)
-Survolog
-Lex
-Lintech
-LinuxShef
-Sheridan
-Wilk
+- StartWine Community
+- Андрей
+- 3y6HuK
+- Alexandrdrdr
+- Huskysoul
+- kazbek
+- Kot41ru
+- Fanchji (Виталий)
+- Survolog
+- Lex
+- Lintech
+- LinuxShef
+- Sheridan
+- Wilk
 
 > **Дизайн проекта**
 
