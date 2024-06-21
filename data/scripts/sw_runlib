@@ -4,19 +4,13 @@ export START_WINE_PATH="$(cd "$(dirname "$(realpath "$0")")"/../../ && pwd)"
 
 ###############################   VERSION   ####################################
 
-export SW_VER="403"
+export SW_VER="404"
 export UTILS_VER="2.5"
+export PFX_DEF_VER="0.1"
 
 ##############################...LOCALE...######################################
 
-[ -f "${START_WINE_PATH}/data/scripts/sw_menu.json" ] && \
-    export SW_LANG="$(grep -oE "en_US|ru_RU" "${START_WINE_PATH}/data/scripts/sw_menu.json")"
-
-if [ "${SW_LANG}" == "en_US" ]; then
-    export LANG="en_US"
-else
-    export LANG="ru_RU.UTF-8"
-fi
+export LANGUAGE="${SW_LOCALE}.UTF-8"
 
 . gettext.sh
 export TEXTDOMAIN="StartWine"
@@ -190,16 +184,12 @@ libraries_init_error () {
 
 sw_win_ver () {
 
-    if [[ -z `cat "${WINEPREFIX}/system.reg" | grep "Windows $SW_USE_WINDOWS_VER"` ]]; then
-        if [ ! -z "${SW_USE_WINDOWS_VER}" ] && [ `echo "$SW_USE_WINDOWS_VER" | sed 's/.*/\L&/'` == "xp" ]; then
-            if [ "${WINEARCH}" != "win32" ]; then
-                export SW_USE_WINDOWS_VER="xp64"
-            else
-                export SW_USE_WINDOWS_VER="xp"
-            fi
-        fi
-        "${WINELOADER}" winecfg -v `echo "win${SW_USE_WINDOWS_VER}" | sed 's/.*/\L&/'`
-        echo "Set to win-${SW_USE_WINDOWS_VER}"
+    if [[ ! -n "$(grep -i "ProductName.*Microsoft Windows $SW_USE_WINDOWS_VER" "$WINEPREFIX/system.reg" 2>/dev/null)" ]]; then
+        [[ "$SW_USE_WINDOWS_VER" == "xp" && "$WINEARCH" == "win64" ]] && \
+            export SW_USE_WINDOWS_VER="xp64"
+        "${WINELOADER}" winecfg -v win$SW_USE_WINDOWS_VER &>/dev/null
+        "${WINESERVER}" -w
+        echo "Set to Windows ${SW_USE_WINDOWS_VER}"
     fi
 
 }
@@ -436,7 +426,6 @@ try_get_wine_ver () {
         "https://api.github.com/repos/Kron4ek/Wine-Builds/releases"
         "https://api.github.com/repos/RusNor/Wine-Steam-Proton/releases"
         "https://api.github.com/repos/GloriousEggroll/proton-ge-custom/releases"
-        "https://api.github.com/repos/GloriousEggroll/wine-ge-custom/releases"
     )
 
     grep_url() { grep 'browser_download_url'|grep -iEo 'https.*download.*\.tar\.gz|https.*download.*\.tar\.xz|https.*download.*\.tar\.zst'|sed "s/.*-x86.tar.xz//g" ; }
@@ -444,7 +433,6 @@ try_get_wine_ver () {
     export staging_ver=$(curl -s "${url_list[0]}"|grep_url|tr -d '"'|tr '\n' ' ')
     export steam_proton_ver=$(curl -s "${url_list[1]}"|grep_url|tr -d '"'|tr '\n' ' ')
     export proton_ge_ver=$(curl -s "${url_list[2]}"|grep_url|tr -d '"'|tr '\n' ' ')
-    export lutris_ge_ver=$(curl -s "${url_list[3]}"|grep_url|tr -d '"'|tr '\n' ' ')
 
     for staging in $staging_ver ; do
         [[ $staging == *"staging-amd64"* && $staging != *"rc1"* ]] && \
@@ -453,17 +441,11 @@ try_get_wine_ver () {
             staging_tkg_list+="$staging "
     done
 
-    for lutris_ge in $lutris_ge_ver ; do
-        [[ "$lutris_ge" != *"LoL"* && "$lutris_ge" != *"lol"* ]] && \
-            lutris_ge_list+="$lutris_ge "
-    done
-
     echo "{" > "${START_WINE_PATH}/data/scripts/wine_version.json"
     echo "\"wine_staging\": \"${staging_list[*]}\"," >> "${START_WINE_PATH}/data/scripts/wine_version.json"
     echo "\"wine_steam_proton\": \"$steam_proton_ver\"," >> "${START_WINE_PATH}/data/scripts/wine_version.json"
     echo "\"wine_proton_ge\": \"$proton_ge_ver\"," >> "${START_WINE_PATH}/data/scripts/wine_version.json"
-    echo "\"wine_staging_tkg\": \"${staging_tkg_list[*]}\"," >> "${START_WINE_PATH}/data/scripts/wine_version.json"
-    echo "\"wine_lutris_ge\": \"${lutris_ge_list[*]}\"" >> "${START_WINE_PATH}/data/scripts/wine_version.json"
+    echo "\"wine_staging_tkg\": \"${staging_tkg_list[*]}\"" >> "${START_WINE_PATH}/data/scripts/wine_version.json"
     echo "}" >> "${START_WINE_PATH}/data/scripts/wine_version.json"
 
 }
@@ -537,14 +519,10 @@ try_update_sw () {
                     [ -f "${START_WINE_PATH}/data/tmp/StartWine_v$GIT_VER.tar.xz" ] && \
                         try_remove "${START_WINE_PATH}/data/tmp/StartWine_v$GIT_VER.tar.xz"
 
-                    try_get_wine_ver
-
                     "$CRIER" -i "$(eval_gettext 'The update is completed successfully. Restart StartWine for the changes to take effect.')"
                 fi
             fi
         else
-            try_get_wine_ver
-
             "$CRIER" -i "$(eval_gettext 'This is the latest version of StartWine. There is nothing more to do.')"
         fi
     fi
@@ -554,6 +532,21 @@ try_update_sw () {
 TRY_REGEDIT_PATCH () {
 
     "${WINELOADER}" "regedit" "${START_WINE_PATH}/data/app_patches/${SW_USE_REGEDIT_PATCH}" "$@"
+
+}
+
+try_download_pfx_dn_default () {
+
+    if [ ! -f "${START_WINE_PATH}/data/pfx_backup/pfx_dn_default.iso" ]; then
+
+        export URL_PFX_LIST=(
+           "https://huggingface.co/SudoNano/sw_repo/resolve/main/pfx_backup/pfx_dn_default.iso?download=true"
+           "https://github.com/RusNor/pfx_backup/releases/download/pfx_default/pfx_dn_default.iso"
+        )
+
+        "$CRIER" -d "${URL_PFX_LIST[0]}" "${START_WINE_PATH}/data/pfx_backup/pfx_dn_default.iso" \
+        || "$CRIER" -d "${URL_PFX_LIST[1]}" "${START_WINE_PATH}/data/pfx_backup/pfx_dn_default.iso"
+    fi
 
 }
 
@@ -606,7 +599,7 @@ export DRIVE_Z="$WINEPREFIX/dosdevices/z:"
 export SW_DESKTOP_DIR="$(xdg-user-dir DESKTOP)"
 export CRIER="${START_WINE_PATH}/data/scripts/sw_crier.py"
 export WINE_MONO_OVERRIDES="Microsoft.Xna.Framework.*,Gac=n"
-export SW_RUN_RUNIMAGE="${START_WINE_PATH}/data/runtime/sw_runtime"
+export SW_RUN_RUNIMAGE="${START_WINE_PATH}/data/runtime/sw"
 
 ##################################   CREATE   ##################################
 
@@ -617,6 +610,7 @@ try_create_dir "${START_WINE_PATH}/data/wine"
 try_create_dir "${START_WINE_PATH}/Shortcuts"
 try_create_dir "${START_WINE_PATH}/data/tools"
 try_create_dir "${START_WINE_PATH}/data/tmp/logs"
+try_create_dir "${START_WINE_PATH}/data/tmp/stats"
 try_create_dir "${START_WINE_PATH}/data/tmp/icons"
 try_create_dir "${HOME}/.local/share/applications"
 try_create_dir "${START_WINE_PATH}/data/pfx_backup"
@@ -634,27 +628,12 @@ if [ ! -f "${HOME}/.local/share/applications/StartWine.desktop" ] && [ ! -f "/us
     sw_desktop_name="StartWine.desktop"
     echo "[Desktop Entry]" > "${HOME}/.local/share/applications/${sw_desktop_name}"
     echo "Name=StartWine" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
-    echo "Exec=env \"${SW_RUN_RUNIMAGE}\" \"${START_WINE_PATH}/data/scripts/sw_start\" %F" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
+    echo "Exec=env \"${SW_RUN_RUNIMAGE}\" %F" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
     echo "Comment[en_GB]=Launch Windows applications on Linux operating systems" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
     echo "Comment[ru]=Запуск приложений Windows в операционных системах Linux" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
     echo "Type=Application" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
     echo "MimeType=application/x-wine-extension-msp;application/x-msi;application/x-ms-dos-executable;" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
     echo "Categories=Game;" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
-    echo "Icon=${START_WINE_PATH}/data/img/gui_icons/sw_icon.svg" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
-    chmod +x "${HOME}/.local/share/applications/${sw_desktop_name}"
-fi
-
-if [ ! -f "${HOME}/.local/share/applications/StartWine-Run.desktop" ] && [ ! -f "/usr/share/applications/StartWine-Run.desktop" ]; then
-    sw_desktop_name="StartWine-Run.desktop"
-    echo "[Desktop Entry]" > "${HOME}/.local/share/applications/${sw_desktop_name}"
-    echo "Name=StartWine-Run" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
-    echo "Exec=env \"${SW_RUN_RUNIMAGE}\" \"${START_WINE_PATH}/data/scripts/sw_start\" %F --run" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
-    echo "Comment[en_GB]=Launch Windows applications on Linux operating systems" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
-    echo "Comment[ru]=Запуск приложений Windows в операционных системах Linux" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
-    echo "Type=Application" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
-    echo "MimeType=application/x-wine-extension-msp;application/x-msi;application/x-ms-dos-executable;" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
-    echo "Categories=Game;" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
-    echo "NoDisplay=true" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
     echo "Icon=${START_WINE_PATH}/data/img/gui_icons/sw_icon.svg" >> "${HOME}/.local/share/applications/${sw_desktop_name}"
     chmod +x "${HOME}/.local/share/applications/${sw_desktop_name}"
 fi
@@ -702,7 +681,7 @@ fi
 if [ "${SW_USE_NVAPI_DISABLE}" == 1 ]; then
     try_winedlloverride_update "nvapi,nvapi64,nvcuda,nvcuvid,nvencodeapi,nvencodeapi64="
 else
-    if [ -d "${WINEDIR}/lib/wine/nvapi" ]; then
+    if [ -f "${WINEDIR}/lib/wine/nvapi/nvapi.dll" ]; then
         if [ "${WINEARCH}" != "win32" ]; then
             [ -f "${WINEDIR}/lib/wine/nvapi/nvapi.dll" ] && \
                 try_copy "${WINEDIR}/lib/wine/nvapi/nvapi.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
@@ -778,18 +757,26 @@ if [ "${SW_USE_FSR}" == 1 ]; then
     export WINE_FULLSCREEN_FSR=1
     export WINE_FULLSCREEN_FSR_STRENGTH=2
     export WINE_FULLSCREEN_INTEGER_SCALING=0
+    export FULLSCREEN_PRESERVE_WINDOW_SIZE=1
     export WINE_FULLSCREEN_FSR_MODE="${SW_USE_FSR_MODE}"
 else
     unset WINE_FULLSCREEN_FSR WINE_FULLSCREEN_FSR_STRENGTH WINE_FULLSCREEN_INTEGER_SCALING WINE_FULLSCREEN_FSR_MODE WINE_FULLSCREEN_FAKE_CURRENT_RES
 fi
 
 if [ "${SW_USE_GSTREAMER}" == 1 ]; then
+
+    [ "${SW_GAME_NAME}" != "StartWine" ] && \
+        try_create_dir "${START_WINE_PATH}/data/tmp/gstreamer-1.0/${SW_GAME_NAME}"
+
     export GST_DEBUG="0:WARNING"
-    export WINE_GST_REGISTRY_DIR="${START_WINE_PATH}/data/tmp/gstreamer-1.0"
-    export MEDIACONV_AUDIO_DUMP_FILE="${START_WINE_PATH}/data/tmp/gstreamer-1.0/audio.foz"
-    export MEDIACONV_VIDEO_DUMP_FILE="${START_WINE_PATH}/data/tmp/gstreamer-1.0/video.foz"
-    export MEDIACONV_AUDIO_TRANSCODED_FILE="${START_WINE_PATH}/data/tmp/gstreamer-1.0/transcoded_audio.foz"
-    export MEDIACONV_VIDEO_TRANSCODED_FILE="${START_WINE_PATH}/data/tmp/gstreamer-1.0/transcoded_video.foz"
+#    export GST_GL_WINDOW="surfaceless"
+    export MEDIACONV_BLANK_VIDEO_FILE="${WINEDIR}/share/media/blank.mkv"
+    export MEDIACONV_BLANK_AUDIO_FILE="${WINEDIR}/share/media/blank.ptna"
+    export WINE_GST_REGISTRY_DIR="${START_WINE_PATH}/data/tmp/gstreamer-1.0/${SW_GAME_NAME}"
+    export MEDIACONV_AUDIO_DUMP_FILE="${START_WINE_PATH}/data/tmp/gstreamer-1.0/${SW_GAME_NAME}/audiov2.foz"
+    export MEDIACONV_VIDEO_DUMP_FILE="${START_WINE_PATH}/data/tmp/gstreamer-1.0/${SW_GAME_NAME}/video.foz"
+    export MEDIACONV_AUDIO_TRANSCODED_FILE="${START_WINE_PATH}/data/tmp/gstreamer-1.0/${SW_GAME_NAME}/transcoded_audio.foz"
+    export MEDIACONV_VIDEO_TRANSCODED_FILE="${START_WINE_PATH}/data/tmp/gstreamer-1.0/${SW_GAME_NAME}/transcoded_video.foz"
     export GST_PLUGIN_SYSTEM_PATH_1_0="${WINEDIR}/lib64/gstreamer-1.0:${WINEDIR}/lib/gstreamer-1.0"
 fi
 
@@ -938,19 +925,19 @@ if [ ! -f "${START_WINE_PATH}/data/tools/utils/version" ]; then
     [ -d "${START_WINE_PATH}/data/tools/utils" ] && \
         try_remove "${START_WINE_PATH}/data/tools/utils"
 
-    [ -f "${START_WINE_PATH}/data/tmp/utils-v${UTILS_VER}.tar.xz" ] && \
-        try_remove "${START_WINE_PATH}/data/tmp/utils-v${UTILS_VER}.tar.xz"
+    [ -f "${START_WINE_PATH}/data/tmp/utils.tar.xz" ] && \
+        try_remove "${START_WINE_PATH}/data/tmp/utils.tar.xz"
 
     export URL_UTILS_LIST=(
-       "https://huggingface.co/SudoNano/sw_repo/resolve/main/utils_data/utils-v${UTILS_VER}.tar.xz?download=true"
-       "https://github.com/RusNor/Utils-data/releases/download/utils-v${UTILS_VER}/utils-v${UTILS_VER}.tar.xz"
+       "https://huggingface.co/SudoNano/sw_repo/resolve/main/utils_data/utils.tar.xz?download=true"
+       "https://github.com/RusNor/Utils-data/releases/download/utils/utils.tar.xz"
     )
 
-    "$CRIER" -d "${URL_UTILS_LIST[0]}" "${START_WINE_PATH}/data/tmp/utils-v${UTILS_VER}.tar.xz" \
-    || "$CRIER" -d "${URL_UTILS_LIST[1]}" "${START_WINE_PATH}/data/tmp/utils-v${UTILS_VER}.tar.xz"
-    "$CRIER" -tar "${START_WINE_PATH}/data/tmp/utils-v${UTILS_VER}.tar.xz" "${START_WINE_PATH}/data/tools"
-    [ -f "${START_WINE_PATH}/data/tmp/utils-v${UTILS_VER}.tar.xz" ] && \
-        try_remove "${START_WINE_PATH}/data/tmp/utils-v${UTILS_VER}.tar.xz"
+    "$CRIER" -d "${URL_UTILS_LIST[0]}" "${START_WINE_PATH}/data/tmp/utils.tar.xz" \
+    || "$CRIER" -d "${URL_UTILS_LIST[1]}" "${START_WINE_PATH}/data/tmp/utils.tar.xz"
+    "$CRIER" -tar "${START_WINE_PATH}/data/tmp/utils.tar.xz" "${START_WINE_PATH}/data/tools"
+    [ -f "${START_WINE_PATH}/data/tmp/utils.tar.xz" ] && \
+        try_remove "${START_WINE_PATH}/data/tmp/utils.tar.xz"
     echo "$UTILS_VER" > "${START_WINE_PATH}/data/tools/utils/version"
 fi
 
@@ -965,6 +952,10 @@ if [ ! -f "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso" ]; then
 
     "$CRIER" -d "${URL_PFX_LIST[0]}" "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso" \
     || "$CRIER" -d "${URL_PFX_LIST[1]}" "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso"
+
+    [ -f "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso" ] && \
+        echo "${PFX_DEF_VER}" > "${START_WINE_PATH}/data/pfx_backup/version"
+
 fi
 
 if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_default/drive_c/windows/system32/start.exe" ]; then
@@ -1191,15 +1182,15 @@ RUN_VULKAN () {
         try_winedlloverride_update "libvkd3d-1,libvkd3d-shader-1,d3d12,d3d12core,openvr_api_dxvk,d3d11,d3d10,d3d10core,d3d10_1,d3d9,dxgi=n"
 
         if [ "${SW_USE_SHADER_CACHE}" == 1 ]; then
-            try_create_dir "${START_WINE_PATH}/data/tmp/vulkan_shader_cache/$SW_GAME_NAME"
+            try_create_dir "${START_WINE_PATH}/data/tmp/vulkan_shader_cache/${SW_GAME_NAME}"
             export DXVK_CONFIG_FILE="${START_WINE_PATH}/data/tools/utils/config/dxvk.conf"
-            export DXVK_STATE_CACHE_PATH="${START_WINE_PATH}/data/tmp/vulkan_shader_cache/$SW_GAME_NAME"
+            export DXVK_STATE_CACHE_PATH="${START_WINE_PATH}/data/tmp/vulkan_shader_cache/${SW_GAME_NAME}"
             export DXVK_STATE_CACHE=1
             export DXVK_LOG_LEVEL="none"
             export DXVK_LOG_PATH="none"
 
-            export VKD3D_SHADER_CACHE_PATH="${START_WINE_PATH}/data/tmp/vulkan_shader_cache/$SW_GAME_NAME"
-            export VKD3D_FEATURE_LEVEL="12_1"
+            export VKD3D_SHADER_CACHE_PATH="${START_WINE_PATH}/data/tmp/vulkan_shader_cache/${SW_GAME_NAME}"
+            export VKD3D_FEATURE_LEVEL="12_0"
             export VKD3D_SHADER_DEBUG="none"
             export VKD3D_DEBUG="none"
         else
@@ -1212,7 +1203,10 @@ RUN_VULKAN () {
         notify-send -t 1500 -a "StartWine" "$(eval_gettext "VULKAN mode")"
 
         if [ "${SW_USE_MESA_OVERLAY_HUD}" == 1 ]; then
-            export VK_LAYER_MESA_OVERLAY_CONFIG="position=top-right"
+            export VK_LAYER_MESA_OVERLAY_CONFIG="output_file=${START_WINE_PATH}/data/tmp/stats/${SW_GAME_NAME}.txt"
+            export VK_INSTANCE_LAYERS="$VK_INSTANCE_LAYERS:VK_LAYER_MESA_overlay"
+        else
+            export VK_LAYER_MESA_OVERLAY_CONFIG="no_display=1,output_file=${START_WINE_PATH}/data/tmp/stats/${SW_GAME_NAME}.txt"
             export VK_INSTANCE_LAYERS="$VK_INSTANCE_LAYERS:VK_LAYER_MESA_overlay"
         fi
 
@@ -1309,7 +1303,7 @@ ADD_SHORTCUT_TO_MENU () {
     if [ ! -f "${HOME}/.local/share/applications/${CUSTOME_GAME_NAME}.desktop" ]; then
         echo "[Desktop Entry]" > "${HOME}/.local/share/applications/${CUSTOME_GAME_NAME}.desktop"
         echo "Name=${CUSTOME_GAME_NAME}" >> "${HOME}/.local/share/applications/${CUSTOME_GAME_NAME}.desktop"
-        echo "Exec=env \"${SW_RUN_RUNIMAGE}\" \"${START_WINE_PATH}/data/scripts/sw_start\" \"${SW_GAME_EXE}\" --run" >> "${HOME}/.local/share/applications/${CUSTOME_GAME_NAME}.desktop"
+        echo "Exec=env \"${SW_RUN_RUNIMAGE}\" \"${SW_GAME_EXE}\" --run" >> "${HOME}/.local/share/applications/${CUSTOME_GAME_NAME}.desktop"
         echo "Type=Application" >> "${HOME}/.local/share/applications/${CUSTOME_GAME_NAME}.desktop"
         echo "Categories=Game;" >> "${HOME}/.local/share/applications/${CUSTOME_GAME_NAME}.desktop"
         echo "Icon=${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x256.png" >> "${HOME}/.local/share/applications/${CUSTOME_GAME_NAME}.desktop"
@@ -1323,7 +1317,7 @@ ADD_SHORTCUT_TO_DESKTOP () {
     if [ ! -f "${SW_DESKTOP_DIR}/${CUSTOME_GAME_NAME}.desktop" ]; then
         echo "[Desktop Entry]" > "${SW_DESKTOP_DIR}/${CUSTOME_GAME_NAME}.desktop"
         echo "Name=${CUSTOME_GAME_NAME}" >> "${SW_DESKTOP_DIR}/${CUSTOME_GAME_NAME}.desktop"
-        echo "Exec=env \"${SW_RUN_RUNIMAGE}\" \"${START_WINE_PATH}/data/scripts/sw_start\" \"${SW_GAME_EXE}\" --run" >> "${SW_DESKTOP_DIR}/${CUSTOME_GAME_NAME}.desktop"
+        echo "Exec=env \"${SW_RUN_RUNIMAGE}\" \"${SW_GAME_EXE}\" --run" >> "${SW_DESKTOP_DIR}/${CUSTOME_GAME_NAME}.desktop"
         echo "Type=Application" >> "${SW_DESKTOP_DIR}/${CUSTOME_GAME_NAME}.desktop"
         echo "Categories=Game;" >> "${SW_DESKTOP_DIR}/${CUSTOME_GAME_NAME}.desktop"
         echo "Icon=${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x256.png" >> "${SW_DESKTOP_DIR}/${CUSTOME_GAME_NAME}.desktop"
@@ -1344,7 +1338,7 @@ ADD_SHORTCUT_TO_STEAM () {
             export EXE_PATH="\"env\""
             export START_DIR="\"${SW_GAME_PATH}\""
             export ICON_PATH="${START_WINE_PATH}/data/img/${SW_GAME_NAME}_x256.png"
-            export LAUNCH_OPTIONS="\"${SW_RUN_RUNIMAGE}\" \"${START_WINE_PATH}/data/scripts/sw_run\" \"${SW_GAME_EXE}\""
+            export LAUNCH_OPTIONS="\"${SW_RUN_RUNIMAGE}\" \"${SW_GAME_EXE}\" --run"
             export ID_RHEX="$(printf "%03x%03x%02x\n" $((RANDOM%4096)) $((RANDOM%4096)) $((RANDOM%256)))"
             export ID_HEX="\x$(awk '{$1=$1}1' FPAT='.{2}' OFS="\\\x" <<< "$ID_RHEX")"
 
@@ -1659,7 +1653,7 @@ CREATE_PFX_DEFAULT () {
     "$CRIER" -d "${FTP_URL}" "${START_WINE_PATH}/data/scripts/winetricks" &&
     chmod +x "${START_WINE_PATH}/data/scripts/winetricks"
 
-    GE_VER="8-32"
+    GE_VER="9-7"
     WINE_OK=1
     WINE_3
 
@@ -1673,7 +1667,9 @@ CREATE_PFX_DEFAULT () {
 
     "${START_WINE_PATH}/data/scripts/winetricks" -q -f mfc120 mfc42 msvcirt openal physx vb6run vcrun2005 vcrun2008 vcrun2010 \
     vcrun2012 vcrun2013 vcrun2019 vcrun2022 vcrun6 vcrun6sp6 lucida nocrashdialog || libraries_init_error
-    "${WINESERVER}" -w
+    "${WINE}" -w
+
+    "${WINE}" "winecfg"
 
     "$CRIER" -i "$(eval_gettext "Libraries installed successfully")"
 
@@ -1932,58 +1928,6 @@ WINE_4 () {
 
 }
 
-WINE_5 () {
-
-    [ -f "${START_WINE_PATH}/data/tmp/wine-lutris-GE-Proton${LUTRIS_GE_VER}-x86_64.tar.xz" ] && \
-        try_remove "${START_WINE_PATH}/data/tmp/wine-lutris-GE-Proton${LUTRIS_GE_VER}-x86_64.tar.xz" &&
-    [ -d "${START_WINE_PATH}/data/tmp/lutris-GE-Proton${LUTRIS_GE_VER}-x86_64" ] && \
-        try_remove "${START_WINE_PATH}/data/tmp/lutris-GE-Proton${LUTRIS_GE_VER}-x86_64"
-
-    if [ ! -d "${START_WINE_PATH}/data/wine/wine-lutris-GE-Proton${LUTRIS_GE_VER}-x86_64/bin" ]; then
-
-        export FTP_URL=(
-            "https://huggingface.co/SudoNano/sw_repo/resolve/main/wine-ge-custom/wine-lutris-GE-Proton${LUTRIS_GE_VER}-x86_64.tar.xz?download=true"
-            "https://github.com/GloriousEggroll/wine-ge-custom/releases/download/GE-Proton${LUTRIS_GE_VER}/wine-lutris-GE-Proton${LUTRIS_GE_VER}-x86_64.tar.xz"
-        )
-
-        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/wine-lutris-GE-Proton${LUTRIS_GE_VER}-x86_64.tar.xz" \
-        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/wine-lutris-GE-Proton${LUTRIS_GE_VER}-x86_64.tar.xz"
-        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/wine-lutris-GE-Proton${LUTRIS_GE_VER}-x86_64.tar.xz" "${START_WINE_PATH}/data/tmp"
-        try_create_dir "${START_WINE_PATH}/data/wine/wine-lutris-GE-Proton${LUTRIS_GE_VER}-x86_64/files"
-
-        for copy_dir in bin lib lib64 share ; do
-            try_move "${START_WINE_PATH}/data/tmp/lutris-GE-Proton${LUTRIS_GE_VER}-x86_64/${copy_dir}" "${START_WINE_PATH}/data/wine/wine-lutris-GE-Proton${LUTRIS_GE_VER}-x86_64/files"
-        done
-
-        for link_dir in bin lib lib64 share ; do
-            try_link "${START_WINE_PATH}/data/wine/wine-lutris-GE-Proton${LUTRIS_GE_VER}-x86_64/files/${link_dir}" "${START_WINE_PATH}/data/wine/wine-lutris-GE-Proton${LUTRIS_GE_VER}-x86_64"
-        done
-
-        [ -f "${START_WINE_PATH}/data/tmp/wine-lutris-GE-Proton${LUTRIS_GE_VER}-x86_64.tar.xz" ] && \
-            try_remove "${START_WINE_PATH}/data/tmp/wine-lutris-GE-Proton${LUTRIS_GE_VER}-x86_64.tar.xz" &&
-        [ -d "${START_WINE_PATH}/data/tmp/lutris-GE-Proton${LUTRIS_GE_VER}-x86_64" ] && \
-            try_remove "${START_WINE_PATH}/data/tmp/lutris-GE-Proton${LUTRIS_GE_VER}-x86_64"
-
-    fi
-
-    echo "Lutris-GE-${LUTRIS_GE_VER}" > "${START_WINE_PATH}/data/wine/wine-lutris-GE-Proton${LUTRIS_GE_VER}-x86_64/version"
-    echo "${LUTRIS_GE_VER}" >> "${START_WINE_PATH}/data/wine/wine-lutris-GE-Proton${LUTRIS_GE_VER}-x86_64/version"
-
-    chmod -R 775 "${START_WINE_PATH}/data/wine/wine-lutris-GE-Proton${LUTRIS_GE_VER}-x86_64"
-
-    if [ "${WINE_OK}" == 1 ]; then
-        echo " "
-    else
-        if [ -d "${START_WINE_PATH}/data/wine/wine-lutris-GE-Proton${LUTRIS_GE_VER}-x86_64/bin" ]; then
-            msg="$(eval_gettext "Downloading wine lutris ge \${LUTRIS_GE_VER} completed successfully")"
-            "$CRIER" -i "$msg"
-        else
-            "$CRIER" -e "$(eval_gettext "Download failed, try again")"
-        fi
-    fi
-
-}
-
 RM_WINE_1 () {
 
     crier=`"$CRIER" -q "$(eval_gettext "Do you really want to remove the wine staging?")"`
@@ -2024,16 +1968,6 @@ RM_WINE_4 () {
 
 }
 
-RM_WINE_5 () {
-
-    crier=`"$CRIER" -q "$(eval_gettext "Do you really want to remove the wine lutris ge?")"`
-
-    if [ "$(echo $crier)" == "0" ]; then
-        try_remove "${START_WINE_PATH}/data/wine/wine-lutris-GE-Proton${LUTRIS_GE_VER}-x86_64"
-    fi
-
-}
-
 ##################################   STOP   ####################################
 
 STOP () {
@@ -2052,7 +1986,7 @@ STOP () {
 
     notify-send -t 1500 -a "StartWine" "$(eval_gettext "Termination of active processes...")"
 
-    exit
+    exit 0
 
 }
 
@@ -2062,7 +1996,7 @@ INSTALL_BATTLE_NET () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_Battle.net/drive_c/Program Files (x86)/Battle.net/Battle.net.exe" ]; then
 
-        GE_VER="8-30"
+        GE_VER="9-7"
         WINE_OK=1
         WINE_3
 
@@ -2078,14 +2012,14 @@ INSTALL_BATTLE_NET () {
         "${WINESERVER}" -w
 
         export FTP_URL=(
-            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/Battle.net_0.1.tar.xz?download=true"
-            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/Battle.net_0.1/Battle.net_0.1.tar.xz"
+            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/Battle.net.tar.xz?download=true"
+            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/Battle.net_0.1/Battle.net.tar.xz"
         )
 
-        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/Battle.net_0.1.tar.xz" \
-        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/Battle.net_0.1.tar.xz"
-        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/Battle.net_0.1.tar.xz" "${WINEPREFIX}/drive_c/Program Files (x86)"
-        try_remove "${START_WINE_PATH}/data/tmp/Battle.net_0.1.tar.xz"
+        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/Battle.net.tar.xz" \
+        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/Battle.net.tar.xz"
+        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/Battle.net.tar.xz" "${WINEPREFIX}/drive_c/Program Files (x86)"
+        try_remove "${START_WINE_PATH}/data/tmp/Battle.net.tar.xz"
 
         SW_USE_EXE="drive_c/Program Files (x86)/Battle.net/Battle.net.exe"
 
@@ -2108,7 +2042,7 @@ INSTALL_EPIC_GAMES () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_EpicGamesLauncher/drive_c/Program Files (x86)/Epic Games/Launcher/Portal/Binaries/Win32/EpicGamesLauncher.exe" ]; then
 
-        GE_VER="8-30"
+        GE_VER="9-7"
         WINE_OK=1
         WINE_3
 
@@ -2124,14 +2058,14 @@ INSTALL_EPIC_GAMES () {
         "${WINESERVER}" -w
 
         export FTP_URL=(
-            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/EpicGames_0.1.tar.xz?download=true"
-            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/EpicGames_0.1/EpicGames_0.1.tar.xz"
+            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/EpicGames.tar.xz?download=true"
+            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/EpicGames_0.1/EpicGames.tar.xz"
         )
 
-        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/EpicGames_0.1.tar.xz" \
-        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/EpicGames_0.1.tar.xz"
-        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/EpicGames_0.1.tar.xz" "${WINEPREFIX}/drive_c/Program Files (x86)"
-        try_remove "${START_WINE_PATH}/data/tmp/EpicGames_0.1.tar.xz"
+        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/EpicGames.tar.xz" \
+        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/EpicGames.tar.xz"
+        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/EpicGames.tar.xz" "${WINEPREFIX}/drive_c/Program Files (x86)"
+        try_remove "${START_WINE_PATH}/data/tmp/EpicGames.tar.xz"
 
         SW_USE_EXE="drive_c/Program Files (x86)/Epic Games/Launcher/Portal/Binaries/Win32/EpicGamesLauncher.exe"
 
@@ -2154,7 +2088,7 @@ INSTALL_EVE () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_evelauncher/drive_c/EVE/Launcher/evelauncher.exe" ]; then
 
-        GE_VER="8-30"
+        GE_VER="9-7"
         WINE_OK=1
         WINE_3
 
@@ -2172,14 +2106,14 @@ INSTALL_EVE () {
         "${WINELOADER}" "regedit" "${START_WINE_PATH}/data/app_patches/EveLauncher_patch.reg"
 
         export FTP_URL=(
-            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/EVE_0.1.tar.xz?download=true"
-            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/EVE_0.1/EVE_0.1.tar.xz"
+            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/EVE.tar.xz?download=true"
+            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/EVE_0.1/EVE.tar.xz"
         )
 
-        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/EVE_0.1.tar.xz" \
-        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/EVE_0.1.tar.xz"
-        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/EVE_0.1.tar.xz" "${WINEPREFIX}/drive_c"
-        try_remove "${START_WINE_PATH}/data/tmp/EVE_0.1.tar.xz"
+        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/EVE.tar.xz" \
+        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/EVE.tar.xz"
+        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/EVE.tar.xz" "${WINEPREFIX}/drive_c"
+        try_remove "${START_WINE_PATH}/data/tmp/EVE.tar.xz"
 
         SW_USE_EXE="drive_c/EVE/Launcher/evelauncher.exe"
 
@@ -2202,7 +2136,7 @@ INSTALL_GAME_CENTER () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_GameCenter/drive_c/users/steamuser/AppData/Local/GameCenter/GameCenter.exe" ]; then
 
-        GE_VER="8-30"
+        GE_VER="8-32"
         WINE_OK=1
         WINE_3
 
@@ -2248,11 +2182,11 @@ INSTALL_GALAXY () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_GalaxyClient/drive_c/Program Files (x86)/GOG Galaxy/GalaxyClient.exe" ]; then
 
-        GE_VER="8-30"
+        GE_VER="9-7"
         WINE_OK=1
         WINE_3
 
-        export GOG_VER=2.0.73.27
+        export GOG_VER=2.0.74.352
         export FTP_URL="https://content-system.gog.com/open_link/download?path=/open/galaxy/client/${GOG_VER}/setup_galaxy_${GOG_VER}.exe"
         "$CRIER" -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/setup_galaxy_${GOG_VER}.exe"
 
@@ -2326,14 +2260,14 @@ INSTALL_RIOT_GAMES () {
         "${WINESERVER}" -w
 
         export FTP_URL=(
-            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/RiotGames_0.1.tar.xz?download=true"
-            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/RiotGames_0.1/RiotGames_0.1.tar.xz"
+            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/RiotGames.tar.xz?download=true"
+            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/RiotGames_0.1/RiotGames.tar.xz"
         )
 
-        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/RiotGames_0.1.tar.xz" \
-        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/RiotGames_0.1.tar.xz"
-        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/RiotGames_0.1.tar.xz" "${WINEPREFIX}/drive_c"
-        try_remove "${START_WINE_PATH}/data/tmp/RiotGames_0.1.tar.xz"
+        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/RiotGames.tar.xz" \
+        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/RiotGames.tar.xz"
+        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/RiotGames.tar.xz" "${WINEPREFIX}/drive_c"
+        try_remove "${START_WINE_PATH}/data/tmp/RiotGames.tar.xz"
 
         SW_USE_EXE="drive_c/Riot Games/Riot Client/RiotClientServices.exe"
 
@@ -2356,7 +2290,7 @@ INSTALL_EA () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_EALauncher/drive_c/Program Files/Electronic Arts/EA Desktop/EA Desktop/EALauncher.exe" ]; then
 
-        GE_VER="8-30"
+        GE_VER="9-7"
         WINE_OK=1
         WINE_3
 
@@ -2403,7 +2337,7 @@ INSTALL_ROCKSTAR_GAMES () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_Launcher/drive_c/Program Files/Rockstar Games/Launcher/Launcher.exe" ]; then
 
-        GE_VER="8-30"
+        GE_VER="8-32"
         WINE_OK=1
         WINE_3
 
@@ -2419,14 +2353,14 @@ INSTALL_ROCKSTAR_GAMES () {
         "${WINESERVER}" -w
 
         export FTP_URL=(
-            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/RockstarGames_0.1.tar.xz?download=true"
-            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/RockstarGames_0.1/RockstarGames_0.1.tar.xz"
+            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/RockstarGames.tar.xz?download=true"
+            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/RockstarGames_0.1/RockstarGames.tar.xz"
         )
 
-        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/RockstarGames_0.1.tar.xz" \
-        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/RockstarGames_0.1.tar.xz"
-        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/RockstarGames_0.1.tar.xz" "${WINEPREFIX}/drive_c/Program Files"
-        try_remove "${START_WINE_PATH}/data/tmp/RockstarGames_0.1.tar.xz"
+        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/RockstarGames.tar.xz" \
+        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/RockstarGames.tar.xz"
+        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/RockstarGames.tar.xz" "${WINEPREFIX}/drive_c/Program Files"
+        try_remove "${START_WINE_PATH}/data/tmp/RockstarGames.tar.xz"
 
         SW_USE_EXE="drive_c/Program Files/Rockstar Games/Launcher/Launcher.exe"
 
@@ -2449,7 +2383,7 @@ INSTALL_STEAM () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_steam/drive_c/Program Files (x86)/Steam/steam.exe" ]; then
 
-        GE_VER="8-30"
+        GE_VER="8-32"
         WINE_OK=1
         WINE_3
 
@@ -2467,14 +2401,14 @@ INSTALL_STEAM () {
        "${WINELOADER}" "regedit" "${START_WINE_PATH}/data/app_patches/Steam_patch.reg"
 
         export FTP_URL=(
-            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/Steam_0.1.tar.xz?download=true"
-            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/Steam_0.1/Steam_0.1.tar.xz"
+            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/Steam.tar.xz?download=true"
+            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/Steam/Steam.tar.xz"
         )
 
-        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/Steam_0.1.tar.xz" \
-        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/Steam_0.1.tar.xz"
-        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/Steam_0.1.tar.xz" "${WINEPREFIX}/drive_c/Program Files (x86)"
-        try_remove "${START_WINE_PATH}/data/tmp/Steam_0.1.tar.xz"
+        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/Steam.tar.xz" \
+        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/Steam.tar.xz"
+        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/Steam.tar.xz" "${WINEPREFIX}/drive_c/Program Files (x86)"
+        try_remove "${START_WINE_PATH}/data/tmp/Steam.tar.xz"
 
         SW_USE_EXE="drive_c/Program Files (x86)/Steam/steam.exe"
 
@@ -2497,7 +2431,7 @@ INSTALL_UBISOFT_CONNECT () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_UbisoftConnect/drive_c/Program Files (x86)/Ubisoft/Ubisoft Game Launcher/UbisoftConnect.exe" ]; then
 
-        GE_VER="8-30"
+        GE_VER="9-7"
         WINE_OK=1
         WINE_3
 
@@ -2513,14 +2447,14 @@ INSTALL_UBISOFT_CONNECT () {
         "${WINESERVER}" -w
 
         export FTP_URL=(
-            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/Ubisoft_0.1.tar.xz?download=true"
-            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/Ubisoft_0.1/Ubisoft_0.1.tar.xz"
+            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/Ubisoft.tar.xz?download=true"
+            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/Ubisoft_0.1/Ubisoft.tar.xz"
         )
 
-        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/Ubisoft_0.1.tar.xz" \
-        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/Ubisoft_0.1.tar.xz"
-        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/Ubisoft_0.1.tar.xz" "${WINEPREFIX}/drive_c/Program Files (x86)"
-        try_remove "${START_WINE_PATH}/data/tmp/Ubisoft_0.1.tar.xz"
+        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/Ubisoft.tar.xz" \
+        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/Ubisoft.tar.xz"
+        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/Ubisoft.tar.xz" "${WINEPREFIX}/drive_c/Program Files (x86)"
+        try_remove "${START_WINE_PATH}/data/tmp/Ubisoft.tar.xz"
 
         SW_USE_EXE="drive_c/Program Files (x86)/Ubisoft/Ubisoft Game Launcher/UbisoftConnect.exe"
 
@@ -2543,7 +2477,7 @@ INSTALL_WARGAMING () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_wgc_api/drive_c/ProgramData/Wargaming.net/GameCenter/api/wgc_api.exe" ]; then
 
-        GE_VER="8-30"
+        GE_VER="9-7"
         WINE_OK=1
         WINE_3
 
@@ -2559,14 +2493,14 @@ INSTALL_WARGAMING () {
         "${WINESERVER}" -w
 
         export FTP_URL=(
-            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/Wargaming.net_0.1.tar.xz?download=true"
-            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/Wargaming.net_0.1/Wargaming.net_0.1.tar.xz"
+            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/Wargaming.net.tar.xz?download=true"
+            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/Wargaming.net_0.1/Wargaming.net.tar.xz"
         )
 
-        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/Wargaming.net_0.1.tar.xz" \
-        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/Wargaming.net_0.1.tar.xz"
-        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/Wargaming.net_0.1.tar.xz" "${WINEPREFIX}/drive_c/ProgramData"
-        try_remove "${START_WINE_PATH}/data/tmp/Wargaming.net_0.1.tar.xz"
+        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/Wargaming.net.tar.xz" \
+        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/Wargaming.net.tar.xz"
+        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/Wargaming.net.tar.xz" "${WINEPREFIX}/drive_c/ProgramData"
+        try_remove "${START_WINE_PATH}/data/tmp/Wargaming.net.tar.xz"
 
         SW_USE_EXE="drive_c/ProgramData/Wargaming.net/GameCenter/api/wgc_api.exe"
 
@@ -2589,7 +2523,7 @@ INSTALL_ZONA () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_Zona/drive_c/Program Files (x86)/Zona/Zona.exe" ]; then
 
-        GE_VER="8-30"
+        GE_VER="9-7"
         WINE_OK=1
         WINE_3
 
@@ -2636,7 +2570,7 @@ INSTALL_OSU () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_osu!/drive_c/osu!/osu!.exe" ]; then
 
-        GE_VER="8-30"
+        GE_VER="9-7"
         WINE_OK=1
         WINE_3
 
@@ -2649,10 +2583,10 @@ INSTALL_OSU () {
 
         "${WINELOADER}" "regedit" "${START_WINE_PATH}/data/app_patches/Osu_patch.reg"
 
-        export FTP_URL="https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/osu_0.1/osu_0.1.tar.xz"
-        "$CRIER" -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/osu_0.1.tar.xz"
-        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/osu_0.1.tar.xz" "${WINEPREFIX}/drive_c"
-        try_remove "${START_WINE_PATH}/data/tmp/osu_0.1.tar.xz"
+        export FTP_URL="https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/osu/osu.tar.xz"
+        "$CRIER" -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/osu.tar.xz"
+        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/osu.tar.xz" "${WINEPREFIX}/drive_c"
+        try_remove "${START_WINE_PATH}/data/tmp/osu.tar.xz"
 
         SW_USE_EXE="drive_c/osu!/osu!.exe"
 
@@ -2713,7 +2647,7 @@ INSTALL_WORLD_OF_SEA_BATTLE () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_WorldOfSeaBattleClient/drive_c/World Of Sea Battle/WorldOfSeaBattleClient.exe" ]; then
 
-        GE_VER="8-30"
+        GE_VER="9-7"
         WINE_OK=1
         WINE_3
 
@@ -2729,14 +2663,14 @@ INSTALL_WORLD_OF_SEA_BATTLE () {
         "${WINESERVER}" -w
 
         export FTP_URL=(
-            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/WorldOfSeaBattle_0.1.tar.xz?download=true"
-            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/WorldOfSeaBattle_0.1/WorldOfSeaBattle_0.1.tar.xz"
+            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/WorldOfSeaBattle.tar.xz?download=true"
+            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/WorldOfSeaBattle_0.1/WorldOfSeaBattle.tar.xz"
         )
 
-        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/WorldOfSeaBattle_0.1.tar.xz" \
-        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/WorldOfSeaBattle_0.1.tar.xz"
-        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/WorldOfSeaBattle_0.1.tar.xz" "${WINEPREFIX}/drive_c"
-        try_remove "${START_WINE_PATH}/data/tmp/WorldOfSeaBattle_0.1.tar.xz"
+        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/WorldOfSeaBattle.tar.xz" \
+        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/WorldOfSeaBattle.tar.xz"
+        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/WorldOfSeaBattle.tar.xz" "${WINEPREFIX}/drive_c"
+        try_remove "${START_WINE_PATH}/data/tmp/WorldOfSeaBattle.tar.xz"
 
         SW_USE_EXE="drive_c/World Of Sea Battle/WorldOfSeaBattleClient.exe"
 
@@ -2764,7 +2698,7 @@ INSTALL_CROSSOUT () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_CrossOut/drive_c/Crossout/CrossOut.exe" ]; then
 
-        GE_VER="8-30"
+        GE_VER="9-7"
         WINE_OK=1
         WINE_3
 
@@ -2779,10 +2713,10 @@ INSTALL_CROSSOUT () {
         "${WINELOADER}" wineboot || prefix_init_error
         "${WINESERVER}" -w
 
-        export FTP_URL="https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/Crossout_0.1/Crossout_0.1.tar.xz"
-        "$CRIER" -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/Crossout_0.1.tar.xz"
-        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/Crossout_0.1.tar.xz" "${WINEPREFIX}/drive_c"
-        try_remove "${START_WINE_PATH}/data/tmp/Crossout_0.1.tar.xz"
+        export FTP_URL="https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/CrossOut/CrossOut.tar.xz"
+        "$CRIER" -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/CrossOut.tar.xz"
+        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/CrossOut.tar.xz" "${WINEPREFIX}/drive_c"
+        try_remove "${START_WINE_PATH}/data/tmp/CrossOut.tar.xz"
 
         SW_USE_EXE="drive_c/Crossout/CrossOut.exe"
 
@@ -2821,14 +2755,14 @@ INSTALL_CALIBER () {
         "${WINESERVER}" -w
 
         export FTP_URL=(
-            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/Caliber_0.1.tar.xz?download=true"
-            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/Caliber_0.1/Caliber_0.1.tar.xz"
+            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/Caliber.tar.xz?download=true"
+            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/Caliber_0.1/Caliber.tar.xz"
         )
 
-        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/Caliber_0.1.tar.xz" \
-        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/Caliber_0.1.tar.xz"
-        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/Caliber_0.1.tar.xz" "${WINEPREFIX}/drive_c/Program Files (x86)"
-        try_remove "${START_WINE_PATH}/data/tmp/Caliber_0.1.tar.xz"
+        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/Caliber.tar.xz" \
+        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/Caliber.tar.xz"
+        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/Caliber.tar.xz" "${WINEPREFIX}/drive_c/Program Files (x86)"
+        try_remove "${START_WINE_PATH}/data/tmp/Caliber.tar.xz"
 
         SW_USE_EXE="drive_c/Program Files (x86)/1C Game Studios/Caliber/Caliber.exe"
 
@@ -2854,7 +2788,7 @@ INSTALL_LESTA_GAMES () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_lgc_api/drive_c/ProgramData/Lesta/GameCenter/api/lgc_api.exe" ]; then
 
-        GE_VER="8-30"
+        GE_VER="9-7"
         WINE_OK=1
         WINE_3
 
@@ -2870,14 +2804,14 @@ INSTALL_LESTA_GAMES () {
         "${WINESERVER}" -w
 
         export FTP_URL=(
-            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/Lesta_0.1.tar.xz?download=true"
-            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/Lesta_0.1/Lesta_0.1.tar.xz"
+            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/Lesta.tar.xz?download=true"
+            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/Lesta_0.1/Lesta.tar.xz"
         )
 
-        "$CRIER" -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/Lesta_0.1.tar.xz" \
-        || "$CRIER" -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/Lesta_0.1.tar.xz"
-        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/Lesta_0.1.tar.xz" "${WINEPREFIX}/drive_c/ProgramData"
-        try_remove "${START_WINE_PATH}/data/tmp/Lesta_0.1.tar.xz"
+        "$CRIER" -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/Lesta.tar.xz" \
+        || "$CRIER" -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/Lesta.tar.xz"
+        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/Lesta.tar.xz" "${WINEPREFIX}/drive_c/ProgramData"
+        try_remove "${START_WINE_PATH}/data/tmp/Lesta.tar.xz"
 
         SW_USE_EXE="drive_c/ProgramData/Lesta/GameCenter/api/lgc_api.exe"
 
@@ -2900,7 +2834,7 @@ INSTALL_STALCRAFT () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_ExboLauncher/drive_c/EXBO/java/bin/ExboLauncher.exe" ]; then
 
-        GE_VER="8-30"
+        GE_VER="9-7"
         WINE_OK=1
         WINE_3
 
@@ -2915,10 +2849,10 @@ INSTALL_STALCRAFT () {
         "${WINELOADER}" wineboot || prefix_init_error
         "${WINESERVER}" -w
 
-        export FTP_URL="https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/Stalcraft_0.1/Stalcraft_0.1.tar.xz"
-        "$CRIER" -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/Stalcraft_0.1.tar.xz"
-        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/Stalcraft_0.1.tar.xz" "${WINEPREFIX}/drive_c"
-        try_remove "${START_WINE_PATH}/data/tmp/Stalcraft_0.1.tar.xz"
+        export FTP_URL="https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/Stalcraft/Stalcraft.tar.xz"
+        "$CRIER" -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/Stalcraft.tar.xz"
+        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/Stalcraft.tar.xz" "${WINEPREFIX}/drive_c"
+        try_remove "${START_WINE_PATH}/data/tmp/Stalcraft.tar.xz"
 
         SW_USE_EXE="drive_c/EXBO/java/bin/ExboLauncher.exe"
 
@@ -2941,7 +2875,7 @@ INSTALL_LINEAGE () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_Lineage/drive_c/GameCoast Games/launcher/Lineage.exe" ]; then
 
-        GE_VER="8-30"
+        GE_VER="9-7"
         WINE_OK=1
         WINE_3
 
@@ -2956,10 +2890,10 @@ INSTALL_LINEAGE () {
         "${WINELOADER}" wineboot || prefix_init_error
         "${WINESERVER}" -w
 
-        export FTP_URL="https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/Lineage_0.1/Lineage_0.1.tar.xz"
-        "$CRIER" -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/Lineage_0.1.tar.xz"
-        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/Lineage_0.1.tar.xz" "${WINEPREFIX}/drive_c"
-        try_remove "${START_WINE_PATH}/data/tmp/Lineage_0.1.tar.xz"
+        export FTP_URL="https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/Lineage/Lineage.tar.xz"
+        "$CRIER" -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/Lineage.tar.xz"
+        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/Lineage.tar.xz" "${WINEPREFIX}/drive_c"
+        try_remove "${START_WINE_PATH}/data/tmp/Lineage.tar.xz"
 
         SW_USE_EXE="drive_c/GameCoast Games/launcher/Lineage.exe"
 
@@ -2982,7 +2916,7 @@ INSTALL_PLARIUM_PLAY () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_RaidSetup/drive_c/RaidSetup.exe" ]; then
 
-        GE_VER="8-30"
+        GE_VER="8-32"
         WINE_OK=1
         WINE_3
 
@@ -2991,8 +2925,10 @@ INSTALL_PLARIUM_PLAY () {
         export WINEDIR="${START_WINE_PATH}/data/wine/GE-Proton${GE_VER}"
         export WINELOADER=$WINEDIR/bin/wine
 
+        try_download_pfx_dn_default
+
         try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
-        unsquashfs -d "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}" "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso"
+        unsquashfs -d "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}" "${START_WINE_PATH}/data/pfx_backup/pfx_dn_default.iso"
 
         "${WINELOADER}" wineboot || prefix_init_error
         "${WINESERVER}" -w
@@ -3024,7 +2960,7 @@ INSTALL_PATH_OF_EXILE () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_PathOfExile/drive_c/Grinding Gear Games/Path of Exile/PathOfExile.exe" ]; then
 
-        GE_VER="8-30"
+        GE_VER="9-7"
         WINE_OK=1
         WINE_3
 
@@ -3039,10 +2975,10 @@ INSTALL_PATH_OF_EXILE () {
         "${WINELOADER}" wineboot || prefix_init_error
         "${WINESERVER}" -w
 
-        export FTP_URL="https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/GrindingGearGames_0.1/GrindingGearGames_0.1.tar.xz"
-        "$CRIER" -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/GrindingGearGames_0.1.tar.xz"
-        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/GrindingGearGames_0.1.tar.xz" "${WINEPREFIX}/drive_c"
-        try_remove "${START_WINE_PATH}/data/tmp/GrindingGearGames_0.1.tar.xz"
+        export FTP_URL="https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/GrindingGearGames/GrindingGearGames.tar.xz"
+        "$CRIER" -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/GrindingGearGames.tar.xz"
+        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/GrindingGearGames.tar.xz" "${WINEPREFIX}/drive_c"
+        try_remove "${START_WINE_PATH}/data/tmp/GrindingGearGames.tar.xz"
 
         SW_USE_EXE="drive_c/Grinding Gear Games/Path of Exile/PathOfExile.exe"
 
@@ -3065,7 +3001,7 @@ INSTALL_STALKER_ONLINE () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_StalkerOnline_Launcher/drive_c/StalkerOnline/StalkerOnline Launcher.exe" ]; then
 
-        GE_VER="8-30"
+        GE_VER="9-7"
         WINE_OK=1
         WINE_3
 
@@ -3080,10 +3016,10 @@ INSTALL_STALKER_ONLINE () {
         "${WINELOADER}" wineboot || prefix_init_error
         "${WINESERVER}" -w
 
-        export FTP_URL="https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/StalkerOnline_0.1/StalkerOnline_0.1.tar.xz"
-        "$CRIER" -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/StalkerOnline_0.1.tar.xz"
-        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/StalkerOnline_0.1.tar.xz" "${WINEPREFIX}/drive_c"
-        try_remove "${START_WINE_PATH}/data/tmp/StalkerOnline_0.1.tar.xz"
+        export FTP_URL="https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/StalkerOnline/StalkerOnline.tar.xz"
+        "$CRIER" -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/StalkerOnline.tar.xz"
+        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/StalkerOnline.tar.xz" "${WINEPREFIX}/drive_c"
+        try_remove "${START_WINE_PATH}/data/tmp/StalkerOnline.tar.xz"
 
         SW_USE_EXE="drive_c/StalkerOnline/StalkerOnline Launcher.exe"
 
@@ -3106,9 +3042,9 @@ INSTALL_ANOMALY_ZONE () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_Anomaly_Zone/drive_c/Cybertime Games/Anomaly-Zone/Anomaly Zone.exe" ]; then
 
-        SP_VER="8.0.1"
+        GE_VER="8-30"
         WINE_OK=1
-        WINE_2
+        WINE_3
 
         export SW_USE_PFX="pfx_Anomaly_Zone"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
@@ -3122,14 +3058,14 @@ INSTALL_ANOMALY_ZONE () {
         "${WINESERVER}" -w
 
         export FTP_URL=(
-            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/CybertimeGames_0.1.tar.xz?download=true"
-            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/CybertimeGames_0.1/CybertimeGames_0.1.tar.xz"
+            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/CybertimeGames.tar.xz?download=true"
+            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/CybertimeGames_0.1/CybertimeGames.tar.xz"
         )
 
-        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/CybertimeGames_0.1.tar.xz" \
-        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/CybertimeGames_0.1.tar.xz"
-        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/CybertimeGames_0.1.tar.xz" "${WINEPREFIX}/drive_c"
-        try_remove "${START_WINE_PATH}/data/tmp/CybertimeGames_0.1.tar.xz"
+        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/CybertimeGames.tar.xz" \
+        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/CybertimeGames.tar.xz"
+        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/CybertimeGames.tar.xz" "${WINEPREFIX}/drive_c"
+        try_remove "${START_WINE_PATH}/data/tmp/CybertimeGames.tar.xz"
 
         SW_USE_EXE="drive_c/Cybertime Games/Anomaly-Zone/Anomaly Zone.exe"
 
@@ -3152,7 +3088,7 @@ INSTALL_NINTENDO_SWITCH () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_yuzu/drive_c/yuzu/yuzu.exe" ]; then
 
-        GE_VER="8-30"
+        GE_VER="9-7"
         WINE_OK=1
         WINE_3
 
@@ -3168,14 +3104,14 @@ INSTALL_NINTENDO_SWITCH () {
         "${WINESERVER}" -w
 
         export FTP_URL=(
-            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/yuzu_0.1.tar.xz?download=true"
-            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/yuzu_0.1/yuzu_0.1.tar.xz"
+            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/yuzu.tar.xz?download=true"
+            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/yuzu_0.1/yuzu.tar.xz"
         )
 
-        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/yuzu_0.1.tar.xz" \
-        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/yuzu_0.1.tar.xz"
-        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/yuzu_0.1.tar.xz" "${WINEPREFIX}/drive_c"
-        try_remove "${START_WINE_PATH}/data/tmp/yuzu_0.1.tar.xz"
+        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/yuzu.tar.xz" \
+        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/yuzu.tar.xz"
+        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/yuzu.tar.xz" "${WINEPREFIX}/drive_c"
+        try_remove "${START_WINE_PATH}/data/tmp/yuzu.tar.xz"
 
         SW_USE_EXE="drive_c/yuzu/yuzu.exe"
 
@@ -3199,7 +3135,7 @@ INSTALL_POPCOTIME () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_PopcoTime/drive_c/PopcoTime/PopcoTime.exe" ]; then
 
-        GE_VER="8-30"
+        GE_VER="9-7"
         WINE_OK=1
         WINE_3
 
@@ -3215,14 +3151,14 @@ INSTALL_POPCOTIME () {
         "${WINESERVER}" -w
 
         export FTP_URL=(
-            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/PopcoTime_0.1.tar.xz?download=true"
-            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/PopcoTime_0.1/PopcoTime_0.1.tar.xz"
+            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/PopcoTime.tar.xz?download=true"
+            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/PopcoTime_0.1/PopcoTime.tar.xz"
         )
 
-        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/PopcoTime_0.1.tar.xz" \
-        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/PopcoTime_0.1.tar.xz"
-        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/PopcoTime_0.1.tar.xz" "${WINEPREFIX}/drive_c"
-        try_remove "${START_WINE_PATH}/data/tmp/PopcoTime_0.1.tar.xz"
+        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/PopcoTime.tar.xz" \
+        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/PopcoTime.tar.xz"
+        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/PopcoTime.tar.xz" "${WINEPREFIX}/drive_c"
+        try_remove "${START_WINE_PATH}/data/tmp/PopcoTime.tar.xz"
 
         SW_USE_EXE="drive_c/PopcoTime/PopcoTime.exe"
 
@@ -3245,7 +3181,7 @@ INSTALL_GAMEXP () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_GameXP_Launcher/drive_c/Launcher/GameXP Launcher.exe" ]; then
 
-        GE_VER="8-30"
+        GE_VER="9-7"
         WINE_OK=1
         WINE_3
 
@@ -3260,10 +3196,10 @@ INSTALL_GAMEXP () {
         "${WINELOADER}" wineboot || prefix_init_error
         "${WINESERVER}" -w
 
-        export FTP_URL="https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/GameXPLauncher_0.1/GameXPLauncher_0.1.tar.xz"
-        "$CRIER" -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/GameXPLauncher_0.1.tar.xz"
-        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/GameXPLauncher_0.1.tar.xz" "${WINEPREFIX}/drive_c"
-        try_remove "${START_WINE_PATH}/data/tmp/GameXPLauncher_0.1.tar.xz"
+        export FTP_URL="https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/GameXPLauncher/GameXPLauncher.tar.xz"
+        "$CRIER" -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/GameXPLauncher.tar.xz"
+        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/GameXPLauncher.tar.xz" "${WINEPREFIX}/drive_c"
+        try_remove "${START_WINE_PATH}/data/tmp/GameXPLauncher.tar.xz"
 
         SW_USE_EXE="drive_c/Launcher/GameXP Launcher.exe"
 
@@ -3301,10 +3237,10 @@ INSTALL_RPG_CLUB () {
         "${WINELOADER}" wineboot || prefix_init_error
         "${WINESERVER}" -w
 
-        export FTP_URL="https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/RPG-Club_0.1/RPG-Club_0.1.tar.xz"
-        "$CRIER" -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/RPG-Club_0.1.tar.xz"
-        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/RPG-Club_0.1.tar.xz" "${WINEPREFIX}/drive_c"
-        try_remove "${START_WINE_PATH}/data/tmp/RPG-Club_0.1.tar.xz"
+        export FTP_URL="https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/RPG-Club/RPG-Club.tar.xz"
+        "$CRIER" -d "${FTP_URL}" "${START_WINE_PATH}/data/tmp/RPG-Club.tar.xz"
+        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/RPG-Club.tar.xz" "${WINEPREFIX}/drive_c"
+        try_remove "${START_WINE_PATH}/data/tmp/RPG-Club.tar.xz"
 
         SW_USE_EXE="drive_c/RPG-Club/RPG Club.exe"
 
@@ -3327,7 +3263,7 @@ INSTALL_GENSHIN_IMPACT () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_launcher/drive_c/Program Files/Genshin Impact/launcher.exe" ]; then
 
-        GE_VER="8-30"
+        GE_VER="9-7"
         WINE_OK=1
         WINE_3
 
@@ -3343,14 +3279,14 @@ INSTALL_GENSHIN_IMPACT () {
         "${WINESERVER}" -w
 
         export FTP_URL=(
-            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/GenshinImpact_0.1.tar.xz?download=true"
-            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/GenshinImpact_0.1/GenshinImpact_0.1.tar.xz"
+            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/GenshinImpact.tar.xz?download=true"
+            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/GenshinImpact_0.1/GenshinImpact.tar.xz"
         )
 
-        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/GenshinImpact_0.1.tar.xz" \
-        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/GenshinImpact_0.1.tar.xz"
-        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/GenshinImpact_0.1.tar.xz" "${WINEPREFIX}/drive_c/Program Files"
-        try_remove "${START_WINE_PATH}/data/tmp/GenshinImpact_0.1.tar.xz"
+        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/GenshinImpact.tar.xz" \
+        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/GenshinImpact.tar.xz"
+        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/GenshinImpact.tar.xz" "${WINEPREFIX}/drive_c/Program Files"
+        try_remove "${START_WINE_PATH}/data/tmp/GenshinImpact.tar.xz"
 
         SW_USE_EXE="drive_c/Program Files/Genshin Impact/launcher.exe"
 
@@ -3373,7 +3309,7 @@ INSTALL_LOST_LIGHT () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_Lost_Light/drive_c/Program Files (x86)/LostLight/Lost Light.exe" ]; then
 
-        GE_VER="8-30"
+        GE_VER="9-7"
         WINE_OK=1
         WINE_3
 
@@ -3389,14 +3325,14 @@ INSTALL_LOST_LIGHT () {
         "${WINESERVER}" -w
 
         export FTP_URL=(
-            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/LostLight_0.1.tar.xz?download=true"
-            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/LostLight_0.1/LostLight_0.1.tar.xz"
+            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/LostLight.tar.xz?download=true"
+            "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/LostLight_0.1/LostLight.tar.xz"
         )
 
-        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/LostLight_0.1.tar.xz" \
-        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/LostLight_0.1.tar.xz"
-        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/LostLight_0.1.tar.xz" "${WINEPREFIX}/drive_c/Program Files (x86)"
-        try_remove "${START_WINE_PATH}/data/tmp/LostLight_0.1.tar.xz"
+        "$CRIER" -d "${FTP_URL[0]}" "${START_WINE_PATH}/data/tmp/LostLight.tar.xz" \
+        || "$CRIER" -d "${FTP_URL[1]}" "${START_WINE_PATH}/data/tmp/LostLight.tar.xz"
+        "$CRIER" -tar "${START_WINE_PATH}/data/tmp/LostLight.tar.xz" "${WINEPREFIX}/drive_c/Program Files (x86)"
+        try_remove "${START_WINE_PATH}/data/tmp/LostLight.tar.xz"
 
         SW_USE_EXE="drive_c/Program Files (x86)/LostLight/Lost Light.exe"
 
@@ -3415,12 +3351,11 @@ INSTALL_LOST_LIGHT () {
 
 }
 
-
 INSTALL_RETROBAT () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_retrobat/drive_c/RetroBat/retrobat.exe" ]; then
 
-        GE_VER="8-30"
+        GE_VER="9-7"
         WINE_OK=1
         WINE_3
 
@@ -3436,7 +3371,7 @@ INSTALL_RETROBAT () {
         "${WINESERVER}" -w
 
         export FTP_URL=(
-            ""
+            "https://huggingface.co/SudoNano/sw_repo/resolve/main/Autoinstal-Launchers-Data/RetroBat.tar.xz?download=true"
             "https://github.com/RusNor/Autoinstall-Launchers-Data/releases/download/RetroBat/RetroBat.tar.xz"
         )
 

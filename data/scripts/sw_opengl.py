@@ -30,7 +30,7 @@ sw_themes = f"{sw_img}/sw_themes"
 fragments_list = [s.value for s in list(sdr)]
 
 vertex_src = '''
-#version 410
+#version 450
 
 uniform vec3 iResolution;
 in vec2 position;
@@ -43,7 +43,7 @@ void main() {
 '''
 
 fragment_prefix = '''
-    #version 410
+    #version 450
 
     uniform vec3      iResolution;
     uniform float     iTime;
@@ -75,7 +75,7 @@ fragment_main = '''
 '''
 
 img_vertex_src = '''
-#version 410
+#version 450
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec2 texture;
@@ -90,7 +90,7 @@ void main()
 '''
 
 img_fragment_src = '''
-#version 410
+#version 450
 
 in vec2 fragCoord;
 uniform sampler2D sTexture;
@@ -126,32 +126,9 @@ img_indices = [
     16, 17, 18, 18, 19, 16,
     20, 21, 22, 22, 23, 20
 ]
-
 vertices = array('f', vertices)
 img_verts = array('f', img_vertices)
 img_inds = array('I', img_indices)
-
-H = datetime.now().strftime("%H")
-M = datetime.now().strftime("%M")
-S = datetime.now().strftime("%S")
-T = datetime.now().strftime("%H%M%S")
-
-global fragment_src, first_frame, first_frame_time, dif_time, x_mouse, y_mouse
-first_frame_time = 0
-first_frame = 0
-dif_time = 0
-x_mouse = 0.0
-y_mouse = 0.0
-
-if getenv('SW_OPENGL') == '1':
-    f_num = getenv('FRAGMENT_NUM')
-    fragment_src = (
-                    fragment_prefix
-                    + fragments_list[int(f_num)]
-                    + fragment_main
-    )
-else:
-    fragment_src = None
 
 class RenderArea(Gtk.GLArea):
 
@@ -167,6 +144,26 @@ class RenderArea(Gtk.GLArea):
         )
         self.parent = parent
         self.image = image
+        self.first_frame_time = 0
+        self.gl_resolution = 0
+        self.first_frame = 0
+        self.time_delta = 0
+        self.x_mouse = 0.0
+        self.y_mouse = 0.0
+        self.dif_time = 0
+        self.frame = 0
+
+        if getenv('SW_OPENGL') == '1':
+            self.f_num = getenv('FRAGMENT_NUM')
+            self.fragment_src = (
+                            fragment_prefix
+                            + fragments_list[int(self.f_num)]
+                            + fragment_main
+            )
+        else:
+            self.f_num = 0
+            self.fragment_src = None
+
         self.connect('realize', self.on_realize)
         self.connect('resize', self.on_resize)
         self.connect('render', self.on_render)
@@ -183,12 +180,11 @@ class RenderArea(Gtk.GLArea):
     def get_cycle_source(self):
         '''Cyclically load the shader fragment source from the fragment list.'''
 
-        global fragment_src
         if getenv('SW_OPENGL') == '1':
             timer = clock.time() - start_time
 
             if round(timer) < len(fragments_list) * 3:
-                fragment_src = (
+                self.fragment_src = (
                                 fragment_prefix
                                 + fragments_list[round((timer/3)-1)]
                                 + fragment_main
@@ -197,26 +193,25 @@ class RenderArea(Gtk.GLArea):
             else:
                 return False
         else:
-            fragment_src = None
+            self.fragment_src = None
 
         return True
 
     def get_source_next_boot(self):
         '''Update the shader fragment source after implementing boot shader.'''
 
-        global fragment_src
         if getenv('SW_OPENGL') == '1':
             timer = clock.time() - start_time
             f_num = getenv('FRAGMENT_NUM')
 
             if round(timer) >= 3:
-                fragment_src = (
+                self.fragment_src = (
                                 fragment_prefix
                                 + fragments_list[int(f_num)]
                                 + fragment_main
                 )
         else:
-            fragment_src = None
+            self.fragment_src = None
 
         return True
 
@@ -245,10 +240,9 @@ class RenderArea(Gtk.GLArea):
     def on_resize(self, gl_area, width, height):
         '''Opengl area resizing signal handler.'''
 
-        global gl_resolution
         width = self.get_width()
         height = self.get_height()
-        gl_resolution = [width, height,1.0]
+        self.gl_resolution = [width, height, 1.0]
 
         if getenv('SW_OPENGL') == '1':
             glViewport(0,0, width, height)
@@ -259,7 +253,7 @@ class RenderArea(Gtk.GLArea):
         if self.get_error() is not None:
             return False
 
-        elif fragment_src is None:
+        elif self.fragment_src is None:
             return True
 
         elif getenv('SW_OPENGL') == '0':
@@ -272,7 +266,7 @@ class RenderArea(Gtk.GLArea):
             glClear(GL_COLOR_BUFFER_BIT)
 
             if self.image is None:
-                self.on_draw(fragment_src)
+                self.on_draw()
             else:
                 self.on_image_draw()
 
@@ -378,14 +372,12 @@ class RenderArea(Gtk.GLArea):
         glDeleteTextures(1, texture)
         glDeleteProgram(shader)
 
-    def on_draw(self, fragment_src):
+    def on_draw(self):
         '''Compiling a shader program and rendering in opengl area.'''
-
-        global dif_time, timedelta, frame, x_mouse, y_mouse, gl_resolution
 
         # Compile shaders.
         v = compileShader(vertex_src, GL_VERTEX_SHADER)
-        f = compileShader(fragment_src, GL_FRAGMENT_SHADER)
+        f = compileShader(self.fragment_src, GL_FRAGMENT_SHADER)
 
         # Shader program.
         shader = glCreateProgram()
@@ -431,25 +423,25 @@ class RenderArea(Gtk.GLArea):
         date_location = glGetUniformLocation(shader, "iDate");
 
         if resolution_location != -1:
-            glUniform3fv(resolution_location, 1, gl_resolution)
+            glUniform3fv(resolution_location, 1, self.gl_resolution)
 
         if time_location != -1:
-            glUniform1f(time_location, dif_time)
+            glUniform1f(time_location, self.dif_time)
 
         if date_location != -1:
             pass    #glUniform1i(date_location, 1, int(T))
 
         if mouse_location != -1:
             try:
-                glUniform4f(mouse_location, float(x_mouse), float(y_mouse), 1.0, 1.0)
+                glUniform4f(mouse_location, float(self.x_mouse), float(self.y_mouse), 1.0, 1.0)
             except:
                 pass
 
         if timedelta_location != -1:
-            glUniform1f(timedelta_location, time_delta);
+            glUniform1f(timedelta_location, self.time_delta);
 
         if frame_location != -1:
-            glUniform1i(frame_location, frame);
+            glUniform1i(frame_location, self.frame);
 
         if sample_rate_location != -1:
             pass    #glUniform1i(sample_rate_location, samp);
@@ -476,28 +468,25 @@ class RenderArea(Gtk.GLArea):
     def on_ctrl_gl_motion(self, ctrl_gl_motion, x, y):
         '''Mouse position signal handler.'''
 
-        global x_mouse, y_mouse
-        x_mouse = x
-        y_mouse = y
+        self.x_mouse = x
+        self.y_mouse = y
 
     def on_frame_clock(self, gl_area, frame_clock):
         '''Update frames and redraw widget.'''
 
-        global first_frame, first_frame_time, dif_time, time_delta, frame
-
         frame_time = frame_clock.get_frame_time()
-        frame = frame_clock.get_frame_counter()
+        self.frame = frame_clock.get_frame_counter()
 
-        if first_frame_time == 0:
-            first_frame_time = frame_time
-            first_frame = frame
+        if self.first_frame_time == 0:
+            self.first_frame_time = frame_time
+            self.first_frame = self.frame
             previous_time = 0
         else:
-            previous_time = dif_time
+            previous_time = self.dif_time
 
-        dif_time = (frame_time - first_frame_time) / float(1000000.0)
-        frame = frame - first_frame
-        time_delta = dif_time - previous_time
+        self.dif_time = (frame_time - self.first_frame_time) / float(1000000.0)
+        self.frame = self.frame - self.first_frame
+        self.time_delta = self.dif_time - previous_time
 
         self.queue_render()
         return True

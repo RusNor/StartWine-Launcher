@@ -41,12 +41,12 @@ export SW_USE_DLSS=0
 export SW_USE_DISABLE_UPDATE_PFX=0
 export SW_USE_SHADER_CACHE=1
 export SW_USE_WINE_CPU_TOPOLOGY=""
-export SW_USE_DXVK_VER="2.3"
-export SW_USE_VKD3D_VER="2.11"
+export SW_USE_DXVK_VER="2.3.1"
+export SW_USE_VKD3D_VER="2.12"
 export SW_USE_VKBASALT_EFFECTS="cas:Tonemap:Colourfulness:"
 export SW_USE_VKBASALT_CAS="0.4"
 export SW_USE_FPS_LIMIT="0.0"
 export SW_USE_MANGOHUD_CONFIG="cpu_temp,ram,core_load,cpu_mhz,wine,gpu_temp,gpu_core_clock,vram"
-export SW_USE_WINE="GE-Proton8-30"
+export SW_USE_WINE="GE-Proton9-7"
 export SW_USE_PFX="pfx_yuzu"
 ################################################################################

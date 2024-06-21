@@ -8,6 +8,7 @@ gi.require_version('Gdk', '3.0')
 from gi.repository import Gtk, GLib, Gdk, Gio
 
 import os
+from os import environ
 from sys import argv
 from pathlib import Path
 from subprocess import Popen, PIPE, run
@@ -20,7 +21,6 @@ sw_link = Path(argv[0]).absolute().parent
 sw_scripts = f"{sw_link}"
 sw_path = Path(sw_scripts).parent.parent
 sw_fsh = Path(f"{sw_scripts}/sw_function.sh")
-sw_rsh = Path(f"{sw_scripts}/sw_run.sh")
 sw_run = Path(f"{sw_scripts}/sw_run")
 sw_menu = Path(f"{sw_scripts}/sw_menu.py")
 sw_shortcuts = sw_shortcuts = Path(f"{sw_path}/Shortcuts")
@@ -91,18 +91,18 @@ def tray_main():
 
                 elif len(lnk) > 0:
                     x_path = lnk[0]
-
                 else:
                     x_path = None
 
                 if x_path is not None and Path(x_path).exists():
-                    sw_rsh.write_text(f'env "{sw_menu}" "{x_path}"')
+                    text = f'"{x_path}"'
+                    message = GLib.Variant("(s)", (text,))
                     try:
                         ret_var = proxy.call_sync(
-                                "Run", None, Gio.DBusCallFlags.NO_AUTO_START, 500, None
+                                "Run", message, Gio.DBusCallFlags.NO_AUTO_START, 500, None
                         )
                     except Exception as e:
-                        pass
+                        print(e)
                 else:
                     try:
                         text = 'lnk_error'
@@ -121,7 +121,8 @@ def tray_main():
         cmd_startwine.set_label(str_tray_hide)
 
         if sc_label == f'StartWine':
-            sw_rsh.write_text(f'env "{sw_menu}"')
+            text = 'None'
+            message = GLib.Variant("(s)", (text,))
             try:
                 ret_var = proxy.call_sync(
                         "Show", None, Gio.DBusCallFlags.NO_AUTO_START, 500, None
@@ -152,13 +153,14 @@ def tray_main():
                     x_path = None
 
                 if x_path is not None and Path(x_path).exists():
-                    sw_rsh.write_text(f'env "{sw_menu}" "{x_path}"')
+                    text = f'"{x_path}"'
+                    message = GLib.Variant("(s)", (text,))
                     try:
                         ret_var = proxy.call_sync(
-                                "Show", None, Gio.DBusCallFlags.NO_AUTO_START, 500, None
+                                "Show", message, Gio.DBusCallFlags.NO_AUTO_START, 500, None
                         )
                     except Exception as e:
-                        pass
+                        print(e)
                 else:
                     try:
                         text = 'lnk_error'

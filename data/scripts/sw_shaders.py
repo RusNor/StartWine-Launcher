@@ -2275,6 +2275,175 @@ class Shaders(Enum):
     }
     """
 
+    src_pwb_blue = """
+    ////////////////// Blue parabolic waves background
+
+    void mainImage( out vec4 fragColor, in vec2 fragCoord ){
+
+        vec2 uv =  (-0.8 * fragCoord + iResolution.xy) / min(iResolution.x, iResolution.y);
+
+        for(float i = 1.0; i < 8.0; i++){
+        uv.y += i * 0.1 / i * 
+          sin(uv.y * i * i + iTime * 0.3) * sin(uv.x * i * i + iTime * 0.3);
+      }
+
+       vec3 col;
+       col.r  = uv.y - 0.7;
+       col.g = uv.y - 0.5;
+       col.b = uv.y - 0.3;
+
+        fragColor = vec4(col,1.0);
+    }
+    """
+
+    src_pwb_red = """
+    ////////////////// Red parabolic waves background
+
+    void mainImage( out vec4 fragColor, in vec2 fragCoord ){
+
+        vec2 uv =  (-0.8 * fragCoord + iResolution.xy) / min(iResolution.x, iResolution.y);
+
+        for(float i = 1.0; i < 8.0; i++){
+        uv.y += i * 0.1 / i * 
+          sin(uv.y * i * i + iTime * 0.3) * sin(uv.x * i * i + iTime * 0.3);
+      }
+
+       vec3 col;
+       col.r  = uv.y - 0.35;
+       col.g = uv.y - 0.7;
+       col.b = uv.y - 0.7;
+
+        fragColor = vec4(col,1.0);
+    }
+    """
+
+    src_pwb_teal = """
+    ////////////////// Teal parabolic waves background
+
+    void mainImage( out vec4 fragColor, in vec2 fragCoord ){
+
+        vec2 uv =  (-0.8 * fragCoord + iResolution.xy) / min(iResolution.x, iResolution.y);
+
+        for(float i = 1.0; i < 8.0; i++){
+        uv.y += i * 0.1 / i * 
+          sin(uv.y * i * i + iTime * 0.3) * sin(uv.x * i * i + iTime * 0.3);
+      }
+
+       vec3 col;
+       col.r  = uv.y - 0.7;
+       col.g = uv.y - 0.3;
+       col.b = uv.y - 0.3;
+
+        fragColor = vec4(col,1.0);
+    }
+    """
+
+    src_pwb_mint = """
+    ////////////////// Mint parabolic waves background
+
+    void mainImage( out vec4 fragColor, in vec2 fragCoord ){
+
+        vec2 uv =  (-0.8 * fragCoord + iResolution.xy) / min(iResolution.x, iResolution.y);
+
+        for(float i = 1.0; i < 8.0; i++){
+        uv.y += i * 0.1 / i * 
+          sin(uv.y * i * i + iTime * 0.3) * sin(uv.x * i * i + iTime * 0.3);
+      }
+
+       vec3 col;
+       col.r  = uv.y - 0.5;
+       col.g = uv.y - 0.3;
+       col.b = uv.y - 0.7;
+
+        fragColor = vec4(col,1.0);
+    }
+    """
+
+    src_pwb_golden = """
+    ////////////////// Golden parabolic waves background
+
+    void mainImage( out vec4 fragColor, in vec2 fragCoord ){
+
+        vec2 uv =  (-0.8 * fragCoord + iResolution.xy) / min(iResolution.x, iResolution.y);
+
+        for(float i = 1.0; i < 8.0; i++){
+        uv.y += i * 0.1 / i * 
+          sin(uv.y * i * i + iTime * 0.3) * sin(uv.x * i * i + iTime * 0.3);
+      }
+
+       vec3 col;
+       col.r  = uv.y - 0.3;
+       col.g = uv.y - 0.3;
+       col.b = uv.y - 0.7;
+
+        fragColor = vec4(col,1.0);
+    }
+    """
+
+    src_pwb_purple = """
+    ////////////////// Purple parabolic waves background
+
+    void mainImage( out vec4 fragColor, in vec2 fragCoord ){
+
+        vec2 uv =  (-0.8 * fragCoord + iResolution.xy) / min(iResolution.x, iResolution.y);
+
+        for(float i = 1.0; i < 8.0; i++){
+        uv.y += i * 0.1 / i * 
+          sin(uv.y * i * i + iTime * 0.3) * sin(uv.x * i * i + iTime * 0.3);
+      }
+
+       vec3 col;
+       col.r  = uv.y - 0.5;
+       col.g = uv.y - 0.7;
+       col.b = uv.y - 0.3;
+
+        fragColor = vec4(col,1.0);
+    }
+    """
+
+    src_pwb_brown = """
+    ////////////////// Brown parabolic waves background
+
+    void mainImage( out vec4 fragColor, in vec2 fragCoord ){
+
+        vec2 uv =  (-0.8 * fragCoord + iResolution.xy) / min(iResolution.x, iResolution.y);
+
+        for(float i = 1.0; i < 8.0; i++){
+        uv.y += i * 0.1 / i * 
+          sin(uv.y * i * i + iTime * 0.3) * sin(uv.x * i * i + iTime * 0.3);
+      }
+
+       vec3 col;
+       col.r  = uv.y - 0.3;
+       col.g = uv.y - 0.5;
+       col.b = uv.y - 0.7;
+
+        fragColor = vec4(col,1.0);
+    }
+    """
+
+    src_pwb_gray = """
+    ////////////////// Gray parabolic waves background
+
+    void mainImage( out vec4 fragColor, in vec2 fragCoord ){
+
+        vec2 uv =  (-0.8 * fragCoord + iResolution.xy) / min(iResolution.x, iResolution.y);
+
+        for(float i = 1.0; i < 8.0; i++){
+        uv.y += i * 0.1 / i * 
+          sin(uv.y * i * i + iTime * 0.3) * sin(uv.x * i * i + iTime * 0.3);
+      }
+
+       vec3 col;
+       col.r  = uv.y - 0.5;
+       col.g = uv.y - 0.5;
+       col.b = uv.y - 0.5;
+
+        fragColor = vec4(col,1.0);
+    }
+    """
+
+
     src_mac = """
     /////////////////// MacOS Monterey 2
 
@@ -2327,7 +2496,7 @@ class Shaders(Enum):
         vec3 col3 = scene(((fragCoord * 2.0) + vec2(0.0, 1.0))/iResolution.xy);
 
         // Output to screen
-        fragColor = vec4((col0 + col1 + col2 + col2) / 4.0,1.0);
+        fragColor = vec4((col0 + col1 + col2 + col3) / 4.0,1.0);
     }
     """
 
@@ -5375,27 +5544,6 @@ class Shaders(Enum):
         #endif
 
         fragColor = vec4(col,1);
-    }
-    """
-
-    src_bb = """
-    ////////////////// Blue Background
-
-    void mainImage( out vec4 fragColor, in vec2 fragCoord ){
-
-        vec2 uv =  (-0.8 * fragCoord + iResolution.xy) / min(iResolution.x, iResolution.y);
-
-        for(float i = 1.0; i < 8.0; i++){
-        uv.y += i * 0.1 / i * 
-          sin(uv.y * i * i + iTime * 0.3) * sin(uv.x * i * i + iTime * 0.3);
-      }
-
-       vec3 col;
-       col.r  = uv.y - 0.7;
-       col.g = uv.y - 0.5;
-       col.b = uv.y - 0.3;
-
-        fragColor = vec4(col,1.0);
     }
     """
 
@@ -10361,6 +10509,48 @@ class Shaders(Enum):
         
         vec4 logo_ = logo(st);    
         fragColor = mix(vec4(0.,.5,.5,1.000), logo_, logo_.a);
+    }
+    """
+
+    src_sc_3d = """
+    /////////////////// sincos 3d
+
+    #define A(v) mat2(cos(m.v+radians(vec4(0, -90, 90, 0))))  // rotate
+    #define W(v) length(vec3(p.yz-v(p.x+vec2(0, pi_2)+t), 0))-lt  // wave
+    //#define W(v) length(p-vec3(round(p.x*pi)/pi, v(t+p.x), v(t+pi_2+p.x)))-lt  // wave
+    #define P(v) length(p-vec3(0, v(t), v(t+pi_2)))-pt  // point
+    void mainImage( out vec4 C, in vec2 U )
+    {
+        float lt = .1, // line thickness
+              pt = .3, // point thickness
+              pi = 3.1416,
+              pi2 = pi*2.,
+              pi_2 = pi/2.,
+              t = iTime*pi/10,
+              s = 1., d = 0., i = d;
+        vec2 R = iResolution.xy,
+             m = vec2(0, 0); //for rotate m = (iMouse.xy-.5*R)/R.y*4.;
+        vec3 o = vec3(0, 0, -7), // cam
+             u = normalize(vec3((U-.5*R)/R.y, 1)),
+             c = vec3(0), k = c, p;
+        if (iMouse.z < 1.) m = -vec2(t/20.-pi_2, 0);
+        mat2 v = A(y), h = A(x); // pitch & yaw
+        for (; i++<50.;) // raymarch
+        {
+            p = o+u*d;
+            p.yz *= v;
+            p.xz *= h;
+            p.x -= 3.;
+            if (p.y < -1.5) p.y = 2./p.y;
+            k.x = min( max(p.x+lt, W(sin)), P(sin) );
+            k.y = min( max(p.x+lt, W(cos)), P(cos) );
+            s = min(s, min(k.x, k.y));
+            if (s < .001 || d > 100.) break;
+            d += s*.5;
+        }
+        c = max(cos(d*pi2) - s*sqrt(d) - k, 0.);
+        c.gb += .1;
+        C = vec4(c*.4 + c.brg*.6 + c*c, 1);
     }
     """
 

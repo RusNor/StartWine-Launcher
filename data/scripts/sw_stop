@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
-. "$(dirname $(readlink -f "$0"))/sw_runlib"
+export LANGUAGE="${SW_LOCALE}.UTF-8"
+
+. gettext.sh
+export TEXTDOMAIN="StartWine"
+export TEXTDOMAINDIR="${SW_SCRIPTS_PATH}/locale"
 
 RED='\033[1;31m'
 

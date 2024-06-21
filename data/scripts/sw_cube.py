@@ -24,7 +24,7 @@ if getenv('XDG_SESSION_TYPE') == 'wayland':
         environ['GSK_RENDERER'] = 'opengl'
     else:
         environ['PYOPENGL_PLATFORM'] = 'egl'
-        environ['GDK_DEBUG'] = 'gl-egl'
+        environ['GDK_DEBUG'] = 'gl-prefer-gl'
         environ['GDK_BACKEND'] = 'wayland'
         environ['GSK_RENDERER'] = 'opengl'
 else:
@@ -558,6 +558,9 @@ class Cube(Gtk.Application):
         global x_mouse, y_mouse
         x_mouse = x
         y_mouse = y
+
+        self.gl_area.queue_render()
+        return True
 
     def on_frame_clock(self, gl_area, frame_clock):
         '''___update frames and redraw widget___'''

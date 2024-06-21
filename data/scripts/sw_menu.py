@@ -2,11 +2,13 @@
 
 ####___Core modules___.
 
-from time import time
-from time import process_time, sleep, strftime
+import time
+from time import time, process_time, sleep, strftime, perf_counter
+start_counter = perf_counter()
 start_process = process_time()
 start_time = time()
-
+import io
+import random
 import platform
 from platform import python_version
 import os
@@ -20,6 +22,7 @@ from subprocess import Popen, run, PIPE, STDOUT, DEVNULL
 from pathlib import Path
 from threading import Thread, Timer
 import multiprocessing as mp
+import asyncio
 from warnings import filterwarnings
 import mimetypes
 import urllib.request
@@ -31,6 +34,10 @@ import codecs
 import shutil
 import tarfile
 import zipfile
+import evdev
+from evdev import UInput, AbsInfo, InputDevice, ecodes, categorize
+from markdown import markdown
+import itertools
 
 ####__Export backend for OpenGL
 
@@ -68,7 +75,7 @@ if getenv('XDG_SESSION_TYPE') == 'wayland':
         if nv_drv_ver is not None:
             if int(nv_drv_ver.split('.')[0]) >= 545:
                 environ['PYOPENGL_PLATFORM'] = 'egl'
-                environ['GDK_DEBUG'] = 'gl-egl'
+                environ['GDK_DEBUG'] = 'gl-prefer-gl'
                 environ['GDK_BACKEND'] = 'wayland'
                 environ['GSK_RENDERER'] = 'opengl'
             else:
@@ -83,13 +90,13 @@ if getenv('XDG_SESSION_TYPE') == 'wayland':
             environ['GSK_RENDERER'] = 'opengl'
     else:
         environ['PYOPENGL_PLATFORM'] = 'egl'
-        environ['GDK_DEBUG'] = 'gl-egl'
+        environ['GDK_DEBUG'] = 'gl-prefer-gl'
         environ['GDK_BACKEND'] = 'wayland'
         environ['GSK_RENDERER'] = 'opengl'
 else:
     if gpu_in_use == 'nvidia':
         environ['PYOPENGL_PLATFORM'] = 'egl'
-        environ['GDK_DEBUG'] = 'gl-egl'
+        environ['GDK_DEBUG'] = 'gl-prefer-gl'
         environ['GDK_BACKEND'] = 'x11'
         environ['GSK_RENDERER'] = 'opengl'
     else:
@@ -99,6 +106,10 @@ else:
         environ['GSK_RENDERER'] = 'opengl'
 
 ####___Third party modules___.
+#environ["LD_LIBRARY_PATH"] = os.path.sep + f'/usr/local/lib'
+#environ['GI_TYPELIB_PATH'] = os.path.sep + f'/usr/local/lib/girepository-1.0'
+#from ctypes import CDLL
+#CDLL('/usr/local/lib/libgtk4-layer-shell.so.1.0.1')
 
 import gi
 gi.require_version('Gtk', '4.0')
@@ -107,28 +118,28 @@ gi.require_version('WebKit', '6.0')
 gi.require_version('Notify', '0.7')
 gi.require_version('Vte', '3.91')
 
-from gi.repository import Gtk, Gdk, Gio, GLib, Pango, GObject, Graphene
+from gi.repository import Gtk, Gdk, Gsk, Gio, GLib, Pango, GObject, Graphene
 from gi.repository import WebKit
 from gi.repository import GdkPixbuf
 from gi.repository import Notify
 from gi.repository import Vte
+#from gi.repository import Gtk4LayerShell as LayerShell
 
 from PIL import Image, ImageColor
+import psutil
 from psutil import Process
 
 ####___Local data modules___.
 
+import sw_data
 from sw_data import *
 from sw_data import Msg as msg
 from sw_data import TermColors as tc
-from sw_crier import dialog_question, dialog_entry, dialog_directory
-from sw_crier import info as dialog_info
-
-if sw_opengl_bg == 'True':
-    environ['SW_OPENGL'] = '1'
-else:
-    environ['SW_OPENGL'] = '0'
-
+from sw_crier import SwDialogQuestion as dialog_question
+from sw_crier import SwDialogEntry as dialog_entry
+from sw_crier import SwDialogDirectory as dialog_directory
+from sw_crier import SwCrier as dialog_info
+from sw_crier import SwProgressBar, SwWidget
 from sw_opengl import RenderArea
 
 ####___Add_mime_types___.
@@ -138,36 +149,111 @@ try:
 except:
     print(f'{tc.VIOLET2}ADD_MIME_TYPES: {tc.RED}failed')
 
-def get_sw_exe_path():
+def check_arg(arg):
+    '''___check system comanline arg and set to environment___'''
+
+    if arg is None or arg == 'None':
+        try:
+            arg = argv[2]
+        except:
+            arg = None
+
+    if arg is not None and arg != '%F':
+        if Path(arg).exists():
+            g_file = Gio.File.new_for_commandline_arg(arg)
+            g_info = g_file.query_info('*', Gio.FileQueryInfoFlags.NONE)
+            arg_type = g_info.get_content_type()
+
+            if Path(arg).suffix == '.desktop' or Path(arg).suffix == '.swd':
+                arg = [x.split('=')[1].strip('"') for x in Path(arg).read_text().splitlines() if 'Exec=' in x]
+
+                if len(arg) > 0:
+                    commandline = arg[0]
+                    exe = [x for x in arg[0].split('"') if '.exe' in x.lower()]
+                    msi = [x for x in arg[0].split('"') if '.msi' in x.lower()]
+                    bat = [x for x in arg[0].split('"') if '.bat' in x.lower()]
+                    lnk = [x for x in arg[0].split('"') if '.lnk' in x.lower()]
+
+                    if len(exe) > 0:
+                        x_path = exe[0]
+
+                    elif len(msi) > 0:
+                        x_path = msi[0]
+
+                    elif len(bat) > 0:
+                        x_path = bat[0]
+
+                    elif len(lnk) > 0:
+                        x_path = lnk[0]
+                    else:
+                        x_path = None
+
+                    if x_path is not None and Path(x_path).exists():
+                        environ['SW_COMMANDLINE'] = f'"{x_path}"'
+                        environ['SW_EXEC'] = f'"{x_path}"'
+                    else:
+                        print(f'Executable is {arg[0]}')
+                        environ['SW_COMMANDLINE'] = f'"{arg[0]}"'
+                        environ['SW_EXEC'] = 'StartWine'
+                else:
+                    print('Executable not exists...')
+                    environ['SW_COMMANDLINE'] = 'None'
+                    environ['SW_EXEC'] = 'StartWine'
+
+            elif (Path(arg).suffix.lower() == '.exe'
+                or Path(arg).suffix.lower() == '.msi'
+                or Path(arg).suffix.lower() == '.bat'
+                or Path(arg).suffix.lower() == '.lnk'):
+                    print(f'Executable is {arg_type} mimetype...')
+                    environ['SW_COMMANDLINE'] = f'"{arg}"'
+                    environ['SW_EXEC'] = f'"{arg}"'
+
+            elif arg_type in exe_mime_types:
+                    print(f'Executable is {arg_type} mimetype...')
+                    environ['SW_COMMANDLINE'] = f'"{arg}"'
+                    environ['SW_EXEC'] = f'"{arg}"'
+            else:
+                print(f'Executable is {arg_type} mimetype...')
+                environ['SW_COMMANDLINE'] = f'"{arg}"'
+                environ['SW_EXEC'] = 'StartWine'
+        else:
+            print('Executable not exists...')
+            environ['SW_COMMANDLINE'] = 'None'
+            environ['SW_EXEC'] = 'StartWine'
+    else:
+        print('Running without args...')
+        environ['SW_COMMANDLINE'] = 'None'
+        environ['SW_EXEC'] = 'StartWine'
+
+    print(f'{tc.RED}SW_EXEC: {tc.GREEN}{getenv("SW_EXEC")}')
+
+def get_arg_mimetype():
     '''___get exe path from system comanline arg___'''
 
     try:
-        exc_type = tuple(mimetypes.guess_type(f'{argv[1]}', strict=True))[0]
+        exc_type = tuple(mimetypes.guess_type(f'{argv[2]}', strict=True))[0]
     except:
         exc_type = tuple(mimetypes.guess_type(f'{argv[0]}', strict=True))[0]
-        sw_exe_path = 'StartWine'
     else:
-        if exc_type in exe_mime_types:
-            sw_exe_path = argv[1]
-        else:
-            sw_exe_path = 'StartWine'
+        if Path(argv[2]).suffix in swd_mime_types:
+            exc_type = 'application-x-swd'
 
-    return [sw_exe_path, exc_type]
+    return exc_type
 
-def set_print_id_info(g_app, show):
+def set_print_id_info(swgs, show):
     '''___print default display and application id info___'''
 
     if show:
         display = Gdk.DisplayManager.get().get_default_display()
         py_ver = str(python_version())
-        exc_type = get_sw_exe_path()[1]
+        exc_type = get_arg_mimetype()
 
         print(
             f'\n{tc.SELECTED + tc.BEIGE}'
             +f'--------------< STARTWINE {str_sw_version} >-------------{tc.END}\n'
         )
         print(
-            f'{tc.VIOLET2}APPLICATION_ID: {tc.GREEN}{g_app.get_application_id()}\n'
+            f'{tc.VIOLET2}APPLICATION_ID: {tc.GREEN}{swgs.get_application_id()}\n'
             f"{tc.VIOLET2}DISPLAY:        {tc.GREEN}{str(display).split(' ')[0].strip('<')}\n"
             f'{tc.VIOLET2}PYTHON_VERSION: {tc.GREEN}{py_ver}{tc.END}\n'
             f'{tc.VIOLET2}ADD_MIME_TYPES: {tc.GREEN}{", ".join(exe_mime_types)}\n'
@@ -205,7 +291,10 @@ def set_print_run_time(show):
             + str(round(process_time() - start_process, 2)),
             f'\n{tc.VIOLET2} RUN_TIME:           '
             + tc.GREEN
-            + str(round(time() - start_time, 2))
+            + str(round(time() - start_time, 2)),
+            f'\n{tc.VIOLET2} PERF_TIME:          '
+            + tc.GREEN
+            + str(round(perf_counter() - start_counter, 2))
             + tc.END)
     else:
         return None
@@ -220,6 +309,9 @@ def set_print_mem_info(mapped):
         tc.SELECTED + tc.YELLOW
         + "\n----------------< MEMORY_INFO >----------------\n"
         + tc.END, "\n",
+        tc.VIOLET2 + 'SW MEMORY:     ' + tc.GREEN
+        + str(round(mem_info.rss / (1024**2), 2)
+            - round(mem_info.shared / (1024**2), 2)) + tc.END, "\n",
         tc.VIOLET2 + 'RSS MEMORY:    ' + tc.GREEN
         + str(round(mem_info.rss / (1024**2), 2)) + tc.END, "\n",
         tc.VIOLET2 + 'VMS_MEMORY:    ' + tc.GREEN
@@ -244,32 +336,17 @@ def set_print_mem_info(mapped):
         for x in mem_map:
             try:
                 print(x[0], x[1])
-            except:
+            except Exception as e:
                 pass
     else:
         return None
 
-def echo_run(sw_exe_path):
-    '''___write execute command line to run.sh___'''
-
-    if sw_exe_path is None:
-        sw_exe_path = get_sw_exe_path()[0]
-
-    if sw_exe_path == 'StartWine':
-        sw_rsh.write_text(f'env "{sw_menu}"')
-    else:
-        sw_rsh.write_text(f'env "{sw_menu}" "{sw_exe_path}"')
-
-    print(f'{tc.RED}Echo exe path... {tc.GREEN}env "{sw_menu}" "{sw_exe_path}"')
-
 def get_app_path():
     '''___get application path___'''
 
-    env_menu = f"env \"{sw_menu}\" "
-    app_path = str(sw_rsh.read_text()).replace(env_menu, '')
-
-    if str('.py') in str(Path(app_path).suffix):
-        app_path = f'StartWine'
+    app_path = getenv('SW_EXEC')
+    if app_path == '' or  app_path is None:
+        app_path = 'StartWine'
 
     return app_path
 
@@ -352,39 +429,39 @@ def get_lnk_data(lnk_path):
         else:
             return None, None, None
 
-def write_lnk_data(app_name, app_suffix, app_lnk_path):
+def write_lnk_data(app_name, app_path, app_suffix, app_lnk_path):
 
     pfx_path = get_pfx_path()
     app_path = get_app_path()
 
     if app_lnk_path is None:
         text_message = msg.msg_dict['lnk_error']
-        return dialog_info(app, text_message, 'ERROR')
+        return dialog_info(text_message=text_message, message_type='ERROR').run()
 
     if app_name is None:
         text_message = msg.msg_dict['lnk_error']
-        return dialog_info(app, text_message, 'ERROR')
+        return dialog_info(text_message=text_message, message_type='ERROR').run()
 
     if app_suffix is None:
         text_message = msg.msg_dict['lnk_error']
-        return dialog_info(app, text_message, 'ERROR')
+        return dialog_info(text_message=text_message, message_type='ERROR').run()
 
     if f'{app_lnk_path}' in f'{Path(app_path.strip('"')).parent}/{app_name}{app_suffix}':
         app_path = f'{Path(app_path.strip('"')).parent}/{app_name}{app_suffix}'
-        sw_rsh.write_text(f'env "{sw_menu}" "{app_path}"')
+        environ['SW_EXEC'] = f'"{app_path}"'
     else:
         if f'{pfx_path}' == f'{sw_pfx}/pfx_default':
             for r, d, f in walk(pfx_path.strip('"')):
                 for x in f:
                     if f'{app_name}{app_suffix}'.lower() in x.lower():
                         app_path = f'{Path(join(r, x))}'
-                        sw_rsh.write_text(f'env "{sw_menu}" "{app_path}"')
+                        environ['SW_EXEC'] = f'"{app_path}"'
         else:
             for r, d, f in walk(f'{sw_pfx}/pfx_{app_name}'):
                 for x in f:
                     if f'{app_name}{app_suffix}'.lower() in x.lower():
                         app_path = f'{Path(join(r, x))}'
-                        sw_rsh.write_text(f'env "{sw_menu}" "{app_path}"')
+                        environ['SW_EXEC'] = f'"{app_path}"'
 
 def create_app_conf():
     '''___create application config___'''
@@ -392,7 +469,7 @@ def create_app_conf():
     app_name = get_out()
     app_conf = Path(f"{sw_app_config}/" + str(app_name))
     launcher_conf = Path(f"{sw_app_config}/.default/" + str(app_name))
-    sw_exe_path = get_sw_exe_path()[0]
+    sw_exe_path = get_app_path()
 
     if not app_conf.exists():
         if sw_exe_path == 'StartWine':
@@ -427,7 +504,7 @@ def clear_tmp():
     if sw_tmp.exists():
         for x in scandir(path=sw_tmp):
             if x.is_file():
-                if '.swd' in str(x):
+                if '.desktop' in str(x):
                     Path(x).unlink()
 
 def start_tray():
@@ -441,15 +518,7 @@ def start_tray():
         is_active = []
         for line in out.splitlines():
             if str('sw_tray.py') in line:
-#                pid = int(line.split()[1])
-#                kill(pid, 9)
                 is_active.append('1')
-
-        for line in out.splitlines():
-            if f"{sw_rsh}" in line:
-#                pid = int(line.split()[1])
-#                kill(pid, 9)
-                pass
 
         if len(is_active) == 0:
             sw_tray_log = f'{sw_logs}/sw_tray.log'
@@ -505,6 +574,103 @@ def write_app_conf(x_path):
         else:
             app_conf.write_text(launcher_conf.read_text())
             app_conf.chmod(0o755)
+
+def write_app_stat(stat_path: str, var: str, val: float):
+    '''___Writing total time in the app___'''
+
+    if Path(stat_path).exists():
+        text = Path(stat_path).read_text()
+        lines = text.splitlines()
+        line = [x for x in lines if f'{var}=' in x]
+        if len(line) > 0:
+            cur_val = line[0].split('=')[1]
+
+            if var == 'Time':
+                new_val = round(float(val) + float(cur_val), 2)
+            elif var == 'Fps':
+                new_val = round(float(val) + float(cur_val), 2) / 2
+
+            new_line = f'{var}={new_val}'
+            with open(stat_path, 'w') as f:
+                f.write(text.replace(line[0], new_line))
+                f.close()
+        else:
+            new_val = round(float(val), 2)
+            new_line = f'\n{var}={new_val}'
+            with open(stat_path, 'a') as f:
+                f.write(new_line)
+                f.close()
+    else:
+        print(f'{stat_path} not exists')
+
+def read_app_stat(stat_path: str, var: str):
+    '''___Reading total time in the app___'''
+
+    if Path(stat_path).exists():
+        lines = Path(stat_path).read_text().splitlines()
+        line = [line for line in lines if f'{var}=' in line]
+
+        if len(line) > 0:
+            val = line[0].split('=')[1]
+        else:
+            val = 0.0
+
+        if var == 'Time':
+            if float(val) < 60:
+                t_val = msg.msg_dict['seconds']
+                val = round(float(val), 2)
+                return f'{val} {t_val}'
+
+            elif 60 < float(val) < 3600:
+                t_val = msg.msg_dict['minutes']
+                val = round(float(val) / 60, 2)
+                return f'{val} {t_val}'
+
+            elif 3600 <= float(val) < 86400:
+                t_val = msg.msg_dict['hours']
+                val = round(float(val) / 3600, 2)
+                return f'{val} {t_val}'
+
+            elif float(val) > 86400:
+                t_val = msg.msg_dict['days']
+                val = round(float(val) / 86400, 2)
+                return f'{val} {t_val}'
+
+            else:
+                val = f'0.0 {msg.msg_dict["seconds"]}'
+                return val
+        else:
+            return val
+    else:
+        val = 0.0
+        return val
+
+def read_overlay_output(app_name: str):
+    '''___Getting average fps from output log___'''
+
+    fps_tmp = f'{sw_tmp}/stats/{app_name}.txt'
+
+    if Path(fps_tmp).exists():
+        with open(fps_tmp, 'r') as f:
+            lines = f.read().splitlines()
+            f.close()
+
+        if lines != []:
+            count = 0
+            val = 0
+            for line in lines:
+                count += 1
+                try:
+                    val += float(line.split(', ')[2])
+                except Exception as e:
+                    pass
+            else:
+                fps = float(val / count)
+                return fps
+        else:
+            return None
+    else:
+        return None
 
 def app_info(x_path):
     '''___get application settings dictionary___'''
@@ -566,7 +732,7 @@ def preload_runlib(enable_env: bool):
     cmd = f"{sw_scripts}/sw_runlib {app_name}"
     run(cmd, shell=True)
 
-    print(tc.VIOLET2, f'PRELOAD: {tc.YELLOW}sw_runlib...{tc.END}')
+    print(tc.VIOLET2, f'PRELOAD_RUNLIB: {tc.YELLOW}done{tc.END}')
 
 def get_exe_icon():
     '''___get icon from exe file___'''
@@ -704,9 +870,9 @@ def try_download_logo(app_id, app_name, original_name, orientation):
 
     elif orientation == 'vertical':
         if not str(app_id) in str([x.name for x in list(sw_app_vicons.iterdir())]):
-
             app_name_isalnum = ''.join(e for e in app_name if e.isalnum())
             file_vicon = f'{sw_app_icons}/tmp/{app_name_isalnum}_vertical_{original_name}_{app_id}.jpg'
+
             try:
                 url_app_logo = f'https://cdn.cloudflare.steamstatic.com/steam/apps/{app_id}/library_600x900_2x.jpg'
                 urllib.request.urlretrieve(url_app_logo, file_vicon)
@@ -886,7 +1052,6 @@ def check_download_sgdb(cur_name, app_name, width, height, orientation):
 
         edited_name = '_'.join(parts)
 
-        print(f'++++++++++++++++++++++++++++++++++++++++++++++++ {edited_name}')
         url_search = f'https://www.steamgriddb.com/api/v2/search/autocomplete/{edited_name}'
         try:
             request_urlopen(url_search, f'{sw_fm_cache_database}/{edited_name}.json', True)
@@ -935,6 +1100,7 @@ def check_download_sgdb(cur_name, app_name, width, height, orientation):
 
             if app_id is not None:
                 url_app_id = f'https://www.steamgriddb.com/api/v2/grids/game/{app_id}?dimentions={width}x{height}'
+                check_sgdb_heroes(app_name_isalnum, app_id, data_name)
 
                 try:
                     request_urlopen(url_app_id, f'{sw_fm_cache_database}/{app_name_isalnum}_{orientation}_{app_id}.json', True)
@@ -1001,6 +1167,44 @@ def check_download_sgdb(cur_name, app_name, width, height, orientation):
     else:
         print('icon not found...')
         return None
+
+def check_sgdb_heroes(app_name_isalnum, app_id, data_name):
+
+    size_dict = {3840: 1240, 1920: 620, 1600: 650}
+    url_heroes_icon = []
+
+    for width, height in size_dict.items():
+        url_heroes = f'https://www.steamgriddb.com/api/v2/heroes/game/{app_id}?dimentions={width}x{height}'
+        try:
+            request_urlopen(url_heroes, f'{sw_fm_cache_database}/{app_name_isalnum}_heroes_{app_id}.json', True)
+        except Exception as e:
+            print(e)
+        else:
+            with open(f'{sw_fm_cache_database}/{app_name_isalnum}_heroes_{app_id}.json', mode='r', encoding='utf-8') as f:
+                json_data = json.load(f)
+                if len(json_data['data']) > 0:
+                    for value in json_data['data']:
+                        if (str(value['style']) == 'alternate'
+                            and int(value['width']) == int(width)):
+                                url_heroes_icon.append(value['url'])
+                                break
+                f.close()
+    else:
+        if len(url_heroes_icon) > 0:
+            print(url_heroes_icon)
+
+            try:
+                request_urlopen(url_heroes_icon[0], f'{sw_fm_cache_database}/{app_name_isalnum}_heroes_{data_name}_{app_id}.jpg', False)
+            except Exception as e:
+                print(e)
+            else:
+                file_heroes_icon = f'{sw_app_heroes_icons}/{app_name_isalnum}_heroes_{data_name}_{app_id}.jpg'
+                cache_icon = f'{sw_fm_cache_database}/{app_name_isalnum}_heroes_{data_name}_{app_id}.jpg'
+                shutil.copy2(cache_icon, file_heroes_icon)
+                print(f'{tc.GREEN} Copy heroes icon: {tc.YELLOW} {app_id} {tc.RED} {data_name} {tc.END}')
+        else:
+            print('icon not found...')
+            return None
 
 def check_download_logo(app_id_dict, app_name, name_dict, orientation):
 
@@ -1124,7 +1328,6 @@ def get_meta_desc(metadata):
 def get_exe_logo(app_name, app_path):
     '''___get exe logo id from json data___'''
 
-    echo_run(app_path.strip('"'))
     app_dir_list = list()
     orig_name = None
     desc_name = None
@@ -1268,7 +1471,7 @@ def check_exe_logo(app_name):
     return False
 
 def try_get_exe_logo():
-    '''Try to get wide screen logo for current app.'''
+    '''Try to get wide screen logo for current exe.'''
 
     app_path = get_app_path()
     app_name = get_out()
@@ -1281,15 +1484,15 @@ def try_get_exe_logo():
 
 def get_bookmark_list():
 
-    bmark_list.clear()
+    bookmarks_list.clear()
 
     with open(sw_bookmarks, 'r') as f:
         l = f.read().splitlines()
         for s in l:
-            bmark_list.append(s)
+            bookmarks_list.append(s)
             f.close()
 
-    return bmark_list
+    return bookmarks_list
 
 ####___Echo_functon___.
 
@@ -1590,7 +1793,7 @@ def get_cpu_core_num():
 
 ####___Activate_startwine_menu___.
 
-class StartWine(Gtk.Application):
+class StartWineGraphicalShell(Gtk.Application):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args,
@@ -1598,37 +1801,35 @@ class StartWine(Gtk.Application):
                         flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
                         **kwargs
         )
-        ####___set_program_name___.
         GLib.set_prgname(sw_program_name)
         GLib.set_application_name(sw_program_name)
 
-        ####___set_files_monitor___.
-        self.cur_dir = Gio.File.new_for_commandline_arg(bytes(Path.cwd()))
-        self.f_mon = self.cur_dir.monitor(Gio.FileMonitorFlags.WATCH_MOVES, None)
-        self.f_mon.connect('changed', g_file_monitor)
+        self.get_default().register()
+        set_print_id_info(self, True)
+
+        self.width = 1280
+        self.height = 720
+
+        self.connection = self.get_dbus_connection()
+        self.gdbus_node = Gio.DBusNodeInfo.new_for_xml(gdbus_node_sample)
+
+        self.tray = start_tray()
         self.connect('activate', sw_activate)
 
-        ####___register_program___.
-        g_app = self.get_default()
-        g_app.register()
-        set_print_id_info(g_app, True)
+        ####___send_notification___
+        enable_notify = None
+        if enable_notify is not None:
+            try:
+                Notify.init(sw_program_name)
+            except Exception as e:
+                pass
+            else:
+                message = msg.msg_dict['good_day_is']
+                ntf = Notify.Notification.new(sw_program_name, message, sw_default_icon)
+                ntf.show()
+                Timer(3, ntf.close).start()
 
-        self.connection = g_app.get_dbus_connection()
-        self.gdbus_node = Gio.DBusNodeInfo.new_for_xml(gdbus_node_sample)
-        self.tray = start_tray()
-
-#        ####___send_notification___
-#        try:
-#            Notify.init(sw_program_name)
-#        except Exception as e:
-#            pass
-#        else:
-#            msg = msg.msg_dict['good_day_is']
-#            ntf = Notify.Notification.new(sw_program_name, msg, sw_default_icon)
-#            ntf.show()
-#            Timer(3, ntf.close).start()
-
-def sw_activate(app):
+def sw_activate(swgs):
     '''___build and activate application___'''
 
     def gdbus_method_call(
@@ -1645,7 +1846,7 @@ def sw_activate(app):
 
             if text_message is not None:
                 print(f'{sender} : {text_message}')
-                dialog_info(app, text_message, 'INFO')
+                dialog_info(text_message=text_message, message_type='ERROR').run()
                 invocation.return_value(None)
 
         elif method_name == "Active":
@@ -1657,61 +1858,41 @@ def sw_activate(app):
             invocation.return_value(answer)
 
         elif method_name == "Run":
+            if len(params.unpack()) > 0:
+                arg = params.unpack()[0].strip('"')
+                check_arg(arg)
+
             start_mode()
             on_start()
+            invocation.return_value(None)
 
         elif method_name == "Terminal":
-            window = app.get_active_window()
-            window.set_hide_on_close(False)
-            window.set_visible(True)
-            window.unminimize()
+            open_window()
             on_terminal()
             terminal.feed_child(f'neofetch\n'.encode("UTF-8"))
             invocation.return_value(None)
 
         elif method_name == "Show":
-            window = app.get_active_window()
-            window.set_hide_on_close(False)
-            window.set_visible(True)
-            window.unminimize()
+            if len(params.unpack()) > 0:
+                arg = params.unpack()[0].strip('"')
+                check_arg(arg)
 
-            app_name = get_out()
-            app_path = get_app_path()
-            start_mode()
-
-            if (app_name != 'StartWine'
-                and not Path(f'{sw_shortcuts}/{app_name}.swd').exists()):
-                    on_files(Path(Path(app_path.strip('"')).parent))
-
-                    label_frame_create_shortcut.set_label(msg.msg_dict['cs'])
-                    response = [
-                                msg.msg_dict['run'].title(),
-                                msg.msg_dict['cs'].title(),
-                                msg.msg_dict['cancel'].title(),
-                    ]
-                    title = msg.msg_dict['choose']
-                    func = [on_start, on_message_cs, None]
-                    dialog_question(app, title, None, response, func)
-
+            startup_question()
             invocation.return_value(None)
 
         elif method_name == "ShowHide":
-            window = app.get_active_window()
+            window = swgs.get_active_window()
 
             if window.get_visible():
-                window = app.get_active_window()
-                window.set_hide_on_close(True)
-                window.close()
-                invocation.return_value(None)
+                hide_window()
             else:
-                window.set_hide_on_close(False)
-                window.set_visible(True)
-                window.unminimize()
-                invocation.return_value(None)
+                open_window()
+
+            invocation.return_value(None)
 
         elif method_name == "Shutdown":
             Popen(f"{sw_scripts}/sw_stop", shell=True)
-            app.connection.flush(callback=flush_connection, user_data=None)
+            swgs.connection.flush(callback=flush_connection, user_data=None)
             invocation.return_value(None)
 
     def flush_connection(self, res, data):
@@ -1719,7 +1900,74 @@ def sw_activate(app):
 
         result = self.flush_finish(res)
         print(result)
-        app.quit()
+        window = swgs.get_active_window()
+        window.close()
+        swgs.quit()
+
+    def startup_question():
+        '''___Startup dialog question___'''
+
+        app_name = get_out()
+        app_path = get_app_path()
+        start_mode()
+
+        if app_name != 'StartWine':
+            if not Path(f'{sw_shortcuts}/{app_name}.swd').exists():
+                on_files(Path(Path(app_path.strip('"')).parent))
+
+                label_frame_create_shortcut.set_label(msg.msg_dict['cs'])
+                response = [
+                            msg.msg_dict['run'].title(),
+                            msg.msg_dict['open'].title(),
+                            msg.msg_dict['cs'].title(),
+                            msg.msg_dict['cancel'].title(),
+                ]
+                title = msg.msg_dict['choose']
+                message = [Path(app_path.strip('"')).name, '']
+                func = [on_start, open_window, on_message_cs, None]
+                dialog_question(swgs, title, message, response, func)
+            else:
+                if not Path(app_path.strip('"')).exists():
+                    text_message = msg.msg_dict['lnk_error']
+                    dialog_info(text_message=text_message, message_type='ERROR').run()
+                else:
+                    on_files(Path(Path(app_path.strip('"')).parent))
+
+                    label_frame_create_shortcut.set_label(msg.msg_dict['cw'])
+                    response = [
+                                msg.msg_dict['run'].title(),
+                                msg.msg_dict['open'].title(),
+                                msg.msg_dict['cw'].title(),
+                                msg.msg_dict['launch_settings'].title(),
+                                msg.msg_dict['cancel'].title(),
+                    ]
+                    title = msg.msg_dict['choose']
+                    message = [Path(app_path.strip('"')).name, '']
+                    func = [on_start, open_window, on_message_cs, on_launch_settings, None]
+                    dialog_question(swgs, title, message, response, func)
+        else:
+            commandline = getenv('SW_COMMANDLINE')
+            if commandline != 'None':
+                if Path(commandline.strip('"')).exists():
+                    on_files(Path(Path(commandline.strip('"')).parent))
+                    open_window()
+                else:
+                    dialog_info(text_message=f"{msg.msg_dict['lnk_error']}", message_type='ERROR').run()
+            else:
+                open_window()
+
+    def open_window():
+
+        window = swgs.get_active_window()
+        window.set_hide_on_close(False)
+        window.set_visible(True)
+        window.unminimize()
+
+    def hide_window():
+
+        window = swgs.get_active_window()
+        window.set_hide_on_close(True)
+        window.close()
 
     def cb_ctrl_key_pressed(ctrl_key_press, keyval, keycode, state, parent):
         '''___key pressed events handler___'''
@@ -1766,40 +2014,46 @@ def sw_activate(app):
 
         if keyval == Gdk.KEY_F1:
             return on_webview(home_page + '/StartWine-Launcher')
-            #return on_webview(home_html)
 
         if keyval == Gdk.KEY_F2:
-            selected = get_selected_item_gfile()
-            if len(selected) > 1:
-                return on_files_rename(selected)
-            elif len(selected) == 1:
-                return on_file_rename(selected[0])
-            else:
-                print('oops! not selected files')
+            if reveal_stack.get_visible_child() == files_view_grid:
+                selected = get_selected_item_gfile()
+                if len(selected) > 1:
+                    return on_files_rename(selected)
+                elif len(selected) == 1:
+                    return on_file_rename(selected[0])
 
         if keyval == Gdk.KEY_F3:
+            return on_paned_files_view()
+
+        if keyval == Gdk.KEY_F4:
             return on_about()
 
         if keyval == Gdk.KEY_F5:
-            path = entry_path.get_name()
-            try:
-                update_grid_view(path)
-            except PermissionError as e:
-                overlay_info(overlay, None, e, None, 3)
+            if reveal_stack.get_visible_child() == files_view_grid:
+                parent_file = get_parent_file()
+                if parent_file.get_path() is None:
+                    parent_uri = parent_file.get_uri()
+                    update_grid_view_uri(parent_uri)
+                else:
+                    on_files(parent_file.get_path())
 
         if ((state & all_mask) == Gdk.ModifierType.SHIFT_MASK
             and keyval == Gdk.KEY_Delete):
-                selected = get_selected_item_gfile()
-                return on_file_remove(selected)
+                if reveal_stack.get_visible_child() == files_view_grid:
+                    selected = get_selected_item_gfile()
+                    return on_file_remove(selected)
 
         if keyval == Gdk.KEY_Delete:
-            selected = get_selected_item_gfile()
-            return on_file_to_trash(selected)
+            if reveal_stack.get_visible_child() == files_view_grid:
+                selected = get_selected_item_gfile()
+                return on_file_to_trash(selected)
 
         if ((state & all_mask) == Gdk.ModifierType.SHIFT_MASK
             and k_val[1] in (Gdk.KEY_l, Gdk.KEY_L)):
-                data = get_selected_item_gfile()
-                return on_file_link(data)
+                if reveal_stack.get_visible_child() == files_view_grid:
+                    data = get_selected_item_gfile()
+                    return on_file_link(data)
 
         if ((state & all_mask) == Gdk.ModifierType.META_MASK
             and keyval == Gdk.KEY_BackSpace):
@@ -1822,82 +2076,61 @@ def sw_activate(app):
 
         if ((state & all_mask) == Gdk.ModifierType.ALT_MASK
             and k_val[1] in (Gdk.KEY_f, Gdk.KEY_F)):
-                if stack_sidebar.get_visible_child() != frame_main:
-                    btn_back_main.set_visible(False)
-                    stack_sidebar.set_visible_child(frame_main)
                 dict_ini = read_menu_conf()
                 sw_default_dir = dict_ini['default_dir']
                 return on_files(Path(sw_default_dir))
 
+        if ((state & all_mask) == Gdk.ModifierType.CONTROL_MASK
+            and keyval == Gdk.KEY_1):
+                set_view_parent_path(left_grid_view)
+
+                if scrolled_left_files.get_child().get_name() != 'left_column_view':
+                    add_column_view()
+                else:
+                    scrolled_left_files.set_child(left_grid_view)
+
+                return on_files(Path(get_parent_file().get_path()))
+
         if ((state & all_mask) == Gdk.ModifierType.ALT_MASK
             and k_val[1] in (Gdk.KEY_w, Gdk.KEY_W)):
-                if stack_sidebar.get_visible_child() != frame_main:
-                    btn_back_main.set_visible(False)
-                    stack_sidebar.set_visible_child(frame_main)
                 return on_winetricks()
 
         if ((state & all_mask) == Gdk.ModifierType.ALT_MASK
             and k_val[1] in (Gdk.KEY_a, Gdk.KEY_A)):
-                if stack_sidebar.get_visible_child() != frame_main:
-                    btn_back_main.set_visible(False)
-                    stack_sidebar.set_visible_child(frame_main)
                 return on_shortcuts()
 
         if ((state & all_mask) == Gdk.ModifierType.ALT_MASK
             and k_val[1] in (Gdk.KEY_l, Gdk.KEY_L)):
-                if stack_sidebar.get_visible_child() != frame_main:
-                    btn_back_main.set_visible(False)
-                    stack_sidebar.set_visible_child(frame_main)
-
                 return on_install_launchers()
 
         if ((state & all_mask) == Gdk.ModifierType.ALT_MASK
             and k_val[1] in (Gdk.KEY_x, Gdk.KEY_X)):
-                on_settings()
-                return set_settings_widget(
-                                        scrolled_launch_settings,
-                                        vw_dict['launch_settings'],
-                                        pref_group_title
-                )
+                return on_launch_settings()
+
         if ((state & all_mask) == Gdk.ModifierType.ALT_MASK
             and k_val[1] in (Gdk.KEY_m, Gdk.KEY_M)):
-                on_settings()
-                return set_settings_widget(
-                                        scrolled_mangohud_settings,
-                                        vw_dict['mangohud_settings'],
-                                        pref_group_mh_title
-                )
+                return on_mangohud_settings()
+
         if ((state & all_mask) == Gdk.ModifierType.ALT_MASK
             and k_val[1] in (Gdk.KEY_v, Gdk.KEY_V)):
-                on_settings()
-                return set_settings_widget(
-                                        scrolled_vkbasalt_settings,
-                                        vw_dict['vkbasalt_settings'],
-                                        pref_group_vk_title
-                )
+                return on_vkbasalt_settings()
+
         if ((state & all_mask) == Gdk.ModifierType.ALT_MASK
-            and k_val[1] in (Gdk.KEY_c, Gdk.KEY_C)):
-                on_settings()
-                return set_settings_widget(
-                                        scrolled_colors_settings,
-                                        vw_dict['colors_settings'],
-                                        colors_mh_title
-                )
+            and k_val[1] in (Gdk.KEY_i, Gdk.KEY_I)):
+                return on_global_settings()
+
         if ((state & all_mask) == Gdk.ModifierType.ALT_MASK
-            and k_val[1] in (Gdk.KEY_g, Gdk.KEY_G)):
-                on_settings()
-                return set_settings_widget(
-                                        scrolled_global_settings,
-                                        vw_dict['global_settings'],
-                                        None
-                )
+            and k_val[1] in (Gdk.KEY_j, Gdk.KEY_J)):
+                return on_controller_settings()
+
         if ((state & all_mask) == Gdk.ModifierType.ALT_MASK
             and k_val[1] in (Gdk.KEY_u, Gdk.KEY_U)):
                 on_webview(home_page)
 
         if ((state & all_mask) == Gdk.ModifierType.ALT_MASK
             and k_val[1] in (Gdk.KEY_n, Gdk.KEY_N)):
-                add_webview(home_page)
+                if reveal_stack.get_visible_child() == grid_web:
+                    add_webview(home_page)
 
         if ((state & all_mask) == Gdk.ModifierType.ALT_MASK
             and keyval == Gdk.KEY_Up):
@@ -1905,37 +2138,72 @@ def sw_activate(app):
 
         if ((state & all_mask) == Gdk.ModifierType.ALT_MASK
             and k_val[1] in (Gdk.KEY_s, Gdk.KEY_S)):
-                if revealer.get_reveal_child():
-                    return on_sidebar()
+                return on_sidebar()
+
+        if keyval == Gdk.KEY_Escape:
+            if btn_back_main.get_visible():
+                return on_back_main()
+
+            elif sidebar_revealer.get_reveal_child():
+                return on_sidebar()
+
+        if ((state & all_mask) == Gdk.ModifierType.ALT_MASK
+            and k_val[1] == Gdk.KEY_Return):
+                if reveal_stack.get_visible_child() == files_view_grid:
+                    data = get_selected_item_gfile()
+                    on_file_properties()
+                    if len(data) == 0:
+                        get_file_props(get_parent_file())
+                    elif len(data) == 1:
+                        get_file_props(data[0])
+                    else:
+                        get_file_props_list(data)
 
         if ((state & all_mask) == Gdk.ModifierType.CONTROL_MASK
-            and keyval == Gdk.KEY_Escape):
-                parent.close()
+            and k_val[1] in (Gdk.KEY_w, Gdk.KEY_W)):
+                swgs.get_active_window().close()
 
-        if ((state & all_mask) == (
-            Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SHIFT_MASK)
+        if ((state & all_mask) == Gdk.ModifierType.CONTROL_MASK
             and k_val[1] in (Gdk.KEY_q, Gdk.KEY_Q)):
                 on_shutdown()
 
         if ((state & all_mask) == Gdk.ModifierType.CONTROL_MASK
             and k_val[1] in (Gdk.KEY_a, Gdk.KEY_A)):
-                grid_view.get_model().select_all()
+                if reveal_stack.get_visible_child() == files_view_grid:
+                    grid_view = get_list_view()
+                    grid_view.get_model().select_all()
 
         if ((state & all_mask) == Gdk.ModifierType.CONTROL_MASK
             and keyval == Gdk.KEY_KP_Add):
-                adjustment_icon.set_value(adjustment_icon.get_value() + 1)
+                if reveal_stack.get_visible_child() == files_view_grid:
+                    if Path(entry_path.get_name()) == sw_shortcuts:
+                        btn_scale_shortcuts.set_value(btn_scale_shortcuts.get_value() + scale_step)
+                    else:
+                        btn_scale_icons.set_value(btn_scale_icons.get_value() + scale_step)
 
         if ((state & all_mask) == Gdk.ModifierType.CONTROL_MASK
             and keyval == Gdk.KEY_KP_Subtract):
-                adjustment_icon.set_value(adjustment_icon.get_value() - 1)
+                if reveal_stack.get_visible_child() == files_view_grid:
+                    if Path(entry_path.get_name()) == sw_shortcuts:
+                        btn_scale_shortcuts.set_value(btn_scale_shortcuts.get_value() - scale_step)
+                    else:
+                        btn_scale_icons.set_value(btn_scale_icons.get_value() - scale_step)
 
         if ((state & all_mask) == Gdk.ModifierType.CONTROL_MASK
             and keyval == Gdk.KEY_equal):
-                adjustment_icon.set_value(adjustment_icon.get_value() + 1)
+                if reveal_stack.get_visible_child() == files_view_grid:
+                    if Path(entry_path.get_name()) == sw_shortcuts:
+                        btn_scale_shortcuts.set_value(btn_scale_shortcuts.get_value() + scale_step)
+                    else:
+                        btn_scale_icons.set_value(btn_scale_icons.get_value() + scale_step)
 
         if ((state & all_mask) == Gdk.ModifierType.CONTROL_MASK
             and keyval == Gdk.KEY_minus):
-                adjustment_icon.set_value(adjustment_icon.get_value() - 1)
+                if reveal_stack.get_visible_child() == files_view_grid:
+                    if Path(entry_path.get_name()) == sw_shortcuts:
+                        btn_scale_shortcuts.set_value(btn_scale_shortcuts.get_value() - scale_step)
+                    else:
+                        btn_scale_icons.set_value(btn_scale_icons.get_value() - scale_step)
 
         if ((state & all_mask) == Gdk.ModifierType.CONTROL_MASK
             and k_val[1] in (Gdk.KEY_d, Gdk.KEY_D)):
@@ -1943,30 +2211,12 @@ def sw_activate(app):
 
         if ((state & all_mask) == Gdk.ModifierType.CONTROL_MASK
             and k_val[1] in (Gdk.KEY_t, Gdk.KEY_T)):
-                dict_ini = read_menu_conf()
-
-                if dict_ini['on_tray'] == 'True':
-                    dict_ini['on_tray'] = 'False'
-                else:
-                    dict_ini['on_tray'] = 'True'
-
-                write_menu_conf(dict_ini)
+                return on_switch_tray()
 
         if ((state & all_mask) == Gdk.ModifierType.CONTROL_MASK
             and k_val[1] in (Gdk.KEY_h, Gdk.KEY_H)):
-                dict_ini = read_menu_conf()
-
-                if dict_ini['hidden_files'] == 'True':
-                    dict_ini['hidden_files'] = 'False'
-                else:
-                    dict_ini['hidden_files'] = 'True'
-
-                write_menu_conf(dict_ini)
-                path = entry_path.get_name()
-                try:
-                    update_grid_view(path)
-                except PermissionError as e:
-                    overlay_info(overlay, None, e, None, 3)
+                if reveal_stack.get_visible_child() == files_view_grid:
+                    return on_hidden_files()
 
         if ((state & all_mask) == Gdk.ModifierType.CONTROL_MASK
             and k_val[1] in (Gdk.KEY_l, Gdk.KEY_L)):
@@ -1975,30 +2225,31 @@ def sw_activate(app):
 
         if ((state & all_mask) == Gdk.ModifierType.CONTROL_MASK
             and k_val[1] in (Gdk.KEY_n, Gdk.KEY_N)):
-                path = entry_path.get_name()
-                return on_create_dir(path)
+                if reveal_stack.get_visible_child() == files_view_grid:
+                    parent_file = get_parent_file()
+                    if parent_file.get_path() is not None:
+                        return on_create_dir()
 
         if ((state & all_mask) == Gdk.ModifierType.CONTROL_MASK
             and k_val[1] in (Gdk.KEY_c, Gdk.KEY_C)):
-                data = get_selected_item_gfile()
-                return on_file_copy(data)
+                if reveal_stack.get_visible_child() == files_view_grid:
+                    data = get_selected_item_gfile()
+                    return on_file_copy(data)
 
         if ((state & all_mask) == Gdk.ModifierType.CONTROL_MASK
             and k_val[1] in (Gdk.KEY_v, Gdk.KEY_V)):
-                return on_file_paste()
+                if reveal_stack.get_visible_child() == files_view_grid:
+                    return on_file_paste()
 
         if ((state & all_mask) == Gdk.ModifierType.CONTROL_MASK
             and k_val[1] in (Gdk.KEY_x, Gdk.KEY_X)):
-                data = get_selected_item_gfile()
-                return on_file_cut(data)
+                if reveal_stack.get_visible_child() == files_view_grid:
+                    data = get_selected_item_gfile()
+                    return on_file_cut(data)
 
         if ((state & all_mask) == Gdk.ModifierType.CONTROL_MASK
             and k_val[1] in (Gdk.KEY_k, Gdk.KEY_K)):
                 return on_show_hotkeys()
-
-        if ((state & all_mask) == Gdk.ModifierType.CONTROL_MASK
-            and k_val[1] in (Gdk.KEY_r, Gdk.KEY_R)):
-                return on_parent_resize(wc_resize)
 
         if ((state & all_mask) == (
             Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.CONTROL_MASK)
@@ -2020,23 +2271,21 @@ def sw_activate(app):
             and keyval == Gdk.KEY_Right):
                 return on_next()
 
+        if ((state & all_mask) == (
+            Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.CONTROL_MASK)
+            and k_val[1] in (Gdk.KEY_f, Gdk.KEY_F)):
+                return on_parent_fullscreen()
+
     def cb_ctrl_lclick_parent(self, n_press, x, y):
         '''___left click on parent window___'''
 
         pick = parent.pick(x, y, Gtk.PickFlags.DEFAULT)
 
-        if (revealer.get_reveal_child()
-            and reveal_stack.get_visible_child() != grid_web):
-                stack_search_path.set_visible_child(box_path)
-
-        if stack_search_path.get_visible_child() == box_side:
-            stack_search_path.set_visible_child(box_path)
-
         if (stack_search_path.get_visible_child() == box_search
-            or stack_search_path.get_visible_child() == box_web
-                and (reveal_stack.get_visible_child().get_first_child() == grid_view
-                    or reveal_stack.get_visible_child().get_first_child() == scrolled_files)
-                        and pick.get_name().isdigit() is False):
+            or stack_search_path.get_visible_child() == box_side
+                or stack_search_path.get_visible_child() == box_web):
+                    if (reveal_stack.get_visible_child() == files_view_grid
+                        and not pick.get_name().isdigit()):
                             entry_search.set_text('')
                             stack_search_path.set_visible_child(box_path)
 
@@ -2044,22 +2293,37 @@ def sw_activate(app):
             and terminal_stack.get_visible_child() == terminal):
                 terminal.set_visible(False)
                 terminal_revealer.set_reveal_child(False)
+                files_view_grid.set_position(-1)
 
-    def cb_ctrl_fclick_parent(self, n_press, x, y):
-        '''___forward click on parent window___'''
+    def cb_ctrl_swipe_panel(self, x, y, data):
+        '''___swipe gesture on the bottom panel of the window___'''
 
-        print(self.get_button())
+        swap_x = x*1000
+        swap_y = y*1000
+        print(swap_x, swap_y)
+        if swap_x != 0.0:
+            if swap_x > swap_y:
+                return on_next()
+            elif swap_x < swap_y:
+                return on_prev()
 
-        if btn_back_main.get_visible():
-            on_back_main()
+    def cb_ctrl_motion_headerbar(self, x, y, data):
+        '''___  ___'''
 
-    def cb_ctrl_bclick_parent(self, n_press, x, y):
-        '''___back click on parent window___'''
+        if getenv('SW_AUTO_HIDE_TOP_HEADER') == '1':
+            if (y <= 42
+                or stack_search_path.get_visible_child() == box_search
+                    or stack_search_path.get_visible_child() == box_web):
+                        top_headerbar_revealer.set_reveal_child(True)
+            elif y > 42:
+                top_headerbar_revealer.set_reveal_child(False)
 
-        print(self.get_button())
-
-        if btn_back_main.get_visible():
-            on_back_main()
+        if getenv('SW_AUTO_HIDE_BOTTOM_HEADER') == '1':
+            if (y >= (data.get_height() - 42)
+                or progress_main.get_visible()):
+                    bottom_headerbar_revealer.set_reveal_child(True)
+            else:
+                bottom_headerbar_revealer.set_reveal_child(False)
 
     def cb_ctrl_key_term(ctrl_key_press, keyval, keycode, state, terminal):
         '''___key press events in terminal___'''
@@ -2081,19 +2345,16 @@ def sw_activate(app):
 
     ####___Overlay_info___.
 
-    def cb_dialog_entry(self, dialog, func, args):
-        '''___activate entry row___'''
-        dialog.destroy()
-        return func(args)
-
     def overlay_info(overlay, title, message, response, timer):
         '''dialog info widget for text message in overlay widget'''
+
+        def timer_finish(q):
+            q.append('close')
 
         def close(grid_info):
             '''___remove overlay info message___'''
 
             grid_info.set_visible(False)
-            #overlay.remove_overlay(grid_info)
 
         def cb_btn_exit(self):
             '''___remove overlay info message___'''
@@ -2108,7 +2369,10 @@ def sw_activate(app):
         grid_info.set_visible(True)
 
         if timer is not None:
-            Timer(timer, close, args=[grid_info]).start()
+            q = []
+            t = Timer(timer, timer_finish, args=[q])
+            t.start()
+            GLib.timeout_add(1000, check_alive, t, close, grid_info, None)
 
     ####___Progress_function___.
 
@@ -2124,6 +2388,7 @@ def sw_activate(app):
             bar.set_fraction(0.0)
             bar.set_show_text(False)
             bar.set_visible(False)
+            stack_progress_main.set_visible_child(stack_panel)
 
             environ['FRAGMENT_NUM'] = getenv('FRAGMENT_INDEX')
 
@@ -2138,7 +2403,7 @@ def sw_activate(app):
                 on_wine_tools()
 
             if bar.get_name() == 'pfx_remove':
-                sw_rsh.write_text(f"env \"{sw_menu}\"")
+                environ['SW_EXEC'] = ''
 
             if info is not None:
                 overlay_info(overlay, None, info, None, 3)
@@ -2155,68 +2420,84 @@ def sw_activate(app):
         '''___filter list items when search___'''
 
         wv_name = reveal_stack.get_visible_child().get_name()
+        parent_file = get_parent_file()
 
         if wv_name == vw_dict['shortcuts']:
-            on_view_search()
-
-        elif wv_name == vw_dict['install_launchers']:
-            launchers_flow.set_filter_func(on_flowbox_search_filter, launchers_list)
-
-        elif wv_name == vw_dict['launch_settings']:
-            ls_names = lp_title + switch_labels
-            launch_flow.set_filter_func(on_flowbox_search_filter, ls_names)
-
-        elif wv_name == vw_dict['mangohud_settings']:
-            mangohud_flow.set_filter_func(on_flowbox_search_filter, check_mh_labels)
-
-        elif wv_name == vw_dict['vkbasalt_settings']:
-            vkbasalt_flow.set_filter_func(on_flowbox_search_filter, vkbasalt_dict)
+            if reveal_stack.get_visible_child() == files_view_grid:
+                if parent_file.get_path() is not None:
+                    on_view_search()
+                else:
+                    overlay_info(overlay, None, msg.msg_dict['action_not_supported'], None, 3)
 
         elif wv_name == vw_dict['files']:
-            on_view_search()
+            if reveal_stack.get_visible_child() == files_view_grid:
+                if parent_file.get_path() is not None:
+                    on_view_search()
+                else:
+                    overlay_info(overlay, None, msg.msg_dict['action_not_supported'], None, 3)
+
+        elif wv_name == vw_dict['install_launchers']:
+            if reveal_stack.get_visible_child() == scrolled_install_launchers:
+                swgs.launchers_flow.set_filter_func(on_flowbox_search_filter, launchers_list)
+
+        elif wv_name == vw_dict['launch_settings']:
+            if reveal_stack.get_visible_child() == scrolled_launch_settings:
+                ls_names = lp_title + switch_labels
+                swgs.launch_flow.set_filter_func(on_flowbox_search_filter, ls_names)
+
+        elif wv_name == vw_dict['mangohud_settings']:
+            if reveal_stack.get_visible_child() == scrolled_mangohud_settings:
+                swgs.mangohud_flow.set_filter_func(on_flowbox_search_filter, check_mh_labels)
+                swgs.colors_flow_mh.set_filter_func(on_flowbox_search_filter, mh_colors_description)
+
+        elif wv_name == vw_dict['vkbasalt_settings']:
+            if reveal_stack.get_visible_child() == scrolled_vkbasalt_settings:
+                swgs.vkbasalt_flow.set_filter_func(on_flowbox_search_filter, vkbasalt_dict)
 
         elif wv_name == vw_dict['winetricks']:
-            if stack_tabs.get_visible_child() == scrolled_dll:
-                on_winetricks_search(list_store_dll_0, dll_dict)
-            elif stack_tabs.get_visible_child() == scrolled_fonts:
-                on_winetricks_search(list_store_fonts, fonts_dict)
-
-        elif wv_name == vw_dict['colors_settings']:
-            colors_flow_mh.set_filter_func(on_flowbox_search_filter, mh_colors_description)
-            colors_flow_theme.set_filter_func(on_flowbox_search_filter, dcolor_labels)
+            if reveal_stack.get_visible_child() == scrolled_winetricks:
+                if swgs.stack_tabs.get_visible_child() == swgs.scrolled_dll:
+                    on_winetricks_search(swgs.list_store_dll_0, dll_dict)
+                elif swgs.stack_tabs.get_visible_child() == swgs.scrolled_fonts:
+                    on_winetricks_search(swgs.list_store_fonts, fonts_dict)
 
     def on_view_search():
         '''___recursive search for files in the current directory___'''
 
-        global timeout_list
         find = entry_search.get_text().lower()
         found = []
         start_path = Path(entry_path.get_name())
+        paned_store = get_list_store()
+        dir_list = get_dir_list()
 
         def get_found():
             '''___append found files to list store___'''
 
-            list_store.remove_all()
+            paned_store.remove_all()
             timeout_list_clear(None)
-            count = 0
+            count = 24
             for r, d, f in walk(start_path):
+                if search_is_empty == []:
+                    paned_store.remove_all()
+                    timeout_list_clear(None)
+                    break
+
                 for x in d:
                     if find in x.lower():
-                        count += 25
+                        count += 2
                         p = Path(join(r, x))
                         x_file = Gio.File.new_for_path(bytes(p))
                         x_info = x_file.query_info('*', Gio.FileQueryInfoFlags.NONE, None)
-                        timeout_info = GLib.timeout_add(count, get_file_info, x_file, x_info, None)
+                        timeout_info = GLib.timeout_add(count, get_file_info, paned_store, dir_list, x_file, x_info, None)
                         timeout_list.append(timeout_info)
 
-            for r, d, f in walk(start_path):
                 for x in f:
                     if find in x.lower():
-                        count += 25
+                        count += 2
                         p = Path(join(r, x))
                         x_file = Gio.File.new_for_path(bytes(p))
                         x_info = x_file.query_info('*', Gio.FileQueryInfoFlags.NONE, None)
-                        timeout_info = GLib.timeout_add(count, get_file_info, x_file, x_info, None)
+                        timeout_info = GLib.timeout_add(count, get_file_info, paned_store, dir_list, x_file, x_info, None)
                         timeout_list.append(timeout_info)
 
         def clear():
@@ -2227,49 +2508,47 @@ def sw_activate(app):
             if len(find) <= 1:
                 dict_ini = read_menu_conf()
                 x_hidden_files = dict_ini['hidden_files']
-                list_store.remove_all()
+                paned_store.remove_all()
                 timeout_list_clear(None)
-                count = 25
-                sorted_list = sort_func(list(start_path.iterdir()))
-
-                if len(sorted_list) > 200:
-                    delay = 16
-                else:
-                    delay = 0
+                count = 24
+                g_file = Gio.File.new_for_path(bytes(start_path))
+                g_enum = g_file.enumerate_children('*', Gio.FileQueryInfoFlags.NONE)
+                sorted_list = sort_func(g_enum)
 
                 for x in sorted_list:
                     count += 2
-                    x_file = Gio.File.new_for_path(bytes(x))
-                    x_info = x_file.query_info('*', Gio.FileQueryInfoFlags.NONE, None)
-                    timeout_info = GLib.timeout_add(count, get_file_info, x_file, x_info, x_hidden_files)
+                    x_file = g_enum.get_child(x)
+                    timeout_info = GLib.timeout_add(count, get_file_info, paned_store, dir_list, x_file, x, x_hidden_files)
                     timeout_list.append(timeout_info)
 
         if stack_search_path.get_visible_child() == box_search:
 
             if len(find) <= 1:
+                search_is_empty.clear()
                 clear()
 
             if len(find) > 1:
-                list_store.remove_all()
+                search_is_empty.append(find)
+                paned_store.remove_all()
                 timeout_list_clear(None)
-                if (str(start_path) == str(sw_shortcuts)
-                    or str(start_path) == str(sw_launchers)):
-                        count = 0
-                        for x in scandir(path=start_path):
-                            if find in x.name.lower():
-                                count += 25
-                                p = Path(join(start_path, x.name))
-                                x_file = Gio.File.new_for_path(bytes(p))
-                                x_info = x_file.query_info('*', Gio.FileQueryInfoFlags.NONE, None)
-                                timeout_info = GLib.timeout_add(count, get_file_info, x_file, x_info, None)
-                                timeout_list.append(timeout_info)
+
+                if str(start_path) == str(sw_shortcuts):
+                    count = 24
+                    for x in scandir(path=start_path):
+                        if find in x.name.lower():
+                            count += 2
+                            p = Path(join(start_path, x.name))
+                            x_file = Gio.File.new_for_path(bytes(p))
+                            x_info = x_file.query_info('*', Gio.FileQueryInfoFlags.NONE, None)
+                            timeout_info = GLib.timeout_add(count, get_file_info, paned_store, dir_list, x_file, x_info, None)
+                            timeout_list.append(timeout_info)
                 else:
                     thread_get_found = Thread(target=get_found)
                     thread_get_found.start()
                     progress_main.set_show_text(True)
                     progress_main.set_text(progress_dict['search'])
                     GLib.timeout_add(100, progress_on_thread, progress_main, thread_get_found, None)
-                    GLib.timeout_add(120, check_alive, thread_get_found, clear, None, None)
+                    #GLib.timeout_add(120, check_alive, thread_get_found, clear, None, None)
 
     def on_flowbox_search_filter(fb_child, data_labels):
         '''___filter item in flowbox___'''
@@ -2312,13 +2591,13 @@ def sw_activate(app):
         '''___append dll items to list store___'''
 
         if x_dll is not None:
-            list_store_dll_0.append(x_dll)
+            swgs.list_store_dll_0.append(x_dll)
 
         if y_dll is not None:
-            list_store_dll_1.append(y_dll)
+            swgs.list_store_dll_1.append(y_dll)
 
         if f_dll is not None:
-            list_store_fonts.append(f_dll)
+            swgs.list_store_fonts.append(f_dll)
 
         return False
 
@@ -2326,9 +2605,9 @@ def sw_activate(app):
         '''update dlls and fonts list'''
 
         w_log = get_dll_info(get_pfx_path())
-        list_store_dll_0.remove_all()
-        list_store_dll_1.remove_all()
-        list_store_fonts.remove_all()
+        swgs.list_store_dll_0.remove_all()
+        swgs.list_store_dll_1.remove_all()
+        swgs.list_store_fonts.remove_all()
 
         def update_dll():
 
@@ -2397,7 +2676,10 @@ def sw_activate(app):
             elif y == 1.0:
                 hadjustment_path.set_value(1000)
 
+    ####___Web_view___.
+
     def create_web_view():
+        '''___Create new web page in web view___.'''
 
         webview_network_session = WebKit.NetworkSession.new(
                                     cache_directory=f'{sw_fm_cache_database}',
@@ -2412,8 +2694,8 @@ def sw_activate(app):
         favicon_database.connect('favicon-changed', cb_favicon_changed)
 
         webview = WebKit.WebView(
-                            network_session=webview_network_session,
-                            automation_presentation_type=WebKit.AutomationBrowsingContextPresentation.TAB,
+            network_session=webview_network_session,
+            automation_presentation_type=WebKit.AutomationBrowsingContextPresentation.TAB,
         )
         webview.connect('load-changed', cb_webview_load_changed)
         webview.connect('decide-policy', cb_webview_decide_policy)
@@ -2421,6 +2703,7 @@ def sw_activate(app):
         webview.connect('resource-load-started', cb_web_resource_load_started)
         webview.connect('permission-request', cb_web_permission_request)
         webview.connect('create', cb_web_create)
+        webview.connect('context-menu', cb_webview_context_menu)
         #webview.connect('authenticate', cb_web_authenticate)
         webview_settings = webview.get_settings()
         webview_settings.set_enable_write_console_messages_to_stdout(True)
@@ -2451,7 +2734,12 @@ def sw_activate(app):
         title_box = Gtk.Box(css_name='sw_row', spacing=32, orientation=Gtk.Orientation.HORIZONTAL)
         image = Gtk.Picture(css_name='sw_picture')
         image.set_size_request(16, 16)
-        label = Gtk.Label(css_name='sw_label_info', label=str(home_page.split('/')[-1]))
+        label = Gtk.Label(
+                        css_name='sw_label_info',
+                        label=str(home_page.split('/')[-1]),
+                        ellipsize=Pango.EllipsizeMode.END,
+                        width_request=160
+        )
         button = Gtk.Button(css_name='sw_wc_close', valign=Gtk.Align.CENTER)
         button.connect('clicked', cb_web_page_close, webview)
         title_box.append(image)
@@ -2464,6 +2752,7 @@ def sw_activate(app):
         if stack_web.get_nth_page(0) is None:
             create_web_view()
 
+        num_pages = stack_web.get_n_pages()
         page_num = stack_web.get_current_page()
         page = stack_web.get_nth_page(page_num)
         webview = page.get_child().get_child()
@@ -2474,14 +2763,18 @@ def sw_activate(app):
                             orientation=Gtk.Orientation.HORIZONTAL
         )
         if favicon is not None:
-            print(favicon)
             image = Gtk.Picture(css_name='sw_picture')
             image.new_for_paintable(favicon)
             image.set_content_fit(Gtk.ContentFit.SCALE_DOWN)
             image.set_size_request(16, 16)
             title_box.append(image)
 
-        label = Gtk.Label(css_name='sw_label_info', label=str(url.split('/')[-1]))
+        label = Gtk.Label(
+                        css_name='sw_label_info',
+                        label=str(url.split('/')[-1]),
+                        ellipsize=Pango.EllipsizeMode.END,
+                        width_request=160
+        )
         button = Gtk.Button(css_name='sw_wc_close', valign=Gtk.Align.CENTER)
         button.connect('clicked', cb_web_page_close, webview)
         title_box.append(label)
@@ -2502,8 +2795,8 @@ def sw_activate(app):
 
         stack_search_path.set_visible_child(box_web)
         entry_web.grab_focus()
+
         return set_settings_widget(
-                                grid_web,
                                 vw_dict['web_view'],
                                 None
         )
@@ -2543,15 +2836,26 @@ def sw_activate(app):
         print('Authenticate cancelled')
 
     def cb_web_authenticate(self, request):
+        '''___emitted when the user is challenged with HTTP authentication___'''
 
-        credential = WebKit.Credential.new(username, password, WebKit.CredentialPersistence.SESSION)
+        credential = WebKit.Credential.new(
+                                        username, password,
+                                        WebKit.CredentialPersistence.SESSION
+        )
         request.connect('authenticated', cb_authenticated)
         request.connect('authenticated', cb_cancelled)
         request.authenticate(credential)
 
     def cb_web_create(self, navigation_action):
         '''___emitted when the creation of a new WebKitWebView is requested___'''
-        
+
+        return add_webview(swgs.hit_test_uri)
+
+    def cb_webview_context_menu(self, context_menu, hit_test_result):
+        '''___emitted when a context menu is about to be displayed ___'''
+
+        swgs.hit_test_uri = hit_test_result.get_link_uri()
+        print(tc.YELLOW, hit_test_result.get_link_uri(), tc.END)
 
     def cb_entry_web_activate(self):
 
@@ -2559,7 +2863,7 @@ def sw_activate(app):
         url = buffer.get_text()
         if not '://' in url:
             url = 'https://www.google.com/search?q=' + url
-            #url = 'https://' + url
+
             if url.endswith('/'):
                 url = url.rstrip('/')
 
@@ -2589,7 +2893,7 @@ def sw_activate(app):
             print(e)
             result = None
         else:
-            print('++++++++++', result)
+            print(result)
 
     def cb_favicon_changed(self, page_uri, favicon_uri):
         '''___signal emitted when the favicon URI of page_uri has been changed
@@ -2674,7 +2978,7 @@ def sw_activate(app):
                     destination = f'{sw_app_hicons}/{name}'
 
                 try:
-                    converted = convert_image(cache, destination, 460, 215)
+                    converted = convert_image(cache, destination, 920, 430)
                 except:
                     shutil.move(cache, destination)
                     print(f'{tc.GREEN} Copy horizontal icon: {tc.YELLOW}{destination} {tc.END}')
@@ -2702,6 +3006,7 @@ def sw_activate(app):
         every time new data has been written to the destination___'''
 
         fraction = self.get_estimated_progress()
+        stack_progress_main.set_visible_child(progress_main_grid)
         progress_main.set_visible(True)
         progress_main.set_show_text(True)
         progress_main.set_fraction(fraction)
@@ -2710,6 +3015,7 @@ def sw_activate(app):
             progress_main.set_fraction(0.0)
             progress_main.set_show_text(False)
             progress_main.set_visible(False)
+            stack_progress_main.set_visible_child(stack_panel)
 
     def cb_decide_destination(self, res, webkit_download):
         '''___response callback to the selected destination___'''
@@ -2717,6 +3023,7 @@ def sw_activate(app):
             result = self.select_folder_finish(res)
         except GLib.GError as e:
             result = None
+            dialog_info(text_message=str(e.message), message_type='ERROR').run()
         else:
             url_name = str(entry_web.get_text()).split('/')[-1]
             path = str(result.get_path()) + '/' + url_name
@@ -2727,7 +3034,7 @@ def sw_activate(app):
         '''___a response has been received to decide a destination for the download___'''
 
         title = 'Change Directory'
-        dialog = dialog_directory(app, title)
+        dialog = dialog_directory(title)
         dialog.select_folder(
                     parent=parent,
                     cancellable=Gio.Cancellable(),
@@ -2759,6 +3066,94 @@ def sw_activate(app):
         page_num = stack_web.get_current_page()
         stack_web.remove_page(page_num)
 
+    ####___Files___.
+
+    def cb_paned_cycle_child_focus(self, _reversed):
+        '''___Emitted to cycle the focus between the children of the paned.___'''
+
+        print(self.get_focus_child().get_name())
+
+    def cb_paned_cycle_handle_focus(self):
+        '''___Emitted to accept the current position of the handle.___'''
+
+        print(self.get_position())
+
+    def on_paned_files_view():
+        '''___paned files grid view___'''
+
+        if paned_grid_view.get_end_child() is not None:
+            paned_grid_view.set_end_child(None)
+        else:
+            right_grid_factory = Gtk.SignalListItemFactory()
+            right_list_model = Gtk.MultiSelection.new(right_list_store)
+
+            right_grid_view = Gtk.GridView(name='right_grid_view', css_name='sw_gridview')
+            right_grid_view.set_enable_rubberband(True)
+            right_grid_view.set_min_columns(1)
+            right_grid_view.set_max_columns(16)
+            right_grid_view.set_tab_behavior(Gtk.ListTabBehavior.ITEM)
+
+            right_grid_view.set_factory(right_grid_factory)
+            right_grid_view.set_model(right_list_model)
+            right_grid_view.connect('activate', cb_item_activate)
+
+            right_grid_factory.connect('setup', cb_factory_setup, right_grid_view)
+            right_grid_factory.connect('bind', cb_factory_bind, right_grid_view)
+            right_grid_factory.connect('teardown', cb_grid_factory_teardown)
+            right_grid_factory.connect('unbind', cb_grid_factory_unbind)
+
+            ctrl_lclick_view = Gtk.GestureClick()
+            ctrl_lclick_view.connect('pressed', cb_ctrl_lclick_view)
+            ctrl_lclick_view.set_button(1)
+
+            ctrl_rclick_view = Gtk.GestureClick()
+            ctrl_rclick_view.connect('pressed', cb_ctrl_rclick_view)
+            ctrl_rclick_view.set_button(3)
+
+            ctrl_drag_source = Gtk.DragSource()
+            ctrl_drag_source.set_actions(Gdk.DragAction.MOVE)
+            ctrl_drag_source.connect('prepare', cb_ctrl_drag_prepare)
+            ctrl_drag_source.connect('drag-end', cb_ctrl_drag_end)
+            ctrl_drag_source.connect('drag-cancel', cb_ctrl_drag_cancel)
+
+            ctrl_drop_target = Gtk.DropTarget()
+            types = (Gdk.FileList, Gio.File)
+            action_copy = Gdk.DragAction.COPY
+            action_move = Gdk.DragAction.MOVE
+            action_ask = Gdk.DragAction.ASK
+
+            ctrl_drop_target.set_gtypes(types)
+            ctrl_drop_target.set_actions(action_move)
+            ctrl_drop_target.set_preload(True)
+            ctrl_drop_target.connect('drop', cb_ctrl_drop_target)
+
+            ctrl_right_view_motion = Gtk.EventControllerMotion()
+            ctrl_right_view_motion.connect('enter', cb_ctrl_right_view_motion)
+
+            ctrl_right_view_focus = Gtk.EventControllerFocus()
+            ctrl_right_view_focus.connect('enter', cb_ctrl_right_view_focus)
+            #ctrl_left_view_focus.connect('leave', cb_ctrl_right_view_focus)
+
+            right_grid_view.add_controller(ctrl_drag_source)
+            right_grid_view.add_controller(ctrl_lclick_view)
+            right_grid_view.add_controller(ctrl_rclick_view)
+            right_grid_view.add_controller(ctrl_right_view_motion)
+            right_grid_view.add_controller(ctrl_right_view_focus)
+
+            scrolled_right_files = Gtk.ScrolledWindow(
+                                            css_name='sw_scrolled_view',
+                                            name='right_files',
+                                            vexpand=True,
+                                            hexpand=True,
+                                            valign=Gtk.Align.FILL,
+                                            halign=Gtk.Align.FILL,
+                                            child=right_grid_view,
+            )
+            paned_grid_view.set_end_child(scrolled_right_files)
+
+            set_view_parent_path(right_grid_view)
+            return on_files(sw_default_dir)
+
     def on_files(path):
         '''___show files list view___'''
 
@@ -2771,14 +3166,47 @@ def sw_activate(app):
             except PermissionError as e:
                 return overlay_info(overlay, None, e, None, 3)
 
-        revealer.set_reveal_child(True)
+            terminal.feed_child(
+                f'cd "{str(path)}" && clear\n'.encode("UTF-8")
+            )
+
+        if (stack_sidebar.get_visible_child() != frame_main
+            and stack_sidebar.get_visible_child() != frame_bookmarks):
+                return on_back_main()
+
         reveal_stack.set_visible_child(files_view_grid)
 
-        scrolled_files.set_min_content_width(width*0.2)
-        scrolled_files.set_min_content_height(250)
+        scrolled_left_files.set_min_content_width(width*0.2)
+        scrolled_left_files.set_min_content_height(240)
+        scrolled_right_files = paned_grid_view.get_end_child()
+        if scrolled_right_files is not None:
+            scrolled_right_files.set_min_content_width(width*0.2)
+            scrolled_right_files.set_min_content_height(240)
 
-        set_parent_size()
         update_color_scheme()
+
+    def on_hidden_files():
+        '''___show or hide hidden files___'''
+
+        timeout_list_clear(None)
+        dict_ini = read_menu_conf()
+        if dict_ini['hidden_files'] == 'True':
+            dict_ini['hidden_files'] = 'False'
+        else:
+            dict_ini['hidden_files'] = 'True'
+
+        write_menu_conf(dict_ini)
+        parent_file = get_parent_file()
+        if parent_file.get_path() is not None:
+            try:
+                update_grid_view(parent_file.get_path())
+            except PermissionError as e:
+                overlay_info(overlay, None, e, None, 3)
+        else:
+            try:
+                update_grid_view_uri(parent_file.get_uri())
+            except PermissionError as e:
+                overlay_info(overlay, None, e, None, 3)
 
     def on_terminal():
         '''___show or hide terminal___'''
@@ -2787,13 +3215,18 @@ def sw_activate(app):
             scrolled_gvol.set_visible(False)
             terminal.set_visible(False)
             terminal_revealer.set_reveal_child(False)
+            files_view_grid.set_position(-1)
         else:
             terminal.set_visible(True)
             terminal_stack.set_visible_child(terminal)
             terminal_revealer.set_reveal_child(True)
+            files_view_grid.set_position(0)
 
     def on_drive():
         '''___show or hide mounted volumes___'''
+
+        if scrolled_gvol.get_child() is None:
+            add_gvol_view()
 
         update_gvolume()
 
@@ -2801,22 +3234,24 @@ def sw_activate(app):
             scrolled_gvol.set_visible(False)
             terminal.set_visible(False)
             terminal_revealer.set_reveal_child(False)
+            files_view_grid.set_position(-1)
         else:
             scrolled_gvol.set_visible(True)
             terminal_stack.set_visible_child(scrolled_gvol)
-            scrolled_gvol.set_min_content_width(width*0.2)
-            scrolled_gvol.set_min_content_height(250)
+            scrolled_gvol.set_min_content_width(swgs.width*0.2)
+            scrolled_gvol.set_min_content_height(240)
             terminal_revealer.set_reveal_child(True)
+            files_view_grid.set_position(swgs.height*0.5)
             update_color_scheme()
 
     def update_gvolume():
         '''___update mounted volumes list___'''
 
-        list_gvol_store.remove_all()
+        swgs.list_gvol_store.remove_all()
 
-        gvolume_list = gvolume_monitor.get_volumes()
-        gmount_list = gvolume_monitor.get_mounts()
-        gdrive_list = gvolume_monitor.get_connected_drives()
+        gvolume_list = swgs.gvolume_monitor.get_volumes()
+        gmount_list = swgs.gvolume_monitor.get_mounts()
+        gdrive_list = swgs.gvolume_monitor.get_connected_drives()
 
         if (gvolume_list is None or gvolume_list == []):
             partitions = psutil.disk_partitions()
@@ -2826,32 +3261,30 @@ def sw_activate(app):
                         mountpoint = x.mountpoint
                         if not '.Xauthority' in mountpoint:
                             string = Gtk.StringObject.new(f'{mountpoint}:{x.device}:{x.fstype}:{x.opts}')
-                            list_gvol_store.append(string)
+                            swgs.list_gvol_store.append(string)
         else:
             for gvolume in gvolume_list:
                 gvolume_name = gvolume.get_name()
                 gvolume_icon = gvolume.get_icon()
-                list_gvol_store.append(gvolume)
+                swgs.list_gvol_store.append(gvolume)
 
     def on_message_cs():
         '''___create shortcut on item activate___'''
 
-        if top_headerbar_start_box.get_first_child() is not None:
-            if top_headerbar_start_box.get_first_child().get_name() == 'btn_back_main':
-                btn_back_main.set_visible(True)
-        else:
-            top_headerbar_start_box.attach(btn_back_main, 0, 0, 1, 1)
+        if scrolled_create_shortcut.get_child() is None:
+            add_create_shortcut_menu()
 
         if sidebar_revealer.get_reveal_child() is False:
             on_sidebar()
 
+        btn_back_main.set_visible(True)
         stack_sidebar.set_visible_child(frame_create_shortcut)
 
-    def cb_item_activate(grid_view, position):
+    def cb_item_activate(self, position):
         '''___activate view item by user___'''
 
-        item = grid_view.get_model().get_item(position)
-        item_path = grid_view.get_model().get_item(position).get_path()
+        item = self.get_model().get_item(position)
+        item_path = self.get_model().get_item(position).get_path()
 
         file_info = item.query_info('*', Gio.FileQueryInfoFlags.NONE, None)
         f_type = file_info.get_content_type()
@@ -2870,29 +3303,29 @@ def sw_activate(app):
                     symlink_target = Path(symlink_target).absolute()
                 try:
                     update_grid_view(symlink_target)
-                except Exception as e:
+                except PermissionError as e:
                     return overlay_info(overlay, None, e, None, 3)
                 else:
                     terminal.feed_child(f'cd "{symlink_target}" && clear\n'.encode("UTF-8"))
             else:
                 try:
                     update_grid_view(item_path)
-                except Exception as e:
+                except PermissionError as e:
                     return overlay_info(overlay, None, e, None, 3)
                 else:
                     terminal.feed_child(f'cd "{item_path}" && clear\n'.encode("UTF-8"))
 
         elif f_type in exe_mime_types:
-            x_path = Path(item_path)
-            sw_rsh.write_text(f"env \"{sw_menu}\" \"{x_path}\"")
-            write_app_conf(x_path)
+
+            environ['SW_EXEC'] = f'"{item_path}"'
+            write_app_conf(Path(item_path))
             app_name = get_out()
 
             if Path(f'{sw_shortcuts}/{app_name}.swd').exists():
                 app_dict = app_info(Path(f'{sw_shortcuts}/{app_name}.swd'))
                 app_exec = app_dict['Exec'].replace(f'env "{sw_start}" ', '').strip('"')
 
-                if str(x_path) == str(app_exec):
+                if str(item_path) == str(app_exec):
                     label_frame_create_shortcut.set_label(msg.msg_dict['cw'])
                     response = [
                                 msg.msg_dict['run'].title(),
@@ -2902,7 +3335,7 @@ def sw_activate(app):
                     start_mode()
                     title = msg.msg_dict['choose']
                     func = [on_start, on_message_cs, None]
-                    dialog_question(app, title, None, response, func)
+                    dialog_question(swgs, title, [Path(item_path).name, ''], response, func)
                 else:
                     overlay_info(overlay, None, msg.msg_dict['same_name'], None, None)
             else:
@@ -2915,70 +3348,30 @@ def sw_activate(app):
                 start_mode()
                 title = msg.msg_dict['choose']
                 func = [on_start, on_message_cs, None]
-                dialog_question(app, title, None, response, func)
+                dialog_question(swgs, title, [Path(item_path).name, ''], response, func)
 
         elif f_type in app_mime_types:
 
-            if str(sw_shortcuts) in str(item_path):
-                d_exec = [x.split('=')[1] for x in Path(item_path).read_text().splitlines() if 'Exec=' in x]
-                if len(d_exec) > 0:
-                    exe = [x for x in d_exec[0].split('"') if '.exe' in x.lower()]
-                    msi = [x for x in d_exec[0].split('"') if '.msi' in x.lower()]
-                    bat = [x for x in d_exec[0].split('"') if '.bat' in x.lower()]
-                    lnk = [x for x in d_exec[0].split('"') if '.lnk' in x.lower()]
-
-                    if len(exe) > 0:
-                        x_path = exe[0]
-
-                    elif len(msi) > 0:
-                        x_path = msi[0]
-
-                    elif len(bat) > 0:
-                        x_path = bat[0]
-
-                    elif len(lnk) > 0:
-                        x_path = lnk[0]
-
-                    else:
-                        x_path = None
-
-                    if x_path is not None:
-                        gx_file = Gio.File.new_for_path(bytes(Path(x_path)))
-                        gx_info = gx_file.query_info('*', Gio.FileQueryInfoFlags.NONE, None)
-                        gx_type = gx_info.get_content_type()
-
-                        if gx_type in exe_mime_types:
-                            if Path(x_path).exists():
-                                sw_rsh.write_text(f"env \"{sw_menu}\" \"{x_path}\"")
-                                start_mode()
-                                cb_btn_start(btn_start)
-                            else:
-                                return overlay_info(overlay, None, msg.msg_dict['exist_desktop'], None, 3)
-
-                        elif (gx_type in bin_mime_types
-                            or gx_type in script_mime_types):
-                                new_app = Gio.AppInfo.create_from_commandline(
-                                                                bytes(Path(f'\"{x_path}\"')),
-                                                                f'\"{x_path}\"',
-                                                                Gio.AppInfoCreateFlags.SUPPORTS_URIS
-                                )
-                                try:
-                                    new_app.launch_uris()
-                                except Exception as e:
-                                    print(tc.RED, e, tc.END)
-                                    message = msg.msg_dict['launch_error'] + f': {e}'
-                                    return overlay_info(overlay, None, message, None, 3)
-                        else:
-                            fl = Gtk.FileLauncher()
-                            fl.set_file(item)
-                            try:
-                                fl.launch()
-                            except Exception as e:
-                                message = msg.msg_dict['launch_error'] + f': {e}'
-                                return overlay_info(overlay, None, message, None, 3)
-                    else:
-                        text_message = msg.msg_dict['lnk_error']
-                        return dialog_info(app, text_message, 'ERROR')
+            check_arg(str(item_path))
+            if getenv('SW_EXEC') != 'StartWine':
+                start_mode()
+                cb_btn_start(btn_start)
+            elif getenv('SW_COMMANDLINE') != 'None':
+                cmd = getenv('SW_COMMANDLINE').strip('"').replace('env ', '')
+                gio_app_info = Gio.AppInfo.create_from_commandline(
+                    cmd, None, Gio.AppInfoCreateFlags.SUPPORTS_URIS)
+                try:
+                    gio_app_info.launch_uris()
+                except GLib.GError as e:
+                    print(tc.RED, e.message, tc.END)
+                    fl = Gtk.FileLauncher()
+                    fl.set_file(item)
+                    try:
+                        fl.launch()
+                    except Exception as e:
+                        print(tc.RED, e, tc.END)
+                        message = msg.msg_dict['launch_error'] + f': {e}'
+                        return overlay_info(overlay, None, message, None, 3)
             else:
                 fl = Gtk.FileLauncher()
                 fl.set_file(item)
@@ -2990,67 +3383,43 @@ def sw_activate(app):
                     return overlay_info(overlay, None, message, None, 3)
 
         elif Path(item_path).suffix in swd_mime_types:
+#            check_arg(str(item_path))
+#            if getenv('SW_EXEC') != 'StartWine':
+#                start_mode()
+#                on_startapp_page()
+#            else:
+#                return overlay_info(overlay, None, msg.msg_dict['lnk_error'], None, 3)
 
-            if str(sw_shortcuts) in str(item_path):
-                d_exec = [x.split('=')[1] for x in Path(item_path).read_text().splitlines() if 'Exec=' in x]
-                if len(d_exec) > 0:
-                    exe = [x for x in d_exec[0].split('"') if '.exe' in x.lower()]
-                    msi = [x for x in d_exec[0].split('"') if '.msi' in x.lower()]
-                    bat = [x for x in d_exec[0].split('"') if '.bat' in x.lower()]
-                    lnk = [x for x in d_exec[0].split('"') if '.lnk' in x.lower()]
-
-                    if len(exe) > 0:
-                        x_path = exe[0]
-
-                    elif len(msi) > 0:
-                        x_path = msi[0]
-
-                    elif len(bat) > 0:
-                        x_path = bat[0]
-
-                    elif len(lnk) > 0:
-                        x_path = lnk[0]
-
-                    else:
-                        x_path = None
-
-                    if x_path is not None:
-
-                        gx_file = Gio.File.new_for_path(bytes(Path(x_path)))
-                        gx_info = gx_file.query_info('*', Gio.FileQueryInfoFlags.NONE, None)
-                        gx_type = gx_info.get_content_type()
-
-                        if gx_type in exe_mime_types:
-                            if Path(x_path).exists():
-                                sw_rsh.write_text(f"env \"{sw_menu}\" \"{x_path}\"")
-                                start_mode()
-                                cb_btn_start(btn_start)
-                            else:
-                                return overlay_info(overlay, None, msg.msg_dict['exist_desktop'], None, 3)
-                    else:
-                        text_message = msg.msg_dict['lnk_error']
-                        return dialog_info(app, text_message, 'ERROR')
+            check_arg(str(item_path))
+            if getenv('SW_EXEC') != 'StartWine':
+                start_mode()
+                cb_btn_start(btn_start)
+            elif getenv('SW_COMMANDLINE') != 'None':
+                cmd = getenv('SW_COMMANDLINE').strip('"').replace('env ', '')
+                run(cmd, shell=True)
+            else:
+                text_message = msg.msg_dict['lnk_error']
+                return dialog_info(text_message=text_message, message_type='ERROR').run()
 
         elif f_type in bin_mime_types:
-            new_app = Gio.AppInfo.create_from_commandline(
+            gio_app_info = Gio.AppInfo.create_from_commandline(
                                             bytes(Path(f'\"{item_path}\"')),
                                             f'\"{item_path}\"',
                                             Gio.AppInfoCreateFlags.SUPPORTS_URIS
             )
             try:
-                new_app.launch_uris()
-            except Exception as e:
-                print(tc.RED, e, tc.END)
-                return dialog_info(app, f'(e)', 'ERROR')
-
+                gio_app_info.launch_uris()
+            except GLib.GError as e:
+                print(tc.RED, e.message, tc.END)
+                return dialog_info(text_message=e.message, message_type='ERROR').run()
         else:
             fl = Gtk.FileLauncher()
             fl.set_file(item)
             try:
                 fl.launch()
-            except Exception as e:
-                print(tc.RED, e, tc.END)
-                return dialog_info(app, f'(e)', 'ERROR')
+            except GLib.GError as e:
+                print(tc.RED, e.message, tc.END)
+                return dialog_info(text_message=e.message, message_type='ERROR').run()
 
     def get_dll_info(x_path):
         '''___get installed dll list from winetricks log___'''
@@ -3064,18 +3433,69 @@ def sw_activate(app):
             read_w_log = []
             return read_w_log
 
+    def get_list_store():
+
+        view = getenv('SW_FILES_VIEW_NAME')
+        store = list_store
+
+        if view == 'left_grid_view':
+            store = list_store
+        elif view == 'right_grid_view':
+            store = right_list_store
+
+        return store
+
+    def get_list_view():
+
+        view_name = getenv('SW_FILES_VIEW_NAME')
+        view = paned_grid_view.get_start_child().get_child()
+
+        if view_name == 'left_grid_view':
+            view = paned_grid_view.get_start_child().get_child()
+        elif view_name == 'right_grid_view':
+            if paned_grid_view.get_end_child() is not None:
+                view = paned_grid_view.get_end_child().get_child()
+            else:
+                view = paned_grid_view.get_start_child().get_child()
+
+        return view
+
+    def get_dir_list():
+
+        view = getenv('SW_FILES_VIEW_NAME')
+        dir_list = left_dir_list
+
+        if view == 'left_grid_view':
+            dir_list = left_dir_list
+        elif view == 'right_grid_view':
+            dir_list = right_dir_list
+
+        return dir_list
+
     def get_parent_path():
         '''___get current path in file manger list view___'''
 
-        if grid_view.get_model().get_item(0) is None:
-            parent_path = dir_list.get_file().get_path()
-        else:
-            parent_path = dir_list.get_file().get_parent().get_path()
-
+        parent_path = getenv('SW_FILES_PARENT_PATH')
         return parent_path
+
+    def get_parent_file():
+        '''___get current path in file manger list view___'''
+
+        grid_view = get_list_view()
+        dir_list = get_dir_list()
+
+        if grid_view.get_model().get_item(0) is None:
+            parent_file = dir_list.get_file()
+        else:
+            parent_file = dir_list.get_file().get_parent()
+
+        return parent_file
 
     def get_parent_uri():
         '''___get current uri in file manger list view___'''
+
+        grid_view = get_list_view()
+        dir_list = get_dir_list()
 
         if grid_view.get_model().get_item(0) is None:
             parent_uri = dir_list.get_file().get_uri()
@@ -3087,6 +3507,7 @@ def sw_activate(app):
     def get_selected_item_path():
         '''___get path list from selected item in list view___'''
 
+        grid_view = get_list_view()
         model = grid_view.get_model()
         nums = model.get_n_items()
         paths = list()
@@ -3101,6 +3522,7 @@ def sw_activate(app):
     def get_selected_item_gfile():
         '''___get gio files list from selected item in list view___'''
 
+        grid_view = get_list_view()
         model = grid_view.get_model()
         nums = model.get_n_items()
         files = list()
@@ -3115,6 +3537,7 @@ def sw_activate(app):
     def get_selected_item_info():
         '''___get gio file info list from selected item in list view___'''
 
+        grid_view = get_list_view()
         model = grid_view.get_model()
         nums = model.get_n_items()
         infos = list()
@@ -3145,161 +3568,245 @@ def sw_activate(app):
         else:
             return icon
 
-    def sort_func(x_path):
+    def sort_func(x_list):
         '''___file sorting function in the list___'''
 
-        paths_list = sorted(
-                            x_path,
-                            key=lambda x: str(x.stem),
-                            reverse=False
-                            )
+        sorted_list = list()
+        dict_ini = read_menu_conf()
 
-        paths_is_file_sorted = sorted(
-                                    paths_list,
-                                    key=lambda x: str(x.is_file()),
-                                    reverse=False
-                                    )
+        try:
+            sorting_files = dict_ini['sorting_files']
+        except KeyError as e:
+            sorting_files = 'name'
 
-        return paths_is_file_sorted
+        try:
+            sorting_reverse = dict_ini['sorting_reverse']
+        except KeyError as e:
+            sorting_reverse = 'False'
 
-    def get_file_info(x_file, x_info, x_hidden_files):
+        if sorting_files == 'type':
+            sorted_list_by_type = sorted(
+                [x for x in x_list if x.has_attribute(attrs['type'])],
+                key=lambda x: str(x.get_content_type()),
+                reverse=eval(sorting_reverse)
+            )
+            sorted_list = sorted_list_by_type
+
+        elif sorting_files == 'size':
+            sorted_list_by_size = sorted(
+                [x for x in x_list if x.has_attribute(attrs['size'])],
+                key=lambda x: str(round(x.get_size()/1024/1024, 4)),
+                reverse=eval(sorting_reverse)
+            )
+            sorted_list = sorted_list_by_size
+
+        elif sorting_files == 'date':
+            sorted_list_by_date = sorted(
+                [x for x in x_list if x.has_attribute(attrs['created'])],
+                key=lambda x: str(x.get_creation_date_time().format('%c')),
+                reverse=eval(sorting_reverse)
+            )
+            sorted_list = sorted_list_by_date
+
+        elif sorting_files == 'name':
+            sorted_list_by_name = sorted(
+                [x for x in x_list],
+                key=lambda x: str(x.get_display_name()),
+                reverse=eval(sorting_reverse)
+            )
+            sorted_list = sorted_list_by_name
+
+        else:
+            pass
+
+        sorted_list = sorted(
+            sorted_list,
+            key=lambda x: (str(Path(x_list.get_child(x).get_path()).is_file()),
+                        str(Path(x_list.get_child(x).get_path()).is_symlink())),
+            reverse=False
+        )
+        return sorted_list
+
+    def get_file_info(paned_store, dir_list, x_file, x_info, x_hidden_files):
         '''___getting file attributes to set name and images in list___'''
 
         x_path = Path(x_file.get_path())
-
         if x_path.parent == Path(sw_shortcuts):
-            if x_info.get_content_type() in app_mime_types:
-                if x_info.has_attribute(attrs['rename']):
-                    edit_name = x_path.stem
-                    suffix = x_path.suffix
-                    try:
-                        x_file.set_display_name(edit_name + swd_mime_types[0])
-                    except GLib.GError as e:
-                        print(e)
-            else:
-                if not x_path.suffix in swd_mime_types:
-                    pass
+            if x_info is not None:
+                if (x_info.get_content_type() in app_mime_types
+                    and x_info.has_attribute(attrs['rename'])):
+                        try:
+                            x_file.set_display_name(x_path.stem + swd_mime_types[0])
+                        except GLib.GError as e:
+                            print(e.message)
+                else:
+                    if not x_path.suffix in swd_mime_types:
+                        pass
 
-        if (x_path.parent == Path(sw_launchers)
-            and not x_info.get_content_type() in image_mime_types):
-                pass
+        if x_hidden_files is None:
+            x_hidden = False
 
+        elif x_hidden_files == 'True':
+            x_hidden = x_path.name.startswith('.')
         else:
-            if x_hidden_files is None:
-                x_hidden = False
+            x_hidden = False
 
-            elif x_hidden_files == 'True':
-                x_hidden = x_path.name.startswith('.')
-            else:
-                x_hidden = False
+        if not x_hidden:
+            dir_list.set_file(x_file)
+            paned_store.append(x_file)
 
-            if not x_hidden:
-                dir_list.set_file(x_file)
-                list_store.append(x_file)
-
-            return False
+        return False
 
     def update_grid_view(new_path):
         '''___update list view when path is changed___'''
-
-        global timeout_list
 
         update_path(new_path)
         entry_path.set_text(str(new_path))
         entry_path.set_name(str(new_path))
 
-        if Path(new_path) == sw_shortcuts:
-            overlay_label.set_label(vl_dict['shortcuts'])
-        else:
-            overlay_label.set_label(vl_dict['files'])
+        swgs.cur_dir = Gio.File.new_for_path(bytes(Path(new_path)))
+        swgs.f_mon = swgs.cur_dir.monitor(Gio.FileMonitorFlags.WATCH_MOVES, None)
+        swgs.f_mon.connect('changed', g_file_monitor)
 
-        os.chdir(new_path)
-        app.cur_dir = Gio.File.new_for_commandline_arg(bytes(Path.cwd()))
-        app.f_mon = app.cur_dir.monitor(Gio.FileMonitorFlags.WATCH_MOVES, None)
-        app.f_mon.connect('changed', g_file_monitor)
+        paned_store = get_list_store()
+        grid_view = get_list_view()
 
         if Path(new_path).is_dir():
-            list_store.remove_all()
-            iter_new_path = sort_func(list(Path(new_path).iterdir()))
+            os.chdir(new_path)
+            paned_store.remove_all()
+            dict_ini = read_menu_conf()
+            x_hidden_files = dict_ini['hidden_files']
+            g_file = Gio.File.new_for_path(bytes(Path(new_path)))
+            t = Thread(target=update_view, args=[paned_store, g_file, x_hidden_files])
+            t.start()
+            timeout = GLib.timeout_add(100, check_alive, t, update_selection, grid_view, None)
+            timeout_list.append(timeout)
 
-            if iter_new_path == []:
-                file = Gio.File.new_for_commandline_arg(bytes(Path(new_path)))
-                dir_list.set_file(file)
+    async def image_thumbnail():
+        '''___generate image thumbnail___'''
+
+        async def run_thumbnail(in_file, out_file, width, height):
+            '''___generate thumbnail for image mime type files___'''
+
+            start = perf_counter()
+            in_type = 'image'
+            file = Gio.File.new_for_commandline_arg(in_file)
+            file_info = file.query_info('*', Gio.FileQueryInfoFlags.NONE, None)
+            size = width, height
+
+            if file_info.get_content_type() == 'image/svg+xml':
+                in_type = 'svg'
+
+            if in_type == 'svg':
+                image_cache = shutil.copy(in_file, out_file)
             else:
-                if len(iter_new_path) > 200:
-                    delay = 16
+                try:
+                    image = Image.open(in_file)
+                except:
+                    print(
+                        f'{tc.RED}get_image_thumbnail'
+                        + f'{tc.GREEN}{in_file}{tc.RED}failed{tc.END}'
+                    )
                 else:
-                    delay = 0
+                    try:
+                        image.thumbnail(size, Image.Resampling.LANCZOS)
+                    except:
+                        print(
+                            f'{tc.RED}get_image_thumbnail'
+                            + f'{tc.GREEN}{in_file}{tc.RED}failed{tc.END}'
+                        )
+                    else:
+                        try:
+                            image.save(out_file, 'png')
+                        except:
+                            print(
+                                f'{tc.RED}save_image_thumbnail'
+                                + f'{tc.GREEN}{in_file}{tc.RED}failed{tc.END}'
+                            )
+                        else:
+                            end = perf_counter() - start
+                            print(f'-->Thumbnail {in_file} => {out_file} (took {end:0.2f} seconds)')
 
-                dict_ini = read_menu_conf()
-                x_hidden_files = dict_ini['hidden_files']
+        start = perf_counter()
+        items = thumbnail_image_dict.items()
+        await asyncio.gather(*(run_thumbnail(v.get_path(), k, 128, 128) for k, v in items if not Path(k).exists()))
 
-                t = Thread(target=update_view, args=[delay, iter_new_path, x_hidden_files])
-                t.start()
+        end = perf_counter() - start
+        print(f"Thumbnailer finished in {end:0.2f} seconds.")
 
-    def update_view(delay, sorted_list, x_hidden_files):
+        thumbnail_image_dict.clear()
+        print(f"Thumbnail list clear...")
+
+    async def video_thumbnail():
+        '''___generate video thumbnail___'''
+
+        async def run_thumbnail(in_file, out_file, width):
+            '''___generate thumbnail for video mime type files___'''
+
+            start = perf_counter()
+            cmd = (f'ffmpeg -loglevel quiet -ss 00:00:01.00 -i "{in_file}" -vf \
+                "scale={width}:{width}:force_original_aspect_ratio=decrease" \
+                -vframes 1 -y "{out_file}"')
+            try:
+                run(cmd, shell=True)
+            except:
+                print(f'{tc.RED}Thumbnail {tc.GREEN}{in_file}{tc.RED}failed{tc.END}')
+            else:
+                end = perf_counter() - start
+                print(f'-->Thumbnail {in_file} => {out_file} (took {end:0.2f} seconds)')
+                print(f'{tc.GREEN}done{tc.END}')
+
+        start = perf_counter()
+        items = thumbnail_video_dict.items()
+        args = (run_thumbnail(v.get_path(), k, 128) for k, v in items if not Path(k).exists())
+        await asyncio.gather(*args)
+
+        end = perf_counter() - start
+        print(f"Thumbnailer finished in {end:0.2f} seconds.")
+
+        thumbnail_video_dict.clear()
+        print(f"Thumbnail list clear...")
+
+    def update_selection(grid_view):
+        '''___update list model item selection when list view is updated___'''
+
+        #set_view_parent_path(grid_view)
+        grid_view.grab_focus()
+
+        if len(list(thumbnail_video_dict)) > 0:
+            Thread(target=asyncio.run, args=[video_thumbnail()]).start()
+
+        if len(list(thumbnail_image_dict)) > 0:
+            Thread(target=asyncio.run, args=[image_thumbnail()]).start()
+
+    def update_view(paned_store, g_file, x_hidden_files):
         '''___update list view when path is changed___'''
 
-        count = 16
-        for x in sorted_list:
-            x_file = Gio.File.new_for_commandline_arg(bytes(x))
-            try:
-                x_info = x_file.query_info(
-                                            '*',
-                                            Gio.FileQueryInfoFlags.NONE,
-                                            None,
-                )
-            except:
-                count += delay
-                timeout_info = GLib.timeout_add(count, get_file_info, x_file, x_info, x_hidden_files)
-                timeout_list.append(timeout_info)
-            else:
-                if x_info.get_content_type() in video_mime_types:
-                    count += delay
-                    out_file = f'{sw_fm_cache_thumbnail}/{x_file.get_basename()}.png'
-
-                    if not Path(out_file).exists():
-                        GLib.timeout_add(
-                                        count,
-                                        thread_video_thumbnails,
-                                        x_file,
-                                        x_info,
-                                        out_file
-                        )
-                        timeout_info = GLib.timeout_add(count, get_file_info, x_file, x_info, x_hidden_files)
-                        timeout_list.append(timeout_info)
-                    else:
-                        timeout_info = GLib.timeout_add(count, get_file_info, x_file, x_info, x_hidden_files)
-                        timeout_list.append(timeout_info)
-
-                elif x_info.get_content_type() in image_mime_types:
-                    count += delay
-                    out_file = f'{sw_fm_cache_thumbnail}/{x_file.get_basename()}'
-                    in_type = 'image'
-
-                    if x_info.get_content_type() == 'image/svg+xml':
-                        in_type = 'svg'
-
-                    if not Path(out_file).exists():
-                        GLib.timeout_add(
-                                        count,
-                                        thread_image_thumbnails,
-                                        in_type,
-                                        x_file,
-                                        x_info,
-                                        out_file
-                        )
-                        timeout_info = GLib.timeout_add(count, get_file_info, x_file, x_info, x_hidden_files)
-                        timeout_list.append(timeout_info)
-                    else:
-                        timeout_info = GLib.timeout_add(count, get_file_info, x_file, x_info, x_hidden_files)
-                        timeout_list.append(timeout_info)
-                else:
-                    count += delay
-                    timeout_info = GLib.timeout_add(count, get_file_info, x_file, x_info, x_hidden_files)
-                    timeout_list.append(timeout_info)
+        dir_list = get_dir_list()
+        count = 0
+        if Path(g_file.get_path()).is_dir():
+            g_enum = g_file.enumerate_children('*', Gio.FileQueryInfoFlags.NONE)
+            sorted_list = sort_func(g_enum)
+            start_time = time()
         else:
-            sorted_list.clear()
+            sorted_list = [g_file.query_info('*', Gio.FileQueryInfoFlags.NONE, None)]
+
+        if sorted_list == []:
+            dir_list.set_file(g_file)
+        else:
+            for x_info in sorted_list:
+                count += 1
+                x_file = g_enum.get_child(x_info)
+                timeout_info = GLib.timeout_add(count, get_file_info, paned_store, dir_list, x_file, x_info, x_hidden_files)
+                timeout_list.append(timeout_info)
+
+                if x_info.get_content_type() in video_mime_types:
+                    out_file = f'{sw_fm_cache_thumbnail}/{x_file.get_path().replace("/", "")}.png'
+                    thumbnail_video_dict[f'{out_file}'] = x_file
+
+                if x_info.get_content_type() in image_mime_types:
+                    out_file = f'{sw_fm_cache_thumbnail}/{x_file.get_path().replace("/", "")}'
+                    thumbnail_image_dict[out_file] = x_file
 
     def cb_btn_back_up(self):
         '''___return to the parent directory when user activated___'''
@@ -3308,8 +3815,6 @@ def sw_activate(app):
 
     def timeout_list_clear(args):
         '''___terminate all glib timeout process___'''
-
-        global timeout_list
 
         if args is None:
             for t in timeout_list:
@@ -3326,52 +3831,74 @@ def sw_activate(app):
         else:
             pass
 
-    def on_walk_path(self):
+    def on_walk_path(self, x_path, x_type):
 
-        if self.get_name() == '/':
-            self_path = self.get_name() + self.get_child().get_label()
-        else:
-            self_path = self.get_name() + '/' + self.get_child().get_label()
-
+        g_file = Gio.File.new_for_commandline_arg(x_path)
         timeout_list_clear(None)
+
         if not reveal_stack.get_visible_child() == files_view_grid:
-            on_files(self_path)
+            on_files(x_path)
+
+        elif x_type == 'uri':
+            update_grid_view_uri(x_path)
         else:
-            update_grid_view(self_path)
+            update_grid_view(g_file.get_path())
 
     def update_path(x_path):
+        '''___update entry path button when path is chaged___'''
 
         len_cur_path = len(Path(entry_path.get_name()).parts)
-
         for p in range(len_cur_path*2):
             child = box_scrolled.get_last_child()
-
             try:
                 box_scrolled.remove(child)
             except:
                 pass
 
-        parts = list(Path(x_path).parts)
+        split_path = list(str(x_path).split('://'))
+        if len(split_path) == 1:
+            path_type = 'file'
+            parts = list(Path(split_path[0]).parts)
+        else:
+            prefix = split_path[0] + ':/'
+            path_type = 'uri'
+            parts = list(Path(split_path[1]).parts)
+            parts.insert(0, prefix)
 
-        if Path(x_path).root != '':
-            parts.remove(Path(x_path).root)
+        if parts[0] == '/':
+            parts.remove('/')
+            parts.insert(0, '')
 
-        rev_parts = list(Path(x_path).parents)
-        rev_parts.reverse()
+        list_paths = list()
+        for i in range(len(parts)):
+            x = '/'.join(parts[0:i+1])
+            list_paths.append(x)
 
-        for p, r in zip(parts, rev_parts):
-            label_split_path = Gtk.Label(css_name='sw_label_desc', label=p)
-            btn_split_path = Gtk.Button(css_name='sw_button_path')
-            btn_split_path.set_valign(Gtk.Align.CENTER)
-            btn_split_path.set_child(label_split_path)
-            btn_split_path.set_name(str(r))
-            btn_split_path.connect('clicked', on_walk_path)
+        if list_paths[0] == '':
+            list_paths.remove('')
+            list_paths.insert(0, '/')
+            parts.remove('')
+            parts.insert(0, '/')
 
-            label_slash = Gtk.Label(css_name='sw_label')
-            label_slash.set_label('/')
+        for name, path in zip(parts, list_paths):
 
-            box_scrolled.append(label_slash)
-            box_scrolled.append(btn_split_path)
+            if name == '/':
+                child = Gtk.Label(css_name='sw_label_desc', label='rootfs')
+            else:
+                child = Gtk.Label(
+                                css_name='sw_label_desc', label=name,
+                                ellipsize=Pango.EllipsizeMode.END,
+                                max_width_chars=32
+                )
+
+            btn = Gtk.Button(
+                            name=name, css_name='sw_button_path',
+                            valign=Gtk.Align.CENTER
+            )
+            btn.set_size_request(80, -1)
+            btn.set_child(child)
+            btn.connect('clicked', on_walk_path, path, path_type)
+            box_scrolled.append(btn)
 
     def cb_btn_home(self):
         '''___return to the home directory when user activated___'''
@@ -3407,25 +3934,51 @@ def sw_activate(app):
 
         if action_name.get_name() == (
                                 ctx_dict['show_hidden_files'][0].replace(' ', '')
-                                + ctx_dict['show_hidden_files'][1].replace('+', '')
             ):
-            return on_show_hidden_files()
+            return on_files_view_props('hidden_files', None)
+
+        if action_name.get_name() == (
+                                ctx_dict['sorting_by_type'][0].replace(' ', '')
+            ):
+            return on_files_view_props('sorting_files', 'type')
+
+        if action_name.get_name() == (
+                                ctx_dict['sorting_by_size'][0].replace(' ', '')
+            ):
+            return on_files_view_props('sorting_files', 'size')
+
+        if action_name.get_name() == (
+                                ctx_dict['sorting_by_date'][0].replace(' ', '')
+            ):
+            return on_files_view_props('sorting_files', 'date')
+
+        if action_name.get_name() == (
+                                ctx_dict['sorting_by_name'][0].replace(' ', '')
+            ):
+            return on_files_view_props('sorting_files', 'name')
+
+        if action_name.get_name() == (
+                                ctx_dict['sorting_reverse'][0].replace(' ', '')
+            ):
+            return on_files_view_props('sorting_reverse', None)
+
+        if action_name.get_name() == (
+                                    ctx_dict['global_settings'][0].replace(' ', '')
+            ):
+            return on_global_settings()
 
         if action_name.get_name() == (
                                     ctx_dict['show_hotkeys'][0].replace(' ', '')
-                                    + ctx_dict['show_hotkeys'][1].replace('+', '')
             ):
             return on_show_hotkeys()
 
         if action_name.get_name() == (
                                     ctx_dict['about'][0].replace(' ', '')
-                                    + ctx_dict['about'][1].replace('+', '')
             ):
             return on_about()
 
         if action_name.get_name() == (
                                     ctx_dict['help'][0].replace(' ', '')
-                                    + ctx_dict['help'][1].replace('+', '')
             ):
             return on_webview(home_page + '/StartWine-Launcher')
 
@@ -3435,31 +3988,45 @@ def sw_activate(app):
             ):
             on_shutdown()
 
-    def on_show_hidden_files():
-        '''___Show or not hidden files___'''
+    def on_files_view_props(prop_name, prop_value):
+        '''___set files view properties___'''
 
         dict_ini = read_menu_conf()
 
-        if dict_ini['hidden_files'] == 'True':
-            dict_ini['hidden_files'] = 'False'
+        if prop_value is None:
+            if dict_ini[prop_name] == 'True':
+                dict_ini[prop_name] = 'False'
+            else:
+                dict_ini[prop_name] = 'True'
         else:
-            dict_ini['hidden_files'] = 'True'
+            dict_ini[prop_name] = prop_value
 
         write_menu_conf(dict_ini)
-        path = entry_path.get_name()
-        try:
-            update_grid_view(path)
-        except PermissionError as e:
-            overlay_info(overlay, None, e, None, 3)
+        parent_file = get_parent_file()
+        if parent_file.get_path() is not None:
+            try:
+                update_grid_view(parent_file.get_path())
+            except PermissionError as e:
+                overlay_info(overlay, None, e, None, 3)
+        else:
+            try:
+                update_grid_view_uri(parent_file.get_uri())
+            except PermissionError as e:
+                overlay_info(overlay, None, e, None, 3)
 
     def back_up():
         '''___return to the parent directory when user activated___'''
 
-        path = Path(entry_path.get_name()).parent
-        on_files(path)
-        terminal.feed_child(
-            f'cd "{str(path)}" && clear\n'.encode("UTF-8")
-        )
+        parent_file = get_parent_file()
+        if parent_file.get_path() is None:
+            if parent_file.get_parent() is not None:
+                uri = parent_file.get_parent().get_uri()
+                update_grid_view_uri(uri)
+            else:
+                on_files(sw_default_dir)
+        else:
+            if parent_file.get_parent() is not None:
+                on_files(Path(parent_file.get_parent().get_path()))
 
     def cb_btn_back_main(self):
         '''___sidebar back to main menu___'''
@@ -3469,12 +4036,15 @@ def sw_activate(app):
     def on_back_main():
         '''___sidebar back to main menu___'''
 
+        if main_stack.get_visible_child() == scrolled_startapp_page:
+            main_stack.set_visible_child(reveal_stack)
+
         btn_back_main.set_visible(False)
         stack_sidebar.set_visible_child(frame_main)
 
-        if (revealer.get_reveal_child()
-            and reveal_stack.get_visible_child() != files_view_grid):
-                return on_shortcuts()
+        if reveal_stack.get_visible_child() != files_view_grid:
+            current_path = get_parent_file().get_path()
+            return on_files(current_path)
 
     def cb_btn_main(self):
         '''___main buttons signal handler___'''
@@ -3506,87 +4076,6 @@ def sw_activate(app):
         if self.get_name() == btn_dict['about']:
             return on_about()
 
-    def cb_btn_overlay(self):
-        '''___main buttons signal handler___'''
-
-        if self.get_name() == 'btn_next':
-            return cb_btn_next(overlay_btn_next)
-
-        if self.get_name() == 'btn_prev':
-            return cb_btn_prev(overlay_btn_prev)
-
-    def cb_ctrl_scroll_view(self, x, y, data):
-        '''___mouse scroll event to scroll gridview___'''
-
-        if self.get_unit() == Gdk.ScrollUnit.WHEEL:
-            data.append(y)
-            if y == -1.0:
-                if len(data) > 3:
-                    data.clear()
-                    cb_btn_overlay(overlay_btn_next)
-            elif y == 1.0:
-                if len(data) > 3:
-                    data.clear()
-                    cb_btn_overlay(overlay_btn_prev)
-
-    def get_video_thumbnail(in_file, out_file, time, width):
-        '''___generate thumbnail for video mime type files___'''
-
-        cmd = (f'ffmpeg -ss 00:00:01.00 -i "{in_file}" -vf \
-            "scale={width}:{width}:force_original_aspect_ratio=decrease" \
-            -vframes 1 "{out_file}"')
-        try:
-            Popen(cmd, shell=True)
-        except:
-            print(
-                f'{tc.RED}get_video_thumbnail'
-                + f'{tc.GREEN}{in_file}{tc.RED}failed{tc.END}'
-            )
-
-    def get_image_thumbnail(in_type, in_file, out_file, width, height):
-        '''___generate thumbnail for image mime type files___'''
-
-        size = width, height
-
-        if in_type == 'svg':
-            image_cache = shutil.copy(in_file, out_file)
-        else:
-            try:
-                image = Image.open(in_file)
-            except:
-                print(
-                    f'{tc.RED}get_image_thumbnail'
-                    + f'{tc.GREEN}{in_file}{tc.RED}failed{tc.END}'
-                )
-            else:
-                try:
-                    image.thumbnail(size, Image.Resampling.LANCZOS)
-                except:
-                    print(
-                        f'{tc.RED}get_image_thumbnail'
-                        + f'{tc.GREEN}{in_file}{tc.RED}failed{tc.END}'
-                    )
-                else:
-                    try:
-                        image.save(out_file, 'png')
-                    except:
-                        print(
-                            f'{tc.RED}save_image_thumbnail'
-                            + f'{tc.GREEN}{in_file}{tc.RED}failed{tc.END}'
-                        )
-
-    def thread_video_thumbnails(file, file_info, out_file):
-        '''___return video thumbnail thread___'''
-        Thread(target=get_video_thumbnail,
-               args=[file.get_path(), out_file, 1, 128]
-               ).start()
-
-    def thread_image_thumbnails(in_type, file, file_info, out_file):
-        '''___return image thumbnail thread___'''
-        Thread(target=get_image_thumbnail,
-                args=[in_type, file.get_path(), out_file, 128, 128]
-                ).start()
-
     def cb_btn_start_settings(self):
         '''___show settings menu ___'''
         on_settings()
@@ -3595,7 +4084,26 @@ def sw_activate(app):
         '''___show hidden widgets when expand menu___'''
 
         if widget_name is not None:
-            overlay_label.set_label(vl_dict[widget_name])
+            try:
+                next_name = next_vw_dict[widget_name]
+            except:
+                next_name = 'launch_settings'
+            try:
+                prev_name = prev_vw_dict[widget_name]
+            except:
+                prev_name = 'install_launchers'
+
+            stack_panel.set_visible_child_name(vw_dict[widget_name])
+            child = stack_panel.get_child_by_name(vw_dict[widget_name])
+
+            one = child.get_first_child()
+            one.get_first_child().get_first_child().set_label(vl_dict[prev_name])
+
+            two = one.get_next_sibling()
+            two.set_label(vl_dict[widget_name])
+
+            three = two.get_next_sibling()
+            three.get_first_child().get_last_child().set_label(vl_dict[next_name])
 
         if (widget_name == vw_dict['shortcuts']
                 or widget_name == vw_dict['files']):
@@ -3604,50 +4112,33 @@ def sw_activate(app):
                     btn_popover_scale.set_visible(True)
                     btn_icon_position.set_visible(True)
 
-        read_parent_state()
-        revealer.set_visible(True)
+        #read_parent_state()
         stack_search_path.set_visible(True)
         image_next.set_visible(True)
         btn_sidebar.set_visible(True)
         btn_back_up.set_visible(True)
         btn_home.set_visible(True)
         btn_more.set_visible(True)
-        stack_progress_main.set_visible_child(progress_main_grid)
-        progress_main.set_visible(True)
-        media_controls.set_visible(True)
+        stack_progress_main.set_visible_child(stack_panel)
+        stack_panel.set_visible(True)
         scrolled_winetricks.set_visible(True)
         wc_maximize.set_visible(True)
+        progress_main.set_size_request(480, 20)
 
-    def on_hide_widgets():
-        '''___hide widgets when resize menu___'''
-
-        write_parent_state()
-        revealer.set_reveal_child(False)
-        revealer.set_visible(False)
-        stack_sidebar.set_size_request(320, -1)
-        gl_cover.set_size_request(320, 540)
-        parent.set_default_size(320, 540)
-        parent.set_resizable(False)
-        image_next.set_visible(False)
-        btn_sidebar.set_visible(False)
-        btn_gmount.set_visible(False)
-        btn_bookmarks.set_visible(False)
-        btn_back_up.set_visible(False)
-        btn_home.set_visible(False)
-        btn_more.set_visible(False)
-        stack_search_path.set_visible(False)
-        progress_main.set_visible(False)
-        media_controls.set_visible(False)
-        btn_popover_scale.set_visible(False)
-        btn_icon_position.set_visible(False)
-        scrolled_winetricks.set_visible(False)
-        wc_maximize.set_visible(False)
-
-    def on_set_px_size(adjustment_icon):
+    def on_set_px_size(self):
         '''___updating list when user resize icons___'''
 
-        parent_path = get_parent_path()
-        update_grid_view(parent_path)
+        timeout_list_clear(None)
+        t = GLib.timeout_add(100, on_spin_update, self)
+        timeout_list.append(t)
+
+    def on_spin_update(self):
+
+        parent_file = get_parent_file()
+        if parent_file.get_path() is not None:
+            update_grid_view(parent_file.get_path())
+        else:
+            update_grid_view_uri(parent_file.get_uri())
 
     def update_color_scheme():
         '''___update new widgets color scheme___'''
@@ -3657,113 +4148,190 @@ def sw_activate(app):
         if scheme == 'dark':
             css_provider.load_from_file(Gio.File.new_for_path(bytes(sw_css_dark)))
             Gtk.StyleContext.add_provider_for_display(
-                display,
-                css_provider,
-                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-                )
+                                        display,
+                                        css_provider,
+                                        Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
         elif scheme == 'light':
             css_provider.load_from_file(Gio.File.new_for_path(bytes(sw_css_light)))
             Gtk.StyleContext.add_provider_for_display(
-                display,
-                css_provider,
-                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-                )
+                                        display,
+                                        css_provider,
+                                        Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
         else:
             css_provider.load_from_file(Gio.File.new_for_path(bytes(sw_css_custom)))
             Gtk.StyleContext.add_provider_for_display(
-                display,
-                css_provider,
-                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-                )
+                                        display,
+                                        css_provider,
+                                        Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
+        set_define_colors()
 
     def update_bookmarks():
         '''___update bookmarks list view___'''
 
-        bmarks_store.remove_all()
-        bmark_list = get_bookmark_list()
+        swgs.bookmarks_store.remove_all()
+        bookmarks_list = get_bookmark_list()
 
-        for b in bmark_list:
+        for b in bookmarks_list:
             gtk_str = Gtk.StringObject.new(b)
-            bmarks_store.append(gtk_str)
-
-    def read_parent_state():
-        '''___read parent window state from config___'''
-
-        dict_ini = read_menu_conf()
-        sw_width = int(dict_ini['width'])
-        sw_height = int(dict_ini['height'])
-
-        return sw_width, sw_height
-
-    def on_write_parent_state(self):
-        '''___write parent window state in config___'''
-
-        parent.set_hide_on_close(True)
-        return write_parent_state()
-
-    def write_parent_state():
-        '''___write parent window state in config___'''
-
-        clear_tmp()
-        dict_ini = read_menu_conf()
-
-        h = parent.get_height()
-        w = parent.get_width()
-        w_name = str(reveal_stack.get_visible_child().get_name())
-
-        if not parent.get_resizable():
-            dict_ini['expand_menu'] = 'False'
-            dict_ini['view_widget'] = 'None'
-            dict_ini['control_panel'] = 'show'
-        else:
-            if Path(entry_path.get_name()) == sw_shortcuts:
-                dict_ini['view_widget'] = vw_dict['shortcuts']
-            else:
-                dict_ini['view_widget'] = vw_dict['files']
-                dict_ini['current_dir'] = entry_path.get_name()
-
-            if not sidebar_revealer.get_reveal_child():
-                dict_ini['control_panel'] = 'hide'
-            else:
-                dict_ini['control_panel'] = 'show'
-
-            if w != 0:
-                dict_ini['width'] = w
-
-            if h !=0:
-                dict_ini['height'] = h
-
-            dict_ini['expand_menu'] = 'True'
-
-        if switch_opengl.get_active():
-            dict_ini['opengl_bg'] = 'True'
-        else:
-            dict_ini['opengl_bg'] = 'False'
-
-        dict_ini['icon_size'] = round(adjustment_icon.get_value())*24
-        dict_ini['sound'] = 'off'
-
-        return write_menu_conf(dict_ini)
-
-    def cb_btn_shortcuts(self):
-        '''___show shortcuts list view___'''
-
-        return on_shortcuts()
+            swgs.bookmarks_store.append(gtk_str)
 
     def on_shortcuts():
         '''___show shortcuts list view___'''
 
+        timeout_list_clear(None)
         on_show_hidden_widgets(vw_dict['shortcuts'])
         update_grid_view(sw_shortcuts)
 
-        revealer.set_reveal_child(True)
+        if stack_sidebar.get_visible_child() != frame_main:
+            btn_back_main.set_visible(False)
+            stack_sidebar.set_visible_child(frame_main)
+
         reveal_stack.set_visible_child(files_view_grid)
 
-        scrolled_files.set_min_content_width(width*0.2)
-        scrolled_files.set_min_content_height(250)
+        scrolled_left_files.set_min_content_width(width*0.2)
+        scrolled_left_files.set_min_content_height(240)
+        scrolled_right_files = paned_grid_view.get_end_child()
+        if scrolled_right_files is not None:
+            scrolled_right_files.set_min_content_width(width*0.2)
+            scrolled_right_files.set_min_content_height(240)
 
-        set_parent_size()
         update_color_scheme()
+
+    def on_startapp_page():
+        '''___show start app page___'''
+
+        _image_btn_start = Gtk.Image(css_name='sw_image')
+        _image_btn_start.set_from_file(IconPath.icon_playback)
+
+        _image_start_settings = Gtk.Image(css_name='sw_image')
+        _image_start_settings.set_from_file(IconPath.icon_settings)
+
+        _image_stop = Gtk.Image(css_name='sw_image')
+        _image_stop.set_from_file(IconPath.icon_clear)
+
+        _label_btn_start = Gtk.Label(css_name='sw_label')
+        _label_btn_start.set_label(btn_dict['start'])
+
+        _box_btn_start = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        _box_btn_start.set_halign(Gtk.Align.CENTER)
+        _box_btn_start.set_spacing(8)
+        _box_btn_start.append(_label_btn_start)
+        _box_btn_start.append(_image_btn_start)
+
+        _btn_stop = Gtk.Button(
+                                css_name='sw_button',
+                                name=btn_dict['stop'],
+                                tooltip_markup=msg.tt_dict['stop'],
+                                valign=Gtk.Align.END,
+                                child=_image_stop,
+        )
+        #btn_stop.connect('clicked', cb_btn_main)
+
+        _btn_start = Gtk.Button(
+                                css_name='sw_button',
+                                width_request=240,
+                                valign=Gtk.Align.END,
+        )
+        _btn_start.set_vexpand(True)
+        _btn_start.set_child(_box_btn_start)
+        #_btn_start.connect('clicked', cb_btn_start)
+
+        _btn_settings = Gtk.Button(
+                                css_name='sw_button',
+                                name=btn_dict['settings'],
+                                valign=Gtk.Align.END,
+                                tooltip_markup=msg.tt_dict['settings'],
+                                child=_image_start_settings
+        )
+        #btn_start_settings.connect('clicked', cb_btn_start_settings)
+
+        label_startapp = Gtk.Label(
+                                css_name='sw_label_title',
+                                xalign=0.0,
+                                margin_start=16,
+                                margin_top=16,
+                                valign=Gtk.Align.START,
+        )
+        label_startapp.add_css_class('font_size_18')
+
+        image_title = Gtk.Picture(css_name='sw_picture')
+        image_title.set_hexpand(True)
+        image_title.set_vexpand(True)
+        image_title.add_css_class('stub')
+        image_title.set_size_request(-1,(swgs.width/96)*31)
+
+#        image_subtitle = SwPicture(css_name='sw_picture')
+#        image_subtitle.set_hexpand(True)
+#        image_subtitle.set_vexpand(True)
+#        image_subtitle.set_effects(['blur', 'reverse'])
+
+        box_control = Gtk.Box(
+                            css_name='sw_action_row', spacing=8,
+                            hexpand=True, vexpand=True, valign=Gtk.Align.END,
+                            orientation=Gtk.Orientation.HORIZONTAL
+        )
+        box_control.append(_btn_stop)
+        box_control.append(_btn_start)
+        box_control.append(_btn_settings)
+
+        grid_title = Gtk.Grid(css_name='sw_grid', vexpand=True, hexpand=True)
+        grid_title.set_row_spacing(8)
+        grid_title.set_column_spacing(8)
+        grid_title.attach(label_startapp,0,0,1,1)
+        grid_title.attach(box_control, 0,1,1,1)
+        grid_title.add_css_class('shadow')
+
+        grid_button = Gtk.Grid(css_name='sw_grid', vexpand=True, hexpand=True,
+                                margin_start=32, margin_end=32, margin_top=32, margin_bottom=32,
+                                valign=Gtk.Align.CENTER, halign=Gtk.Align.CENTER,
+                                row_spacing=8, column_spacing=32,
+        )
+        for i in range(4):
+            btn0 = Gtk.Button(css_name='sw_button', label=f'button_{i}', hexpand=True, width_request=320)
+            btn1 = Gtk.Button(css_name='sw_button', label=f'button_{i}', hexpand=True, width_request=320)
+            grid_button.attach(btn0, 0,i,1,1)
+            grid_button.attach(btn1, 1,i,1,1)
+
+        box_text = Gtk.Box(
+                        css_name='sw_box', orientation=Gtk.Orientation.VERTICAL,
+                        halign=Gtk.Align.START, valign=Gtk.Align.START, vexpand=True, hexpand=True, spacing=4,
+                        margin_start=16, margin_end=16, margin_top=48, margin_bottom=16,
+        )
+        for t in range(4):
+            text = Gtk.Label(css_name='sw_label', label=f'если [ дважды два равно {t} ];\n\tтогда sudo rm -rf $мозг\nиначе')
+            box_text.append(text)
+
+        text_ = Gtk.Label(css_name='sw_label', label=f'дважды два равно 4\nexport мозг=1\nфи\nвернуть $мозг')
+        box_text.append(text_)
+
+        overlay_title = Gtk.Overlay()
+        overlay_title.set_child(image_title)
+        overlay_title.add_overlay(grid_title)
+        overlay_title.add_overlay(box_text)
+
+        box_button = Gtk.Box(css_name='sw_box', vexpand=True, hexpand=True)
+        box_button.append(grid_button)
+#        box_button.set_effects(['blur', 'reverse'])
+
+        grid_content = Gtk.Grid(css_name='sw_grid', vexpand=True, hexpand=True)
+        grid_content.attach(overlay_title, 0,0,1,1)
+        grid_content.attach(box_button, 0,1,1,1)
+
+        set_heroes_icon(get_out(), get_app_path(), image_title, label_startapp)
+        #set_heroes_icon(get_out(), None, box_button, None)
+        scrolled_startapp_page.set_child(grid_content)
+
+        btn_back_main.set_visible(True)
+        main_stack.set_visible_child(scrolled_startapp_page)
+
+        #image_title.add_tick_callback(on_box_control_resize)
+
+    def on_box_control_resize(self, frame_clock):
+        self.set_size_request(-1, (swgs.width/96)*31)
+        return True
 
     def context_connect(menu_x, context_x, data_x, count):
         '''___connect context menu items to a callback function___'''
@@ -3773,20 +4341,22 @@ def sw_activate(app):
             action_name: str = a['name']
             action_type = ''.join(e for e in action_name if e.isalnum())
             action_func = a['func']
-            menu_x.insert_item(
-                count,
-                Gio.MenuItem.new(f'{action_name}', f'app.{action_type}')
-            )
+            item = Gio.MenuItem.new(f'{action_name}\t', f'app.{action_type}')
+            menu_x.insert_item(count, item)
             action = Gio.SimpleAction.new(action_type, None)
             action.connect('activate', action_func, data_x)
-            app.add_action(action)
+            swgs.add_action(action)
 
-            accel_for_action = a.get('accel')
-            if 'accel' in a.keys():
-                app.set_accels_for_action(
-                    f'app.{a["name"]}',
-                    [accel_for_action],
-                )
+            try:
+                accel_for_action = a['accel']
+            except Exception as e:
+                accel_for_action = None
+
+            swgs.set_accels_for_action(
+                f'app.{action_type}',
+                [accel_for_action],
+            )
+            action_list.append(f'app.{action_type}')
 
         context_x.clear()
 
@@ -3794,8 +4364,7 @@ def sw_activate(app):
         '''___right click on empty place in list view___'''
 
         if stack_sidebar.get_visible_child() == frame_files_info:
-            btn_back_main.set_visible(False)
-            stack_sidebar.set_visible_child(frame_main)
+            on_back_main()
 
         custom_context = '''
              <?xml version="1.0" encoding="UTF-8"?>
@@ -3813,43 +4382,98 @@ def sw_activate(app):
         menu = builder_context.get_object('custom_context')
 
         context_dir = [
-            {'name': ctx_dict['create_dir'], 'func': on_cb_empty_create_dir},
+            {
+            'name': ctx_dict['create_dir'][0],
+            'func': on_cb_empty_create_dir,
+            'accel': ctx_dict['create_dir'][1],
+            },
         ]
-
         context_edit = [
-            {'name': ctx_dict['paste'], 'func': on_cb_empty_paste},
-            {'name': ctx_dict['select_all'], 'func': on_cb_empty_select_all},
+            {
+            'name': ctx_dict['paste'][0],
+            'func': on_cb_empty_paste,
+            'accel': ctx_dict['paste'][1]
+            },
+            {
+            'name': ctx_dict['select_all'][0],
+            'func': on_cb_empty_select_all,
+            'accel': ctx_dict['select_all'][1]
+            },
         ]
-
         context_property = [
-            {'name': ctx_dict['properties'], 'func': on_cb_empty_properties},
+            {'name': ctx_dict['properties'][0], 'func': on_cb_empty_properties},
         ]
-
         context_create = [
             {'name': ctx_dict['txt'], 'func': on_cb_empty_create_file},
             {'name': ctx_dict['sh'], 'func': on_cb_empty_create_file},
             {'name': ctx_dict['py'], 'func': on_cb_empty_create_file},
             {'name': ctx_dict['desktop'], 'func': on_cb_empty_create_file},
         ]
-
         context_more = [
             {'name': ctx_dict['copy_path'], 'func': on_cb_empty_copy_path},
             {'name': ctx_dict['add_bookmark'], 'func': on_cb_empty_add_bookmark},
         ]
-
-        context_hidden_files = [
-            {'name': ' '.join(ctx_dict['show_hidden_files']), 'func': on_btn_header_menu},
+        context_file_props = [
+            {
+            'name': ctx_dict['show_hidden_files'][0],
+            'accel': ctx_dict['show_hidden_files'][1],
+            'func': on_btn_header_menu
+            },
+            {
+            'name': ctx_dict['sorting_by_type'][0],
+            'accel': ctx_dict['sorting_by_type'][1],
+            'func': on_btn_header_menu
+            },
+            {
+            'name': ctx_dict['sorting_by_size'][0],
+            'accel': ctx_dict['sorting_by_size'][1],
+            'func': on_btn_header_menu
+            },
+            {
+            'name': ctx_dict['sorting_by_date'][0],
+            'accel': ctx_dict['sorting_by_date'][1],
+            'func': on_btn_header_menu
+            },
+            {
+            'name': ctx_dict['sorting_by_name'][0],
+            'accel': ctx_dict['sorting_by_name'][1],
+            'func': on_btn_header_menu
+            },
+            {
+            'name': ctx_dict['sorting_reverse'][0],
+            'accel': ctx_dict['sorting_reverse'][1],
+            'func': on_btn_header_menu
+            },
         ]
-
         context_header_menu = [
-            {'name': ' '.join(ctx_dict['show_hotkeys']), 'func': on_btn_header_menu},
-            {'name': ' '.join(ctx_dict['about']), 'func': on_btn_header_menu},
-            {'name': ' '.join(ctx_dict['help']), 'func': on_btn_header_menu},
+            {
+            'name': ctx_dict['global_settings'][0],
+            'accel': ctx_dict['global_settings'][1],
+            'func': on_btn_header_menu
+            },
+            {
+            'name': ctx_dict['show_hotkeys'][0],
+            'accel': ctx_dict['show_hotkeys'][1],
+            'func': on_btn_header_menu
+            },
+            {
+            'name': ctx_dict['about'][0],
+            'accel': ctx_dict['about'][1],
+            'func': on_btn_header_menu
+            },
+            {
+            'name': ctx_dict['help'][0],
+            'accel': ctx_dict['help'][1],
+            'func': on_btn_header_menu
+            },
         ]
         context_shutdown = [
-            {'name': ctx_dict['shutdown'][0] + f' {sw_program_name}', 'func': on_btn_header_menu},
+            {
+            'name': ctx_dict['shutdown'][0] + f' {sw_program_name}',
+            'accel': ctx_dict['shutdown'][1],
+            'func': on_btn_header_menu
+            },
         ]
-
         rect = Gdk.Rectangle()
         rect.x = x
         rect.y = y
@@ -3860,7 +4484,7 @@ def sw_activate(app):
         section_edit = Gio.Menu()
         section_property = Gio.Menu()
         section_more = Gio.Menu()
-        section_hidden_files = Gio.Menu()
+        section_file_props = Gio.Menu()
         section_header_menu = Gio.Menu()
         section_shutdown = Gio.Menu()
 
@@ -3873,10 +4497,6 @@ def sw_activate(app):
 
         if widget.get_name() == 'header_menu':
             gmenu = Gio.Menu()
-            if reveal_stack.get_visible_child() == files_view_grid:
-                gmenu.insert_section(0, None, section_hidden_files)
-                context_connect(section_hidden_files, context_hidden_files, parent_path, 0)
-
             gmenu.insert_section(1, None, section_header_menu)
             gmenu.append_section(None, section_shutdown)
 
@@ -3884,9 +4504,11 @@ def sw_activate(app):
             context_connect(section_shutdown, context_shutdown, parent_path, 0)
             context_menu.set_menu_model(gmenu)
         else:
-            if widget.get_name() == 'view_more':
-                menu.append_section(None, section_more)
-                context_connect(section_more, context_more, parent_path, 0)
+            menu.append_section(None, section_more)
+            context_connect(section_more, context_more, parent_path, 0)
+
+            menu.insert_submenu(0, ctx_dict['sort'], section_file_props)
+            context_connect(section_file_props, context_file_props, parent_path, 0)
 
             menu.insert_submenu(1, ctx_dict['create'], menu_create)
             menu.append_section(None, section_edit)
@@ -3999,18 +4621,28 @@ def sw_activate(app):
     def on_create_file(name, ext, sample):
         '''___create new file___'''
 
-        parent_path = get_parent_path()
+        parent_file = get_parent_file()
 
-        if parent_path is not None:
-            count = int()
-            x_path = Path(f'{parent_path}/{name}{ext}')
+        if parent_file.get_path() is not None:
+            parent_path = parent_file.get_path()
+        else:
+            parent_path = parent_file.get_uri()
 
-            while x_path.exists():
-                count += 1
-                x_path = Path(f'{parent_path}/{name} {count}{ext}')
+        count = int()
+        x_path = f'{parent_path}/{name}{ext}'
+        x_file = Gio.File.new_for_commandline_arg(x_path)
 
-            x_file = Gio.File.new_for_commandline_arg(bytes(x_path))
+        while x_file.query_exists():
+            count += 1
+            x_path = f'{parent_path}/{name} {count}{ext}'
+            x_file = Gio.File.new_for_commandline_arg(x_path)
 
+        try:
+            x_file.create(Gio.FileCreateFlags.NONE)
+        except GLib.GError as e:
+            print(e.message)
+            dialog_info(text_message=str(e.message), message_type='ERROR').run()
+        else:
             if sample is not None:
                 try:
                     with open(x_path, 'w') as x:
@@ -4018,11 +4650,8 @@ def sw_activate(app):
                         x.close()
                 except IOError as e:
                     print(e)
-            else:
-                try:
-                    x_file.create(Gio.FileCreateFlags.NONE)
-                except GLib.GError as e:
-                    print(e)
+                    strerr = msg.msg_dict['does_not_exist']
+                    dialog_info(text_message=strerr, message_type='ERROR').run()
 
     def on_cb_empty_create_dir(action_name, parameter, parent_path):
         '''___callback on context button for create directory___'''
@@ -4036,9 +4665,9 @@ def sw_activate(app):
             return overlay_info(overlay, None, text_message, None, 3)
 
         else:
-            return on_create_dir(parent_path)
+            return on_create_dir()
 
-    def on_create_dir(parent_path):
+    def on_create_dir():
         '''___create new directory___'''
 
         def create_dir(src):
@@ -4046,24 +4675,32 @@ def sw_activate(app):
 
             dir_name = entry_name.get_text()
             count = int()
-            x_path = Path(f'{parent_path}/{dir_name}')
+            x_path = f'{src}/{dir_name}'
+            x_file = Gio.File.new_for_commandline_arg(x_path)
 
-            while x_path.exists():
+            while x_file.query_exists():
                 count += 1
-                x_path = Path(f'{parent_path}/{dir_name} {count}')
+                x_path = f'{src}/{dir_name} {count}'
+                x_file = Gio.File.new_for_commandline_arg(x_path)
+
             try:
-                x_file = Gio.File.new_for_commandline_arg(bytes(x_path))
                 x_file.make_directory_with_parents()
             except GLib.GError as e:
-                print(e)
+                print(e.message)
+                dialog_info(text_message=str(e.message), message_type='ERROR').run()
+
+        parent_file = get_parent_file()
+        if parent_file.get_path() is None:
+            src = parent_file.get_uri()
+        else:
+            src = parent_file.get_path()
 
         title = msg.msg_dict['create_dir'].capitalize()
         text_message = [msg.msg_dict['new_dir'].capitalize()]
         button_name = msg.msg_dict['create'].capitalize()
-        func = [(create_dir, None), None]
-        dialog = dialog_entry(app, title, text_message, button_name, func, 1, None)
+        func = [(create_dir, (src,)), None]
+        dialog = dialog_entry(swgs, title, text_message, button_name, func, 1, None)
         entry_name = dialog.get_child().get_first_child()
-        entry_name.connect('activate', cb_dialog_entry, dialog, create_dir, None)
 
     def on_cb_empty_paste(action_name, parameter, data):
         '''___activate context menu button paste___'''
@@ -4073,21 +4710,26 @@ def sw_activate(app):
     def on_cb_empty_select_all(action_name, parameter, data):
         '''___callback context button select all___'''
 
+        grid_view = get_list_view()
         grid_view.get_model().select_all()
 
     def on_cb_empty_properties(action_name, parameter, data):
         '''___get current directory properties___'''
 
-        x_file = Gio.File.new_for_commandline_arg(bytes(Path(data)))
-        get_file_props(x_file)
         on_file_properties()
 
-    def on_file_context(x, y, x_files):
+        if data is None:
+            x_file = get_parent_uri()
+        else:
+            x_file = Gio.File.new_for_commandline_arg(bytes(Path(data)))
+
+        get_file_props(x_file)
+
+    def on_file_context(x, y, grid_view, x_files):
         '''___build and connect file context menu___'''
 
         if stack_sidebar.get_visible_child() == frame_files_info:
-            btn_back_main.set_visible(False)
-            stack_sidebar.set_visible_child(frame_main)
+            on_back_main()
 
         custom_context = '''
              <?xml version="1.0" encoding="UTF-8"?>
@@ -4107,45 +4749,36 @@ def sw_activate(app):
         context_exe = [
             {'name': ctx_dict['run'], 'func': on_cb_file_exe},
         ]
-
         context_open_location = [
             {'name': ctx_dict['open_location'], 'func': on_cb_file_open_location},
         ]
-
         context_open_with = [
             {'name': ctx_dict['open_with'], 'func': on_cb_file_open_with},
         ]
-
         context_run = [
             {'name': ctx_dict['run'], 'func': on_cb_file_run},
             {'name': ctx_dict['open'], 'func': on_cb_file_open},
         ]
-
         context_open = [
             {'name': ctx_dict['open'], 'func': on_cb_file_open},
         ]
-
         context_edit = [
-            {'name': ctx_dict['cut'], 'func': on_cb_file_cut},
-            {'name': ctx_dict['copy'], 'func': on_cb_file_copy},
-            {'name': ctx_dict['rename'], 'func': on_cb_file_rename},
-            {'name': ctx_dict['link'], 'func': on_cb_file_link},
+            {'name': ctx_dict['cut'][0], 'func': on_cb_file_cut, 'accel': ctx_dict['cut'][1]},
+            {'name': ctx_dict['copy'][0], 'func': on_cb_file_copy, 'accel': ctx_dict['copy'][1]},
+            {'name': ctx_dict['rename'][0], 'func': on_cb_file_rename, 'accel': ctx_dict['rename'][1]},
+            {'name': ctx_dict['link'][0], 'func': on_cb_file_link, 'accel': ctx_dict['link'][1]},
             {'name': ctx_dict['compress'], 'func': on_cb_file_compress},
         ]
-
         context_remove = [
-            {'name': ctx_dict['trash'], 'func': on_cb_file_remove},
-            {'name': ctx_dict['remove'], 'func': on_cb_file_remove},
+            {'name': ctx_dict['trash'][0], 'func': on_cb_file_remove, 'accel': ctx_dict['trash'][1]},
+            {'name': ctx_dict['remove'][0], 'func': on_cb_file_remove, 'accel': ctx_dict['remove'][1]},
         ]
-
         context_property = [
-            {'name': ctx_dict['properties'], 'func': on_cb_file_properties},
+            {'name': ctx_dict['properties'][0], 'func': on_cb_file_properties},
         ]
-
         context_dir = [
             {'name': ctx_dict['open'], 'func': on_cb_dir_open},
         ]
-
         rect = Gdk.Rectangle()
         rect.x = x
         rect.y = y
@@ -4177,8 +4810,16 @@ def sw_activate(app):
                                     )
         file_type = file_info.get_content_type()
 
-        if Path(x_files[0].get_path()).is_file():
-            context_connect(menu, context_open_with, x_files, 0)
+        if x_files[0].get_path() is not None:
+            if Path(x_files[0].get_path()).is_file():
+                context_connect(menu, context_open_with, x_files, 0)
+
+            context_connect(section_edit, context_edit, x_files, 0)
+            context_connect(section_remove, context_remove, x_files, 0)
+            context_connect(section_property, context_property, x_files, 0)
+        else:
+            context_connect(section_edit, context_edit[0:2], x_files, 0)
+            context_connect(section_remove, context_remove, x_files, 0)
 
         if len(entry_search.get_text()) > 1:
             context_connect(menu, context_open_location, x_files, 0)
@@ -4194,10 +4835,6 @@ def sw_activate(app):
                 context_connect(menu, context_run, x_files, 0)
         else:
             context_connect(menu, context_open, x_files, 0)
-
-        context_connect(section_edit, context_edit, x_files, 0)
-        context_connect(section_remove, context_remove, x_files, 0)
-        context_connect(section_property, context_property, x_files, 0)
 
         context_menu.set_menu_model(menu)
 
@@ -4221,9 +4858,10 @@ def sw_activate(app):
         copy_target = list()
         cut_source = list()
         cut_target = list()
-        parent_path = get_parent_path()
+        parent_file = get_parent_file()
 
-        if parent_path is not None:
+        if (parent_file.get_path() is not None and data[1].get_files()[0].get_path() is not None):
+            parent_path = parent_file.get_path()
 
             if data[0] == 'is_cut':
                 for f in data[1].get_files():
@@ -4239,14 +4877,14 @@ def sw_activate(app):
                                 cut_target.append(target)
                     else:
                         text_message = msg.msg_dict['equal_paths']
-                        dialog_info(app, text_message, 'INFO')
+                        dialog_info(text_message=text_message, message_type='INFO').run()
                 else:
                     if len(replace_source) > 0:
                         str_source = str('\n'.join(sorted(replace_source)))
                         title = msg.msg_dict['replace_file']
-                        message = msg.msg_dict['replace_override'] + f'\n{str_source}'
+                        message = [msg.msg_dict['replace_override'], f'{str_source}']
                         func = [{move_replace : (parent_path, replace_source)}, None]
-                        dialog_question(app, title, message, None, func)
+                        dialog_question(swgs, title, message, None, func)
 
                     if len(cut_source) > 0:
                         for s, t in zip(cut_source, cut_target):
@@ -4279,19 +4917,23 @@ def sw_activate(app):
                             copy_target.append(target)
                     else:
                         text_message = msg.msg_dict['equal_paths']
-                        dialog_info(app, text_message, 'INFO')
+                        dialog_info(text_message=text_message, message_type='INFO').run()
                 else:
                     if len(replace_source) > 0:
                         str_source = str('\n'.join(sorted(replace_source)))
                         title = msg.msg_dict['replace_file']
-                        message = msg.msg_dict['replace_override'] + f'\n{str_source}'
+                        message = [msg.msg_dict['replace_override'], f'{str_source}']
                         func = [{copy_replace : (parent_path, replace_source)}, None]
-                        dialog_question(app, title, message, None, func)
+                        dialog_question(swgs, title, message, None, func)
 
                     if len(copy_source) > 0:
                         for s, t in zip(copy_source, copy_target):
                             Thread(target=run_copy, args=[s, t]).start()
                             GLib.timeout_add(100, on_copy_move_progress, s, t)
+            else:
+                pass
+        else:
+            on_uri_changed(data)
 
     def get_dir_size(size, data):
         '''___get size of files in current directory___'''
@@ -4339,10 +4981,8 @@ def sw_activate(app):
         else:
             raise ValueError(f'{tc.RED}file {source} is not a file or directory{tc.END}')
 
-    def move_replace(args):
+    def move_replace(parent_path, replace_source):
         '''___replace files on dialog response___'''
-
-        parent_path, replace_source = args
 
         for r in replace_source:
             s = Path(r)
@@ -4350,10 +4990,8 @@ def sw_activate(app):
             Thread(target=run_move, args=(s, t,)).start()
             GLib.timeout_add(100, on_copy_move_progress, s, t)
 
-    def copy_replace(args):
+    def copy_replace(parent_path, replace_source):
         '''___replace files on dialog response___'''
-
-        parent_path, replace_source = args
 
         for r in replace_source:
             s = Path(r)
@@ -4401,6 +5039,8 @@ def sw_activate(app):
         elif t_size >= s_size:
             progress_main.set_fraction(0.0)
             progress_main.set_show_text(False)
+            progress_main.set_visible(False)
+            stack_progress_main.set_visible_child(stack_panel)
             overlay_info(overlay, str_copying, msg.msg_dict['copy_completed'], None, 3)
             environ['FRAGMENT_NUM'] = getenv('FRAGMENT_INDEX')
             return False
@@ -4434,11 +5074,15 @@ def sw_activate(app):
             elif current_size == 0:
                 progress_main.set_fraction(0.0)
                 progress_main.set_show_text(False)
+                progress_main.set_visible(False)
+                stack_progress_main.set_visible_child(stack_panel)
                 overlay_info(overlay, str_deletion, msg.msg_dict['delete_completed'], None, 3)
                 return False
         else:
             progress_main.set_fraction(0.0)
             progress_main.set_show_text(False)
+            progress_main.set_visible(False)
+            stack_progress_main.set_visible_child(stack_panel)
             overlay_info(overlay, str_deletion, msg.msg_dict['delete_completed'], None, 3)
             return False
 
@@ -4446,13 +5090,13 @@ def sw_activate(app):
         '''___run a file from the context menu___'''
 
         x_path = g_file.get_path()
-        new_app = Gio.AppInfo.create_from_commandline(
+        gio_app_info = Gio.AppInfo.create_from_commandline(
                                         bytes(Path(f'\"{x_path}\"')),
                                         f'\"{x_path}\"',
                                         Gio.AppInfoCreateFlags.SUPPORTS_URIS
         )
         try:
-            new_app.launch_uris()
+            gio_app_info.launch_uris()
         except Exception as e:
             print(tc.RED, e, tc.END)
 
@@ -4476,10 +5120,12 @@ def sw_activate(app):
     def on_cb_file_exe(action_name, parameter, data):
         '''___run a x-ms-dos-executable file from the context menu___'''
 
-        x_path = Path(data[0].get_path())
-        sw_rsh.write_text(f"env \"{sw_menu}\" \"{x_path}\"")
-        write_app_conf(x_path)
-        return on_start()
+        if data[0].get_path() is not None:
+            environ['SW_EXEC'] = f'"{data[0].get_path()}"'
+            write_app_conf(Path(data[0].get_path()))
+            return on_start()
+        else:
+            return overlay_info(overlay, None, msg.msg_dict['action_not_supported'], None, 3)
 
     def on_cb_file_run(action_name, parameter, data):
         '''___run a x-executable file from the context menu___'''
@@ -4497,7 +5143,11 @@ def sw_activate(app):
         '''___open a file with program from context menu___'''
 
         g_file = data[0]
-        on_file_open_with(g_file)
+        if g_file.get_path() is None:
+            uri  = g_file.get_uri()
+            on_uri_open_with(uri)
+        else:
+            on_file_open_with(g_file)
 
     def on_file_open_with(g_file):
         '''___open a file with program___'''
@@ -4510,27 +5160,49 @@ def sw_activate(app):
         except Exception as e:
             print(tc.RED, e , tc.END)
 
+    def on_uri_open_with(uri):
+        '''___open a file with program___'''
+
+        ul = Gtk.UriLauncher()
+        ul.set_uri(uri)
+        try:
+            ul.launch()
+        except Exception as e:
+            print(tc.RED, e , tc.END)
+
     def on_cb_file_open(action_name, parameter, data):
         '''___open a file from the context menu___'''
 
         g_file = data[0]
-        return on_file_open(g_file)
+        if g_file.get_path() is None:
+            uri  = g_file.get_uri()
+            return on_uri_open_with(uri)
+        else:
+            return on_file_open(g_file)
 
     def on_cb_dir_open(action_name, parameter, data):
         '''___open a directory from the context menu___'''
 
-        file = Path(data[0].get_path()).name
-        path = Path(entry_path.get_name())
-        on_files(Path(f'{path}/{file}'))
+        if data[0].get_path() is not None:
+            file = Path(data[0].get_path()).name
+            parent_file = get_parent_file()
+            if parent_file.get_path() is not None:
+                path = parent_file.get_path()
+                on_files(Path(f'{path}/{file}'))
+        else:
+            item_uri = data[0].get_uri()
+            update_grid_view_uri(item_uri)
 
     def on_cb_file_cut(action_name, parameter, data):
         '''___cut the selected file from the curent directory___'''
 
-        return on_file_cut(data)
+        if reveal_stack.get_visible_child() == files_view_grid:
+            return on_file_cut(data)
 
     def on_file_cut(data):
         '''___cut the selected file from the curent directory___'''
 
+        grid_view = get_list_view()
         model = grid_view.get_model()
         nums = model.get_n_items()
         child = grid_view.get_first_child()
@@ -4550,16 +5222,13 @@ def sw_activate(app):
         f_list = Gdk.FileList.new_from_list(data)
         clipboard.set(f_list)
         content = clipboard.get_content()
-
-        if data[0].get_path() is None:
-            content.connect('content-changed', on_uri_changed, ['is_cut', f_list])
-        else:
-            content.connect('content-changed', on_content_changed, ['is_cut', f_list])
+        content.connect('content-changed', on_content_changed, ['is_cut', f_list])
 
     def on_cb_file_copy(action_name, parameter, data):
         '''___copy the selected file to the clipboard___'''
 
-        return on_file_copy(data)
+        if reveal_stack.get_visible_child() == files_view_grid:
+            return on_file_copy(data)
 
     def on_file_copy(data):
         '''___copy the selected file to the clipboard___'''
@@ -4567,13 +5236,9 @@ def sw_activate(app):
         f_list = Gdk.FileList.new_from_list(data)
         clipboard.set(f_list)
         content = clipboard.get_content()
+        content.connect('content-changed', on_content_changed, ['is_copy', f_list])
 
-        if data[0].get_path() is None:
-            content.connect('content-changed', on_uri_changed, ['is_copy', f_list])
-        else:
-            content.connect('content-changed', on_content_changed, ['is_copy', f_list])
-
-    def on_uri_changed(self, data):
+    def on_uri_changed(data):
 
         replace_source = list()
         replace_target = list()
@@ -4582,15 +5247,15 @@ def sw_activate(app):
         cut_source = list()
         cut_target = list()
 
-        parent_path = get_parent_path()
+        parent_file = get_parent_file()
         parent_uri = get_parent_uri()
 
         for f in data[1].get_files():
             source = f
-            if parent_path is None:
+            if parent_file.get_path() is None:
                 target = Gio.File.new_for_uri(parent_uri + '/' + f.get_basename())
             else:
-                target = Gio.File.new_for_path(parent_path + '/' + f.get_basename())
+                target = Gio.File.new_for_path(parent_file.get_path() + '/' + f.get_basename())
 
             if source != target:
                 if (target.query_exists()
@@ -4603,26 +5268,34 @@ def sw_activate(app):
         else:
             if len(replace_source) > 0:
 
-                def paste_replace(args):
+                def paste_replace(replace_source, replace_target):
                     '''___replace files on dialog response___'''
 
-                    for s, t in zip(args[0], args[1]):
-                        s.copy(t, Gio.FileCopyFlags.OVERWRITE,
-                                progress_callback=on_copy_uri_progress
+                    for s, t in zip(replace_source, replace_target):
+                        try:
+                            s.copy(t, Gio.FileCopyFlags.OVERWRITE,
+                                    progress_callback=on_copy_uri_progress
                         )
+                        except GLib.GError as e:
+                            print(e.message)
+                            dialog_info(text_message=str(e.message), message_type='ERROR').run()
 
                 str_source = str(
                     '\n'.join(sorted([str(s.get_basename()) for s in replace_source])))
                 title = msg.msg_dict['replace_file']
-                message = msg.msg_dict['replace_override'] + f'\n{str_source}'
+                message = [msg.msg_dict['replace_override'], f'\n{str_source}']
                 func = [(paste_replace, [replace_source, replace_target]), None]
-                dialog_question(app, title, message, None, func)
+                dialog_question(swgs, title, message, None, func)
 
             if len(copy_source) > 0:
                 for s, t in zip(copy_source, copy_target):
-                    s.copy(t, Gio.FileCopyFlags.NONE,
-                            progress_callback=on_copy_uri_progress
+                    try:
+                        s.copy(t, Gio.FileCopyFlags.NONE,
+                                progress_callback=on_copy_uri_progress
                     )
+                    except GLib.GError as e:
+                        print(e.message)
+                        dialog_info(text_message=str(e.message), message_type='ERROR').run()
 
     def on_copy_uri_progress(cur_bytes, total_bytes):
         print(cur_bytes/total_bytes)
@@ -4637,10 +5310,10 @@ def sw_activate(app):
             copy_source = list()
             copy_target = list()
             result = self.read_text_finish(res)
-            parent_path = get_parent_path()
+            parent_file = get_parent_file()
 
-            if parent_path is not None:
-
+            if parent_file.get_path() is not None:
+                parent_path = parent_file.get_path()
                 for r in result.splitlines():
                     source = Path(r)
                     target = Path(f'{parent_path}/{source.name}')
@@ -4655,9 +5328,9 @@ def sw_activate(app):
                     if len(replace_source) > 0:
                         str_source = str('\n'.join(sorted(replace_source)))
                         title = msg.msg_dict['replace_file']
-                        message = msg.msg_dict['replace_override'] + f'\n{str_source}'
+                        message = [msg.msg_dict['replace_override'], f'{str_source}']
                         func = [{copy_replace : (parent_path, replace_source)}, None]
-                        dialog_question(app, title, message, None, func)
+                        dialog_question(swgs, title, message, None, func)
 
                     if len(copy_source) > 0:
                         for s, t in zip(copy_source, copy_target):
@@ -4676,22 +5349,24 @@ def sw_activate(app):
     def on_cb_file_rename(action_name, parameter, data):
         '''___activate file rename button___'''
 
-        if len(data) > 1:
-            return on_files_rename(data)
-        else:
-            return on_file_rename(data[0])
+        if reveal_stack.get_visible_child() == files_view_grid:
+            if len(data) > 1:
+                return on_files_rename(data)
+            else:
+                return on_file_rename(data[0])
 
     def on_file_rename(x_file):
         '''___rename the selected file___'''
 
-        def rename(src):
+        def rename():
             '''___set new file name attribute___'''
 
             new_name = entry_rename.get_text()
             try:
                 x_file.set_display_name(new_name)
             except GLib.GError as e:
-                print(e)
+                print(e.message)
+                dialog_info(text_message=str(e.message), message_type='ERROR').run()
 
         x_info = x_file.query_info('*', Gio.FileQueryInfoFlags.NONE, None)
 
@@ -4705,15 +5380,14 @@ def sw_activate(app):
 
             text_message = [edit_name]
             button_name = msg.msg_dict['rename'].capitalize()
-            func = [(rename, None), None]
-            dialog = dialog_entry(app, title, text_message, button_name, func, 1, None)
+            func = [rename, None]
+            dialog = dialog_entry(swgs, title, text_message, button_name, func, 1, None)
             entry_rename = dialog.get_child().get_first_child()
-            entry_rename.connect('activate', cb_dialog_entry, dialog, rename, None)
 
     def on_files_rename(x_files):
         '''___rename multiple files___'''
 
-        def rename(src):
+        def rename():
             '''___set a new name attribute for multiple files___'''
 
             new_name = entry_rename.get_text()
@@ -4740,34 +5414,36 @@ def sw_activate(app):
                 )
         text_message = [msg.msg_dict['original_name'].title() + '1, 2, 3...']
         button_name = msg.msg_dict['rename'].capitalize()
-        func = [(rename, None), None]
-        dialog = dialog_entry(app, title, text_message, button_name, func, 1, None)
+        func = [rename, None]
+        dialog = dialog_entry(swgs, title, text_message, button_name, func, 1, None)
         entry_rename = dialog.get_child().get_first_child()
-        entry_rename.connect('activate', cb_dialog_entry, dialog, rename, text_message[0])
 
     def on_cb_file_link(action_name, parameter, data):
         '''___activate create link button___'''
 
-        return on_file_link(data)
+        if reveal_stack.get_visible_child() == files_view_grid:
+            return on_file_link(data)
 
     def on_file_link(x_path):
         '''___create file symbolic link___'''
 
         for x in x_path:
-            parent_path = Path(x.get_path()).parent
-            link_path = Path(f'{parent_path}/{str_symbolic_link} {Path(x.get_path()).name}')
-            x_file = Gio.File.new_for_commandline_arg(bytes(link_path))
-            x_file.make_symbolic_link(bytes(Path(x.get_path())))
+            if x.get_path() is not None:
+                parent_path = Path(x.get_path()).parent
+                link_path = Path(f'{parent_path}/{msg.msg_dict["file_link"]} {Path(x.get_path()).name}')
+                x_file = Gio.File.new_for_path(bytes(link_path))
+                x_file.make_symbolic_link(bytes(Path(x.get_path())))
 
     def on_cb_file_compress(action_name, parameter, data):
         '''___create a compressed archive from file or files___'''
 
-        return on_file_compress(data)
+        if reveal_stack.get_visible_child() == files_view_grid:
+            return on_file_compress(data)
 
     def on_file_compress(data):
         '''___create a compressed archive___'''
 
-        def create_archive(src):
+        def create_archive():
             '''___create new file compressed archive___'''
 
             archive_name = entry_name.get_text()
@@ -4781,24 +5457,40 @@ def sw_activate(app):
             count = int()
             x_path = Path(f'{parent_path}/{archive_name}')
 
-            while Path(f'{x_path}.tar.xz').exists():
-                count += 1
-                x_path = Path(f'{parent_path}/{archive_name}({count})')
+            if archive_type == 'zip':
+                while Path(f'{x_path}.zip').exists():
+                    count += 1
+                    x_path = Path(f'{parent_path}/{archive_name}{count}')
 
-            if archive_type != 'zip':
-                tar_thread = Thread(target=tar_compress, args=[x_path, data, archive_type])
-                tar_thread.start()
-                info = msg.msg_dict['compression_completed']
-                progress_main.set_show_text(True)
-                progress_main.set_text(msg.msg_dict['compression'] + f'{archive_name}')
-                GLib.timeout_add(100, progress_on_thread, progress_main, tar_thread, info)
-            else:
                 info = msg.msg_dict['compression_completed']
                 progress_main.set_show_text(True)
                 progress_main.set_text(msg.msg_dict['compression'] + f'{archive_name}')
                 zip_thread = Thread(target=zip_compress, args=[x_path, data])
                 zip_thread.start()
                 GLib.timeout_add(100, progress_on_thread, progress_main, zip_thread, info)
+
+            elif archive_type == 'zst' or archive_type == 'zst ultra':
+                while Path(f'{x_path}.tar.zst').exists():
+                    count += 1
+                    x_path = Path(f'{parent_path}/{archive_name}{count}')
+
+                tar_thread = Thread(target=zst_compress, args=[x_path, data, archive_type])
+                tar_thread.start()
+                info = msg.msg_dict['compression_completed']
+                progress_main.set_show_text(True)
+                progress_main.set_text(msg.msg_dict['compression'] + f'{archive_name}')
+                GLib.timeout_add(100, progress_on_thread, progress_main, tar_thread, info)
+            else:
+                while Path(f'{x_path}.tar.{archive_type}').exists():
+                    count += 1
+                    x_path = Path(f'{parent_path}/{archive_name}{count}')
+
+                tar_thread = Thread(target=tar_compress, args=[x_path, data, archive_type])
+                tar_thread.start()
+                info = msg.msg_dict['compression_completed']
+                progress_main.set_show_text(True)
+                progress_main.set_text(msg.msg_dict['compression'] + f'{archive_name}')
+                GLib.timeout_add(100, progress_on_thread, progress_main, tar_thread, info)
 
         if len(data) > 1:
             filename = msg.msg_dict['new_archive']
@@ -4809,13 +5501,23 @@ def sw_activate(app):
         title = msg.msg_dict['create_archive'].capitalize()
         text_message = [filename]
         button_name = msg.msg_dict['create'].capitalize()
-        func = [(create_archive, None), None]
-        dialog = dialog_entry(app, title, text_message, button_name, func, 1, archive_formats)
+        func = [create_archive, None]
+        dialog = dialog_entry(swgs, title, text_message, button_name, func, 1, archive_formats)
         entry_name = dialog.get_child().get_first_child()
-        entry_name.connect('activate', cb_dialog_entry, dialog, create_archive, None)
         dropdown = dialog.get_child().get_last_child()
 
+    def zst_compress(x_path, data, archive_type):
+        '''___create a zstd compressed archive___'''
+
+        target = ' '.join([f'"{x.get_basename()}"' for x in data])
+
+        if archive_type == 'zst':
+            run(f"tar -I 'zstd -T0 -11 --progress' -cf '{x_path}.tar.zst' {target}", shell=True)
+        else:
+            run(f"tar -I 'zstd -T0 --ultra -22 --progress' -cf '{x_path}.tar.zst' {target}", shell=True)
+
     def tar_compress(x_path, data, archive_type):
+        '''___create a gz, xz, bz2 compressed archive___'''
 
         with tarfile.open(f'{x_path}.tar.{archive_type}', f'w:{archive_type}') as tar:
             for file in data:
@@ -4824,9 +5526,15 @@ def sw_activate(app):
                 tar.close()
 
     def zip_compress(x_path, data):
+        '''___create a zip compressed archive___'''
 
+        parent_path = x_path.parent
         with zipfile.ZipFile(f'{x_path}.zip','w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as fzip:
             for file in data:
+                if Path(file.get_path()).is_dir():
+                    for r, d, f in walk(file.get_path()):
+                        for x in f:
+                            fzip.write(f'{r}/{x}'.replace(f'{parent_path}/', ''))
                 fzip.write(file.get_basename())
             else:
                 fzip.close()
@@ -4834,11 +5542,16 @@ def sw_activate(app):
     def on_cb_file_remove(action_name, parameter, x_path):
         '''___activate context button and remove changed file___'''
 
-        if action_name.props.name == ctx_dict['trash'].replace(' ', ''):
-            on_file_to_trash(x_path)
+        if action_name.props.name == ctx_dict['trash'][0].replace(' ', ''):
+            if reveal_stack.get_visible_child() == files_view_grid:
+                on_file_to_trash(x_path)
 
-        elif action_name.props.name == ctx_dict['remove'].replace(' ', ''):
-            on_file_remove(x_path)
+        elif action_name.props.name == ctx_dict['remove'][0].replace(' ', ''):
+            if reveal_stack.get_visible_child() == files_view_grid:
+                if x_path[0].get_path() is None:
+                    on_uri_remove(x_path)
+                else:
+                    on_file_remove(x_path)
 
     def on_file_to_trash(x_path):
         '''___move selected file to trash___'''
@@ -4847,7 +5560,9 @@ def sw_activate(app):
             try:
                 x.trash()
             except GLib.GError as e:
-                print(e)
+                print(e.message)
+                dialog_info(text_message=str(e.message), message_type='ERROR').run()
+                break
         else:
             samples = f'{sw_sounds}/dialog/trash-empty.oga'
             if Path(samples).exists():
@@ -4902,28 +5617,63 @@ def sw_activate(app):
                     except:
                         pass
 
-        text_message = (
-            msg.msg_dict['remove_file']
-            + '\n'.join([Path(x.get_path()).name for x in x_path]) + '?'
-        )
-        func = [(remove, x_path), None]
-        dialog_question(app, None, text_message, None, func)
+        title = msg.msg_dict['remove']
+        text_message = [
+            msg.msg_dict['permanently_delete'],
+            ' '.join([Path(x.get_path()).name for x in x_path]) + '?'
+        ]
+        func = [(remove, (x_path,)), None]
+        dialog_question(swgs, title, text_message, None, func)
+
+    def on_uri_remove(x_files):
+        '''___delete selected files___'''
+
+        for g_file in x_files:
+            try:
+                g_info = g_file.query_info('*', Gio.FileQueryInfoFlags.NONE)
+            except GLib.GError as e:
+                content_type = None
+                print(e.message)
+                return dialog_info(text_message=str(e.message), message_type='ERROR').run()
+            else:
+                content_type = g_info.get_content_type()
+
+            if content_type == dir_mime_types[0]:
+                g_file_enum = g_file.enumerate_children('*', Gio.FileQueryInfoFlags.NONE)
+                for x in g_file_enum:
+                    f = g_file_enum.get_child(x)
+                    try:
+                        f.delete()
+                    except GLib.GError as e:
+                        print(e.message)
+                        return dialog_info(text_message=str(e.message), message_type='ERROR').run()
+                else:
+                    try:
+                        g_file.delete()
+                    except GLib.GError as e:
+                        print(e.message)
+                        return dialog_info(text_message=str(e.message), message_type='ERROR').run()
+            else:
+                try:
+                    g_file.delete()
+                except GLib.GError as e:
+                    print(e.message)
+                    return dialog_info(text_message=str(e.message), message_type='ERROR').run()
 
     def on_cb_file_properties(action_name, parameter, data):
         '''___activate file properties button___'''
 
+        on_file_properties()
+
         if len(data) > 1:
             get_file_props_list(data)
         else:
-            pass
             get_file_props(data[0])
-
-        on_file_properties()
 
     def  on_switch_file_exec(self, state):
         '''___switch file execute property___'''
 
-        p = Path(switch_file_execute.get_name())
+        p = Path(swgs.switch_file_execute.get_name())
         f = Gio.File.new_for_commandline_arg(bytes(p))
         i = f.query_info('*', Gio.FileQueryInfoFlags.NONE, None)
         e = i.get_attribute_as_string('access::can-execute')
@@ -4938,11 +5688,11 @@ def sw_activate(app):
                 mode = p.stat().st_mode
                 p.chmod(0o644)
 
-    def get_allocated_size(size, data):
+    def get_allocated_size(size, data, label):
         '''___get size of files in current directory___'''
 
         size_list = list()
-        t = GLib.timeout_add(100, set_allocated_size, size_list)
+        t = GLib.timeout_add(100, set_allocated_size, size_list, label)
 
         for root, dirs, files in walk(data):
             for f in files:
@@ -4953,162 +5703,199 @@ def sw_activate(app):
                 else:
                     size_list.append(size)
 
-    def set_allocated_size(size_list):
+    def set_allocated_size(size_list, label):
         '''___set file size info to label___'''
 
         if len(size_list) >= 1:
             size = int(size_list[-1])
 
             if len(str(round(size, 2))) <= 6:
-                label = f'{str(round(size/1024, 2))} Kib / {str(round(size/1000, 2))} Kb'
+                str_size = f'{str(round(size/1024, 2))} Kib / {str(round(size/1000, 2))} Kb'
 
             elif 6 < len(str(round(size, 2))) <= 9:
-                label = f'{str(round(size/1024**2, 2))} Mib / {str(round(size/1000**2, 2))} Mb'
+                str_size = f'{str(round(size/1024**2, 2))} Mib / {str(round(size/1000**2, 2))} Mb'
 
             elif len(str(round(size, 2))) > 9:
-                label = f'{str(round(size/1024**3, 2))} Gib / {str(round(size/1000**3, 2))} Gb'
+                str_size = f'{str(round(size/1024**3, 2))} Gib / {str(round(size/1000**3, 2))} Gb'
 
-            label_file_size.set_label(label)
+            label.set_label(str_size)
             size_list.clear()
             return True
 
         return False
+
+    def get_disk_usage(data):
+        '''___get size of the current partition___'''
+
+        partitions = psutil.disk_partitions()
+
+        if data is not None:
+            data_path = data.get_path()
+
+            for x in sorted(partitions):
+                if x.mountpoint in data_path:
+                    mountpoint = x.mountpoint
+            try:
+                fs_size = psutil.disk_usage(mountpoint).total
+            except Exception as e:
+                fs_size = msg.msg_dict['unknown']
+                fmt_size = msg.msg_dict['unknown']
+            else:
+                fmt_size = GLib.format_size(int(fs_size))
+            try:
+                fs_free = psutil.disk_usage(mountpoint).free
+            except Exception as e:
+                fs_free = msg.msg_dict['unknown']
+                fmt_free = msg.msg_dict['unknown']
+            else:
+                fmt_free = GLib.format_size(int(fs_free))
+
+            fmt_all = (
+                        f"{msg.msg_dict['free']} {fmt_free} / "
+                        +f"{msg.msg_dict['total']} {fmt_size}"
+            )
+            swgs.label_disk_size.set_label(fmt_all)
 
     def get_file_props_list(x_path):
         '''___get file list attributes___'''
 
         if isinstance(x_path, list):
             if len(x_path) > 1:
-                box_file_info.set_visible(False)
-                box_file_execute.set_visible(False)
+                swgs.box_file_info.set_visible(False)
+                swgs.box_file_execute.set_visible(False)
 
-                label_file_path.set_label('\n'.join([x.get_path() for x in x_path]))
-                label_file_name.set_label(vl_dict['files'])
-                label_file_mime.set_label('')
-                label_file_mime.set_visible(False)
-                label_file_size.set_visible(False)
+                swgs.label_file_path.set_label('\n'.join([x.get_path() for x in x_path]))
+                swgs.label_file_name.set_label(vl_dict['files'])
+                swgs.label_file_mime.set_label('')
+                swgs.label_file_mime.set_visible(False)
+                swgs.label_file_size.set_visible(False)
 
                 parent_file = x_path[0].get_parent()
                 parent_info = parent_file.query_info('*', Gio.FileQueryInfoFlags.NONE, None)
+                get_disk_usage(parent_file)
 
                 if parent_info.has_attribute(attrs['icon']):
                     f_icon = parent_info.get_attribute_object("standard::icon")
-                    image_file_info.set_from_gicon(f_icon)
-                    image_file_info.set_pixel_size(128)
+                    swgs.image_file_info.set_from_gicon(f_icon)
+                    swgs.image_file_info.set_pixel_size(128)
 
     def get_file_props(x_file):
         '''___get file attributes___'''
 
         if x_file.get_path() is not None:
             x_path = x_file.get_path()
+            parent_file = x_file.get_parent()
         else:
             x_path = x_file.get_uri()
+            parent_file = None
 
-        box_file_info.set_visible(True)
-        label_file_mime.set_visible(True)
-        label_file_size.set_visible(True)
-        label_file_size.set_label('0.0 Kib / 0.0 Kb')
-        label_file_path.set_label(str(x_path))
-
-        file_info = x_file.query_info('*',
-                                    Gio.FileQueryInfoFlags.NONE,
-                                    None,
-                                    )
-
-        if file_info.has_attribute(attrs['type']):
-            f_type = file_info.get_content_type()
-            label_file_mime.set_label(f_type)
-
-        if file_info.has_attribute(attrs['name']):
-            f_name = file_info.get_attribute_as_string("standard::display-name")
-            label_file_name.set_label(f_name)
-
-        if file_info.has_attribute(attrs['icon']):
-            f_icon = file_info.get_attribute_object("standard::icon")
-            image_file_info.set_from_gicon(f_icon)
-            image_file_info.set_pixel_size(128)
-
-        if file_info.has_attribute(attrs['size']):
-            f_size = [file_info.get_size()]
-
-            if f_type == dir_mime_types[0]:
-                box_file_execute.set_visible(False)
-                size = 0
-                data = Path(x_path)
-                Thread(target=get_allocated_size, args=[size, data]).start()
-            else:
-                box_file_execute.set_visible(True)
-                set_allocated_size(f_size)
-
-        if file_info.has_attribute(attrs['user']):
-            f_uid = file_info.get_attribute_as_string("owner::user")
-
-        if file_info.has_attribute(attrs['group']):
-            f_gid = file_info.get_attribute_as_string("owner::group")
-
-        if file_info.has_attribute(attrs['modified']):
-            f_modified = file_info.get_modification_date_time().format('%c')
-            label_file_modified.set_label(f_modified)
-
-        if file_info.has_attribute(attrs['created']):
-            f_created = file_info.get_creation_date_time().format('%c')
-            label_file_created.set_label(f_created)
-
-        if (x_file.get_path() is not None
-            and file_info.has_attribute(attrs['exec'])):
-
-            f_execute = file_info.get_attribute_as_string("access::can-execute")
-            switch_file_execute.set_name(x_path)
-
-            if not switch_file_execute.get_active():
-                if f_execute == 'TRUE':
-                    switch_file_execute.set_active(True)
-            else:
-                if f_execute == 'FALSE':
-                    switch_file_execute.set_active(False)
-
-        if file_info.has_attribute(attrs['read']):
-            f_read = file_info.get_attribute_as_string("access::can-read")
-
-            if f_read == 'TRUE':
-                read = str_readable
-            else:
-                read = str_non_readable
-
-        if file_info.has_attribute(attrs['write']):
-            f_write = file_info.get_attribute_as_string("access::can-write")
-
-            if f_write == 'TRUE':
-                write = str_writable
-            else:
-                write = str_non_writable
+        swgs.box_file_info.set_visible(True)
+        swgs.label_file_mime.set_visible(True)
+        swgs.label_file_size.set_visible(True)
+        swgs.label_file_size.set_label('0.0 Kib / 0.0 Kb')
+        swgs.label_file_path.set_label(str(x_path))
+        get_disk_usage(parent_file)
 
         try:
-            label_file_uid.set_label(f'{f_uid} / {f_gid}')
-        except:
-            pass
+            file_info = x_file.query_info('*',
+                                        Gio.FileQueryInfoFlags.NONE,
+                                        None,
+                                        )
+        except GLib.GError as e:
+            print(e.message)
+        else:
+            if file_info.has_attribute(attrs['type']):
+                f_type = file_info.get_content_type()
+                swgs.label_file_mime.set_label(f_type)
 
-        try:
-            label_file_rw.set_label(f'{read} / {write}')
-        except:
-            pass
+            if file_info.has_attribute(attrs['name']):
+                f_name = file_info.get_attribute_as_string("standard::display-name")
+                swgs.label_file_name.set_label(f_name)
+
+            if file_info.has_attribute(attrs['icon']):
+                f_icon = file_info.get_attribute_object("standard::icon")
+                swgs.image_file_info.set_from_gicon(f_icon)
+                swgs.image_file_info.set_pixel_size(128)
+
+            if file_info.has_attribute(attrs['size']):
+                f_size = [file_info.get_size()]
+
+                if f_type == dir_mime_types[0]:
+                    swgs.box_file_execute.set_visible(False)
+                    size = 0
+                    data = Path(x_path)
+                    Thread(target=get_allocated_size, args=[size, data, swgs.label_file_size]).start()
+                else:
+                    swgs.box_file_execute.set_visible(True)
+                    set_allocated_size(f_size, swgs.label_file_size)
+
+            if file_info.has_attribute(attrs['user']):
+                f_uid = file_info.get_attribute_as_string("owner::user")
+
+            if file_info.has_attribute(attrs['group']):
+                f_gid = file_info.get_attribute_as_string("owner::group")
+
+            if file_info.has_attribute(attrs['modified']):
+                f_modified = file_info.get_modification_date_time().format('%c')
+                swgs.label_file_modified.set_label(f_modified)
+
+            if file_info.has_attribute(attrs['created']):
+                f_created = file_info.get_creation_date_time().format('%c')
+                swgs.label_file_created.set_label(f_created)
+
+            if (x_file.get_path() is not None
+                and file_info.has_attribute(attrs['exec'])):
+
+                f_execute = file_info.get_attribute_as_string("access::can-execute")
+                swgs.switch_file_execute.set_name(x_path)
+
+                if not swgs.switch_file_execute.get_active():
+                    if f_execute == 'TRUE':
+                        swgs.switch_file_execute.set_active(True)
+                else:
+                    if f_execute == 'FALSE':
+                        swgs.switch_file_execute.set_active(False)
+
+            if file_info.has_attribute(attrs['read']):
+                f_read = file_info.get_attribute_as_string("access::can-read")
+
+                if f_read == 'TRUE':
+                    read = msg.msg_dict['file_readable']
+                else:
+                    read = msg.msg_dict['file_non_readable']
+
+            if file_info.has_attribute(attrs['write']):
+                f_write = file_info.get_attribute_as_string("access::can-write")
+
+                if f_write == 'TRUE':
+                    write = msg.msg_dict['file_writable']
+                else:
+                    write = msg.msg_dict['file_non_writable']
+
+            try:
+                swgs.label_file_uid.set_label(f'{f_uid} / {f_gid}')
+            except:
+                pass
+
+            try:
+                swgs.label_file_rw.set_label(f'{read} / {write}')
+            except:
+                pass
 
     def on_file_properties():
         '''___set visible file properties page___'''
 
-        if top_headerbar_start_box.get_first_child() is not None:
-            if top_headerbar_start_box.get_first_child().get_name() == 'btn_back_main':
-                btn_back_main.set_visible(True)
-        else:
-            top_headerbar_start_box.attach(btn_back_main, 0, 0, 1, 1)
+        if scrolled_files_info.get_child() is None:
+            add_files_info()
 
         if not sidebar_revealer.get_reveal_child():
             on_sidebar()
 
+        btn_back_main.set_visible(True)
         stack_sidebar.set_visible_child(frame_files_info)
         update_color_scheme()
 
-    def on_shortcut_context(x, y, x_path):
+    def on_shortcut_context(x, y, grid_view, x_path):
         '''___popup context menu callback on right click___'''
 
         custom_context = '''
@@ -5127,38 +5914,10 @@ def sw_activate(app):
         file = Path(x_path).name
         parent_path = get_parent_path()
         shortcut_path = f'{parent_path}/{file}'
-
-        d_exec = [x.split('=')[1] for x in Path(shortcut_path).read_text().splitlines() if 'Exec=' in x]
-        if len(d_exec) > 0:
-            exe = [x for x in d_exec[0].split('"') if '.exe' in x.lower()]
-            msi = [x for x in d_exec[0].split('"') if '.msi' in x.lower()]
-            bat = [x for x in d_exec[0].split('"') if '.bat' in x.lower()]
-            lnk = [x for x in d_exec[0].split('"') if '.lnk' in x.lower()]
-
-            if len(exe) > 0:
-                app_exec = exe[0]
-
-            elif len(msi) > 0:
-                app_exec = msi[0]
-
-            elif len(bat) > 0:
-                app_exec = bat[0]
-
-            elif len(lnk) > 0:
-                app_exec = lnk[0]
-
-            else:
-                app_exec = None
-
-            if app_exec is not None:
-                if Path(app_exec).exists():
-                    sw_rsh.write_text(f'env "{sw_menu}" "{app_exec}"')
-                    start_mode()
-                else:
-                    return overlay_info(overlay, None, msg.msg_dict['exist_desktop'], None, 3)
-            else:
-                text_message = msg.msg_dict['lnk_error']
-                return dialog_info(app, text_message, 'ERROR')
+        check_arg(str(shortcut_path))
+        start_mode()
+        if getenv('SW_EXEC') == 'StartWine':
+            return overlay_info(overlay, None, msg.msg_dict['lnk_error'], None, 3)
 
         ####___Context buttons___.
 
@@ -5253,15 +6012,15 @@ def sw_activate(app):
         if app_id != 'x256':
             app_original_name = str(Path(img_path).stem).split('_')[-2]
         else:
-            app_original_name = file.replace('.desktop', '')
+            app_original_name = file.replace('.swd', '')
 
-        local_dir_app = Path(f'{sw_local}/{app_original_name}.desktop')
-        desktop_dir_app = Path(f'{dir_desktop}/{app_original_name}.desktop')
+        local_dir = Path(f'{sw_local}/{app_original_name}.desktop')
+        desktop_dir = Path(f'{dir_desktop}/{app_original_name}.desktop')
 
-        if local_dir_app.exists():
+        if local_dir.exists():
             switch_0.set_active(True)
 
-        if desktop_dir_app.exists():
+        if desktop_dir.exists():
             switch_1.set_active(True)
 
         ####___Swith images___.
@@ -5299,8 +6058,8 @@ def sw_activate(app):
 
         ####___Grid context___.
 
-        grid_context = Gtk.Grid()
-        #grid_context.set_row_spacing(4)
+        grid_context = Gtk.Grid(css_name='sw_grid')
+        grid_context.set_row_spacing(8)
         grid_context.set_column_spacing(8)
         grid_context.attach(box_winehq, 0,0,1,1)
         grid_context.attach(box_protondb, 0,1,1,1)
@@ -5320,7 +6079,7 @@ def sw_activate(app):
 
         ####___Binding context menu items to a callback function___.
 
-        context_app = [
+        context_app_run = [
             {'name': ctx_dict['run'], 'func': on_cb_app_run},
             {'name': ctx_dict['open'], 'func': on_cb_app_open},
             {'name': ctx_dict['app_settings'], 'func': on_cb_app_settings},
@@ -5331,26 +6090,26 @@ def sw_activate(app):
             ]
 
         context_remove = [
-            {'name': ctx_dict['remove'], 'func': on_cb_app_remove},
+            {'name': ctx_dict['remove'][0], 'func': on_cb_app_remove},
         ]
 
         ####___Create submenu in context menu___.
 
-        menu_app = Gio.Menu()
-        section_app = Gio.Menu()
+        shortcut_menu = Gio.Menu()
+        section_app_run = Gio.Menu()
         section_wine = Gio.Menu()
         section_remove = Gio.Menu()
 
-        menu_app.insert_section(0, None, section_app)
-        menu_app.insert_section(1, None, section_wine)
-        menu_app.insert_section(2, None, section_remove)
-        menu_app.append_section(None, custom_menu)
+        shortcut_menu.insert_section(0, None, section_app_run)
+        shortcut_menu.insert_section(1, None, section_wine)
+        shortcut_menu.insert_section(2, None, section_remove)
+        shortcut_menu.append_section(None, custom_menu)
 
-        context_connect(section_app, context_app, shortcut_context, 0)
+        context_connect(section_app_run, context_app_run, shortcut_context, 0)
         context_connect(section_wine, context_wine, shortcut_context, 1)
         context_connect(section_remove, context_remove, shortcut_context, 0)
 
-        shortcut_context.set_menu_model(menu_app)
+        shortcut_context.set_menu_model(shortcut_menu)
         shortcut_context.add_child(grid_context, 'widget')
 
         scrolled = shortcut_context.get_first_child().get_first_child()
@@ -5359,7 +6118,7 @@ def sw_activate(app):
 
         shortcut_context.popup()
 
-        context_app.clear()
+        context_app_run.clear()
         context_wine.clear()
         context_remove.clear()
 
@@ -5375,7 +6134,7 @@ def sw_activate(app):
         if Path(app_exec).exists():
             return on_start()
         else:
-            return overlay_info(overlay, None, msg.msg_dict['exist_desktop'], None, 3)
+            return overlay_info(overlay, None, msg.msg_dict['lnk_error'], None, 3)
 
     def on_cb_app_open(action_name, parameter, widget):
         '''___open application directory from context menu___'''
@@ -5389,17 +6148,12 @@ def sw_activate(app):
         if Path(app_exec).exists():
             on_files(Path(app_exec).parent)
         else:
-            return overlay_info(overlay, None, msg.msg_dict['exist_desktop'], None, 3)
+            return overlay_info(overlay, None, msg.msg_dict['lnk_error'], None, 3)
 
     def on_cb_app_settings(action_name, parameter, widget):
         '''___open application settings menu from context menu___'''
 
-        on_settings()
-        set_settings_widget(
-                        scrolled_launch_settings,
-                        vw_dict['launch_settings'],
-                        pref_group_title
-                        )
+        on_launch_settings()
 
     def on_cb_app_remove(action_name, parameter, widget):
         '''___remove application prefix from context menu___'''
@@ -5488,7 +6242,7 @@ def sw_activate(app):
             name = str(Path(img_path).stem).split('_')[-2]
             on_webview(f"{griddb_source}{name}")
         else:
-            name = file.replace('.desktop', '')
+            name = file.replace('.swd', '')
             on_webview(f"{griddb_source}{name}")
 
         widget.popdown()
@@ -5502,7 +6256,7 @@ def sw_activate(app):
         if app_id != 'x256':
             app_original_name = str(Path(img_path).stem).split('_')[-2]
         else:
-            app_original_name = file.replace('.desktop', '')
+            app_original_name = file.replace('.swd', '')
 
         if self.get_active():
             if not Path(f'{sw_local}/{app_original_name}.desktop').exists():
@@ -5529,7 +6283,7 @@ def sw_activate(app):
         if app_id != 'x256':
             app_original_name = str(Path(img_path).stem).split('_')[-2]
         else:
-            app_original_name = file.replace('.desktop', '')
+            app_original_name = file.replace('.swd', '')
 
         if self.get_active():
             if not Path(f'{dir_desktop}/{app_original_name}.desktop').exists():
@@ -5562,13 +6316,10 @@ def sw_activate(app):
         if app_id != 'x256':
             app_original_name = str(Path(img_path).stem).split('_')[-2]
         else:
-            app_original_name = file.replace('.desktop', '')
+            app_original_name = file.replace('.swd', '')
 
         if self.get_active():
-            if not Path(f'{dir_desktop}/{app_original_name}.desktop').exists():
-                add_shortcut_to_steam(app_original_name)
-        else:
-            Path(f'{dir_desktop}/{app_original_name}.desktop').unlink()
+            add_shortcut_to_steam(app_original_name)
 
         widget.popdown()
 
@@ -5583,7 +6334,16 @@ def sw_activate(app):
     def unparent_context_menu():
         '''___unparent unused context menu___'''
 
+        grid_view = get_list_view()
         ctx = grid_view.get_last_child()
+
+        for action_type in action_list:
+            swgs.set_accels_for_action(
+                action_type,
+                []
+            )
+        else:
+            action_list.clear()
 
         if ctx is not None:
             if 'GtkListItemWidget' in ctx:
@@ -5613,84 +6373,19 @@ def sw_activate(app):
     def cb_ctrl_lclick_view(self, n_press, x, y):
         '''___left click on empty place in list view___'''
 
+        grid_view = self.get_widget()
+        grid_view.grab_focus()
+        set_view_parent_path(grid_view)
+
         unparent_context_menu()
+        pick = grid_view.pick(x, y, Gtk.PickFlags.DEFAULT)
 
         if stack_sidebar.get_visible_child() == frame_files_info:
-            btn_back_main.set_visible(False)
-            stack_sidebar.set_visible_child(frame_main)
+            on_back_main()
 
         if parent.get_width() < 960:
             if sidebar_revealer.get_reveal_child():
                 on_sidebar()
-
-        pick = grid_view.pick(x, y, Gtk.PickFlags.DEFAULT)
-
-        if pick is not None:
-            pos = pick.get_name()
-
-            if str(pos).isdigit():
-                model = grid_view.get_model()
-                parent_path = get_parent_path()
-
-                if parent_path is not None:
-                    if Path(parent_path) == Path(sw_shortcuts):
-                        model.select_item(int(pos), True)
-                        shortcut_path = Path(model.get_item(int(pos)).get_path())
-
-                        d_exec = [x.split('=')[1] for x in Path(shortcut_path).read_text().splitlines() if 'Exec=' in x]
-                        if len(d_exec) > 0:
-                            exe = [x for x in d_exec[0].split('"') if '.exe' in x.lower()]
-                            msi = [x for x in d_exec[0].split('"') if '.msi' in x.lower()]
-                            bat = [x for x in d_exec[0].split('"') if '.bat' in x.lower()]
-                            lnk = [x for x in d_exec[0].split('"') if '.lnk' in x.lower()]
-
-                            if len(exe) > 0:
-                                app_exec = exe[0]
-
-                            elif len(msi) > 0:
-                                app_exec = msi[0]
-
-                            elif len(bat) > 0:
-                                app_exec = bat[0]
-
-                            elif len(lnk) > 0:
-                                app_exec = lnk[0]
-
-                            else:
-                                app_exec = None
-
-                            if app_exec is not None:
-                                if (Path(f'{shortcut_path}').is_file()
-                                    and Path(f'{app_exec}').exists()):
-                                        try:
-                                            app_dict = app_info(f'{shortcut_path}')
-                                            sw_rsh.write_text(f'env "{sw_menu}" "{app_exec}"')
-                                        except:
-                                            pass
-                                        else:
-                                            start_mode()
-                                else:
-                                    return overlay_info(overlay, None, msg.msg_dict['exist_desktop'], None, 3)
-                            else:
-                                text_message = msg.msg_dict['lnk_error']
-                                return dialog_info(app, text_message, 'ERROR')
-
-                    elif Path(parent_path) == Path(sw_launchers):
-                        pass
-
-                    else:
-                        pass
-
-            elif str(pos) == 'GtkGridView':
-                grid_view.get_model().unselect_all()
-            else:
-                pass
-
-    def cb_ctrl_rclick_view(self, n_press, x, y):
-        '''___right click in list view___'''
-
-        unparent_context_menu()
-        pick = grid_view.pick(x, y, Gtk.PickFlags.DEFAULT)
 
         if pick is not None:
             pos = pick.get_name()
@@ -5703,42 +6398,142 @@ def sw_activate(app):
                     if Path(parent_path) == Path(sw_shortcuts):
                         model.select_item(int(pos), True)
                         shortcut_path = model.get_item(int(pos)).get_path()
-
-                        if Path(f'{shortcut_path}').is_file():
-                            on_shortcut_context(x, y, shortcut_path)
-
-                    elif Path(parent_path) == Path(sw_launchers):
+                        check_arg(str(shortcut_path))
+                        start_mode()
+                        if getenv('SW_EXEC') == 'StartWine':
+                            return overlay_info(overlay, None, msg.msg_dict['lnk_error'], None, 3)
+                    else:
                         pass
+                else:
+                    pass
 
+            elif str(pos) == grid_view.get_name():
+                grid_view.get_model().unselect_all()
+            else:
+                pass
+
+    def set_view_parent_path(grid_view):
+
+        if (grid_view.get_name() == 'left_grid_view'
+            or grid_view.get_name() == 'left_column_view'):
+
+            if grid_view.get_model().get_item(0) is None:
+                parent_path = left_dir_list.get_file().get_path()
+                if parent_path is None:
+                    parent_path = left_dir_list.get_file().get_uri()
+            else:
+                parent_path = left_dir_list.get_file().get_parent().get_path()
+                if parent_path is None:
+                    parent_path = left_dir_list.get_file().get_parent().get_uri()
+
+        elif grid_view.get_name() == 'right_grid_view':
+            if grid_view.get_model().get_item(0) is None:
+                parent_path = right_dir_list.get_file().get_path()
+                if parent_path is None:
+                    parent_path = right_dir_list.get_file().get_uri()
+            else:
+                parent_path = right_dir_list.get_file().get_parent().get_path()
+                if parent_path is None:
+                    parent_path = right_dir_list.get_file().get_parent().get_uri()
+
+        if (parent_path is not None and parent_path != entry_path.get_name()):
+            update_path(parent_path)
+            entry_path.set_text(str(parent_path))
+            entry_path.set_name(str(parent_path))
+
+        environ['SW_FILES_PARENT_PATH'] = parent_path
+        environ['SW_FILES_VIEW_NAME'] = grid_view.get_name()
+
+    def cb_ctrl_rclick_view(self, n_press, x, y):
+        '''___right click in list view___'''
+
+        grid_view = self.get_widget()
+        grid_view.grab_focus()
+        set_view_parent_path(grid_view)
+
+        unparent_context_menu()
+        pick = grid_view.pick(x, y, Gtk.PickFlags.DEFAULT)
+
+        if pick is not None:
+            pos = pick.get_name()
+            parent_path = get_parent_path()
+
+            if str(pos).isdigit():
+                model = grid_view.get_model()
+                if parent_path is not None:
+                    if Path(parent_path) == Path(sw_shortcuts):
+                        model.select_item(int(pos), True)
+                        shortcut_path = model.get_item(int(pos)).get_path()
+                        if Path(f'{shortcut_path}').is_file():
+                            on_shortcut_context(x, y, grid_view, shortcut_path)
                     else:
                         nums = model.get_n_items()
                         selected = [i for i in range(nums) if model.is_selected(i)]
-
                         if len(selected) > 1:
                             model.select_item(int(pos), False)
                         else:
                             model.select_item(int(pos), True)
 
                         gio_files = get_selected_item_gfile()
-                        on_file_context(x, y, gio_files)
+                        on_file_context(x, y, grid_view, gio_files)
+                else:
+                    nums = model.get_n_items()
+                    selected = [i for i in range(nums) if model.is_selected(i)]
+                    if len(selected) > 1:
+                        model.select_item(int(pos), False)
+                    else:
+                        model.select_item(int(pos), True)
 
-            elif str(pos) == 'GtkGridView':
+                    gio_files = get_selected_item_gfile()
+                    on_file_context(x, y, grid_view, gio_files)
+
+            elif str(pos) == grid_view.get_name() or str(pos) == 'GtkColumnListView':
                     grid_view.get_model().unselect_all()
                     parent_path = get_parent_path()
 
                     if parent_path is not None:
                         if Path(parent_path) == Path(sw_shortcuts):
                             pass
-                        elif Path(parent_path) == Path(sw_launchers):
-                            pass
                         else:
                             on_empty_context(x, y, grid_view, parent_path)
             else:
                 pass
 
+    def cb_model_selection_changed(self, position, n_items):
+        '''______'''
+
+        if str(get_parent_path()) == str(sw_shortcuts):
+            item = self.get_item(position)
+            #print(item.get_path())
+
+    def cb_ctrl_left_view_focus(self):
+        '''___Emitted whenever the focus enters into the widget or child___'''
+
+        grid_view = self.get_widget()
+        #set_view_parent_path(grid_view)
+
+    def cb_ctrl_right_view_focus(self):
+        '''___Emitted whenever the focus enters into the widget or child___'''
+
+        grid_view = self.get_widget()
+        #set_view_parent_path(grid_view)
+
+    def cb_ctrl_left_view_motion(self, x, y):
+        '''___Emmited when the pointer has entered the widget___'''
+
+        grid_view = self.get_widget()
+        #grid_view.grab_focus()
+
+    def cb_ctrl_right_view_motion(self, x, y):
+        '''___Emmited when the pointer has entered the widget___'''
+
+        grid_view = self.get_widget()
+        #grid_view.grab_focus()
+
     def cb_ctrl_drag_prepare(self, x, y):
         '''___return content for the drag file start___'''
 
+        grid_view = self.get_widget()
         pick = grid_view.pick(x, y, Gtk.PickFlags.DEFAULT)
 
         if pick is not None:
@@ -5748,10 +6543,7 @@ def sw_activate(app):
                 parent_path = get_parent_path()
                 model = grid_view.get_model()
 
-                if Path(parent_path) == Path(sw_launchers):
-                    pass
-
-                elif Path(parent_path) == Path(sw_shortcuts):
+                if str(parent_path) == str(sw_shortcuts):
                     model.select_item(int(pos), True)
                     paintable = Gtk.WidgetPaintable()
                     paintable.set_widget(pick.get_parent())
@@ -5787,11 +6579,12 @@ def sw_activate(app):
                         paintable.set_widget(pick.get_parent())
                         self.set_icon(paintable, 0, 0)
 
-                    file_list = Gdk.FileList.new_from_list(selected)
-                    content = Gdk.ContentProvider.new_for_value(GObject.Value(Gdk.FileList, file_list))
-                    self.set_content(content)
-                    selected.clear()
-                    return content
+                    if selected != []:
+                        file_list = Gdk.FileList.new_from_list(selected)
+                        content = Gdk.ContentProvider.new_for_value(GObject.Value(Gdk.FileList, file_list))
+                        self.set_content(content)
+                        selected.clear()
+                        return content
 
     def cb_ctrl_drag_end(self, drag, delete_data):
         '''___signal on the drag source when a drag is finished___'''
@@ -5807,6 +6600,7 @@ def sw_activate(app):
         replace_source = list()
         copy_source = list()
         copy_target = list()
+        grid_view = get_list_view()
         pick = parent.pick(x, y, Gtk.PickFlags.DEFAULT)
 
         if pick is not None:
@@ -5835,9 +6629,9 @@ def sw_activate(app):
                             if len(replace_source) > 0:
                                 str_source = str('\n'.join(sorted(replace_source)))
                                 title = msg.msg_dict['replace_file']
-                                message = msg.msg_dict['replace_override'] + f'\n{str_source}'
+                                message = [msg.msg_dict['replace_override'], f'{str_source}']
                                 func = [{move_replace : (parent_path, replace_source)}, None]
-                                dialog_question(app, title, message, None, func)
+                                dialog_question(swgs, title, message, None, func)
 
                             if len(copy_source) > 0:
                                 for s, t in zip(copy_source, copy_target):
@@ -5867,146 +6661,68 @@ def sw_activate(app):
                                 if len(replace_source) > 0:
                                     str_source = str('\n'.join(sorted(replace_source)))
                                     title = msg.msg_dict['replace_file']
-                                    message = msg.msg_dict['replace_override'] + f'\n{str_source}'
+                                    message = [msg.msg_dict['replace_override'], f'{str_source}']
                                     func = [{move_replace : (parent_path, replace_source)}, None]
-                                    dialog_question(app, title, message, None, func)
+                                    dialog_question(swgs, title, message, None, func)
 
                                 if len(copy_source) > 0:
                                     for s, t in zip(copy_source, copy_target):
                                         Thread(target=run_move, args=(s, t,)).start()
                                         GLib.timeout_add(100, on_copy_move_progress, s, t)
 
-    def get_dominant_color(image):
-        '''___get the dominant color of the image___'''
-
-#        image_path = image.get_file().get_path()
-
-#        if image_path == f'{IconPath.icon_sw_svg}':
-#            pass
-#        else:
-#            img = Image.open(f'{image_path}')
-#            img = img.copy()
-#            img = img.convert("RGBA")
-#            img = img.resize((1, 1), resample=0)
-#            rgba = img.getpixel((0, 0))
-
-#            if int(rgba[0]) < 127:
-#                red = int(rgba[0]) * 2
-#            else:
-#                red = int(rgba[1])
-
-#            if int(rgba[1]) < 127:
-#                green = int(rgba[1]) * 2
-#            else:
-#                green = int(rgba[1])
-
-#            if int(rgba[2]) < 127:
-#                blue = int(rgba[2]) * 2
-#            else:
-#                blue = int(rgba[0])
-
-#            color = f'rgba({red}, {green}, {blue}, 1.0)'
-
-#            css_string = '''
-#                sw_gridview>child:hover {
-#                    background-color: transparent;
-#                    background-image: none;
-#                    transform: scale(1.1);
-#                    transition: all 350ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-#                    animation-timing-function: cubic-bezier(0.25, 0.5, 0.75, 0.95);
-#                    transition-duration: 350ms;
-#                    filter: drop-shadow('''f'{color}'''' 1rem 1rem 40px);
-#                /*    box-shadow: 0 1px 100px 0 @sw_accent_fg_color;*/
-#                }
-#            '''
-#            css_provider.load_from_string(css_string)
-#            Gtk.StyleContext.add_provider_for_display(
-#                display,
-#                css_provider,
-#                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-#            )
-
-    def cb_grid_factory_setup(self, item_list):
+    def cb_factory_setup(self, item_list, data):
         '''___setup items in grid view___'''
+        cb_paned_factory_setup(item_list, data)
 
-        size = adjustment_icon.get_value() * 24
+    def cb_paned_factory_setup(item_list, view):
 
-        file_label = Gtk.Label(
-                        css_name='sw_label_view',
-                        width_chars=12,
-                        ellipsize=Pango.EllipsizeMode.MIDDLE,
-                        lines=2,
-                        wrap=True,
-                        wrap_mode=Pango.WrapMode.CHAR,
-        )
-        for i in range(1, 8):
-            file_label.remove_css_class(f'font_size_1{i}')
-        else:
-            file_label.add_css_class(f'font_size_1{int(size/24)-2}')
+        ft_size = btn_scale_icons.get_value()
+        sc_size = btn_scale_shortcuts.get_value()
 
-        file_box = Gtk.Box(
-                        css_name='sw_box',
-                        orientation=Gtk.Orientation.VERTICAL,
-                        spacing=4,
-        )
-        overlay_box = Gtk.Box(
-                        css_name='sw_box_overlay',
-                        orientation=Gtk.Orientation.VERTICAL,
-                        vexpand=True,
-                        valign=Gtk.Align.END,
-                        hexpand=True,
-                        halign=Gtk.Align.FILL,
-        )
         file_overlay = Gtk.Overlay()
-        file_overlay.set_child(file_box)
 
         ####___setup_shortcut_widgets___.
-        if (dir_list.get_file().get_path() is not None
-            and Path(dir_list.get_file().get_path()).parent == Path(sw_shortcuts)):
+        if (get_parent_file().get_path() is not None
+            and Path(get_parent_file().get_path()) == Path(sw_shortcuts)):
+                #view.set_single_click_activate(True)
 
-                file_label.set_xalign(0)
-                file_label.set_lines(1)
-                file_label.set_ellipsize(Pango.EllipsizeMode.END)
                 file_image = Gtk.Picture(
                                     css_name='sw_picture',
                                     content_fit=Gtk.ContentFit.COVER,
                 )
                 file_image.add_css_class('gridview')
 
-                dict_ini = read_menu_conf()
-
-                if dict_ini['icon_position'] == 'horizontal':
-                    file_image.set_size_request((size+72) * 1.87, (size+72))
-
-                elif dict_ini['icon_position'] == 'vertical':
-                    file_image.set_size_request((size+72), (size+72) * 1.6)
-
                 prefix_label = Gtk.Label(
-                                    css_name='sw_label_sub',
-                                    xalign=0,
-                                    yalign=0,
-                                    width_chars=12,
-                                    ellipsize=Pango.EllipsizeMode.END,
-                                    lines=2,
-                                    wrap=True,
-                                    wrap_mode=Pango.WrapMode.WORD,
+                                        css_name='sw_label_sub',
+                                        xalign=0,
+                                        yalign=0,
+                                        width_chars=12,
+                                        ellipsize=Pango.EllipsizeMode.END,
+                                        lines=2,
+                                        wrap=True,
+                                        wrap_mode=Pango.WrapMode.WORD,
                 )
                 wine_label = Gtk.Label(
-                                    css_name='sw_label_sub',
-                                    xalign=0,
-                                    yalign=0,
-                                    width_chars=12,
-                                    ellipsize=Pango.EllipsizeMode.END,
-                                    lines=2,
-                                    wrap=True,
-                                    wrap_mode=Pango.WrapMode.WORD,
+                                        css_name='sw_label_sub',
+                                        xalign=0,
+                                        yalign=0,
+                                        width_chars=12,
+                                        ellipsize=Pango.EllipsizeMode.END,
+                                        lines=2,
+                                        wrap=True,
+                                        wrap_mode=Pango.WrapMode.WORD,
                 )
-                file_box.append(file_image)
-                label_box = Gtk.Box(
-                                    orientation=Gtk.Orientation.VERTICAL,
-                )
+                for i in range(9, 26):
+                    prefix_label.remove_css_class(f'font_size_{i}')
+                    wine_label.remove_css_class(f'font_size_{i}')
+
+                prefix_label.add_css_class(f'font_size_{int(sc_size/12)+1}')
+                wine_label.add_css_class(f'font_size_{int(sc_size/12)+1}')
+
+                label_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
                 label_box.append(prefix_label)
                 label_box.append(wine_label)
+
                 label_revealer = Gtk.Revealer(
                                     css_name='sw_revealer',
                                     transition_duration=350,
@@ -6014,25 +6730,131 @@ def sw_activate(app):
                                     child=label_box,
                 )
                 label_revealer.set_reveal_child(False)
-                overlay_box.append(file_label)
-                overlay_box.append(label_revealer)
 
-                ctrl_motion_overlay = Gtk.EventControllerMotion()
-                ctrl_motion_overlay.connect('enter', cb_ctrl_enter_overlay, label_revealer, file_image)
-                ctrl_motion_overlay.connect('leave', cb_ctrl_leave_overlay, label_revealer, file_image)
+                overlay_box = Gtk.Box(
+                                    css_name='sw_box_overlay',
+                                    orientation=Gtk.Orientation.VERTICAL,
+                                    vexpand=True,
+                                    valign=Gtk.Align.END,
+                )
+                if view.get_name() == 'left_column_view':
+                    file_image.set_size_request(swgs.width/5, (swgs.width/105)*9)
+                    overlay_box.set_size_request(swgs.width/5, -1)
+                    swgs.column_view_file.set_fixed_width(swgs.width/5)
+                    if swgs.width == 0:
+                        file_image.set_size_request(256, (256/21)*9)
+                        overlay_box.set_size_request(256, -1)
+                        swgs.column_view_file.set_fixed_width(256)
 
+                    swgs.column_view_file.set_expand(False)
+
+                    file_label = Gtk.Label(
+                                        css_name='sw_label_view',
+                                        width_chars=0,
+                                        ellipsize=Pango.EllipsizeMode.END,
+                                        wrap=True,
+                                        natural_wrap_mode=True,
+                                        xalign=0,
+                    )
+                    for i in range(9, 26):
+                        file_label.remove_css_class(f'font_size_{i}')
+
+                    file_label.add_css_class(f'font_size_{int(sc_size/12)+1}')
+
+                    file_box = Gtk.Box(
+                                    css_name='sw_box',
+                                    orientation=Gtk.Orientation.HORIZONTAL,
+                                    spacing=4,
+                    )
+                    overlay_box.append(file_label)
+
+                else:
+                    file_label = Gtk.Label(
+                                        css_name='sw_label_view',
+                                        width_chars=0,
+                                        ellipsize=Pango.EllipsizeMode.END,
+                                        wrap=True,
+                                        natural_wrap_mode=True,
+                                        xalign=0,
+                    )
+                    for i in range(9, 26):
+                        file_label.remove_css_class(f'font_size_{i}')
+
+                    file_label.add_css_class(f'font_size_{int(sc_size/12)+1}')
+
+                    file_box = Gtk.Box(
+                                    css_name='sw_box',
+                                    orientation=Gtk.Orientation.VERTICAL,
+                                    spacing=4,
+                    )
+                    overlay_box.append(file_label)
+                    overlay_box.append(label_revealer)
+                    ctrl_motion_overlay = Gtk.EventControllerMotion()
+                    ctrl_motion_overlay.connect('enter', cb_ctrl_enter_overlay, label_revealer, file_image)
+                    ctrl_motion_overlay.connect('leave', cb_ctrl_leave_overlay, label_revealer, file_image)
+                    file_overlay.add_controller(ctrl_motion_overlay)
+
+                    dict_ini = read_menu_conf()
+
+                    if dict_ini['icon_position'] == 'horizontal':
+                        file_image.set_size_request(sc_size * (21/10), sc_size)
+                        overlay_box.set_size_request(sc_size * (21/10), -1)
+
+                    elif dict_ini['icon_position'] == 'vertical':
+                        file_image.set_size_request(sc_size, sc_size * (18/10))
+                        overlay_box.set_size_request(sc_size, -1)
+
+                file_box.append(file_image)
+                file_overlay.set_child(file_box)
                 file_overlay.add_overlay(overlay_box)
-                file_overlay.add_controller(ctrl_motion_overlay)
-
                 item_list.set_child(file_overlay)
 
-                if not grid_view.has_css_class('shortcuts'):
-                    grid_view.add_css_class('shortcuts')
+                if not view.has_css_class('shortcuts'):
+                    view.add_css_class('shortcuts')
 
         ####___setup_file_widgets___.
         else:
+            #view.set_single_click_activate(False)
+            if view.get_name() == 'left_column_view':
+                swgs.column_view_file.set_expand(True)
+
+                file_label = Gtk.Label(
+                                    css_name='sw_label_desc',
+                                    width_chars=0,
+                                    ellipsize=Pango.EllipsizeMode.MIDDLE,
+                                    wrap=True,
+                                    natural_wrap_mode=True,
+                                    xalign=0,
+                )
+                for i in range(9, 26):
+                    file_label.remove_css_class(f'font_size_{i}')
+
+                file_box = Gtk.Box(
+                                css_name='sw_box',
+                                orientation=Gtk.Orientation.HORIZONTAL,
+                                spacing=4,
+                )
+            else:
+                file_label = Gtk.Label(
+                                    css_name='sw_label_desc',
+                                    width_chars=12,
+                                    ellipsize=Pango.EllipsizeMode.MIDDLE,
+                                    lines=2,
+                                    wrap=True,
+                                    wrap_mode=Pango.WrapMode.CHAR,
+                )
+                for i in range(9, 26):
+                    file_label.remove_css_class(f'font_size_{i}')
+
+                file_box = Gtk.Box(
+                                css_name='sw_box',
+                                orientation=Gtk.Orientation.VERTICAL,
+                                spacing=4,
+                )
+
+            file_label.add_css_class(f'font_size_{int(ft_size/12)+7}')
             file_image = Gtk.Image(css_name='sw_image')
-            file_image.set_pixel_size(adjustment_icon.get_value()*24)
+            file_image.set_pixel_size(ft_size)
             symlink_image = Gtk.Image(
                                     css_name='sw_image',
                                     pixel_size=24,
@@ -6046,268 +6868,327 @@ def sw_activate(app):
             file_box.set_margin_end(4)
             file_box.append(file_image)
             file_box.append(file_label)
+
+            file_overlay.set_child(file_box)
             file_overlay.add_overlay(symlink_image)
 
             item_list.set_child(file_overlay)
 
-            if grid_view.has_css_class('shortcuts'):
-                grid_view.remove_css_class('shortcuts')
+            if view.has_css_class('shortcuts'):
+                view.remove_css_class('shortcuts')
 
-    def cb_factory_bind(self, item_list):
+    def cb_right_factory_bind(self, item_list, data):
         '''___bind items in list view___'''
 
-        file_overlay = item_list.get_child()
-        file_box = file_overlay.get_first_child()
-        file_image = file_box.get_first_child()
-        file_label = None
-        symlink_image = file_overlay.get_last_child()
+        cb_paned_factory_bind(item_list, data)
+
+    def cb_factory_bind(self, item_list, data):
+        '''___bind items in list view___'''
+
+        cb_paned_factory_bind(item_list, data)
+
+    def cb_paned_factory_bind(item_list, view):
+        '''___bind items in list view___'''
+
+        overlay = item_list.get_child()
+        box = overlay.get_first_child()
+        image = box.get_first_child()
+        symlink_image = overlay.get_last_child()
         item = item_list.get_item()
         position = item_list.get_position()
 
         try:
-            file_info = item.query_info('*', Gio.FileQueryInfoFlags.NONE, None)
+            info = item.query_info('*', Gio.FileQueryInfoFlags.NONE, None)
         except Exception as e:
-            file_info = None
+            info = None
 
-        if file_info is not None:
-            if not file_info.has_attribute(attrs['content_type']):
+        if info is not None:
+            if not info.has_attribute(attrs['content_type']):
                 pass
             else:
-                file_content_type = file_info.get_content_type()
-                symbolic_link = file_info.get_is_symlink()
+                content_type = info.get_content_type()
+                if info.has_attribute('standard::is-symlink'):
+                    symbolic_link = info.get_is_symlink()
 
-                ####___Set_symbolic_links___.
-                if symbolic_link:
-                    try:
-                        symlink_image.set_from_file(IconPath.icon_symlink)
-                    except:
-                        pass
-                    else:
-                        symlink_image.set_visible(True)
+                    ####___Set_symbolic_links___.
+                    if symbolic_link:
+                        try:
+                            symlink_image.set_from_file(IconPath.icon_symlink)
+                        except:
+                            pass
+                        else:
+                            symlink_image.set_visible(True)
 
                 ####___Set_uri_items___.
                 if item.get_path() is None:
-                    file_label = file_image.get_next_sibling()
-                    file_label.set_label(file_info.get_name())
-                    file_label.set_name(file_info.get_name())
-                    file_image.set_from_gicon(file_info.get_icon())
-                    file_image.set_name(str(position))
-                    file_box.set_name(str(position))
-                    file_overlay.set_name(str(position))
+                    uri_factory_bind(overlay, item, box, image, position, info)
                 else:
                     ####___Set_shortcuts___.
                     if Path(item.get_path()).parent == Path(sw_shortcuts):
-
                         if Path(item.get_path()).suffix in swd_mime_types:
-                            dict_ini = read_menu_conf()
-
-                            app_name = str(Path(item.get_path()).stem)
-                            app_strip = app_name.strip('"').replace(' ', '_')
-                            app_config_path = f"{sw_app_config}/{app_strip}"
-
-                            if not Path(app_config_path).exists():
-                                write_app_conf(item.get_path())
-
-                            app_conf_dict = app_info(app_config_path)
-                            app_dict = app_info(item.get_path())
-
-                            overlay_box = file_overlay.get_last_child()
-                            overlay_box.set_name(str(position))
-                            file_label = overlay_box.get_first_child()
-                            prefix_label = (file_label.get_next_sibling()
-                                            .get_child().get_first_child()
-                            )
-                            prefix_label.set_name(str(position))
-                            wine_label = prefix_label.get_next_sibling()
-                            wine_label.set_name(str(position))
-                            prefix_name = (str_prefix + ' '
-                                            + app_conf_dict['export SW_USE_PFX'][1:-1]
-                            )
-                            prefix_label.set_label(prefix_name.replace('pfx_',''))
-                            wine_name = (str('Wine: ')
-                                        + app_conf_dict['export SW_USE_WINE'][1:-1]
-                            )
-                            wine_label.set_label(wine_name.replace('wine_',''))
-
-                            ####___horizontal_icons___.
-                            if dict_ini['icon_position'] == 'horizontal':
-                                for icon in sw_app_hicons.iterdir():
-                                    an_isalnum = ''.join(e for e in app_name if e.isalnum())
-                                    if an_isalnum == str(Path(icon).name).split('_')[0]:
-                                        file_image.set_filename(f'{icon}')
-                                        file_label.set_label(
-                                            str(Path(icon).name).split('_')[-2]
-                                            )
-                                        file_label.set_tooltip_markup(
-                                            str(Path(icon).name).split('_')[-2]
-                                            )
-                                        break
-                                else:
-                                    try:
-                                        file_image.set_filename(f'{sw_gui_icons}/sw.svg')
-                                    except:
-                                        pass
-                                    else:
-                                        file_image.set_content_fit(Gtk.ContentFit.SCALE_DOWN)
-                                    try:
-                                        file_label.set_label(
-                                            str(Path(item.get_path()).stem))
-                                    except:
-                                        pass
-                                    else:
-                                        file_label.set_tooltip_markup(
-                                            str(Path(item.get_path()).stem))
-
-                            ####___Vertical_icons___.
-                            elif dict_ini['icon_position'] == 'vertical':
-                                for icon in sw_app_vicons.iterdir():
-                                    an_isalnum = ''.join(e for e in app_name if e.isalnum())
-                                    if an_isalnum == str(Path(icon).name).split('_')[0]:
-                                        file_image.set_filename(f'{icon}')
-                                        file_label.set_label(
-                                            str(Path(icon).name).split('_')[-2])
-                                        file_label.set_tooltip_markup(
-                                            str(Path(icon).name).split('_')[-2])
-                                        break
-                                else:
-                                    try:
-                                        file_label.set_label(
-                                            str(Path(item.get_path()).stem))
-                                    except:
-                                        pass
-                                    else:
-                                        file_label.set_tooltip_markup(
-                                            str(Path(item.get_path()).stem)
-                                        )
-                                    try:
-                                        file_image.set_filename(f'{sw_gui_icons}/sw.svg')
-                                    except:
-                                        pass
-                                    else:
-                                        file_image.set_content_fit(Gtk.ContentFit.SCALE_DOWN)
-                            else:
-                                pass
-                        else:
-                            pass
+                            shortcut_factory_bind(view, overlay, item, image, position)
 
                     ####___Set_files___.
                     else:
-                        file_label = file_image.get_next_sibling()
-                        if file_content_type in app_mime_types:
-                            app_dict = app_info(item.get_path())
-                            if not Path(app_dict["Icon"]).exists():
-                                try:
-                                    file_image.set_from_gicon(
-                                        file_info.get_attribute_object("standard::icon"))
-                                except:
-                                    try:
-                                        icon = try_get_theme_icon(app_dict["Icon"])
-                                        file_image.set_from_paintable(icon)
-                                    except:
-                                        print(f'{tc.VIOLET2} app_mime_type icon not found for: {tc.GREEN}'
-                                            + item.get_path() + tc.END)
-                            else:
-                                try:
-                                    file_image.set_from_file(app_dict["Icon"])
-                                except:
-                                    print(f'{tc.VIOLET2} app_mime_type icon not found for: {tc.GREEN}'
-                                        + item.get_path() + tc.END)
-                        ####___Image_mime_type___.
-                        elif file_content_type in image_mime_types:
-                            out_file = f'{sw_fm_cache_thumbnail}/{item.get_basename()}'
-                            if Path(out_file).exists():
-                                file_icon = Gtk.IconPaintable.new_for_file(
-                                                Gio.File.new_for_path(out_file),
-                                                adjustment_icon.get_value()*24, 1,)
-                                try:
-                                    file_image.set_from_paintable(file_icon)
-                                except:
-                                    try:
-                                        file_image.set_paintable(file_icon)
-                                    except:
-                                        try:
-                                            file_image.set_from_gicon(
-                                                file_info.get_attribute_object("standard::icon"))
-                                        except:
-                                            try:
-                                                icon = try_get_theme_icon('image')
-                                                file_image.set_from_paintable(icon)
-                                            except:
-                                                raise ValueError(f'{tc.VIOLET2} image_mime_type icon not found for: {tc.GREEN}'
-                                                                + item.get_path() + tc.END)
-                            else:
-                                try:
-                                    file_image.set_from_gicon(
-                                        file_info.get_attribute_object("standard::icon"))
-                                except:
-                                    try:
-                                        icon = try_get_theme_icon('image')
-                                        file_image.set_from_paintable(icon)
-                                    except:
-                                        raise ValueError(f'{tc.VIOLET2} image_mime_type icon not found for: {tc.GREEN}'
-                                                        + item.get_path() + tc.END)
-                        ####___Video_mime_type___.
-                        elif file_content_type in video_mime_types:
-                            out_file = f'{sw_fm_cache_thumbnail}/{item.get_basename()}.png'
-                            if Path(out_file).exists():
-                                file_icon = Gtk.IconPaintable.new_for_file(
-                                                Gio.File.new_for_path(f'{out_file}'),
-                                                adjustment_icon.get_value()*24, 1,)
-                                try:
-                                    file_image.set_from_paintable(file_icon)
-                                except:
-                                    try:
-                                        file_image.set_paintable(file_icon)
-                                    except:
-                                        try:
-                                            file_image.set_from_gicon(
-                                                file_info.get_attribute_object("standard::icon"))
-                                        except:
-                                            raise ValueError(f'{tc.VIOLET2} video_mime_type icon not found for: {tc.GREEN}'
-                                                            + item.get_path() + tc.END)
-                            else:
-                                try:
-                                    file_image.set_from_gicon(
-                                        file_info.get_attribute_object("standard::icon"))
-                                except:
-                                    raise ValueError(f'{tc.VIOLET2} video_mime_type icon not found for: {tc.GREEN}'
-                                                    + item.get_path() + tc.END)
-                        ####___Other_mime_type___.
-                        else:
+                        file_factory_bind(view, item, image, content_type, info)
+
+                    if label is not None:
+                        label.set_name(str(position))
+
+                    if image is not None:
+                        image.set_name(str(position))
+
+                    if box is not None:
+                        box.set_name(str(position))
+
+                    if overlay is not None:
+                        overlay.set_name(str(position))
+
+    def uri_factory_bind(overlay, item, box, image, position, info):
+
+        label = image.get_next_sibling()
+        label.set_label(info.get_name())
+        label.set_name(info.get_name())
+        image.set_from_gicon(info.get_icon())
+        image.set_name(str(position))
+        box.set_name(str(position))
+        overlay.set_name(str(position))
+
+    def shortcut_factory_bind(view, overlay, item, image, position):
+
+        dict_ini = read_menu_conf()
+        app_name = str(Path(item.get_path()).stem)
+        app_strip = app_name.strip('"').replace(' ', '_')
+        app_config_path = f"{sw_app_config}/{app_strip}"
+
+        if not Path(app_config_path).exists():
+            write_app_conf(item.get_path())
+
+        overlay_box = overlay.get_last_child()
+        overlay_box.set_name(str(position))
+        label = overlay_box.get_first_child()
+
+        if view.get_name() == 'left_column_view':
+            swgs.column_view_file.set_title(msg.msg_dict['file_name'])
+            set_horizontal_icon(app_name, item, image, label)
+        else:
+            app_conf_dict = app_info(app_config_path)
+
+            ####___prefix label___.
+            prefix_label = (label.get_next_sibling().get_child().get_first_child())
+            prefix_label.set_name(str(position))
+            prefix_name = str_prefix + ' ' + app_conf_dict['export SW_USE_PFX'][1:-1]
+            prefix_label.set_label(prefix_name.replace('pfx_',''))
+
+            ####___wine label___.
+            wine_label = prefix_label.get_next_sibling()
+            wine_label.set_name(str(position))
+            wine_name = (str('Wine: ') + app_conf_dict['export SW_USE_WINE'][1:-1])
+            wine_label.set_label(wine_name.replace('wine_',''))
+
+            ####___horizontal_icons___.
+            if dict_ini['icon_position'] == 'horizontal':
+                set_horizontal_icon(app_name, item, image, label)
+
+            ####___vertical_icons___.
+            elif dict_ini['icon_position'] == 'vertical':
+                set_vertical_icon(app_name, item, image, label)
+
+    def set_horizontal_icon(app_name, item , image, label):
+
+        for icon in sw_app_hicons.iterdir():
+            an_isalnum = ''.join(e for e in app_name if e.isalnum())
+            if an_isalnum == str(Path(icon).name).split('_')[0]:
+                image.set_filename(f'{icon}')
+                image.set_content_fit(Gtk.ContentFit.COVER)
+                if label is not None:
+                    label.set_label(str(Path(icon).name).split('_')[-2])
+                    label.set_tooltip_markup(str(Path(icon).name).split('_')[-2])
+                break
+        else:
+            try:
+                image.set_filename(f'{sw_gui_icons}/sw.svg')
+            except:
+                pass
+            else:
+                image.set_content_fit(Gtk.ContentFit.SCALE_DOWN)
+
+            if label is not None:
+                try:
+                    label.set_label(
+                        str(Path(item.get_path()).stem))
+                except:
+                    pass
+                else:
+                    label.set_tooltip_markup(
+                        str(Path(item.get_path()).stem))
+
+    def set_vertical_icon(app_name, item, image, label):
+
+        for icon in sw_app_vicons.iterdir():
+            an_isalnum = ''.join(e for e in app_name if e.isalnum())
+            if an_isalnum == str(Path(icon).name).split('_')[0]:
+                image.set_filename(f'{icon}')
+                label.set_label(str(Path(icon).name).split('_')[-2])
+                label.set_tooltip_markup(str(Path(icon).name).split('_')[-2])
+                break
+        else:
+            try:
+                label.set_label(str(Path(item.get_path()).stem))
+            except:
+                pass
+            else:
+                label.set_tooltip_markup(str(Path(item.get_path()).stem))
+            try:
+                image.set_filename(f'{sw_gui_icons}/sw.svg')
+            except:
+                pass
+            else:
+                image.set_content_fit(Gtk.ContentFit.SCALE_DOWN)
+
+    def set_heroes_icon(app_name, app_path , image, label):
+
+        for icon in sw_app_heroes_icons.iterdir():
+            an_isalnum = ''.join(e for e in app_name if e.isalnum())
+            if an_isalnum == str(Path(icon).name).split('_')[0]:
+                image.set_filename(f'{icon}')
+                image.set_content_fit(Gtk.ContentFit.COVER)
+                if label is not None:
+                    label.set_label(str(Path(icon).name).split('_')[-2])
+                    label.set_tooltip_markup(str(Path(icon).name).split('_')[-2])
+                break
+        else:
+            try:
+                image.set_filename(f'{sw_gui_icons}/{sw_logo_light}')
+            except:
+                pass
+            else:
+                image.set_content_fit(Gtk.ContentFit.SCALE_DOWN)
+
+            if label is not None:
+                try:
+                    label.set_label(
+                        str(Path(app_path).stem))
+                except:
+                    pass
+                else:
+                    label.set_tooltip_markup(
+                        str(Path(app_path).stem))
+
+    def file_factory_bind(view, item, image, content_type, info):
+
+        label = image.get_next_sibling()
+
+        if view.get_name() == 'left_column_view':
+            swgs.column_view_file.set_title(msg.msg_dict['file_name'])
+            label.set_size_request(140, -1)
+
+        if content_type in app_mime_types:
+            app_dict = app_info(item.get_path())
+            try:
+                app_dict["Icon"]
+            except:
+                try:
+                    image.set_from_gicon(
+                        info.get_attribute_object("standard::icon"))
+                except:
+                    print(f'{tc.VIOLET2} app_mime_type icon not found for: {tc.GREEN}'
+                        + item.get_path() + tc.END)
+            else:
+                try:
+                    image.set_from_file(app_dict["Icon"])
+                except:
+                    try:
+                        image.set_from_gicon(
+                            info.get_attribute_object("standard::icon"))
+                    except:
+                        print(f'{tc.VIOLET2} app_mime_type icon not found for: {tc.GREEN}'
+                            + item.get_path() + tc.END)
+
+        ####___Image_mime_type___.
+        elif content_type in image_mime_types:
+            thumb = f'{sw_fm_cache_thumbnail}/{item.get_path().replace("/", "")}'
+            if Path(thumb).exists():
+                file_icon = Gtk.IconPaintable.new_for_file(
+                                Gio.File.new_for_path(thumb),
+                                btn_scale_icons.get_value(), 1)
+                try:
+                    image.set_from_paintable(file_icon)
+                except:
+                    try:
+                        image.set_paintable(file_icon)
+                    except:
+                        try:
+                            image.set_from_gicon(
+                                info.get_attribute_object("standard::icon"))
+                        except:
                             try:
-                                file_image.set_from_gicon(
-                                    file_info.get_attribute_object("standard::icon"))
+                                icon = try_get_theme_icon('image')
+                                image.set_from_paintable(icon)
                             except:
-                                try:
-                                    icon = try_get_theme_icon('text')
-                                    file_image.set_from_paintable(icon)
-                                except:
-                                    print(f'{tc.VIOLET2} other_mime_type gicon not found for: {tc.GREEN}'
+                                print(f'{tc.VIOLET2} image_mime_type icon not found for: {tc.GREEN}'
+                                                + item.get_path() + tc.END)
+            else:
+                try:
+                    image.set_from_gicon(
+                        info.get_attribute_object("standard::icon"))
+                except:
+                    try:
+                        icon = try_get_theme_icon('image')
+                        image.set_from_paintable(icon)
+                    except:
+                        print(f'{tc.VIOLET2} image_mime_type icon not found for: {tc.GREEN}'
+                                        + item.get_path() + tc.END)
+        ####___Video_mime_type___.
+        elif content_type in video_mime_types:
+            thumb = f'{sw_fm_cache_thumbnail}/{item.get_path().replace("/", "")}.png'
+            if Path(thumb).exists():
+                file_icon = Gtk.IconPaintable.new_for_file(
+                                Gio.File.new_for_path(f'{thumb}'),
+                                btn_scale_icons.get_value(), 1,)
+                try:
+                    image.set_from_paintable(file_icon)
+                except:
+                    try:
+                        image.set_paintable(file_icon)
+                    except:
+                        try:
+                            image.set_from_gicon(
+                                info.get_attribute_object("standard::icon"))
+                        except:
+                            print(f'{tc.VIOLET2} video_mime_type icon not found for: {tc.GREEN}'
                                             + item.get_path() + tc.END)
-                        try:
-                            file_label.set_label(
-                                file_info.get_attribute_string("standard::display-name"))
-                        except:
-                            print(f'{tc.VIOLET2} label not set for: {tc.GREEN}'
-                                + item.get_path() + tc.END)
-                        try:
-                            file_label.set_tooltip_markup(
-                                file_info.get_attribute_string("standard::display-name"))
-                        except:
-                            print(f'{tc.VIOLET2} tooltip not set for: {tc.GREEN}'
-                                + item.get_path() + tc.END)
-
-                    if file_label is not None:
-                        file_label.set_name(str(position))
-
-                    if file_image is not None:
-                        file_image.set_name(str(position))
-
-                    if file_box is not None:
-                        file_box.set_name(str(position))
-
-                    if file_overlay is not None:
-                        file_overlay.set_name(str(position))
+            else:
+                try:
+                    image.set_from_gicon(
+                        info.get_attribute_object("standard::icon"))
+                except:
+                    print(f'{tc.VIOLET2} video_mime_type icon not found for: {tc.GREEN}'
+                                    + item.get_path() + tc.END)
+        ####___Other_mime_type___.
+        else:
+            try:
+                image.set_from_gicon(
+                    info.get_attribute_object("standard::icon"))
+            except:
+                try:
+                    icon = try_get_theme_icon('text')
+                    image.set_from_paintable(icon)
+                except:
+                    print(f'{tc.VIOLET2} other_mime_type gicon not found for: {tc.GREEN}'
+                            + item.get_path() + tc.END)
+        try:
+            label.set_label(
+                info.get_attribute_string("standard::display-name"))
+        except:
+            print(f'{tc.VIOLET2} label not set for: {tc.GREEN}'
+                + item.get_path() + tc.END)
+        try:
+            label.set_tooltip_markup(
+                info.get_attribute_string("standard::display-name"))
+        except:
+            print(f'{tc.VIOLET2} tooltip not set for: {tc.GREEN}'
+                + item.get_path() + tc.END)
 
     def cb_grid_factory_teardown(self, item_list):
         '''___prepare remove objects from list view___'''
@@ -6317,8 +7198,251 @@ def sw_activate(app):
         '''___remove objects from list view___'''
         return True
 
+    def cb_column_factory_type_setup(self, item_list):
+        '''___setup items in column size view___'''
+
+        box = Gtk.Box(
+                        css_name='sw_box',
+                        orientation=Gtk.Orientation.VERTICAL,
+                        spacing=4,
+                        valign=Gtk.Align.CENTER,
+        )
+        if str(get_parent_file().get_path()) == str(sw_shortcuts):
+            for i in range(4):
+                file_label = Gtk.Label(
+                                css_name='sw_label_desc',
+                                wrap=True,
+                                natural_wrap_mode=True,
+                                ellipsize=Pango.EllipsizeMode.END,
+                                xalign=0,
+                                margin_start=4,
+                                margin_end=4,
+                )
+                box.append(file_label)
+        else:
+            file_label = Gtk.Label(
+                            css_name='sw_label_desc',
+                            wrap=True,
+                            natural_wrap_mode=True,
+                            ellipsize=Pango.EllipsizeMode.END,
+                            wrap_mode=Pango.WrapMode.WORD_CHAR,
+                            lines=5,
+                            xalign=0,
+                            margin_start=4,
+                            margin_end=4,
+            )
+            box.append(file_label)
+
+        file_label.set_size_request(140, -1)
+        item_list.set_child(box)
+
+    def cb_column_factory_size_setup(self, item_list):
+        '''___setup items in column size view___'''
+
+        file_label = Gtk.Label(
+                        css_name='sw_label_desc',
+                        wrap=True,
+                        natural_wrap_mode=True,
+                        ellipsize=Pango.EllipsizeMode.END,
+                        wrap_mode=Pango.WrapMode.WORD_CHAR,
+                        lines=5,
+                        xalign=0,
+                        margin_start=4,
+                        margin_end=4,
+        )
+        file_label.set_size_request(140, -1)
+        item_list.set_child(file_label)
+
+    def cb_column_factory_uid_setup(self, item_list):
+        '''___setup items in column size view___'''
+
+        file_label = Gtk.Label(
+                        css_name='sw_label_desc',
+                        wrap=True,
+                        natural_wrap_mode=True,
+                        ellipsize=Pango.EllipsizeMode.END,
+                        wrap_mode=Pango.WrapMode.WORD_CHAR,
+                        lines=5,
+                        xalign=0,
+                        margin_start=4,
+                        margin_end=4,
+        )
+        file_label.set_size_request(140, -1)
+        item_list.set_child(file_label)
+
+    def cb_column_factory_created_setup(self, item_list):
+        '''___setup items in column file created time view___'''
+
+        file_label = Gtk.Label(
+                        css_name='sw_label_desc',
+                        wrap=True,
+                        natural_wrap_mode=True,
+                        ellipsize=Pango.EllipsizeMode.END,
+                        wrap_mode=Pango.WrapMode.WORD_CHAR,
+                        lines=5,
+                        xalign=0,
+                        margin_start=4,
+                        margin_end=4,
+        )
+        file_label.set_size_request(140, -1)
+        item_list.set_child(file_label)
+
+    def cb_column_factory_type_bind(self, item_list):
+        '''___bind items in list view___'''
+
+        box = item_list.get_child()
+        file_label = box.get_first_child()
+        item = item_list.get_item()
+
+        try:
+            file_info = item.query_info('*', Gio.FileQueryInfoFlags.NONE, None)
+        except Exception as e:
+            file_info = None
+
+        if file_info is not None:
+            if str(item.get_parent().get_path()) == str(sw_shortcuts):
+                swgs.column_view_type.set_title(msg.msg_dict['startup_mode'])
+
+                stat_dict = app_info(item.get_path())
+                app_path = stat_dict['Exec'].strip('"').replace(' ', '_')
+                stat_name = app_path.replace('/', '_').replace('.', '_')
+                stat_path = f'{sw_fm_cache_stats}/{stat_name}'
+
+                app_name = str(Path(item.get_path()).stem)
+                app_strip = app_name.strip('"').replace(' ', '_')
+                app_config_path = f"{sw_app_config}/{app_strip}"
+                app_conf_dict = app_info(app_config_path)
+
+                prefix = app_conf_dict['export SW_USE_PFX'][1:-1].replace('pfx_','')
+                wine = app_conf_dict['export SW_USE_WINE'][1:-1].replace('wine_','')
+
+                prefix_str = (str_prefix + ' ' + prefix)
+                wine_str = (str('Wine: ') + wine)
+
+                file_label.set_label(prefix_str)
+                file_label.set_tooltip_markup(prefix)
+
+                wine_label = file_label.get_next_sibling()
+                wine_label.set_label(wine_str)
+                wine_label.set_tooltip_markup(wine)
+
+                total_time = read_app_stat(stat_path, 'Time')
+                time_str = f'{msg.msg_dict["total_time"]}: {total_time}'
+                time_label = wine_label.get_next_sibling()
+                time_label.set_label(time_str)
+                time_label.set_tooltip_markup(str(total_time))
+
+                total_fps = read_app_stat(stat_path, 'Fps')
+                fps_str = f'{msg.msg_dict["avg_fps"]}: {total_fps}'
+                fps_label = time_label.get_next_sibling()
+                fps_label.set_label(fps_str)
+                fps_label.set_tooltip_markup(str(total_fps))
+            else:
+                swgs.column_view_type.set_title(msg.msg_dict['file_type'])
+                f_type = file_info.get_content_type()
+                file_label.set_label(str(f_type))
+
+    def cb_column_factory_size_bind(self, item_list):
+        '''___bind items in list view___'''
+
+        file_label = item_list.get_child()
+        item = item_list.get_item()
+
+        try:
+            file_info = item.query_info('*', Gio.FileQueryInfoFlags.NONE, None)
+        except Exception as e:
+            file_info = None
+
+        if file_info is not None:
+            if str(item.get_parent().get_path()) == str(sw_shortcuts):
+                swgs.column_view_size.set_title(msg.msg_dict['directory_size'])
+                app_dict = app_info(f'{item.get_path()}')
+                app_exec = app_dict['Exec'].replace(f'env "{sw_start}" ', '').strip('"')
+                size = 0
+                if Path(app_exec).exists():
+                    data = Path(Path(app_exec).parent)
+                    Thread(target=get_allocated_size, args=[size, data, file_label]).start()
+            else:
+                swgs.column_view_size.set_title(msg.msg_dict['file_size'])
+                f_size = file_info.get_size()
+
+                if len(str(f_size)) > 9:
+                    file_label.set_label(
+                        str(round(f_size/1024/1024/1024, 2))[0:5] + ' Gb')
+
+                if 6 < len(str(f_size)) <= 9:
+                    file_label.set_label(
+                        str(round(f_size/1024/1024, 2))[0:5] + ' Mb')
+
+                if len(str(f_size)) <= 6:
+                    file_label.set_label(
+                        str(round(f_size/1024, 2))[0:5] + ' Kb')
+
+    def cb_column_factory_uid_bind(self, item_list):
+        '''___bind items in list view___'''
+
+        file_label = item_list.get_child()
+        item = item_list.get_item()
+
+        try:
+            file_info = item.query_info('*', Gio.FileQueryInfoFlags.NONE, None)
+        except Exception as e:
+            file_info = None
+
+        if file_info is not None:
+            if str(item.get_parent().get_path()) == str(sw_shortcuts):
+                swgs.column_view_uid.set_title(msg.msg_dict['path'])
+                app_dict = app_info(f'{item.get_path()}')
+                app_exec = app_dict['Exec'].replace(f'env "{sw_start}" ', '').strip('"')
+                file_label.set_label(app_exec)
+                file_label.set_tooltip_markup(app_exec)
+            else:
+                swgs.column_view_uid.set_title(msg.msg_dict['user_group'])
+                f_uid = file_info.get_attribute_as_string("owner::user")
+                f_gid = file_info.get_attribute_as_string("owner::group")
+                try:
+                    st = os.stat(item.get_path())
+                except:
+                    permission = ''
+                else:
+                    permission = oct(st.st_mode)
+                    permission = list(permission[:-4:-1])
+                    permission.reverse()
+                    permission = ' '.join([access_dict[int(p)] for p in permission])
+
+                file_label.set_label(f'{f_uid} {f_gid}\n{msg.msg_dict["access"]}: {permission}')
+
+    def cb_column_factory_created_bind(self, item_list):
+        '''___bind items in list view___'''
+
+        file_label = item_list.get_child()
+        item = item_list.get_item()
+        try:
+            file_info = item.query_info('*', Gio.FileQueryInfoFlags.NONE, None)
+        except Exception as e:
+            file_info = None
+
+        if file_info is not None:
+            title = msg.msg_dict['file_date']
+            swgs.column_view_created.set_title(title)
+
+            if file_info.get_modification_date_time() is not None:
+                f_modified = file_info.get_modification_date_time().format('%c')
+            else:
+                f_modified = 'Unknown'
+
+            if file_info.get_creation_date_time() is not None:
+                f_created = file_info.get_creation_date_time().format('%c')
+            else:
+                f_created = 'Unknown'
+
+            file_label.set_label(f'{f_modified}\n{f_created}')
+
     def cb_volume_ops(self, volume):
         '''___mount unmount volume changed___'''
+
+        if scrolled_gvol.get_child() is None:
+            add_gvol_view()
 
         return update_gvolume()
 
@@ -6340,7 +7464,7 @@ def sw_activate(app):
             gmnt = gvol.get_mount()
 
             if (gmnt is None and gvol.can_mount()):
-                gvol.mount(Gio.MountMountFlags.NONE, gmount_ops, callback=gvol_mount)
+                gvol.mount(Gio.MountMountFlags.NONE, swgs.gmount_ops, callback=gvol_mount)
 
             elif gmnt is not None:
                 mount_path = gvol.get_mount().get_default_location().get_path()
@@ -6361,7 +7485,8 @@ def sw_activate(app):
 
     def update_grid_view_uri(new_uri):
 
-        global timeout_list
+        paned_store = get_list_store()
+        dir_list = get_dir_list()
 
         if str(new_uri).endswith('/'):
             new_uri = new_uri
@@ -6373,26 +7498,60 @@ def sw_activate(app):
         entry_path.set_name(str(new_uri))
 
         #os.chdir(new_uri)
-        app.cur_dir = Gio.File.new_for_uri(new_uri)
-        app.f_mon = app.cur_dir.monitor(Gio.FileMonitorFlags.WATCH_MOVES, None)
-        app.f_mon.connect('changed', g_file_monitor)
+        swgs.cur_dir = Gio.File.new_for_uri(new_uri)
+        swgs.f_mon = swgs.cur_dir.monitor(Gio.FileMonitorFlags.WATCH_MOVES, None)
+        swgs.f_mon.connect('changed', g_file_monitor)
 
         gfile = Gio.File.new_for_uri(new_uri)
-        ginfo = gfile.query_info('*', Gio.FileQueryInfoFlags.NONE)
 
-        if ginfo.get_content_type() == dir_mime_types[0]:
-            list_store.remove_all()
+        try:
+            ginfo = gfile.query_info('*', Gio.FileQueryInfoFlags.NONE)
+        except GLib.GError as e:
+            content_type = None
+        else:
+            content_type = ginfo.get_content_type()
+
+        if content_type is None:
+            on_files(sw_default_dir)
+
+        elif content_type == dir_mime_types[0]:
+            paned_store.remove_all()
             gfile_enum = gfile.enumerate_children('*', Gio.FileQueryInfoFlags.NONE)
-
             for g in gfile_enum:
                 uri_file = Gio.File.new_for_uri(f'{new_uri}{g.get_name()}')
-                list_store.append(uri_file)
+                paned_store.append(uri_file)
                 dir_list.set_file(uri_file)
+
+        elif content_type in bin_mime_types[0]:
+            gio_app_info = Gio.AppInfo.create_from_commandline(
+                                            new_uri, None,
+                                            Gio.AppInfoCreateFlags.SUPPORTS_URIS
+            )
+            try:
+                gio_app_info.launch_default_for_uri(new_uri)
+            except GLib.GError as e:
+                print(tc.RED, e, tc.END)
+                return dialog_info(text_message=str(e.message), message_type='ERROR').run()
+        else:
+            gio_app_info = Gio.AppInfo.get_default_for_type(content_type, True)
+            if gio_app_info is not None:
+                try:
+                    gio_app_info.launch_default_for_uri(new_uri)
+                except GLib.GError as e:
+                    print(e.message)
+            else:
+                ul = Gtk.UriLauncher()
+                ul.set_uri(new_uri)
+                try:
+                    ul.launch()
+                except GLib.GError as e:
+                    print(tc.RED, e.message, tc.END)
+                    return dialog_info(text_message=str(e.message), message_type='ERROR').run()
 
     def cb_eject_btn(self, gmount):
 
         dict_ini =  read_menu_conf()
-        gmount.unmount_with_operation(Gio.MountUnmountFlags.NONE, gmount_ops, callback=gmount_unmount)
+        gmount.unmount_with_operation(Gio.MountUnmountFlags.NONE, swgs.gmount_ops, callback=gmount_unmount)
 
     def gvol_mount(self, res):
         '''___mount operation finish___'''
@@ -6400,6 +7559,7 @@ def sw_activate(app):
             result = self.mount_finish(res)
         except GLib.GError as e:
             print(e)
+            dialog_info(text_message=str(e.message), message_type='ERROR').run()
         else:
             mount_path = self.get_mount().get_default_location().get_path()
 
@@ -6426,6 +7586,7 @@ def sw_activate(app):
             result = self.unmount_with_operation_finish(res)
         except GLib.GError as e:
             result = None
+            return dialog_info(text_message=str(e.message), message_type='ERROR').run()
         else:
             unmount_path = dict_ini['default_dir']
             if (unmount_path is not None
@@ -6538,10 +7699,10 @@ def sw_activate(app):
             mountpoint = data.get_string().split(':')[0]
             device = data.get_string().split(':')[1]
             name = f'{Path(mountpoint).stem}'
-            icon = IconPath.icon_harddisk
+            icon = IconPath.icon_drive
             if mountpoint == '/':
                 name = 'rootfs'
-                icon = IconPath.icon_harddisk
+                icon = IconPath.icon_drive
             if '/run/media' in mountpoint:
                 icon = IconPath.icon_usb
             if '/dev/loop' in mountpoint:
@@ -6552,7 +7713,7 @@ def sw_activate(app):
             label.set_text(name)
             image.set_from_file(icon)
             eject_btn.set_visible(False)
-            column_gvol_drive.set_title(msg.msg_dict['mount_options'])
+            swgs.column_gvol_drive.set_title(msg.msg_dict['mount_options'])
         else:
             image.set_from_gicon(data.get_icon())
             label.set_text(data.get_name())
@@ -6667,14 +7828,13 @@ def sw_activate(app):
                     size_bar.set_text(fmt_free)
                     size_bar.set_tooltip_markup(fmt_all)
 
-    def cb_bmarks_factory_setup(self, item_list):
+    def cb_bookmarks_factory_setup(self, item_list):
         '''___setup items in bookmarks list view___'''
 
         label_bookmark = Gtk.Label(
                             css_name='sw_label_desc',
                             xalign=0,
-                            wrap=True,
-                            natural_wrap_mode=True,
+                            ellipsize=Pango.EllipsizeMode.END,
                             margin_top=4,
                             margin_bottom=4,
                             margin_start=4,
@@ -6709,14 +7869,14 @@ def sw_activate(app):
         box_bookmark.append(label_bookmark)
         box_bookmark.append(btn_remove)
         btn_remove.connect('clicked', cb_btn_remove_bookmark)
-        ctrl_motion_bmark = Gtk.EventControllerMotion()
-        ctrl_motion_bmark.connect('enter', cb_ctrl_enter_bmark, btn_remove)
-        ctrl_motion_bmark.connect('leave', cb_ctrl_leave_bmark, btn_remove)
-        box_bookmark.add_controller(ctrl_motion_bmark)
+        ctrl_motion_bookmarks = Gtk.EventControllerMotion()
+        ctrl_motion_bookmarks.connect('enter', cb_ctrl_enter_bookmarks, btn_remove)
+        ctrl_motion_bookmarks.connect('leave', cb_ctrl_leave_bookmarks, btn_remove)
+        box_bookmark.add_controller(ctrl_motion_bookmarks)
 
         item_list.set_child(box_bookmark)
 
-    def cb_bmarks_factory_bind(self, item_list):
+    def cb_bookmarks_factory_bind(self, item_list):
         '''___bind items in bookmarks list view___'''
 
         item = item_list.get_item()
@@ -6733,9 +7893,9 @@ def sw_activate(app):
         box.set_tooltip_markup(str_item)
 
         try:
-            image.set_from_file(bmark_dict[str_item][0])
-            if bmark_dict[str_item][1] is not None:
-                label.set_label(bmark_dict[str_item][1])
+            image.set_from_file(bookmarks_dict[str_item][0])
+            if bookmarks_dict[str_item][1] is not None:
+                label.set_label(bookmarks_dict[str_item][1])
             else:
                 label.set_label(Path(str_item).name.capitalize())
         except:
@@ -6922,15 +8082,14 @@ def sw_activate(app):
         label_fonts.set_label(fonts_dict[item.get_label()])
 
     def cb_factory_dll_templates_setup(self, item_list):
-        ''''''
-        label = Gtk.Label(
-                        css_name='sw_label_view',
-                        xalign=0,
-        )
+        '''___setup dll templates in dropdown list___'''
+
+        label = Gtk.Label(css_name='sw_label_desc', xalign=0)
         item_list.set_child(label)
 
     def cb_factory_dll_templates_bind(self, item_list):
-        ''''''
+        '''___bind dll templates in dropdown list___'''
+
         item = item_list.get_item()
         label = item_list.get_child()
         label.set_label(item.get_label())
@@ -6955,15 +8114,20 @@ def sw_activate(app):
         '''___wine download request___'''
 
         def on_thread_wine():
+
             t = Thread(target=echo_func_name, args=(func_name,))
             t.start()
-            if dict_ini['restore_menu'] == 'on':
-                winedevice = []
-                thread_check_winedevice = Thread(target=check_winedevice, args=[winedevice])
-                thread_check_winedevice.start()
-                s_time = time()
-                parent.set_hide_on_close(True)
-                GLib.timeout_add(1000, check_alive, thread_check_winedevice, parent_back, s_time, None)
+
+            winedevice = []
+            thread_check_winedevice = Thread(target=check_winedevice, args=[winedevice])
+            thread_check_winedevice.start()
+
+            app_path = get_app_path()
+            app_name = get_out()
+            s_time = time()
+            parent.set_hide_on_close(True)
+
+            GLib.timeout_add(1000, check_alive, thread_check_winedevice, parent_back, (app_path, s_time), None)
 
         wine_ver = wine.replace('-amd64', '').replace('-x86_64', '')
         wine_ver = ''.join([e for e in wine_ver if not e.isalpha()]).strip('-')
@@ -6971,8 +8135,8 @@ def sw_activate(app):
         try:
             func_wine = wine_download_dict[wine]
         except KeyError as e:
-            text_message = f'{wine} ' + msg.msg_dict['is_not_installed']
-            dialog_question(app, f'{sw_program_name} Info', text_message, [msg.msg_dict['cancel'],], [on_stop,])
+            text_message = [f'{wine} ' + msg.msg_dict['is_not_installed'], '']
+            dialog_question(swgs, f'{sw_program_name} Info', text_message, [msg.msg_dict['cancel'],], [on_stop,])
         else:
             if func_wine == 'WINE_1':
                 name_ver = 'STAG_VER'
@@ -6986,34 +8150,43 @@ def sw_activate(app):
             if func_wine == 'WINE_4':
                 name_ver = 'STAG_VER'
 
-            if func_wine == 'WINE_5':
-                name_ver = 'LUTRIS_GE_VER'
-
             func_name = f'{name_ver}="{wine_ver}" WINE_OK=1 {func_wine} && RUN_VULKAN'
-            text_message = f"{wine} {msg.msg_dict['not_exists']}"
+            text_message = [f"{wine} {msg.msg_dict['not_exists']}", '']
             func = [on_thread_wine, on_stop]
-            dialog_question(app, None, text_message, None, func)
+            dialog_question(swgs, None, text_message, None, func)
 
-    def parent_back(s_time):
+    def parent_back(args):
         '''___restore the menu after exiting a running application___'''
 
+        app_path, s_time = args
         dict_ini = read_menu_conf()
+
         if dict_ini['auto_stop'] == 'on':
             on_stop()
 
-        parent.set_visible(True)
-        parent.set_hide_on_close(False)
+        if dict_ini['restore_menu'] == 'on':
+            parent.set_visible(True)
+            parent.set_hide_on_close(False)
+
         time_in = round(time() - s_time, 2)
         time_val = 'seconds'
 
-        if time_in > 60:
-            time_in = round(time_in / 60, 2)
-            time_val = 'minutes'
-        elif time_in > 3600:
-            time_in = round(time_in / 60, 2)
-            time_val = 'hours'
+        cache_name = (app_path.strip('"').replace(' ', '_').replace('/', '_')
+                    .replace('.', '_')
+        )
+        app_name = get_out()
+        app_stat_cache = f'{sw_fm_cache_stats}/{cache_name}'
+        fps_in = read_overlay_output(app_name)
 
-        print(f'{tc.VIOLET2}TIME_IN_THE_APP: {tc.GREEN}{time_in} {time_val}{tc.END}')
+        if not Path(app_stat_cache).exists():
+            open(app_stat_cache, 'w').close()
+
+        write_app_stat(app_stat_cache, 'Time', time_in)
+        print(f'{tc.VIOLET2}TIME_IN_THE_APP: {tc.GREEN}{time_in}{tc.END}')
+
+        if fps_in is not None:
+            write_app_stat(app_stat_cache, 'Fps', fps_in)
+            print(f'{tc.VIOLET2}AVERAGE_FPS: {tc.GREEN}{fps_in}{tc.END}')
 
     def check_winedevice(winedevice):
         '''___Check winedevice process___'''
@@ -7043,93 +8216,77 @@ def sw_activate(app):
     def on_start():
         '''___Running application in vulkan or opengl mode___'''
 
-        dict_ini = read_menu_conf()
+        app_path = get_app_path()
         app_name = get_out()
+        app_suffix = get_suffix()
+
         if app_name == 'StartWine':
             text_message = str_oops
             samples = f'{sw_sounds}/dialog/dialog-warning.oga'
             if Path(samples).exists():
-                try:
-                    Thread(target=media_play, args=(media_file, samples,
-                                                    media_controls, 1.0, False
-                                                    )).start()
-                except:
-                    pass
-
-            if revealer.get_reveal_child():
-                return overlay_info(overlay, None, text_message, None, 3)
-            else:
-                return dialog_info(app, text_message, 'INFO')
+                Thread(target=media_play, args=(media_file, samples,
+                                                media_controls, 1.0, False
+                                                )).start()
+            return overlay_info(overlay, None, text_message, None, 3)
         else:
             def run_(q):
                 '''___Running the executable in vulkan or opengl mode___'''
 
-                vulkan_dri = q[0]
-                vulkan_dri2 = q[1]
+                if len(q) > 0:
+                    try:
+                        vulkan_dri = q[0]
+                    except Exception as e:
+                        vulkan_dri = None
+                    else:
+                        if vulkan_dri == '' or vulkan_dri == 'llvmpipe':
+                            vulkan_dri = None
+                    try:
+                        vulkan_dri2 = q[1]
+                    except Exception as e:
+                        vulkan_dri2 = None
+                    else:
+                        if vulkan_dri2 == '' or vulkan_dri2 == 'llvmpipe':
+                            vulkan_dri2 = None
+                else:
+                    vulkan_dri = None
+                    vulkan_dri2 = None
+
                 app_path = get_app_path()
                 app_name = get_out()
                 app_suffix = get_suffix()
 
                 if app_suffix == '.lnk':
                     app_name, app_suffix, app_lnk_path = get_lnk_data(app_path)
-                    write_lnk_data(app_name, app_suffix, app_lnk_path)
+                    write_lnk_data(app_name, app_path, app_suffix, app_lnk_path)
 
                 app_conf = Path(f"{sw_app_config}/" + str(app_name))
                 app_conf_dict = app_conf_info(app_conf, switch_labels)
                 debug = app_conf_dict['WINEDBG_DISABLE'].split('=')[1]
 
-                if (str(vulkan_dri) == str('')
-                    and str(vulkan_dri2) == str('')):
-                        if (debug is None
-                            or debug == '1'):
-                                thread_start = Thread(target=run_opengl)
-                                thread_start.start()
-                        else:
-                            thread_start = Thread(target=debug_opengl)
-                            thread_start.start()
-
-                        t_info = GLib.timeout_add(100, wait_exe_proc, progress_main, app_suffix)
-                        timeout_list.append(t_info)
-
-                        if dict_ini['restore_menu'] == 'on':
-                            s_time = time()
-                            GLib.timeout_add(1000, check_alive, thread_start, parent_back, s_time, None)
-
-                elif (str(vulkan_dri) == str('llvmpipe')
-                    and str(vulkan_dri2) == str('llvmpipe')):
-                        if (debug is None
-                            or debug == '1'):
-                                thread_start = Thread(target=run_opengl)
-                                thread_start.start()
-                        else:
-                            thread_start = Thread(target=debug_opengl)
-                            thread_start.start()
-
-                        t_info = GLib.timeout_add(100, wait_exe_proc, progress_main, app_suffix)
-                        timeout_list.append(t_info)
-
-                        if dict_ini['restore_menu'] == 'on':
-                            s_time = time()
-                            GLib.timeout_add(1000, check_alive, thread_start, parent_back, s_time, None)
+                if vulkan_dri is None and vulkan_dri2 is None:
+                    if debug is None or debug == '1':
+                        thread_start = Thread(target=run_opengl)
+                        thread_start.start()
+                    else:
+                        thread_start = Thread(target=debug_opengl)
+                        thread_start.start()
                 else:
-                    if (debug is None
-                        or debug == '1'):
-                            thread_start = Thread(target=run_vulkan)
-                            thread_start.start()
+                    if debug is None or debug == '1':
+                        thread_start = Thread(target=run_vulkan)
+                        thread_start.start()
                     else:
                         thread_start = Thread(target=debug_vulkan)
                         thread_start.start()
 
-                    t_info = GLib.timeout_add(100, wait_exe_proc, progress_main, app_suffix)
-                    timeout_list.append(t_info)
+                t_info = GLib.timeout_add(100, wait_exe_proc, progress_main, app_suffix)
+                timeout_list.append(t_info)
 
-                    winedevice = []
-                    thread_check_winedevice = Thread(target=check_winedevice, args=[winedevice])
-                    thread_check_winedevice.start()
+                winedevice = []
+                thread_check_winedevice = Thread(target=check_winedevice, args=[winedevice])
+                thread_check_winedevice.start()
 
-                    if dict_ini['restore_menu'] == 'on':
-                        s_time = time()
-                        GLib.timeout_add(1000, check_alive, thread_check_winedevice, parent_back, s_time, None)
+                s_time = time()
+                GLib.timeout_add(1000, check_alive, thread_check_winedevice, parent_back, (app_path, s_time), None)
 
             def wait_exe_proc(bar, app_suffix):
                 '''___Waiting for the executing process to close the menu___'''
@@ -7144,6 +8301,7 @@ def sw_activate(app):
                     environ['FRAGMENT_NUM'] = getenv('FRAGMENT_INDEX')
                     return False
 
+                stack_progress_main.set_visible_child(progress_main_grid)
                 bar.set_visible(True)
                 bar.set_show_text(True)
                 bar.set_text(progress_dict['app_loading'])
@@ -7152,20 +8310,9 @@ def sw_activate(app):
 
             wine = check_wine()
             if wine is not None:
-                app_name = get_out()
-                app_suffix = get_suffix()
-
                 if app_suffix == '.lnk':
-                    app_name = get_lnk_name(app_path)
-                    app_suffix = get_lnk_suffix(app_path)
-
-                    if app_name is None:
-                        text_message = msg.msg_dict['lnk_error']
-                        return dialog_info(app, text_message, 'ERROR')
-
-                    if app_suffix is None:
-                        text_message = msg.msg_dict['lnk_error']
-                        return dialog_info(app, text_message, 'ERROR')
+                    app_name, app_suffix, app_lnk_path = get_lnk_data(app_path)
+                    write_lnk_data(app_name, app_path, app_suffix, app_lnk_path)
 
                 request_wine(wine)
                 t_info = GLib.timeout_add(100, wait_exe_proc, progress_main, app_suffix)
@@ -7175,7 +8322,8 @@ def sw_activate(app):
                 t = Thread(target=vulkan_info, args=(q,))
                 t.start()
                 f = run_
-                GLib.timeout_add(100, check_alive, t, f, q, parent)
+                t_info = GLib.timeout_add(100, check_alive, t, f, q, parent)
+                timeout_list.append(t_info)
 
 ####___Create_shortcut___.
 
@@ -7220,8 +8368,7 @@ def sw_activate(app):
                     write_changed_wine(func_wine)
                     start_mode()
                     if stack_sidebar.get_visible_child() == frame_create_shortcut:
-                        btn_back_main.set_visible(False)
-                        stack_sidebar.set_visible_child(frame_main)
+                        on_back_main()
                 else:
                     btn_back_main.set_visible(False)
                     t = Thread(target=cs_path, args=(func_wine, app_name, app_path))
@@ -7241,7 +8388,12 @@ def sw_activate(app):
         app_path = get_app_path()
         app_name = get_out()
         func_wine = latest_wine_dict[self.get_name()]
-        on_cs_wine(app_name, app_path, func_wine)
+
+        if func_wine is None:
+            message = msg.msg_dict['wine_not_found']
+            dialog_info(text_message=message, message_type='ERROR').run()
+        else:
+            on_cs_wine(app_name, app_path, func_wine)
 
     def cb_btn_cs_wine_custom(self, position):
         '''___create shortcut with changed custom wine___'''
@@ -7253,7 +8405,7 @@ def sw_activate(app):
         wc_label = self.get_model().get_item(position).get_label()
 
         on_cs_wine(app_name, app_path, func_wine)
-        popover_wines.popdown()
+        swgs.popover_wines.popdown()
 
     def cb_factory_wine_custom_setup(self, item_list):
 
@@ -7284,7 +8436,7 @@ def sw_activate(app):
 
     def update_wine_custom_store():
 
-        list_store_wine_custom.remove_all()
+        swgs.list_store_wine_custom.remove_all()
 
         cw_file = []
 
@@ -7320,7 +8472,7 @@ def sw_activate(app):
                     )
                     cw = str(Path(cw).parent.parent).replace(f'{sw_wine}/', '')
                     label = Gtk.Label(label=cn, name=Path(cw))
-                    list_store_wine_custom.append(label)
+                    swgs.list_store_wine_custom.append(label)
 
         t = Thread(target=check_wine_path, args=[cw_file])
         t.start()
@@ -7331,21 +8483,19 @@ def sw_activate(app):
     def cb_btn_menu_wine_custom(self):
         '''___show pop up wine custom menu___'''
 
-        scrolled_wine_custom.set_max_content_height(parent.get_height() / 2)
+        swgs.scrolled_wine_custom.set_max_content_height(parent.get_height() / 2)
         update_wine_custom_store()
-        popover_wines.popup()
+        swgs.popover_wines.popup()
 
 ####___Prefix_tools___.
 
     def on_prefix_tools():
         '''___show prefix tools menu___'''
 
-        if top_headerbar_start_box.get_first_child() is not None:
-            if top_headerbar_start_box.get_first_child().get_name() == 'btn_back_main':
-                btn_back_main.set_visible(True)
-        else:
-            top_headerbar_start_box.attach(btn_back_main, 0, 0, 1, 1)
+        if scrolled_prefix_tools.get_child() is None:
+            add_prefix_tools_menu()
 
+        btn_back_main.set_visible(True)
         stack_sidebar.set_visible_child(frame_prefix_tools)
         on_pfx_dropdown()
 
@@ -7353,7 +8503,7 @@ def sw_activate(app):
         '''___setup change wine items___'''
 
         item = item_list.get_item()
-        label = Gtk.Label()
+        label = Gtk.Label(css_name='sw_label_desc')
         label.set_xalign(0)
         item_list.set_child(label)
 
@@ -7396,10 +8546,10 @@ def sw_activate(app):
         app_conf = Path(f"{sw_app_config}/" + str(app_name))
         app_conf_dict = app_conf_info(app_conf, ['SW_USE_PFX'])
 
-        if not '="pfx_default"' in app_conf_dict[dropdown_change_pfx.get_name()]:
-            dropdown_change_pfx.set_selected(1)
+        if not '="pfx_default"' in app_conf_dict[swgs.dropdown_change_pfx.get_name()]:
+            swgs.dropdown_change_pfx.set_selected(1)
         else:
-            dropdown_change_pfx.set_selected(0)
+            swgs.dropdown_change_pfx.set_selected(0)
 
     def cb_btn_prefix_tools(self):
         '''___prefix tools buttons signal handler___'''
@@ -7544,12 +8694,10 @@ def sw_activate(app):
     def on_wine_tools():
         '''___show wine tools menu___'''
 
-        if top_headerbar_start_box.get_first_child() is not None:
-            if top_headerbar_start_box.get_first_child().get_name() == 'btn_back_main':
-                btn_back_main.set_visible(True)
-        else:
-            top_headerbar_start_box.attach(btn_back_main, 0, 0, 1, 1)
+        if scrolled_wine_tools.get_child() is None:
+            add_wine_tools_menu()
 
+        btn_back_main.set_visible(True)
         stack_sidebar.set_visible_child(frame_wine_tools)
         Thread(target=update_wine_list).start()
 
@@ -7558,7 +8706,7 @@ def sw_activate(app):
 
         item = item_list.get_item()
         label = Gtk.Label(
-                        css_name='sw_label_popover',
+                        css_name='sw_label_desc',
                         ellipsize=Pango.EllipsizeMode.END,
                         xalign=0,
         )
@@ -7575,7 +8723,8 @@ def sw_activate(app):
     def update_wine_list():
         '''___udate wine list in dropdown model___'''
 
-        change_wine_store.remove_all()
+        winever_data, latest_wine_dict, wine_download_dict = get_wine_dicts()
+        swgs.change_wine_store.remove_all()
 
         cw_file = []
         for r, d, f in walk(sw_wine):
@@ -7597,8 +8746,9 @@ def sw_activate(app):
 
         for w in wine_list:
             wine_dir = latest_wine_dict[w]
-            label = Gtk.Label(label=wine_dir, name=f'{wine_dir}')
-            change_wine_store.append(label)
+            if wine_dir is not None:
+                label = Gtk.Label(label=wine_dir, name=f'{wine_dir}')
+                swgs.change_wine_store.append(label)
 
         if len(cw_file) > 0:
             for cw in cw_file:
@@ -7608,7 +8758,7 @@ def sw_activate(app):
                                 .replace('/dist', '')
                 )
                 label = Gtk.Label(label=cn, name=Path(cn))
-                change_wine_store.append(label)
+                swgs.change_wine_store.append(label)
 
         set_selected_wine()
 
@@ -7639,9 +8789,9 @@ def sw_activate(app):
         app_conf_dict = app_conf_info(app_conf, ['SW_USE_WINE'])
         exported_wine = app_conf_dict['SW_USE_WINE'].split('=')[-1]
 
-        for n, x in enumerate(change_wine_store):
+        for n, x in enumerate(swgs.change_wine_store):
             if f'="{x.get_name()}"' == f'={exported_wine}':
-                dropdown_change_wine.set_selected(n)
+                swgs.dropdown_change_wine.set_selected(n)
                 print(f'{tc.VIOLET2}SELECTED_WINE:', tc.GREEN, x.get_name(), tc.END)
 
     def cb_btn_wine_tools(self):
@@ -7756,27 +8906,26 @@ def sw_activate(app):
         if reveal_stack.get_visible_child() == scrolled_winetricks:
             pass
         else:
+            add_winetricks_view()
             update_dll_store()
 
             pfx_path = get_pfx_path()
             pfx_label = get_pfx_name()[1]
-            winetricks_title.set_label(vl_dict['winetricks'] + f' ({pfx_label})')
+            swgs.winetricks_title.set_label(vl_dict['winetricks'] + f' ({pfx_label})')
 
-            revealer.set_reveal_child(True)
             on_show_hidden_widgets(vw_dict['winetricks'])
 
             reveal_stack.set_visible_child(scrolled_winetricks)
-            scrolled_dll.set_min_content_width(width*0.2)
-            scrolled_fonts.set_min_content_width(width*0.2)
+            swgs.scrolled_dll.set_min_content_width(width*0.2)
+            swgs.scrolled_fonts.set_min_content_width(width*0.2)
 
-            set_parent_size()
             update_color_scheme()
 
     def on_tab_dll(self):
-        stack_tabs.set_visible_child(scrolled_dll)
+        swgs.stack_tabs.set_visible_child(swgs.scrolled_dll)
 
     def on_tab_fonts(self):
-        stack_tabs.set_visible_child(scrolled_fonts)
+        swgs.stack_tabs.set_visible_child(swgs.scrolled_fonts)
 
     def on_dll_toggled(self, label, pic):
         '''___check_dll_list_on_toggle_button___'''
@@ -7813,7 +8962,7 @@ def sw_activate(app):
         bar = progress_main
         bar.set_name('install_dll')
         changed_dll = list(dict.fromkeys(install_dll_list))
-        sample_dll = dropdown_dll_templates.get_selected_item().get_name().split(' ')
+        sample_dll = swgs.dropdown_dll_templates.get_selected_item().get_name().split(' ')
 
         w_log = get_dll_info(get_pfx_path())
         for w in w_log:
@@ -7834,12 +8983,7 @@ def sw_activate(app):
                                                     )).start()
                 except:
                     pass
-
-            if revealer.get_reveal_child():
-                return overlay_info(overlay, None, text_message, None, 3)
-            else:
-                return dialog_info(app, text_message, 'INFO')
-
+            return overlay_info(overlay, None, text_message, None, 3)
         else:
             t = Thread(target=install_dll, args=[dll_list])
             t.start()
@@ -7873,16 +9017,67 @@ def sw_activate(app):
     def on_download_wine():
         '''___show wine download list___'''
 
-        return set_settings_widget(
-                            scrolled_install_wine,
-                            vw_dict['install_wine'],
-                            None,
-        )
+        if (stack_sidebar.get_visible_child() != frame_main
+            and stack_sidebar.get_visible_child() != frame_wine_tools):
+                on_back_main()
+        else:
+            btn_back_main.set_visible(True)
+
+        if scrolled_install_wine.get_child() is not None:
+            if reveal_stack.get_visible_child_name() != vw_dict['install_wine']:
+                set_settings_widget(vw_dict['install_wine'], None)
+                update_wine_view()
+            else:
+                activate_install_wine_settings()
+                update_wine_view()
+        else:
+            add_wine_view()
+            update_wine_view()
+            activate_install_wine_settings()
+
+    def cb_btn_update_wine_view(self):
+        '''Check and update wine list from sources'''
+        return on_update_wine_view()
+
+    def on_update_wine_view():
+        '''Check and update wine list from sources'''
+
+        t = Thread(target=echo_func_name, args=('try_get_wine_ver',))
+        t.start()
+        progress_main.set_name('install_wine')
+        timeout_info = GLib.timeout_add(100, progress_on_thread, progress_main, t, None)
+        timeout_list.append(timeout_info)
+
+    def update_wine_view():
+
+        winever_data, latest_wine_dict, wine_download_dict = get_wine_dicts()
+        for wine, dropdown in zip(wine_list, dropdown_download_wine_list):
+            download_wine_model = dropdown.get_model()
+            download_wine_model.remove_all()
+
+            if winever_data is not None:
+                for x in winever_data[wine].split(' '):
+                    if x != '':
+                        wine_dir = Gtk.StringObject.new(str(Path(Path(x).stem).stem))
+                        wine_dir_list.append(Path(Path(x).stem).stem)
+                        download_wine_model.append(wine_dir)
+
+    def cb_factory_dropdown_wine_setup(self, item_list):
+
+        label = Gtk.Label(css_name='sw_label_desc', xalign=0)
+        item_list.set_child(label)
+
+    def cb_factory_dropdown_wine_bind(self, item_list):
+
+        item = item_list.get_item()
+        label = item_list.get_child()
+        label.set_label(item.get_string())
+        label.set_name(item.get_string())
 
     def cb_dropdown_download_wine(self, position):
         '''___dropdown changed wine version to download___'''
-        wine_ver = self.get_model().get_item(position).get_string()
-        activate_install_wine_settings()
+
+        return activate_install_wine_settings()
 
     def cb_btn_download_wine(self, dropdown):
         '''___download changed wine___'''
@@ -7914,11 +9109,6 @@ def sw_activate(app):
             t.start()
             GLib.timeout_add(100, progress_on_thread, bar, t, None)
 
-        elif self.get_name() == 'WINE_5' :
-            t = Thread(target=cb_btn_wine_5, args=[wine_ver])
-            t.start()
-            GLib.timeout_add(100, progress_on_thread, bar, t, None)
-
     def cb_btn_remove_wine(self, dropdown):
         '''___remove changed wine___'''
 
@@ -7946,11 +9136,6 @@ def sw_activate(app):
 
         elif self.get_name() == 'RM_WINE_4' :
             t = Thread(target=cb_btn_rm_wine_4, args=[wine_ver])
-            t.start()
-            GLib.timeout_add(100, progress_on_thread, bar, t, None)
-
-        elif self.get_name() == 'RM_WINE_5' :
-            t = Thread(target=cb_btn_rm_wine_5, args=[wine_ver])
             t.start()
             GLib.timeout_add(100, progress_on_thread, bar, t, None)
 
@@ -8002,18 +9187,6 @@ def sw_activate(app):
         wine_name = f"RM_WINE_4"
         echo_wine(wine_name, name_ver, wine_ver)
 
-    def cb_btn_wine_5(wine_ver):
-
-        name_ver="LUTRIS_GE_VER"
-        wine_name = f"WINE_5"
-        echo_wine(wine_name, name_ver, wine_ver)
-
-    def cb_btn_rm_wine_5(wine_ver):
-
-        name_ver="LUTRIS_GE_VER"
-        wine_name = f"RM_WINE_5"
-        echo_wine(wine_name, name_ver, wine_ver)
-
     def cb_btn_source_wine(self):
 
         if self.get_name() == 'wine_staging':
@@ -8036,11 +9209,19 @@ def sw_activate(app):
     def on_install_launchers():
         '''___show launchers grid view___'''
 
-        return set_settings_widget(
-                            scrolled_install_launchers,
-                            vw_dict['install_launchers'],
-                            None,
-        )
+        if stack_sidebar.get_visible_child() != frame_main:
+            on_back_main()
+        else:
+            btn_back_main.set_visible(True)
+
+        if scrolled_install_launchers.get_child() is not None:
+            if reveal_stack.get_visible_child_name() != vw_dict['install_launchers']:
+                return set_settings_widget(vw_dict['install_launchers'], None)
+            else:
+                activate_install_launchers_settings()
+        else:
+            add_install_launchers_view()
+            activate_install_launchers_settings()
 
     def cb_btn_install_launchers(self):
 
@@ -8072,102 +9253,73 @@ def sw_activate(app):
     def on_settings():
         '''___show settings menu___'''
 
-        if top_headerbar_start_box.get_first_child() is not None:
-            if top_headerbar_start_box.get_first_child().get_name() == 'btn_back_main':
-                btn_back_main.set_visible(True)
-        else:
-            top_headerbar_start_box.attach(btn_back_main, 0, 0, 1, 1)
+        if scrolled_settings.get_child() is None:
+            add_settings_menu()
 
+        btn_back_main.set_visible(True)
         stack_sidebar.set_visible_child(frame_settings)
 
     def cb_btn_settings(self):
         '''___show settings submenu___'''
 
         if self.get_name() == settings_dict['launch_settings']:
-
             image_next.unparent()
             self.get_child().append(image_next)
-            return set_settings_widget(
-                                    scrolled_launch_settings,
-                                    vw_dict['launch_settings'],
-                                    pref_group_title
-                                    )
+            return on_launch_settings()
+
         if self.get_name() == settings_dict['mangohud_settings']:
             image_next.unparent()
             self.get_child().append(image_next)
-            return set_settings_widget(
-                                    scrolled_mangohud_settings,
-                                    vw_dict['mangohud_settings'],
-                                    pref_group_mh_title
-                                    )
+            return on_mangohud_settings()
+
         if self.get_name() == settings_dict['vkbasalt_settings']:
             image_next.unparent()
             self.get_child().append(image_next)
-            return set_settings_widget(
-                                    scrolled_vkbasalt_settings,
-                                    vw_dict['vkbasalt_settings'],
-                                    pref_group_vk_title
-                                    )
-        if self.get_name() == settings_dict['colors_settings']:
-            image_next.unparent()
-            self.get_child().append(image_next)
-            return set_settings_widget(
-                                    scrolled_colors_settings,
-                                    vw_dict['colors_settings'],
-                                    colors_mh_title
-                                    )
-        if self.get_name() == settings_dict['global_settings']:
-            image_next.unparent()
-            self.get_child().append(image_next)
-            return set_settings_widget(
-                                    scrolled_global_settings,
-                                    vw_dict['global_settings'],
-                                    None
-                                    )
+            return on_vkbasalt_settings()
+
         if self.get_name() == settings_dict['set_app_default']:
             return cb_btn_app_conf_default()
-
-        if self.get_name() == settings_dict['set_menu_default']:
-            return cb_btn_menu_json_default()
 
         if self.get_name() == settings_dict['clear_shader_cache']:
             return cb_btn_clear_shader_cache()
 
-    def set_settings_widget(widget, view_widget, title):
+    def set_settings_widget(view_widget, title):
         '''___activate settings submenu___'''
 
         app_name = get_out()
         try:
             on_app_conf_activate(view_widget)
-        except KeyError as e:
-            text_message = (
-                            msg.msg_dict['app_conf_incorrect']
-                            + f' {app_name}. '
-                            + msg.msg_dict['app_conf_reset']
-            )
-            func = [{app_conf_reset_request : (widget, view_widget, title)}, None]
-            dialog_question(app, None, text_message, None, func)
+        except Exception as e:
+            print(e)
+            if reveal_stack.get_visible_child().get_name() == 'launch_settings':
+                text_message = [
+                                msg.msg_dict['app_conf_incorrect'] + f' {app_name}.',
+                                msg.msg_dict['app_conf_reset']
+                ]
+                func = [{app_conf_reset_request : (view_widget, title)}, None]
+                dialog_question(swgs, None, text_message, None, func)
         else:
-            set_settings(widget, view_widget, title)
+            if reveal_stack.get_visible_child().get_name() != view_widget:
+                set_settings_page(view_widget, title)
 
-    def app_conf_reset_request(args):
+    def app_conf_reset_request(view_widget, title):
         '''___Request for reset application settings___'''
 
-        widget, view_widget, title = args
         on_app_conf_default()
-        set_settings(widget, view_widget, title)
+        set_settings_page(view_widget, title)
 
-    def set_settings(widget, view_widget, title):
+    def set_settings_page(view_widget, title):
         '''___show settings submenu___'''
 
         app_name = get_out()
         on_show_hidden_widgets(view_widget)
+        widget = reveal_stack.get_child_by_name(view_widget)
 
         if title is not None:
             if app_name == 'StartWine':
                 title.set_label(
                                 vl_dict[view_widget]
-                                + f' (StartWine General)'
+                                + f' (StartWine)'
                 )
             else:
                 title.set_label(
@@ -8178,20 +9330,12 @@ def sw_activate(app):
         if not widget.is_visible():
             widget.set_visible(True)
 
-        if revealer.get_reveal_child():
-            visible_name = str(reveal_stack.get_visible_child().get_name())
+        visible_name = str(reveal_stack.get_visible_child().get_name())
 
-            if visible_name in view_widgets and visible_name != view_widget:
-                reveal_stack.set_visible_child(widget)
-                if widget == Gtk.ScrolledWindow():
-                    widget.set_min_content_width(width*0.2)
-                set_parent_size()
-        else:
-            revealer.set_reveal_child(True)
+        if visible_name in view_widgets and visible_name != view_widget:
             reveal_stack.set_visible_child(widget)
-            if widget == Gtk.ScrolledWindow():
+            if type(widget) == Gtk.ScrolledWindow:
                 widget.set_min_content_width(width*0.2)
-            set_parent_size()
 
         update_color_scheme()
 
@@ -8212,7 +9356,6 @@ def sw_activate(app):
                 on_app_conf_activate(vw_dict['launch_settings'])
                 on_app_conf_activate(vw_dict['mangohud_settings'])
                 on_app_conf_activate(vw_dict['vkbasalt_settings'])
-                on_app_conf_activate(vw_dict['colors_settings'])
                 start_mode()
         else:
             try:
@@ -8223,22 +9366,21 @@ def sw_activate(app):
                 on_app_conf_activate(vw_dict['launch_settings'])
                 on_app_conf_activate(vw_dict['mangohud_settings'])
                 on_app_conf_activate(vw_dict['vkbasalt_settings'])
-                on_app_conf_activate(vw_dict['colors_settings'])
                 start_mode()
 
     def cb_btn_app_conf_default():
         '''___request reset apllication config to default___'''
 
-        text_message = msg.msg_dict['reset_settings']
+        text_message = [msg.msg_dict['reset_settings'], '']
         func = [on_app_conf_default, None]
-        dialog_question(app, None, text_message, None, func)
+        dialog_question(swgs, None, text_message, None, func)
 
-    def cb_btn_menu_json_default():
+    def cb_btn_menu_json_default(self):
         '''___request reset menu config to default___'''
 
-        text_message = msg.msg_dict['reset_settings']
+        text_message = [msg.msg_dict['reset_settings'], '']
         func = [on_menu_conf_default, None]
-        dialog_question(app, None, text_message, None, func)
+        dialog_question(swgs, None, text_message, None, func)
 
     def on_menu_conf_default():
         '''___request reset menu configuration to default___'''
@@ -8247,14 +9389,76 @@ def sw_activate(app):
         clear_cache_dir()
         check_bookmarks()
         check_css_custom()
+        on_app_conf_activate(vw_dict['global_settings'])
+        activate_global_settings()
         #clear_app_icons()
+
+    def activate_global_settings():
+
+        dict_ini = read_menu_conf()
+        global scheme
+        scheme = dict_ini.get('color_scheme')
+        update_color_scheme()
+        btn_scale_icons.set_value(int(dict_ini.get('icon_size')))
+        btn_scale_shortcuts.set_value(int(dict_ini.get('shortcut_size')))
+        sw_current_dir = dict_ini.get('current_dir')
+
+        if dict_ini.get('autostart') == '1':
+            swgs.switch_autostart.set_active(True)
+        else:
+            swgs.switch_autostart.set_active(False)
+
+        if dict_ini.get('opengl_bg') == 'True':
+            swgs.switch_opengl.set_active(True)
+            swgs.dropdown_shaders.set_sensitive(True)
+        else:
+            swgs.switch_opengl.set_active(False)
+            swgs.dropdown_shaders.set_sensitive(False)
+
+        count = -1
+        for lang in lang_labels:
+            count += 1
+            if dict_ini.get('language') in lang:
+                swgs.dropdown_lang.set_selected(count)
+
+        if dict_ini.get('icons') == 'custom':
+            swgs.switch_icons.set_active(True)
+        else:
+            swgs.switch_icons.set_active(False)
+            gtk_settings.props.gtk_icon_theme_name = "SWSuru++"
+
+        if dict_ini.get('restore_menu') == 'on':
+            swgs.switch_restore_menu.set_active(True)
+        else:
+            swgs.switch_restore_menu.set_active(False)
+
+        if dict_ini.get('auto_stop') == 'on':
+            swgs.switch_auto_stop.set_active(True)
+        else:
+            swgs.switch_auto_stop.set_active(False)
+
+        if dict_ini.get('auto_hide_top_header') == 'on':
+            swgs.switch_auto_hide_top.set_active(True)
+        else:
+            swgs.switch_auto_hide_top.set_active(False)
+            top_headerbar_revealer.set_reveal_child(True)
+
+        if dict_ini.get('auto_hide_bottom_header') == 'on':
+            swgs.switch_auto_hide_bottom.set_active(True)
+        else:
+            swgs.switch_auto_hide_bottom.set_active(False)
+            bottom_headerbar_revealer.set_reveal_child(True)
+
+        swgs.entry_def_dir.set_placeholder_text(dict_ini.get('default_dir'))
+        swgs.dropdown_shaders.set_selected(int(dict_ini.get('shader_src')))
+        parent.set_default_size(int(dict_ini.get('width')), int(dict_ini.get('height')))
 
     def cb_btn_clear_shader_cache():
         '''___request clear shader cache___'''
 
-        text_message = msg.msg_dict['clear_shader_cache']
+        text_message = [msg.msg_dict['clear_shader_cache'], '']
         func = [on_clear_shader_cache, None]
-        dialog_question(app, None, text_message, None, func)
+        dialog_question(swgs, None, text_message, None, func)
 
     def on_clear_shader_cache():
         '''___clear shader cache___'''
@@ -8304,6 +9508,21 @@ def sw_activate(app):
         print(f'{tc.RED}Clear shader cache...')
 
 ####___Launch_settings___.
+
+    def on_launch_settings():
+        '''___open application settings menu___'''
+
+        on_settings()
+        if scrolled_launch_settings.get_child() is not None:
+            if reveal_stack.get_visible_child().get_name() != vw_dict['launch_settings']:
+                set_settings_widget(
+                                vw_dict['launch_settings'],
+                                swgs.pref_group_title
+                )
+            else:
+                pass
+        else:
+            add_launch_settings_view()
 
     def app_conf_chooser(data):
         '''___application configuration chooser window___'''
@@ -8459,7 +9678,7 @@ def sw_activate(app):
 
         label_header = Gtk.Label(
                         css_name='sw_label',
-                        label=ctx_dict['select_all'],
+                        label=ctx_dict['select_all'][0],
         )
         pic_header = Gtk.Picture(
                         css_name='sw_uncheck',
@@ -8527,7 +9746,7 @@ def sw_activate(app):
         headerbar.pack_end(ok)
         win = Gtk.Window(
                         css_name='sw_window',
-                        application=app,
+                        application=swgs,
                         titlebar=headerbar,
                         modal=True,
                         child=apps_grid,
@@ -8600,6 +9819,7 @@ def sw_activate(app):
 
         if x_settings == vw_dict['mangohud_settings']:
             activate_mangohud_settings()
+            activate_colors_settings()
 
         ####___Activate vkbasalt settings___.
 
@@ -8608,22 +9828,24 @@ def sw_activate(app):
 
         ####___Activate colors settings___.
 
-        if x_settings == vw_dict['colors_settings']:
+        if x_settings == vw_dict['global_settings']:
             activate_colors_settings()
 
     def activate_install_wine_settings():
         '''___disable button if launchers is installed___'''
 
         for b, d in zip(btn_iw_list, dropdown_download_wine_list):
-            b.get_parent().set_visible_child_name(b.get_name())
+            if b.get_parent() is not None:
+                b.get_parent().set_visible_child_name(b.get_name())
         else:
             for wine_dir in wine_dir_list:
                 for b, d in zip(btn_iw_list, dropdown_download_wine_list):
-                    ver = d.get_selected_item().get_string()
-                    if (wine_dir == ver
-                        and Path(f'{sw_wine}/{wine_dir}/bin/wine').exists()):
-                            b.get_parent().set_visible_child_name(f'RM_{b.get_name()}')
-                            break
+                    if b.get_parent() is not None:
+                        ver = d.get_selected_item().get_string()
+                        if (wine_dir == ver
+                            and Path(f'{sw_wine}/{wine_dir}/bin/wine').exists()):
+                                b.get_parent().set_visible_child_name(f'RM_{b.get_name()}')
+                                break
 
     def activate_install_launchers_settings():
         '''___disable button if launchers is installed___'''
@@ -8641,6 +9863,7 @@ def sw_activate(app):
                     if s_isallnum == i_stem:
                         for b in btn_il_list:
                             if i.stem.split('_')[-2].replace(' ', '_') == b.get_name():
+                                b.remove_css_class('install')
                                 b.remove_css_class('installing')
                                 b.add_css_class('installed')
                                 b.get_first_child().get_last_child().set_label(msg.msg_dict['installed'])
@@ -8698,10 +9921,10 @@ def sw_activate(app):
                     row.set_selected(count)
 
         count = -1
-        for mode in fsr_mode:
+        for mode in fsr_mode.keys():
             count += 1
             for row in row_combo_list:
-                if f'="{mode}"' in combo_dict[row.get_name()]:
+                if f'="{fsr_mode[mode]}"' in combo_dict[row.get_name()]:
                     row.set_selected(count)
 
         for s in switch_ls_list:
@@ -8711,13 +9934,13 @@ def sw_activate(app):
                 s.set_active(False)
 
         fps_value = float(fps_dict[export_fps_limit].split('=')[1].strip('"'))
-        btn_spin_fps.set_value(fps_value)
+        swgs.btn_spin_fps.set_value(fps_value)
 
         cpu_value = cpu_dict[export_cpu_topology].split('=')[1].split(':')[0].strip('"')
         if cpu_value == "":
             cpu_value = 0.0
 
-        btn_spin_cpu.set_value(float(cpu_value))
+        swgs.btn_spin_cpu.set_value(float(cpu_value))
 
     def activate_mangohud_settings():
         '''___set mangohud settings from application config___'''
@@ -8862,7 +10085,7 @@ def sw_activate(app):
         '''___setup item in combobox item list___'''
 
         item = item_list.get_item()
-        label = Gtk.Label()
+        label = Gtk.Label(css_name='sw_label_desc')
         label.set_xalign(0)
         item_list.set_child(label)
 
@@ -8946,11 +10169,11 @@ def sw_activate(app):
         ####___fsr mode___.
 
         if 'FSR_MODE' in self.get_name():
-            if i in fsr_mode:
+            if i in fsr_mode.keys():
                 app_conf.write_text(
                     app_conf.read_text().replace(
                         app_conf_dict[self.get_name()],
-                        app_conf_dict[self.get_name()].split('=')[0] + f'="{i}"'
+                        app_conf_dict[self.get_name()].split('=')[0] + f'="{fsr_mode[i]}"'
                     )
                 )
 
@@ -8979,6 +10202,8 @@ def sw_activate(app):
         if combo.get_selected() != 0:
             t = Thread(target=on_regedit_patch)
             t.start()
+            stack_progress_main.set_visible_child(progress_main_grid)
+            progress_main.set_visible(True)
             progress_main.set_show_text(True)
             progress_main.set_text(msg.tt_dict['registry'])
             spinner.start()
@@ -9044,7 +10269,6 @@ def sw_activate(app):
                     app_conf_dict[self.get_name()].replace('0','1')
                 )
             )
-#            environ[f'{self.get_name()}'] = '1'
 
         elif not self.get_active():
             app_conf.write_text(
@@ -9053,9 +10277,22 @@ def sw_activate(app):
                     app_conf_dict[self.get_name()].replace('1','0')
                 )
             )
-#            environ[f'{self.get_name()}'] = '0'
 
 ####___Mangohud_settings___.
+
+    def on_mangohud_settings():
+
+        on_settings()
+        if scrolled_mangohud_settings.get_child() is not None:
+            if reveal_stack.get_visible_child_name() != vw_dict['mangohud_settings']:
+                return set_settings_widget(
+                                    vw_dict['mangohud_settings'],
+                                    swgs.pref_group_mh_title,
+                )
+            else:
+                pass
+        else:
+            add_mangohud_settings_view()
 
     def on_mango_flow_activated(self, child, btn_switch_mh):
         '''___activate flowbox child in mangohud settings___'''
@@ -9227,35 +10464,88 @@ def sw_activate(app):
         '''___apply custom color scheme___'''
 
         css_change_list.clear()
+        avg_colors = dict()
+        css_string_list = sw_css_custom.read_text().splitlines()
+        count = 0
+        for entry, invert in zip(entry_theme_color_list, invert_dcolors):
+            color = f" {entry.get_text()};"
+            split_color = entry.get_text().replace('rgba', '').replace('rgb', '')[1:-1].split(',')
+            avg_color = (int(split_color[0]) + int(split_color[1]) + int(split_color[2])) / 3
+            r = int(split_color[0])
+            g = int(split_color[1])
+            b = int(split_color[2])
 
-        for entry in entry_theme_color_list:
-            get_rgb = entry.get_text().replace('rgba', '').replace('rgb', '')[1:-1].split(',')
+            if avg_color < 64:
+                avg_color = avg_color + 192
 
-            if len(get_rgb) == 3:
-                r = int(get_rgb[0])
-                g = int(get_rgb[1])
-                b = int(get_rgb[2])
-                color = f" #{r:02x}{g:02x}{b:02x};"
-            else:
-                color = f" {entry.get_text()};"
+            elif 64 <= avg_color < 96:
+                avg_color = avg_color + 128
 
-            css_change_list.append(entry.get_name() + color)
-            css_string_list = sw_css_custom.read_text().splitlines()
+            elif 96 <= avg_color < 128:
+                avg_color = avg_color + 96
 
-            for string in css_string_list:
-                for change in css_change_list:
-                    c = change.split(' ')[0] + ' ' + change.split(' ')[1]
-                    if c in string:
+            elif 128 <= avg_color < 160:
+                avg_color = avg_color - 96
+
+            elif 160 <= avg_color < 192:
+                avg_color = avg_color - 128
+
+            elif 192 <= avg_color <= 255:
+                avg_color = avg_color - 192
+
+            avg_colors[f'{invert}'] = f' rgba({int(avg_color)},{int(avg_color)},{int(avg_color)}, 1.0);'
+
+            print(entry.get_name())
+            if entry.get_name() == '@define-color sw_accent_fg_color':
+                define_ipc = '@define-color sw_invert_progress_color'
+                invert_progress_color = f' rgba({255 - r},{255 - g},{255 - b},1.0);'
+                for string in css_string_list:
+                    if define_ipc in string:
                         sw_css_custom.write_text(
                             sw_css_custom.read_text().replace(
                                 string,
-                                change
+                                define_ipc + invert_progress_color
                             )
                         )
+
+            change = entry.get_name() + color
+            for string in css_string_list:
+                if entry.get_name() in string:
+                    sw_css_custom.write_text(
+                        sw_css_custom.read_text().replace(
+                            string,
+                            change
+                        )
+                    )
+        else:
+            for string in css_string_list:
+                for k, v in avg_colors.items():
+                    if k in string:
+                        sw_css_custom.write_text(
+                            sw_css_custom.read_text().replace(
+                                string,
+                                k + v
+                            )
+                        )
+
         on_toggled_custom(btn_custom, pic_custom)
         btn_custom.set_active(True)
 
 ####___VkBasalt_settings___.
+
+    def on_vkbasalt_settings():
+
+        on_settings()
+        if scrolled_vkbasalt_settings.get_child() is not None:
+            if reveal_stack.get_visible_child_name() != vw_dict['vkbasalt_settings']:
+                return set_settings_widget(
+                                    vw_dict['vkbasalt_settings'],
+                                    swgs.pref_group_vk_title,
+                )
+            else:
+                pass
+        else:
+            add_vkbasalt_settings_view()
 
     def on_vk_flow_activated(self, child, btn_switch_vk):
 
@@ -9307,6 +10597,25 @@ def sw_activate(app):
 
 ###___Global_settings___.
 
+    def on_global_settings():
+
+        if stack_sidebar.get_visible_child() != frame_main:
+            on_back_main()
+            btn_back_main.set_visible(True)
+        else:
+            btn_back_main.set_visible(True)
+
+        if scrolled_global_settings.get_child() is not None:
+            if reveal_stack.get_visible_child_name() != vw_dict['global_settings']:
+                return set_settings_widget(
+                                    vw_dict['global_settings'],
+                                    None,
+                )
+            else:
+                pass
+        else:
+            add_global_settings_view()
+
     def get_folder(self, res, window):
 
         try:
@@ -9314,25 +10623,20 @@ def sw_activate(app):
         except GLib.GError as e:
             result = None
         else:
-            entry_def_dir.set_text(str(result.get_path()))
+            swgs.entry_def_dir.set_text(str(result.get_path()))
             on_def_dir()
 
-        window.destroy()
         return result
 
     def cb_btn_def_dir(self):
 
-        window = Gtk.Window(css_name='sw_window', application=app)
-        window.remove_css_class('background')
-        window.add_css_class('sw_background')
-        window.set_size_request(480, 260)
         title = 'Change Directory'
-        dialog = dialog_directory(app, title)
+        dialog = dialog_directory(title)
         dialog.select_folder(
-                    parent=window,
+                    parent=parent,
                     cancellable=Gio.Cancellable(),
                     callback=get_folder,
-                    user_data=window,
+                    user_data=parent,
                     )
 
     def cb_entry_def_dir(self, position):
@@ -9343,7 +10647,7 @@ def sw_activate(app):
     def on_def_dir():
         '''___set the default directory to open files___'''
 
-        string = entry_def_dir.get_text()
+        string = swgs.entry_def_dir.get_text()
         if (string != ''
             and Path(string).exists()):
                 dict_ini = read_menu_conf()
@@ -9359,17 +10663,13 @@ def sw_activate(app):
                                                     )).start()
                 except:
                     pass
-
-            if revealer.get_reveal_child():
-                return overlay_info(overlay, None, text_message, None, 3)
-            else:
-                return dialog_info(app, text_message, 'INFO')
+            return overlay_info(overlay, None, text_message, None, 3)
 
     def on_lang_setup(self, item_list):
         '''___setup language item list___'''
 
         item = item_list.get_item()
-        label = Gtk.Label()
+        label = Gtk.Label(css_name='sw_label_desc')
         label.set_xalign(0)
         item_list.set_child(label)
 
@@ -9395,7 +10695,7 @@ def sw_activate(app):
         '''___setup shaders item list___'''
 
         item = item_list.get_item()
-        label = Gtk.Label()
+        label = Gtk.Label(css_name='sw_label_desc')
         label.set_xalign(0)
         item_list.set_child(label)
 
@@ -9435,25 +10735,12 @@ def sw_activate(app):
         if self.get_active():
             environ['SW_OPENGL'] = '1'
             dict_ini['opengl_bg'] = 'True'
-            dropdown_shaders.set_sensitive(True)
+            swgs.dropdown_shaders.set_sensitive(True)
 
         elif not self.get_active():
             environ['SW_OPENGL'] = '0'
             dict_ini['opengl_bg'] = 'False'
-            dropdown_shaders.set_sensitive(False)
-
-        write_menu_conf(dict_ini)
-
-    def on_switch_menu_size(self, state):
-        '''___write compact or full menu size mode to menu config___'''
-
-        dict_ini = read_menu_conf()
-
-        if self.get_active():
-            dict_ini['compact_mode'] = 'True'
-
-        if not self.get_active():
-            dict_ini['compact_mode'] = 'False'
+            swgs.dropdown_shaders.set_sensitive(False)
 
         write_menu_conf(dict_ini)
 
@@ -9480,22 +10767,39 @@ def sw_activate(app):
 
         write_menu_conf(dict_ini)
 
+    def get_sys_icons():
+        '''___try get system icons theme___'''
+
+        sys_icons = getenv('SW_GTK_ICON_THEME')
+        if sys_icons is None:
+            gtk_ini = f'{Path.home()}/.config/gtk-3.0/settings.ini'
+            if Path(gtk_ini).exists():
+                sys_icons = [x.split('=')[1] for x in Path(gtk_ini).read_text().splitlines() if 'gtk-icon-theme-name=' in x]
+                if sys_icons != []:
+                    sys_icons = sys_icons[0]
+                else:
+                    sys_icons = 'SWSuru++'
+            else:
+                sys_icons = 'SWSuru++'
+        else:
+            sys_icons = 'SWSuru++'
+
+        return sys_icons
+
     def on_switch_icons(self, state):
         '''___switch icons theme___'''
 
         gtk_settings = Gtk.Settings.get_for_display(display)
-        sys_icons = getenv('SW_GTK_ICON_THEME')
+        sys_icons = get_sys_icons()
         dict_ini = read_menu_conf()
 
         if self.get_active():
             dict_ini['icons'] = 'custom'
-            gtk_settings.reset_property('gtk-icon_theme-name')
             gtk_settings.props.gtk_icon_theme_name = f"{sys_icons}"
             print(f'{tc.VIOLET}SYSTEM_ICONS: {tc.BLUE}{sys_icons}')
 
         if not self.get_active():
             dict_ini['icons'] = 'builtin'
-            gtk_settings.reset_property('gtk-icon_theme-name')
             gtk_settings.props.gtk_icon_theme_name = "SWSuru++"
             print(f'{tc.VIOLET}BUILTIN_ICONS: {tc.BLUE}SWSuru++')
 
@@ -9527,6 +10831,55 @@ def sw_activate(app):
 
         write_menu_conf(dict_ini)
 
+    def on_switch_auto_hide_top_header(self, state):
+        '''___switch auto hide headers mode___'''
+
+        dict_ini = read_menu_conf()
+
+        if self.get_active():
+            dict_ini['auto_hide_top_header'] = 'on'
+            environ['SW_AUTO_HIDE_TOP_HEADER'] = '1'
+            top_headerbar_revealer.set_reveal_child(False)
+
+        if not self.get_active():
+            dict_ini['auto_hide_top_header'] = 'off'
+            environ['SW_AUTO_HIDE_TOP_HEADER'] = '0'
+            top_headerbar_revealer.set_reveal_child(True)
+
+        write_menu_conf(dict_ini)
+
+    def on_switch_auto_hide_bottom_header(self, state):
+        '''___switch auto hide headers mode___'''
+
+        dict_ini = read_menu_conf()
+
+        if self.get_active():
+            dict_ini['auto_hide_bottom_header'] = 'on'
+            environ['SW_AUTO_HIDE_BOTTOM_HEADER'] = '1'
+            bottom_headerbar_revealer.set_reveal_child(False)
+
+        if not self.get_active():
+            dict_ini['auto_hide_bottom_header'] = 'off'
+            environ['SW_AUTO_HIDE_BOTTOM_HEADER'] = '0'
+            bottom_headerbar_revealer.set_reveal_child(True)
+
+        write_menu_conf(dict_ini)
+
+    def on_switch_tray():
+        '''___enable or disable tray at startup___'''
+
+        dict_ini = read_menu_conf()
+        if dict_ini['on_tray'] == 'True':
+            dict_ini['on_tray'] = 'False'
+        else:
+            dict_ini['on_tray'] = 'True'
+
+        write_menu_conf(dict_ini)
+
+    def on_controller_settings():
+        '''______'''
+        pass
+
 ####___About___.
 
     def check_sw_update():
@@ -9542,11 +10895,11 @@ def sw_activate(app):
             t.start()
         else:
             stack_sidebar.set_visible_child(frame_stack)
-            grid = stack_about.get_child_by_name(self.get_name())
-            btn_back_about.unparent()
-            label_back_about.set_label(about_dict[self.get_name()])
-            grid.attach(btn_back_about,0,0,1,1)
-            stack_about.set_visible_child_name(self.get_name())
+            grid = swgs.stack_about.get_child_by_name(self.get_name())
+            swgs.btn_back_about.unparent()
+            swgs.label_back_about.set_label(about_dict[self.get_name()])
+            grid.attach(swgs.btn_back_about,0,0,1,1)
+            swgs.stack_about.set_visible_child_name(self.get_name())
 
     def cb_btn_back_about(self):
         '''___back to main about submenu page___'''
@@ -9556,19 +10909,18 @@ def sw_activate(app):
     def on_about():
         '''___show_about_menu___'''
 
-        str_sw_version = check_sw_version()
-        title_news.set_label(sw_program_name + ' ' + str_sw_version,)
-        about_version.set_label(str_sw_version)
+        if scrolled_about.get_child() is None:
+            add_about()
 
-        if top_headerbar_start_box.get_first_child() is not None:
-            if top_headerbar_start_box.get_first_child().get_name() == 'btn_back_main':
-                btn_back_main.set_visible(True)
-        else:
-            top_headerbar_start_box.attach(btn_back_main, 0, 0, 1, 1)
+        str_sw_version = check_sw_version()
+        swgs.title_news.set_label(sw_program_name + ' ' + str_sw_version,)
+        swgs.about_version.set_label(str_sw_version)
+
+        if not sidebar_revealer.get_reveal_child():
+            on_sidebar()
 
         if stack_sidebar.get_visible_child() != frame_main:
-            stack_sidebar.set_visible_child(frame_main)
-            btn_back_main.set_visible(False)
+            on_back_main()
         else:
             btn_back_main.set_visible(True)
             stack_sidebar.set_visible_child(frame_about)
@@ -9599,7 +10951,13 @@ def sw_activate(app):
         '''___open web page about donation___'''
 
         if self.get_name() != '':
-            self.set_uri(self.get_name())
+            if (self.get_name().startswith('https://')
+                or self.get_name().startswith('http://')):
+                    self.set_uri(self.get_name())
+            else:
+                clipboard.set(str(self.get_name()))
+                text_message = msg.msg_dict['copied_to_clipboard']
+                return overlay_info(overlay, None, text_message, None, 3)
 
 ####___Debug___.
 
@@ -9649,20 +11007,13 @@ def sw_activate(app):
         label_btn_start.set_visible(True)
         progress_main.set_fraction(0.0)
         progress_main.set_show_text(False)
-
+        progress_main.set_visible(False)
+        stack_progress_main.set_visible_child(stack_panel)
         spinner.stop()
 
         overlay_info(overlay, None, msg.msg_dict['termination'], None, 3)
         cmd = f"{sw_scripts}/sw_stop"
         Popen(cmd, shell=True)
-
-    def set_parent_size():
-        '''___resize parent window, when expand menu___'''
-
-        sw_width, sw_height = read_parent_state()
-        parent.set_default_size(sw_width, sw_height)
-        gl_cover.set_size_request(640,540)
-        parent.set_resizable(True)
 
     def cb_btn_popover_colors(self):
         '''___popup cloor scheme chooser menu___'''
@@ -9672,7 +11023,12 @@ def sw_activate(app):
     def cb_btn_popover_scale(self):
         '''___popup icon scale button___'''
 
-        popover_scale.popup()
+        path = Path(entry_path.get_name())
+
+        if path == sw_shortcuts:
+            popover_scale_sc.popup()
+        else:
+            popover_scale.popup()
 
     def on_toggled_dark(self, pic):
         '''___toggle color scheme___'''
@@ -9696,11 +11052,11 @@ def sw_activate(app):
 
         css_provider.load_from_file(Gio.File.new_for_path(bytes(sw_css_dark)))
         Gtk.StyleContext.add_provider_for_display(
-            display,
-            css_provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-            )
-
+                                        display,
+                                        css_provider,
+                                        Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
+        set_define_colors()
         start_mode()
 
     def on_toggled_light(self, pic):
@@ -9725,11 +11081,11 @@ def sw_activate(app):
 
         css_provider.load_from_file(Gio.File.new_for_path(bytes(sw_css_light)))
         Gtk.StyleContext.add_provider_for_display(
-            display,
-            css_provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-            )
-
+                                        display,
+                                        css_provider,
+                                        Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
+        set_define_colors()
         start_mode()
 
     def on_toggled_custom(self, pic):
@@ -9754,11 +11110,11 @@ def sw_activate(app):
 
         css_provider.load_from_file(Gio.File.new_for_path(bytes(sw_css_custom)))
         Gtk.StyleContext.add_provider_for_display(
-            display,
-            css_provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-            )
-
+                                        display,
+                                        css_provider,
+                                        Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
+        set_define_colors()
         start_mode()
 
     def cb_btn_icon_position(self):
@@ -9774,26 +11130,28 @@ def sw_activate(app):
             dict_ini['icon_position'] = 'horizontal'
             write_menu_conf(dict_ini)
 
-        current_path = entry_path.get_name()
-        update_grid_view(current_path)
+        parent_file = get_parent_file()
+        if parent_file.get_path() is not None:
+            update_grid_view(parent_file.get_path())
+        else:
+            update_grid_view_uri(parent_file.get_uri())
 
     def cb_ctrl_enter_overlay(self, x, y, label_revealer, image):
         '''___cursor position signal handler___'''
 
         label_revealer.set_reveal_child(True)
-        get_dominant_color(image)
 
     def cb_ctrl_leave_overlay(self, label_revealer, image):
         '''___cursor position signal handler___'''
 
         label_revealer.set_reveal_child(False)
 
-    def cb_ctrl_enter_bmark(self, x, y, btn_remove):
+    def cb_ctrl_enter_bookmarks(self, x, y, btn_remove):
         '''___cursor position signal handler___'''
 
         btn_remove.set_visible(True)
 
-    def cb_ctrl_leave_bmark(self, btn_remove):
+    def cb_ctrl_leave_bookmarks(self, btn_remove):
         '''___cursor position signal handler___'''
 
         btn_remove.set_visible(False)
@@ -9807,10 +11165,7 @@ def sw_activate(app):
         '''___cursor position signal handler___'''
 
         reveal_start_mode.set_reveal_child(True)
-
         image_start_mode.add_css_class('sw_blur')
-        btn_shortcuts.add_css_class('sw_custom')
-        btn_create_shortcut.add_css_class('sw_custom')
 
     def cb_ctrl_leave_start_mode(self):
         '''___activate, when cursor leave widget___'''
@@ -9821,10 +11176,7 @@ def sw_activate(app):
         '''___cursor position signal handler___'''
 
         reveal_start_mode.set_reveal_child(False)
-
         image_start_mode.remove_css_class('sw_blur')
-        btn_shortcuts.remove_css_class('sw_custom')
-        btn_create_shortcut.remove_css_class('sw_custom')
 
     def cb_btn_sidebar(self):
         '''___reveal show or hide main menu___'''
@@ -9849,11 +11201,9 @@ def sw_activate(app):
 
             if sidebar_revealer.get_reveal_child():
                 sidebar_revealer.set_reveal_child(False)
-                overlay_panel.set_visible(True)
                 btn_back_main.set_visible(False)
             else:
                 sidebar_revealer.set_reveal_child(True)
-                overlay_panel.set_visible(False)
                 if stack_sidebar.get_visible_child() != frame_main:
                     btn_back_main.set_visible(True)
 
@@ -9870,32 +11220,46 @@ def sw_activate(app):
     def on_bookmarks():
         '''___show or hide bookmarks list___'''
 
+        if scrolled_bookmarks.get_child() is None:
+            add_bookmarks_menu()
+
         if not sidebar_revealer.get_reveal_child():
             sidebar_revealer.set_reveal_child(True)
-            overlay_panel.set_visible(False)
             update_bookmarks()
             stack_sidebar.set_visible_child(frame_bookmarks)
             update_color_scheme()
-
-            if top_headerbar_start_box.get_first_child() is not None:
-                if top_headerbar_start_box.get_first_child().get_name() == 'btn_back_main':
-                    btn_back_main.set_visible(True)
-            else:
-                top_headerbar_start_box.attach(btn_back_main, 0, 0, 1, 1)
+            btn_back_main.set_visible(True)
 
         elif stack_sidebar.get_visible_child() == frame_bookmarks:
-            stack_sidebar.set_visible_child(frame_main)
-            btn_back_main.set_visible(False)
+            on_back_main()
         else:
             update_bookmarks()
             stack_sidebar.set_visible_child(frame_bookmarks)
             update_color_scheme()
+            btn_back_main.set_visible(True)
 
-            if top_headerbar_start_box.get_first_child() is not None:
-                if top_headerbar_start_box.get_first_child().get_name() == 'btn_back_main':
-                    btn_back_main.set_visible(True)
-            else:
-                top_headerbar_start_box.attach(btn_back_main, 0, 0, 1, 1)
+    def cb_btn_overlay(self):
+        '''___main buttons signal handler___'''
+
+        if self.get_name() == 'btn_next':
+            return cb_btn_next(self)
+
+        if self.get_name() == 'btn_prev':
+            return cb_btn_prev(self)
+
+    def cb_ctrl_scroll_view(self, x, y, data):
+        '''___mouse scroll event to scroll gridview___'''
+
+        if self.get_unit() == Gdk.ScrollUnit.WHEEL:
+            data.append(y)
+            if y == -1.0:
+                if len(data) > 3:
+                    data.clear()
+                    cb_btn_overlay(self.get_widget().get_last_child().get_first_child())
+            elif y == 1.0:
+                if len(data) > 3:
+                    data.clear()
+                    cb_btn_overlay(self.get_widget().get_first_child().get_first_child())
 
     def cb_btn_next(self):
         '''___activate next view list___'''
@@ -9907,54 +11271,31 @@ def sw_activate(app):
         return on_next()
 
     def on_next():
-        '''___show next view list___'''
+        '''___show next view page___'''
 
         w_name = str(reveal_stack.get_visible_child().get_name())
+        if w_name == 'files' or w_name == 'web_view' or w_name == 'winetricks':
+            w_name = 'shortcuts'
 
-        if (w_name == vw_dict['files']
-            and Path(entry_path.get_name()) == sw_shortcuts):
-                return set_settings_widget(
-                                scrolled_launch_settings,
-                                vw_dict['launch_settings'],
-                                pref_group_title
-                                )
-        elif w_name == vw_dict['launch_settings']:
-            return set_settings_widget(
-                                scrolled_mangohud_settings,
-                                vw_dict['mangohud_settings'],
-                                pref_group_mh_title
-                                )
-        elif w_name == vw_dict['mangohud_settings']:
-            return set_settings_widget(
-                                scrolled_vkbasalt_settings,
-                                vw_dict['vkbasalt_settings'],
-                                pref_group_vk_title
-                                )
-        elif w_name == vw_dict['vkbasalt_settings']:
-            return set_settings_widget(
-                                scrolled_colors_settings,
-                                vw_dict['colors_settings'],
-                                colors_mh_title
-                                )
-        elif w_name == vw_dict['colors_settings']:
-            return set_settings_widget(
-                                scrolled_global_settings,
-                                vw_dict['global_settings'],
-                                None
-                                )
-        elif w_name == vw_dict['global_settings']:
-            return on_winetricks()
+        w_next = next_vw_dict[w_name]
 
-        elif w_name == vw_dict['winetricks']:
+        if w_next == 'launch_settings':
+            return on_launch_settings()
+        if w_next == 'mangohud_settings':
+            return on_mangohud_settings()
+        if w_next == 'vkbasalt_settings':
+            return on_vkbasalt_settings()
+        if w_next == 'global_settings':
+            return on_global_settings()
+        if w_next == 'install_wine':
+            return on_download_wine()
+        if w_next == 'install_launchers':
             return on_install_launchers()
-
-        elif  w_name == vw_dict['install_launchers']:
-                return on_shortcuts()
-        else:
+        if w_next == 'shortcuts':
             return on_shortcuts()
 
     def cb_btn_prev(self):
-        '''___show previous view list___'''
+        '''___show previous view page___'''
 
         self.set_sensitive(False)
         self.set_can_focus(False)
@@ -9963,50 +11304,28 @@ def sw_activate(app):
         return on_prev()
 
     def on_prev():
+        '''___show previous view page___'''
 
         w_name = str(reveal_stack.get_visible_child().get_name())
+        if w_name == 'files' or w_name == 'web_view' or w_name == 'winetricks':
+            w_name = 'shortcuts'
 
-        if (w_name == vw_dict['files']
-            and Path(entry_path.get_name()) == sw_shortcuts):
-                return on_install_launchers()
+        w_prev = prev_vw_dict[w_name]
 
-        elif w_name == vw_dict['launch_settings']:
+        if w_prev == 'install_launchers':
+            return on_install_launchers()
+        if w_prev == 'shortcuts':
             return on_shortcuts()
-
-        elif w_name == vw_dict['mangohud_settings']:
-            return set_settings_widget(
-                                    scrolled_launch_settings,
-                                    vw_dict['launch_settings'],
-                                    pref_group_title
-                                    )
-        elif w_name == vw_dict['vkbasalt_settings']:
-            return set_settings_widget(
-                                    scrolled_mangohud_settings,
-                                    vw_dict['mangohud_settings'],
-                                    pref_group_mh_title
-                                    )
-        elif w_name == vw_dict['colors_settings']:
-            return set_settings_widget(
-                                    scrolled_vkbasalt_settings,
-                                    vw_dict['vkbasalt_settings'],
-                                    pref_group_vk_title
-                                    )
-        elif w_name == vw_dict['global_settings']:
-            return set_settings_widget(
-                                    scrolled_colors_settings,
-                                    vw_dict['colors_settings'],
-                                    colors_mh_title
-                                    )
-        elif w_name == vw_dict['winetricks']:
-            return set_settings_widget(
-                                scrolled_global_settings,
-                                vw_dict['global_settings'],
-                                None
-                                )
-        elif w_name == vw_dict['install_launchers']:
-            return on_winetricks()
-        else:
-            return on_shortcuts()
+        if w_prev == 'launch_settings':
+            return on_launch_settings()
+        if w_prev == 'mangohud_settings':
+            return on_mangohud_settings()
+        if w_prev == 'vkbasalt_settings':
+            return on_vkbasalt_settings()
+        if w_prev == 'global_settings':
+            return on_global_settings()
+        if w_prev == 'install_wine':
+            return on_download_wine()
 
     def set_btn_sensitive(btn_widget):
         '''___set sensitive button in overlay control panel___'''
@@ -10014,7 +11333,7 @@ def sw_activate(app):
         btn_widget.set_sensitive(True)
         btn_widget.set_can_focus(True)
         btn_widget.set_focusable(True)
-        btn_widget.grab_focus()
+        #btn_widget.grab_focus()
 
     def get_sm_icon(app_name):
         '''___get application icon for start mode in sidebar___'''
@@ -10030,7 +11349,7 @@ def sw_activate(app):
         if app_name == 'StartWine':
             app_icon = f'{sw_gui_icons}/{sw_logo}'
         else:
-            if getenv('sm_image') == 'horizontal':
+            if getenv('SW_SIDEBAR_IMAGE') == 'horizontal':
                 for icon in  Path(f'{sw_app_hicons}').iterdir():
                     app_name_isalnum = ''.join(e for e in app_name if e.isalnum())
                     if app_name_isalnum == str(Path(icon).name).split('_')[0]:
@@ -10042,7 +11361,7 @@ def sw_activate(app):
                     else:
                         app_icon = f'{sw_gui_icons}/{sw_logo}'
 
-            elif getenv('sm_image') == 'vertical':
+            elif getenv('SW_SIDEBAR_IMAGE') == 'vertical':
                 for icon in  Path(f'{sw_app_vicons}').iterdir():
                     app_name_isalnum = ''.join(e for e in app_name if e.isalnum())
                     if app_name_isalnum == str(Path(icon).name).split('_')[0]:
@@ -10104,8 +11423,8 @@ def sw_activate(app):
 
         app_icon = get_sm_icon(app_name)
         set_label_wine_mode(app_dict)
-        set_selected_wine()
-        vk_adjustment.set_value(float(app_dict['export SW_USE_VKBASALT_CAS'][1:-1])*100)
+        #set_selected_wine()
+        #vk_adjustment.set_value(float(app_dict['export SW_USE_VKBASALT_CAS'][1:-1])*100)
 
         return set_print_start_info(app_name, app_icon, app_dict, True)
 
@@ -10114,110 +11433,131 @@ def sw_activate(app):
 
         clear_tmp()
         dict_ini = read_menu_conf()
-        app_name = get_out()
-        app_path = get_app_path()
 
-        if sw_expand_menu == 'True':
-            if sw_compact_mode == 'False':
-                parent.set_resizable(True)
-                btn_popover_scale.set_visible(True)
+        if dict_ini['view_widget'] == vw_dict['shortcuts']:
+            on_shortcuts()
 
-                if (app_name != 'StartWine'
-                    and not Path(f'{sw_shortcuts}/{app_name}.swd').exists()):
-                        on_files(Path(Path(app_path.strip('"')).parent))
+        elif dict_ini['view_widget'] == vw_dict['install_launchers']:
+            on_install_launchers()
 
-                        label_frame_create_shortcut.set_label(msg.msg_dict['cs'])
-                        response = [
-                                    msg.msg_dict['run'].title(),
-                                    msg.msg_dict['cs'].title(),
-                                    msg.msg_dict['cancel'].title(),
-                        ]
-                        start_mode()
-                        title = msg.msg_dict['choose']
-                        func = [on_start, on_message_cs, None]
-                        dialog_question(app, title, None, response, func)
+        elif dict_ini['view_widget'] == vw_dict['files']:
+            sw_current_dir = dict_ini['current_dir']
 
-                elif sw_view_widget == vw_dict['shortcuts']:
-                    on_shortcuts()
-
-                elif sw_view_widget == vw_dict['install_launchers']:
-                    on_install_launchers()
-
-                elif sw_view_widget == vw_dict['files']:
-                    sw_current_dir = dict_ini['current_dir']
-                    if Path(sw_current_dir).exists():
-                        on_files(Path(sw_current_dir))
-                    else:
-                        sw_default_dir = dict_ini['default_dir']
-                        on_files(Path(sw_default_dir))
-                else:
-                    sw_default_dir = dict_ini['default_dir']
-                    on_files(Path(sw_default_dir))
-
-                if sw_control_panel == 'hide':
-                    sidebar_revealer.set_reveal_child(False)
-                    overlay_panel.set_visible(True)
-
-                elif sw_control_panel == 'show':
-                    sidebar_revealer.set_reveal_child(True)
-                    overlay_panel.set_visible(False)
+            if Path(sw_current_dir).exists():
+                on_files(Path(sw_current_dir))
             else:
-                on_hide_widgets()
-                sidebar_revealer.set_reveal_child(True)
-                switch_menu_size.set_active(True)
+                sw_default_dir = dict_ini['default_dir']
+                on_files(Path(sw_default_dir))
         else:
-            if sw_compact_mode == 'True':
-                switch_menu_size.set_active(True)
+            sw_default_dir = dict_ini['default_dir']
+            on_files(Path(sw_default_dir))
 
-            on_hide_widgets()
+        if dict_ini['view_mode'] == 'column':
+            if scrolled_left_files.get_child().get_name() != 'left_column_view':
+                add_column_view()
+            else:
+                scrolled_left_files.set_child(left_grid_view)
+
+        if dict_ini['control_panel'] == 'hide':
+            sidebar_revealer.set_reveal_child(False)
+
+        elif dict_ini['control_panel'] == 'show':
             sidebar_revealer.set_reveal_child(True)
 
-        if sw_color_scheme == 'dark':
+        if dict_ini['color_scheme'] == 'dark':
             btn_dark.set_active(True)
 
-        if sw_color_scheme == 'light':
+        if dict_ini['color_scheme'] == 'light':
             btn_light.set_active(True)
 
-        if sw_color_scheme == 'custom':
+        if dict_ini['color_scheme'] == 'custom':
             btn_custom.set_active(True)
 
-        if sw_autostart == '1':
-            switch_autostart.set_active(True)
-        else:
-            switch_autostart.set_active(False)
-
-        if sw_opengl_bg == 'True':
-            switch_opengl.set_active(True)
-            dropdown_shaders.set_sensitive(True)
-        else:
-            switch_opengl.set_active(False)
-            dropdown_shaders.set_sensitive(False)
-
-        count = -1
-        for lang in lang_labels:
-            count += 1
-            if dict_ini['language'] in lang:
-                dropdown_lang.set_selected(count)
-
         if dict_ini['icons'] == 'custom':
-            switch_icons.set_active(True)
+            sys_icons = get_sys_icons()
+            gtk_settings.props.gtk_icon_theme_name = f"{sys_icons}"
+            print(f'{tc.VIOLET}SYSTEM_ICONS: {tc.BLUE}{sys_icons}')
         else:
-            switch_icons.set_active(False)
-            gtk_settings.reset_property('gtk-icon_theme-name')
             gtk_settings.props.gtk_icon_theme_name = "SWSuru++"
+            print(f'{tc.VIOLET}BUILTIN_ICONS: {tc.BLUE}SWSuru++')
 
-        if dict_ini['restore_menu'] == 'on':
-            switch_restore_menu.set_active(True)
+        if dict_ini['auto_hide_top_header'] == 'on':
+            environ['SW_AUTO_HIDE_TOP_HEADER'] = '1'
+            top_headerbar_revealer.set_reveal_child(False)
         else:
-            switch_restore_menu.set_active(False)
+            environ['SW_AUTO_HIDE_TOP_HEADER'] = '0'
+            top_headerbar_revealer.set_reveal_child(True)
 
-        if dict_ini['auto_stop'] == 'on':
-            switch_auto_stop.set_active(True)
+        if dict_ini['auto_hide_bottom_header'] == 'on':
+            environ['SW_AUTO_HIDE_BOTTOM_HEADER'] = '1'
+            bottom_headerbar_revealer.set_reveal_child(False)
         else:
-            switch_auto_stop.set_active(False)
+            environ['SW_AUTO_HIDE_BOTTOM_HEADER'] = '0'
+            bottom_headerbar_revealer.set_reveal_child(True)
 
-        dropdown_shaders.set_selected(int(dict_ini['shader_src']))
-        preload_runlib(True)
+        #"WenQuanYi Micro Hei 12" #"Sans 12"
+        gtk_settings.props.gtk_font_name = "Noto Sans 12"
+        gtk_settings.props.gtk_application_prefer_dark_theme = True
+        gtk_settings.props.gtk_theme_name = "Sw-dark"
+
+    def read_parent_state():
+        '''___read parent window state from config___'''
+
+        dict_ini = read_menu_conf()
+        sw_width = int(dict_ini['width'])
+        sw_height = int(dict_ini['height'])
+
+        return sw_width, sw_height
+
+    def on_write_parent_state(self):
+        '''___write parent window state in config___'''
+
+        parent.set_hide_on_close(True)
+        return write_parent_state()
+
+    def write_parent_state():
+        '''___write parent window state in config___'''
+
+        clear_tmp()
+        dict_ini = read_menu_conf()
+
+        h = parent.get_height()
+        w = parent.get_width()
+        w_name = str(reveal_stack.get_visible_child().get_name())
+
+        if Path(entry_path.get_name()) == sw_shortcuts:
+            dict_ini['view_widget'] = vw_dict['shortcuts']
+            dict_ini['current_dir'] = entry_path.get_name()
+        else:
+            dict_ini['view_widget'] = vw_dict['files']
+            dict_ini['current_dir'] = entry_path.get_name()
+
+        if scrolled_left_files.get_child().get_name() == 'left_column_view':
+            dict_ini['view_mode'] = 'column'
+        else:
+            dict_ini['view_mode'] = 'grid'
+
+        if not sidebar_revealer.get_reveal_child():
+            dict_ini['control_panel'] = 'hide'
+        else:
+            dict_ini['control_panel'] = 'show'
+
+        if w != 0:
+            dict_ini['width'] = w
+
+        if h !=0:
+            dict_ini['height'] = h
+
+        if getenv('SW_OPENGL') == '1':
+            dict_ini['opengl_bg'] = 'True'
+        else:
+            dict_ini['opengl_bg'] = 'False'
+
+        dict_ini['icon_size'] = round(btn_scale_icons.get_value())
+        dict_ini['shortcut_size'] = round(btn_scale_shortcuts.get_value())
+        dict_ini['sound'] = 'off'
+
+        return write_menu_conf(dict_ini)
 
     def check_file_monitor_event():
         '''___update file grid view on file monitor events___'''
@@ -10237,33 +11577,54 @@ def sw_activate(app):
         global f_mon_event
 
         if f_mon_event != []:
-            event_path = Path(f_mon_event[0].get_path()).parent
-            dict_ini = read_menu_conf()
-            x_hidden_files = dict_ini['hidden_files']
-
             print(f_mon_event)
+
+            if f_mon_event[0].get_parent() is not None:
+                if f_mon_event[0].get_parent().get_path() is not None:
+                    event_path = f_mon_event[0].get_parent().get_path()
+                    path_type = 'file'
+                elif f_mon_event[0].get_parent().get_uri() is not None:
+                    event_path = f_mon_event[0].get_parent().get_uri()
+                    path_type = 'uri'
+                else:
+                    event_path = None
+            else:
+                event_path = None
 
             if f_mon_event[1] == Gio.FileMonitorEvent.CHANGED:
                 f_mon_event.clear()
 
             elif (f_mon_event[1] == Gio.FileMonitorEvent.ATTRIBUTE_CHANGED
-                    or f_mon_event[1] == Gio.FileMonitorEvent.CHANGES_DONE_HINT):
-                        for n, x in enumerate(list_store):
-                            if str(x.get_path()) == str(f_mon_event[0].get_path()):
-                                list_store.remove(n)
-                                delay = 0
-                                sorted_list = [Path(f_mon_event[0].get_path())]
-                                update_view(delay, sorted_list, x_hidden_files)
+                or f_mon_event[1] == Gio.FileMonitorEvent.CHANGES_DONE_HINT):
+                    if event_path is not None:
+                        paned_store = get_list_store()
+                        for n, x in enumerate(paned_store):
+                            if str(x.get_path()) == str(event_path):
+                                paned_store.remove(n)
+                                dict_ini = read_menu_conf()
+                                x_hidden_files = dict_ini['hidden_files']
+                                update_view(paned_store, x, x_hidden_files)
                                 f_mon_event.clear()
                                 break
                         else:
-                            update_grid_view(event_path)
                             f_mon_event.clear()
+                            if path_type == 'file':
+                                update_grid_view(event_path)
+                            else:
+                                update_grid_view_uri(event_path)
             else:
-                update_grid_view(event_path)
-                f_mon_event.clear()
+                if event_path is not None:
+                    f_mon_event.clear()
+                    if path_type == 'file':
+                        update_grid_view(event_path)
+                    else:
+                        update_grid_view_uri(event_path)
+                else:
+                    pass
 
-            update_gvolume()
+            if scrolled_gvol.get_child() is not None:
+                update_gvolume()
+
             f_mon_event.clear()
 
         return True
@@ -10271,33 +11632,25 @@ def sw_activate(app):
     def check_reveal_flap():
         '''___Сhecking the size and position status of sidebar widgets___'''
 
-        if sidebar_revealer.get_reveal_child():
-            overlay_panel.set_visible(False)
-        elif terminal_revealer.get_reveal_child():
-                overlay_panel.set_visible(False)
-        else:
-            overlay_panel.set_visible(True)
-
-        if (revealer.get_reveal_child()
-            and reveal_stack.get_visible_child() == files_view_grid):
-                btn_gmount.set_visible(True)
-                btn_bookmarks.set_visible(True)
-                btn_popover_scale.set_visible(True)
-                if (Path(entry_path.get_name()) == sw_shortcuts
-                    or Path(entry_path.get_name()) == sw_launchers):
-                        btn_icon_position.set_visible(True)
-                else:
-                    btn_icon_position.set_visible(False)
+        if reveal_stack.get_visible_child() == files_view_grid:
+            btn_gmount.set_visible(True)
+            btn_bookmarks.set_visible(True)
+            btn_popover_scale.set_visible(True)
+            if Path(entry_path.get_name()) == sw_shortcuts:
+                btn_icon_position.set_visible(True)
+            else:
+                btn_icon_position.set_visible(False)
         else:
             btn_gmount.set_visible(False)
             btn_bookmarks.set_visible(False)
             btn_popover_scale.set_visible(False)
             btn_icon_position.set_visible(False)
 
-        h = parent.get_height()
+        swgs.width = parent.get_width()
+        swgs.height = parent.get_height()
 
-        if h >= 720:
-            environ['sm_image'] = 'vertical'
+        if swgs.height >= 720:
+            environ['SW_SIDEBAR_IMAGE'] = 'vertical'
             if stack_sidebar.get_visible_child() == frame_main:
                 app_name =get_out()
                 if (not sw_program_name in app_name
@@ -10308,8 +11661,8 @@ def sw_activate(app):
                                 if (not str(sw_app_vicons) in str(img)
                                     and Path(f'{sw_app_vicons}/{img.name}').exists()):
                                         get_sm_icon(app_name)
-        elif h < 720:
-            environ['sm_image'] = 'horizontal'
+        elif swgs.height < 720:
+            environ['SW_SIDEBAR_IMAGE'] = 'horizontal'
             if stack_sidebar.get_visible_child() == frame_main:
                 app_name = get_out()
                 if (not sw_program_name in app_name
@@ -10341,47 +11694,21 @@ def sw_activate(app):
             stack_sidebar.set_size_request(sidebar_scale_width, -1)
 
         if allocation.width <= 960:
-            if revealer.get_reveal_child():
-                if not flap_locked:
-                    widget.set_reveal_child(False)
-                empty_box.set_size_request(0,-1)
-                empty_box.set_visible(False)
-            else:
-                empty_box.set_size_request(sidebar_width, -1)
-                empty_box.set_visible(True)
+            if not flap_locked:
+                widget.set_reveal_child(False)
+            empty_box.set_size_request(0,-1)
+            empty_box.set_visible(False)
 
         elif allocation.width > 960:
-            if revealer.get_reveal_child():
-                if not flap_locked:
-                    widget.set_reveal_child(True)
-                if sidebar_revealer.get_reveal_child():
-                    flap_locked = False
-                    empty_box.set_size_request(sidebar_width, -1)
-                    empty_box.set_visible(True)
-                else:
-                    empty_box.set_size_request(0,-1)
-                    empty_box.set_visible(False)
-            else:
+            if not flap_locked:
+                widget.set_reveal_child(True)
+            if sidebar_revealer.get_reveal_child():
+                flap_locked = False
                 empty_box.set_size_request(sidebar_width, -1)
                 empty_box.set_visible(True)
-
-    def on_parent_resize(self):
-        '''___change_window_size_mode__'''
-
-        global flap_locked
-        on_show_hidden_widgets(None)
-
-        if revealer.get_reveal_child():
-            sidebar_revealer.set_reveal_child(True)
-            on_hide_widgets()
-            if (parent.is_maximized()
-                or parent.is_fullscreen()):
-                    parent.unmaximize()
-        else:
-            revealer.set_reveal_child(True)
-            set_parent_size()
-            if flap_locked:
-                flap_locked = False
+            else:
+                empty_box.set_size_request(0,-1)
+                empty_box.set_visible(False)
 
     def on_parent_close(self):
         '''___window_close___'''
@@ -10401,13 +11728,128 @@ def sw_activate(app):
         else:
             parent.maximize()
 
+    def on_parent_fullscreen():
+        '''___window_fullscreen___'''
+
+        if parent.is_fullscreen():
+            parent.unfullscreen()
+        else:
+            #parent.fullscreen()
+            parent.fullscreen_on_monitor(monitor)
+
     def on_show_hotkeys():
         '''___show hotkeys settings window___'''
 
-        group_hotkeys.unparent()
-        keys_flow.set_min_children_per_line(2)
+        grid_keys_0 = Gtk.Grid(css_name='sw_grid')
+        grid_keys_0.set_column_spacing(8)
+        grid_keys_0.set_row_spacing(8)
 
-        scrolled = Gtk.ScrolledWindow(css_name='sw_pref_box')
+        grid_keys_1 = Gtk.Grid(css_name='sw_grid')
+        grid_keys_1.set_column_spacing(8)
+        grid_keys_1.set_row_spacing(8)
+
+        keys_flow_child_0 = Gtk.FlowBoxChild(css_name='sw_box_view')
+        keys_flow_child_0.set_child(grid_keys_0)
+        keys_flow_child_1 = Gtk.FlowBoxChild(css_name='sw_box_view')
+        keys_flow_child_1.set_child(grid_keys_1)
+
+        keys_flow = Gtk.FlowBox(
+                                css_name='sw_box',
+                                margin_bottom=16,
+                                column_spacing=8,
+                                row_spacing=8,
+                                homogeneous=True,
+                                min_children_per_line=2,
+                                max_children_per_line=4,
+                                )
+        keys_flow.append(keys_flow_child_0)
+        keys_flow.append(keys_flow_child_1)
+
+        count = -1
+        for k, d in zip(hotkey_list, hotkey_desc):
+            count += 1
+
+            label_mod = Gtk.Label(css_name='sw_label', label=k[0])
+            label_x = Gtk.Label(css_name='sw_label', label=k[1])
+            label_y = Gtk.Label(css_name='sw_label', label=k[2])
+
+            key_mod = Gtk.Button(css_name='sw_action_row')
+            key_mod.add_css_class('key')
+            key_mod.set_sensitive(False)
+            key_mod.set_size_request(72,-1)
+            key_mod.set_child(label_mod)
+
+            label_desc_x = Gtk.Label(
+                                    css_name='sw_label_desc',
+                                    label=d.capitalize(),
+                                    xalign=0,
+                                    wrap=True,
+                                    natural_wrap_mode=True
+                                    )
+            label_desc_x.set_xalign(0)
+
+            if k[2] == '':
+                plus_y = Gtk.Label(css_name='sw_label', label='')
+                key_y = Gtk.Label(css_name='sw_label', label='')
+            else:
+                plus_y = Gtk.Label(css_name='sw_label', label='+')
+                key_y = Gtk.Button(css_name='sw_action_row')
+                key_y.add_css_class('key')
+                key_y.set_size_request(72,-1)
+                key_y.set_sensitive(False)
+                key_y.set_child(label_y)
+
+            if k[1] == '':
+                plus_x = Gtk.Label(css_name='sw_label', label='')
+                key_x = Gtk.Label(css_name='sw_label', label='')
+            else:
+                plus_x = Gtk.Label(css_name='sw_label', label='+')
+                key_x = Gtk.Button(css_name='sw_action_row')
+                key_x.add_css_class('key')
+                key_x.set_size_request(72,-1)
+                key_x.set_sensitive(False)
+                key_x.set_child(label_x)
+
+            if count < len(hotkey_list) / 2:
+                grid_keys_0.attach(key_mod, 0,count,1,1)
+                grid_keys_0.attach(plus_x, 1, count,1,1)
+                grid_keys_0.attach(key_x, 2, count,1,1)
+                grid_keys_0.attach(plus_y, 3, count,1,1)
+                grid_keys_0.attach(key_y, 4, count,1,1)
+                grid_keys_0.attach(label_desc_x, 5, count,1,1)
+            else:
+                grid_keys_1.attach(key_mod, 0,count,1,1)
+                grid_keys_1.attach(plus_x, 1, count,1,1)
+                grid_keys_1.attach(key_x, 2, count,1,1)
+                grid_keys_1.attach(plus_y, 3, count,1,1)
+                grid_keys_1.attach(key_y, 4, count,1,1)
+                grid_keys_1.attach(label_desc_x, 5, count,1,1)
+
+        title_hotkeys = Gtk.Label(
+                                css_name='sw_label_title',
+                                label=str_title_hotkeys,
+                                xalign=0,
+                                margin_top=8,
+                                margin_start=4,
+                                )
+        subtitle_hotkeys = Gtk.Label(
+                                css_name='sw_label_info',
+                                label=str_subtitle_hotkeys,
+                                xalign=0,
+                                margin_start=4,
+                                )
+        group_hotkeys = Gtk.Box(
+                                css_name='sw_pref_box',
+                                orientation=Gtk.Orientation.VERTICAL,
+                                spacing=4,
+                                margin_start=16,
+                                margin_end=16,
+                                )
+        group_hotkeys.append(title_hotkeys)
+        group_hotkeys.append(subtitle_hotkeys)
+        group_hotkeys.append(keys_flow)
+
+        scrolled = Gtk.ScrolledWindow(css_name='sw_scrolled_view')
 
         close = Gtk.Button(
                         css_name='sw_wc_close',
@@ -10419,7 +11861,7 @@ def sw_activate(app):
                         )
         win = Gtk.Window(
                         css_name='sw_window',
-                        application=app,
+                        application=swgs,
                         )
         win.remove_css_class('background')
         win.add_css_class('sw_background')
@@ -10430,7 +11872,6 @@ def sw_activate(app):
         win.set_transient_for(parent)
         win.set_modal(True)
         win.set_child(scrolled)
-        win.connect('close-request', cb_close_hotkeys)
         close.connect('clicked', cb_btn_close, win)
         win.present()
 
@@ -10439,17 +11880,17 @@ def sw_activate(app):
 
         win.close()
 
-    def cb_close_hotkeys(self):
-        '''___close hotkeys settings window___'''
-
-        group_hotkeys.unparent()
-        global_box.append(group_hotkeys)
-        keys_flow.set_min_children_per_line(1)
-
     def cb_bookmark_activate(self, position):
         '''___open bookmark directory in file manager'''
 
-        return on_files(self.get_model().get_item(position).get_string())
+        string_path = self.get_model().get_item(position).get_string()
+        file = Gio.File.new_for_commandline_arg(string_path)
+
+        if file.get_path() is None:
+            uri = file.get_uri()
+            update_grid_view_uri(file.get_uri())
+        else:
+            on_files(file.get_path())
 
     def get_gl_image():
         '''___Get opengl background image___'''
@@ -10467,7 +11908,6 @@ def sw_activate(app):
 
         Popen(f"{sw_scripts}/sw_stop", shell=True)
 
-        app_path = get_app_path()
         p = Popen(['ps', '-AF'], stdout=PIPE, encoding='UTF-8')
         out, err = p.communicate()
 
@@ -10476,16 +11916,3204 @@ def sw_activate(app):
                 pid = int(line.split()[1])
                 kill(pid, 9)
 
-        for line in out.splitlines():
-            if f"{sw_rsh}" in line:
-                pid = int(line.split()[1])
-                kill(pid, 9)
+        swgs.connection.flush(callback=flush_connection, user_data=None)
 
-        app.connection.flush(callback=flush_connection, user_data=None)
+    def add_create_shortcut_menu():
+        '''___build wine create chortcut_menu___.'''
+
+        swgs.grid_create_shortcut = Gtk.Grid()
+        swgs.grid_create_shortcut.set_vexpand(True)
+        swgs.grid_create_shortcut.set_row_spacing(10)
+        swgs.grid_create_shortcut.set_margin_top(16)
+        swgs.grid_create_shortcut.set_margin_bottom(16)
+        swgs.grid_create_shortcut.set_margin_start(16)
+        swgs.grid_create_shortcut.set_margin_end(16)
+        swgs.grid_create_shortcut.set_halign(Gtk.Align.CENTER)
+
+        swgs.grid_menu_wine_custom = Gtk.Grid()
+        swgs.grid_menu_wine_custom.set_column_spacing(10)
+
+        image_create = Gtk.Picture(css_name='sw_picture')
+        image_create.set_margin_start(32)
+        image_create.set_margin_end(32)
+        image_create.set_margin_bottom(16)
+
+        paintable_icon_create = Gtk.IconPaintable.new_for_file(
+                                Gio.File.new_for_path(IconPath.icon_create), 256, 1
+        )
+        image_create.set_paintable(paintable_icon_create)
+
+        count = 0
+        for w, l in zip(wine_list, wine_labels):
+            count += 1
+
+            image_wine = Gtk.Image(css_name='sw_image')
+            image_wine.set_from_file(IconPath.icon_wine)
+
+            label_wine = Gtk.Label(css_name='sw_label', label=l)
+
+            box_wine = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+            box_wine.set_spacing(8)
+            box_wine.append(image_wine)
+            box_wine.append(label_wine)
+
+            btn_wine = Gtk.Button(css_name='sw_button')
+            btn_wine.set_hexpand(True)
+            btn_wine.set_name(w)
+            btn_wine.set_child(box_wine)
+            btn_wine.connect('clicked', cb_btn_cs_wine)
+
+            swgs.grid_create_shortcut.attach(btn_wine,0,count,1,1)
+
+        ###_Cutom_wines___.
+
+        swgs.list_store_wine_custom = Gio.ListStore()
+        swgs.model_wine_custom = Gtk.SingleSelection.new(swgs.list_store_wine_custom)
+
+        swgs.factory_wine_custom = Gtk.SignalListItemFactory()
+        swgs.factory_wine_custom.connect('setup', cb_factory_wine_custom_setup)
+        swgs.factory_wine_custom.connect('bind', cb_factory_wine_custom_bind)
+
+        swgs.list_view_wine_custom = Gtk.ListView(
+                                    css_name='sw_listview',
+                                    single_click_activate=True,
+                                    show_separators=True,
+                                    margin_top = 16,
+        )
+        swgs.list_view_wine_custom.set_factory(swgs.factory_wine_custom)
+        swgs.list_view_wine_custom.set_model(swgs.model_wine_custom)
+        swgs.list_view_wine_custom.connect('activate', cb_btn_cs_wine_custom)
+
+        swgs.scrolled_wine_custom = Gtk.ScrolledWindow(
+                                                css_name='sw_scrolledwindow',
+                                                vexpand=True,
+                                                hexpand=False,
+                                                propagate_natural_height=True,
+                                                min_content_width=(280),
+                                                child=swgs.list_view_wine_custom,
+        )
+        swgs.image_menu_wine_custom = Gtk.Image(css_name='sw_image')
+        swgs.image_menu_wine_custom.set_from_file(IconPath.icon_wine)
+
+        swgs.label_menu_wine_custom = Gtk.Label(css_name='sw_label')
+        swgs.label_menu_wine_custom.set_label('Wine Custom')
+
+        swgs.btn_menu_wine_custom = Gtk.Button(css_name='sw_button')
+        swgs.btn_menu_wine_custom.set_child(swgs.grid_menu_wine_custom)
+        swgs.btn_menu_wine_custom.connect('clicked', cb_btn_menu_wine_custom)
+
+        swgs.popover_wines = Gtk.Popover(css_name='sw_popover')
+        swgs.popover_wines.set_child(swgs.scrolled_wine_custom)
+        swgs.popover_wines.set_autohide(True)
+        swgs.popover_wines.set_has_arrow(False)
+        swgs.popover_wines.set_position(Gtk.PositionType.TOP)
+        swgs.popover_wines.set_parent(swgs.btn_menu_wine_custom)
+
+        swgs.grid_create_shortcut.attach(image_create, 0,0,1,1)
+        swgs.grid_create_shortcut.attach(swgs.btn_menu_wine_custom,0,6,1,1)
+
+        swgs.grid_menu_wine_custom.attach(swgs.image_menu_wine_custom,0,0,1,1)
+        swgs.grid_menu_wine_custom.attach(swgs.label_menu_wine_custom,1,0,1,1)
+
+        scrolled_create_shortcut.set_child(swgs.grid_create_shortcut)
+
+    def add_prefix_tools_menu():
+        '''___build prefix tools menu___.'''
+
+        grid_prefix_tools = Gtk.Grid()
+        grid_prefix_tools.set_vexpand(True)
+        grid_prefix_tools.set_row_spacing(10)
+        grid_prefix_tools.set_margin_top(16)
+        grid_prefix_tools.set_margin_bottom(16)
+        grid_prefix_tools.set_margin_start(16)
+        grid_prefix_tools.set_margin_end(16)
+        grid_prefix_tools.set_halign(Gtk.Align.CENTER)
+
+        image_ptools = Gtk.Picture(css_name='sw_picture')
+        image_ptools.set_margin_start(32)
+        image_ptools.set_margin_end(32)
+        image_ptools.set_margin_bottom(16)
+
+        paintable_icon_tools = Gtk.IconPaintable.new_for_file(
+                                Gio.File.new_for_path(IconPath.icon_toolbox),256,1,
+        )
+        image_ptools.set_paintable(paintable_icon_tools)
+        grid_prefix_tools.attach(image_ptools,0,0,1,1)
+
+        change_pfx_list_model = Gtk.StringList()
+
+        for l in prefix_labels:
+            change_pfx_list_model.append(l)
+
+        change_pfx_factory = Gtk.SignalListItemFactory()
+        change_pfx_factory.connect('setup', on_change_pfx_setup)
+        change_pfx_factory.connect('bind', on_change_pfx_bind)
+
+        swgs.dropdown_change_pfx = Gtk.DropDown(css_name='sw_dropdown')
+        swgs.dropdown_change_pfx.set_valign(Gtk.Align.CENTER)
+        swgs.dropdown_change_pfx.set_model(change_pfx_list_model)
+        swgs.dropdown_change_pfx.set_name(str_sw_use_pfx)
+        swgs.dropdown_change_pfx.connect('notify::selected-item', on_change_pfx_activate)
+
+        grid_prefix_tools.attach(swgs.dropdown_change_pfx,0,1,1,1)
+
+        count = 1
+        for l, i in zip(prefix_tools_labels, prefix_tools_icons):
+            count +=1
+
+            image_pfx_tools = Gtk.Image(css_name='sw_image')
+            image_pfx_tools.set_from_file(i)
+            label_pfx_tools = Gtk.Label(css_name='sw_label', label=l)
+
+            box_pfx_tools = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+            box_pfx_tools.set_spacing(8)
+            box_pfx_tools.append(image_pfx_tools)
+            box_pfx_tools.append(label_pfx_tools)
+
+            btn_pfx_tools = Gtk.Button(css_name='sw_button')
+            btn_pfx_tools.set_size_request(280,-1)
+            btn_pfx_tools.set_name(l)
+            btn_pfx_tools.set_child(box_pfx_tools)
+            btn_pfx_tools.connect('clicked', cb_btn_prefix_tools)
+
+            grid_prefix_tools.attach(btn_pfx_tools,0,count,1,1)
+
+        scrolled_prefix_tools.set_child(grid_prefix_tools)
+
+####___Wine_tools_buttons___.
+
+    def add_wine_tools_menu():
+        '''___build wine tools menu___'''
+        swgs.grid_wine_tools = Gtk.Grid()
+        swgs.grid_wine_tools.set_vexpand(True)
+        swgs.grid_wine_tools.set_row_spacing(10)
+        swgs.grid_wine_tools.set_margin_top(16)
+        swgs.grid_wine_tools.set_margin_bottom(16)
+        swgs.grid_wine_tools.set_margin_start(16)
+        swgs.grid_wine_tools.set_margin_end(16)
+        swgs.grid_wine_tools.set_halign(Gtk.Align.CENTER)
+
+        swgs.change_wine_store = Gio.ListStore()
+        swgs.change_wine_model = Gtk.SingleSelection.new(swgs.change_wine_store)
+
+        swgs.change_wine_factory = Gtk.SignalListItemFactory()
+        swgs.change_wine_factory.connect('setup', on_change_wine_setup)
+        swgs.change_wine_factory.connect('bind', on_change_wine_bind)
+
+        swgs.dropdown_change_wine = Gtk.DropDown(css_name='sw_dropdown')
+        swgs.dropdown_change_wine.set_size_request(160, -1)
+        swgs.dropdown_change_wine.set_hexpand(False)
+        swgs.dropdown_change_wine.set_valign(Gtk.Align.CENTER)
+        swgs.dropdown_change_wine.set_model(swgs.change_wine_model)
+        swgs.dropdown_change_wine.set_factory(swgs.change_wine_factory)
+        swgs.dropdown_change_wine.set_name(str_sw_use_wine)
+        #swgs.dropdown_change_wine.connect('notify::selected-item', cb_change_wine_activate)
+
+        swgs.drop_list_view = (swgs.dropdown_change_wine
+                            .get_last_child()
+                                .get_first_child()
+                                    .get_first_child()
+                                        .get_first_child()
+                                            .get_next_sibling()
+                                                .get_first_child()
+        )
+        swgs.drop_list_view.connect('activate', cb_change_wine_activate)
+        swgs.grid_wine_tools.attach(swgs.dropdown_change_wine,0,1,1,1)
+
+        count = 1
+        for l, i in zip(wine_tools_labels, wine_tools_icons):
+            count +=1
+
+            image_wine_tools = Gtk.Image(css_name='sw_image')
+            image_wine_tools.set_from_file(i)
+            label_wine_tools = Gtk.Label(css_name='sw_label', label=l)
+
+            box_wine_tools = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+            box_wine_tools.set_spacing(8)
+            box_wine_tools.append(image_wine_tools)
+            box_wine_tools.append(label_wine_tools)
+
+            btn_wine_tools = Gtk.Button(css_name='sw_button')
+            btn_wine_tools.set_size_request(280,-1)
+            btn_wine_tools.set_name(l)
+            btn_wine_tools.set_child(box_wine_tools)
+            btn_wine_tools.connect('clicked', cb_btn_wine_tools)
+
+            swgs.grid_wine_tools.attach(btn_wine_tools,0,count,1,1)
+
+        swgs.image_wtools = Gtk.Picture(css_name='sw_picture')
+        swgs.image_wtools.set_margin_start(32)
+        swgs.image_wtools.set_margin_end(32)
+        swgs.image_wtools.set_margin_bottom(16)
+
+        paintable_icon_wtools = Gtk.IconPaintable.new_for_file(
+                                Gio.File.new_for_path(IconPath.icon_toolbars),256, 1,
+                                )
+        swgs.image_wtools.set_paintable(paintable_icon_wtools)
+
+        swgs.grid_wine_tools.attach(swgs.image_wtools,0,0,1,1)
+        scrolled_wine_tools.set_child(swgs.grid_wine_tools)
+
+####___Files_info___.
+
+    def add_files_info():
+        '''___build files info widgets___'''
+
+        swgs.label_file_name = Gtk.Label(
+                                    css_name='sw_label_desc',
+                                    wrap=True,
+                                    wrap_mode=Pango.WrapMode.CHAR,
+                                    natural_wrap_mode=True,
+                                    selectable=True,
+        )
+        swgs.label_file_mime = Gtk.Label(
+                                    css_name='sw_label_desc',
+                                    wrap=True,
+                                    natural_wrap_mode=True,
+                                    selectable=True,
+        )
+        swgs.label_file_size = Gtk.Label(
+                                    css_name='sw_label_desc',
+                                    wrap=True,
+                                    natural_wrap_mode=True,
+                                    selectable=True,
+        )
+        swgs.label_disk_size = Gtk.Label(
+                                    css_name='sw_label_desc',
+                                    wrap=True,
+                                    natural_wrap_mode=True,
+                                    selectable=True,
+        )
+        swgs.box_header_info = Gtk.Box(
+                                css_name='sw_action_row',
+                                orientation=Gtk.Orientation.VERTICAL,
+                                spacing=4
+        )
+        swgs.image_file_info = Gtk.Image(css_name='sw_image')
+        swgs.image_file_info.set_margin_start(32)
+        swgs.image_file_info.set_margin_end(32)
+        swgs.image_file_info.set_margin_bottom(16)
+
+        swgs.box_header_info.append(swgs.image_file_info)
+        swgs.box_header_info.append(swgs.label_file_name)
+        swgs.box_header_info.append(swgs.label_file_mime)
+        swgs.box_header_info.append(swgs.label_file_size)
+        swgs.box_header_info.append(swgs.label_disk_size)
+
+        ####___file path info___.
+
+        swgs.box_file_path = Gtk.Box(
+                                css_name='sw_action_row',
+                                orientation=Gtk.Orientation.VERTICAL,
+                                spacing=4
+                                )
+
+        swgs.title_file_path = Gtk.Label(
+                                css_name='sw_label',
+                                xalign=0,
+                                label=msg.msg_dict['path']
+                                )
+
+        swgs.label_file_path = Gtk.Label(
+                                css_name='sw_label_desc',
+                                wrap=True,
+                                wrap_mode=Pango.WrapMode.CHAR,
+                                natural_wrap_mode=True,
+                                xalign=0,
+                                selectable=True
+                                )
+
+        swgs.box_file_path.append(swgs.title_file_path)
+        swgs.box_file_path.append(swgs.label_file_path)
+
+        ####___file user, group, time info___.
+
+        swgs.title_file_uid = Gtk.Label(
+                                css_name='sw_label',
+                                xalign=0,
+                                label=msg.msg_dict['user_group']
+                                )
+
+        swgs.title_file_rw = Gtk.Label(
+                                css_name='sw_label',
+                                xalign=0,
+                                label=msg.msg_dict['access']
+                                )
+
+        swgs.title_file_modified = Gtk.Label(
+                                css_name='sw_label',
+                                xalign=0,
+                                label=msg.msg_dict['file_modified']
+                                )
+
+        swgs.title_file_created = Gtk.Label(
+                                css_name='sw_label',
+                                xalign=0,
+                                label=msg.msg_dict['file_created']
+                                )
+
+        swgs.label_file_uid = Gtk.Label(
+                                css_name='sw_label_desc',
+                                wrap=True,
+                                natural_wrap_mode=True,
+                                xalign=0
+                                )
+
+        swgs.label_file_gid = Gtk.Label(
+                                css_name='sw_label_desc',
+                                wrap=True,
+                                natural_wrap_mode=True,
+                                xalign=0
+                                )
+
+        swgs.label_file_rw = Gtk.Label(
+                                css_name='sw_label_desc',
+                                wrap=True,
+                                natural_wrap_mode=True,
+                                xalign=0
+                                )
+
+        swgs.label_file_modified = Gtk.Label(
+                                css_name='sw_label_desc',
+                                wrap=True,
+                                natural_wrap_mode=True,
+                                xalign=0
+                                )
+        swgs.label_file_created = Gtk.Label(
+                                css_name='sw_label_desc',
+                                wrap=True,
+                                natural_wrap_mode=True,
+                                xalign=0
+                                )
+
+        swgs.box_file_info = Gtk.Box(
+                                css_name='sw_action_row',
+                                orientation=Gtk.Orientation.VERTICAL,
+                                spacing=4
+                                )
+
+        swgs.box_file_info.append(swgs.title_file_uid)
+        swgs.box_file_info.append(swgs.label_file_uid)
+        swgs.box_file_info.append(swgs.title_file_rw)
+        swgs.box_file_info.append(swgs.label_file_rw)
+        swgs.box_file_info.append(swgs.title_file_modified)
+        swgs.box_file_info.append(swgs.label_file_modified)
+        swgs.box_file_info.append(swgs.title_file_created)
+        swgs.box_file_info.append(swgs.label_file_created)
+
+        ####___file executable info___.
+
+        swgs.box_file_execute = Gtk.Box(
+                                css_name='sw_action_row',
+                                orientation=Gtk.Orientation.HORIZONTAL,
+                                spacing=4
+                                )
+        swgs.title_file_execute = Gtk.Label(
+                                css_name='sw_label',
+                                xalign=0,
+                                label=msg.msg_dict['file_executable'].title(),
+                                hexpand=True
+                                )
+        swgs.switch_file_execute = Gtk.Switch(css_name='sw_switch', margin_end=4)
+        swgs.switch_file_execute.set_halign(Gtk.Align.END)
+        swgs.switch_file_execute.set_valign(Gtk.Align.CENTER)
+        swgs.switch_file_execute.connect('state-set', on_switch_file_exec)
+
+        swgs.box_file_execute.append(swgs.title_file_execute)
+        swgs.box_file_execute.append(swgs.switch_file_execute)
+
+        swgs.grid_files_info = Gtk.Grid()
+        swgs.grid_files_info.set_vexpand(True)
+        swgs.grid_files_info.set_row_spacing(10)
+        swgs.grid_files_info.set_margin_top(16)
+        swgs.grid_files_info.set_margin_bottom(16)
+        swgs.grid_files_info.set_margin_start(16)
+        swgs.grid_files_info.set_margin_end(16)
+        swgs.grid_files_info.set_halign(Gtk.Align.CENTER)
+
+        swgs.grid_files_info.attach(swgs.box_header_info, 0,0,1,1)
+        swgs.grid_files_info.attach(swgs.box_file_path, 0,1,1,1)
+        swgs.grid_files_info.attach(swgs.box_file_info, 0,2,1,1)
+        swgs.grid_files_info.attach(swgs.box_file_execute, 0,3,1,1)
+
+        scrolled_files_info.set_child(swgs.grid_files_info)
+
+####___Settings___.
+
+    def add_settings_menu():
+        '''___build settings menu widgets___'''
+
+        grid_settings = Gtk.Grid()
+        grid_settings.set_vexpand(True)
+        grid_settings.set_row_spacing(10)
+        grid_settings.set_margin_top(16)
+        grid_settings.set_margin_bottom(16)
+        grid_settings.set_margin_start(16)
+        grid_settings.set_margin_end(16)
+        grid_settings.set_halign(Gtk.Align.CENTER)
+
+        image_settings_tools = Gtk.Picture(css_name='sw_picture')
+        image_settings_tools.set_margin_start(32)
+        image_settings_tools.set_margin_end(32)
+        image_settings_tools.set_margin_bottom(16)
+
+        paintable_icon_settings = Gtk.IconPaintable.new_for_file(
+                                Gio.File.new_for_path(IconPath.icon_settings), 256, 1,
+                                )
+        image_settings_tools.set_paintable(paintable_icon_settings)
+
+        count = 0
+        for l, i in zip(settings_labels, settings_icons):
+            count += 1
+
+            image_settings = Gtk.Image(css_name='sw_image')
+            image_settings.set_from_file(i)
+            label_settings = Gtk.Label(css_name='sw_label', label=l)
+
+            box_settings = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+            box_settings.set_spacing(8)
+            box_settings.append(image_settings)
+            box_settings.append(label_settings)
+
+            btn_settings = Gtk.Button(css_name='sw_button')
+            btn_settings.set_size_request(280,-1)
+            btn_settings.set_name(l)
+            btn_settings.set_child(box_settings)
+            btn_settings.connect('clicked', cb_btn_settings)
+
+            grid_settings.attach(btn_settings,0,count,1,1)
+
+        grid_settings.attach(image_settings_tools,0,0,1,1)
+        scrolled_settings.set_child(grid_settings)
+
+####___About___.
+
+    def add_about():
+        '''___build about menu widgets___'''
+
+        paintable_about = Gtk.IconPaintable.new_for_file(
+                                            Gio.File.new_for_path(IconPath.icon_app),256,1,
+                                            )
+        about_picture = Gtk.Picture(css_name='sw_picture')
+        about_picture.set_margin_start(32)
+        about_picture.set_margin_end(32)
+        about_picture.set_size_request(-1,32)
+        about_picture.set_paintable(paintable_about)
+
+        about_name = Gtk.Label(
+                            css_name='sw_label',
+                            label=sw_program_name
+                            )
+        swgs.about_version = Gtk.Label(css_name='sw_label', label=str_sw_version)
+
+        box_about_version = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        box_about_version.set_spacing(12)
+        box_about_version.append(about_picture)
+        box_about_version.append(about_name)
+        box_about_version.append(swgs.about_version)
+
+        pref_group_about = Gtk.Box(
+                                css_name='sw_preferencesgroup',
+                                orientation=Gtk.Orientation.VERTICAL,
+                                spacing=8
+                                )
+        pref_group_about.set_size_request(280,-1)
+
+        grid_about = Gtk.Grid()
+        grid_about.set_vexpand(True)
+        grid_about.set_row_spacing(10)
+        grid_about.set_margin_top(16)
+        grid_about.set_margin_bottom(16)
+        grid_about.set_margin_start(16)
+        grid_about.set_margin_end(16)
+        grid_about.set_halign(Gtk.Align.CENTER)
+        grid_about.attach(box_about_version,0,0,1,1)
+        grid_about.attach(pref_group_about,0,1,1,1)
+
+        ####___About_menu_stack___.
+
+        swgs.stack_about = Gtk.Stack()
+        swgs.stack_about.set_transition_duration(250)
+        swgs.stack_about.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
+
+        image_back_about = Gtk.Image()
+        image_back_about.set_from_file(IconPath.icon_back)
+
+        swgs.label_back_about = Gtk.Label(css_name='sw_label')
+
+        box_btn_back_about = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        box_btn_back_about.set_spacing(8)
+        box_btn_back_about.append(image_back_about)
+        box_btn_back_about.append(swgs.label_back_about)
+
+        swgs.btn_back_about = Gtk.Button(css_name='sw_button')
+        swgs.btn_back_about.set_size_request(280,-1)
+        swgs.btn_back_about.set_child(box_btn_back_about)
+        swgs.btn_back_about.connect('clicked', cb_btn_back_about)
+
+        count = 0
+        for l, w in zip(about_labels, about_widgets):
+            count += 1
+
+            if count < 7:
+
+                label_a = Gtk.Label(
+                                    css_name='sw_label',
+                                    label=l,
+                                    xalign=0.0
+                                    )
+                btn_a = Gtk.Button(css_name='sw_button')
+                btn_a.set_child(label_a)
+                btn_a.set_name(w)
+                btn_a.connect('clicked', cb_btn_about)
+
+                pref_group_about.append(btn_a)
+
+                grid_about_content = Gtk.Grid()
+                grid_about_content.set_row_spacing(10)
+                grid_about_content.set_vexpand(True)
+                grid_about_content.set_margin_top(16)
+                grid_about_content.set_margin_start(16)
+                grid_about_content.set_margin_end(16)
+                grid_about_content.set_margin_bottom(16)
+                grid_about_content.set_halign(Gtk.Align.CENTER)
+                grid_about_content.set_name(w)
+
+                swgs.stack_about.add_named(grid_about_content, w)
+
+        grid_about_news = swgs.stack_about.get_child_by_name(list(about_dict)[0])
+        grid_about_details = swgs.stack_about.get_child_by_name(list(about_dict)[1])
+        grid_about_authors = swgs.stack_about.get_child_by_name(list(about_dict)[2])
+        grid_about_license = swgs.stack_about.get_child_by_name(list(about_dict)[3])
+        grid_about_donation = swgs.stack_about.get_child_by_name(list(about_dict)[4])
+        grid_about_update = swgs.stack_about.get_child_by_name(list(about_dict)[5])
+
+        ####___About_news___.
+
+        format_news = '\n \u2022 '.join([s for s in str_news.splitlines()])
+        label_news = Gtk.Label(css_name='sw_label_desc', label=format_news)
+        label_news.set_xalign(0)
+        label_news.set_wrap(True)
+        label_news.set_wrap_mode(Pango.WrapMode.WORD)
+
+        swgs.title_news = Gtk.Label(
+                                css_name='sw_label',
+                                label=sw_program_name + ' ' + str_sw_version,
+                                xalign=0.0,
+                                )
+
+        pref_group_about_news = Gtk.Box(
+                                        css_name='sw_action_row',
+                                        orientation=Gtk.Orientation.VERTICAL
+                                        )
+        pref_group_about_news.set_size_request(280,-1)
+        pref_group_about_news.append(swgs.title_news)
+        pref_group_about_news.append(label_news)
+
+        grid_about_news.attach(pref_group_about_news, 0,1,1,1)
+
+        ####___About_details___.
+
+        image_btn_website = Gtk.Image(css_name='sw_image')
+        image_btn_website.set_from_file(IconPath.icon_global)
+
+        label_btn_website = Gtk.Label(
+                                    css_name='sw_label',
+                                    label=about_dict['about_website']
+                                    )
+        label_btn_website.set_xalign(0)
+
+        box_btn_website = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        box_btn_website.set_spacing(8)
+        box_btn_website.append(image_btn_website)
+        box_btn_website.append(label_btn_website)
+
+        btn_website = Gtk.LinkButton(css_name='sw_link')
+        btn_website.set_child(box_btn_website)
+        btn_website.connect('activate-link', cb_btn_website)
+
+        image_btn_github = Gtk.Image(css_name='sw_image')
+        image_btn_github.set_from_file(IconPath.icon_github)
+
+        label_btn_github = Gtk.Label(
+                                    css_name='sw_label',
+                                    label=about_dict['about_github']
+                                    )
+        label_btn_github.set_xalign(0)
+
+        box_btn_github = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        box_btn_github.set_spacing(8)
+        box_btn_github.append(image_btn_github)
+        box_btn_github.append(label_btn_github)
+
+        btn_github = Gtk.LinkButton(css_name='sw_link')
+        btn_github.set_child(box_btn_github)
+        btn_github.connect('activate-link', cb_btn_github)
+
+        image_btn_discord = Gtk.Image()
+        image_btn_discord.set_from_file(IconPath.icon_discord)
+
+        label_btn_discord = Gtk.Label(
+                                    css_name='sw_label',
+                                    label=about_dict['about_discord']
+                                    )
+        label_btn_discord.set_xalign(0)
+
+        box_btn_discord = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        box_btn_discord.set_spacing(8)
+        box_btn_discord.append(image_btn_discord)
+        box_btn_discord.append(label_btn_discord)
+
+        btn_discord = Gtk.LinkButton(css_name='sw_link')
+        btn_discord.set_child(box_btn_discord)
+        btn_discord.connect('activate-link', cb_btn_discord)
+
+        image_btn_telegram = Gtk.Image()
+        image_btn_telegram.set_from_file(IconPath.icon_telegram)
+
+        label_btn_telegram = Gtk.Label(
+                                    css_name='sw_label',
+                                    label=about_dict['about_telegram']
+                                    )
+        label_btn_telegram.set_xalign(0)
+
+        box_btn_telegram = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        box_btn_telegram.set_spacing(8)
+        box_btn_telegram.append(image_btn_telegram)
+        box_btn_telegram.append(label_btn_telegram)
+
+        btn_telegram = Gtk.LinkButton(css_name='sw_link')
+        btn_telegram.set_child(box_btn_telegram)
+        btn_telegram.connect('activate-link', cb_btn_telegram)
+
+        label_details = Gtk.Label(css_name='sw_label_desc', label=str_about)
+        label_details.set_xalign(0)
+        label_details.set_wrap(True)
+        label_details.set_wrap_mode(Pango.WrapMode.WORD)
+
+        title_details = Gtk.Label(
+                                css_name='sw_label',
+                                label=sw_program_name,
+                                )
+        title_details.set_xalign(0)
+
+        pref_group_about_details = Gtk.Box(
+                                        css_name='sw_action_row',
+                                        orientation=Gtk.Orientation.VERTICAL
+                                        )
+        pref_group_about_details.set_size_request(280,-1)
+        pref_group_about_details.append(title_details)
+        pref_group_about_details.append(label_details)
+
+        grid_about_details.attach(pref_group_about_details, 0, 1, 1, 1)
+        grid_about_details.attach(btn_website, 0, 2, 1, 1)
+        grid_about_details.attach(btn_github, 0, 3, 1, 1)
+        grid_about_details.attach(btn_discord, 0, 4, 1, 1)
+        grid_about_details.attach(btn_telegram, 0, 5, 1, 1)
+
+        ####___About_autors___.
+
+        title_authors = Gtk.Label(
+                                css_name='sw_label',
+                                label=about_dict['about_authors']
+                                )
+        title_authors.set_xalign(0)
+
+        label_authors = Gtk.Label(css_name='sw_label_desc', label=str_authors)
+        label_authors.set_xalign(0)
+        label_authors.set_wrap(True)
+        label_authors.set_wrap_mode(Pango.WrapMode.WORD)
+
+        title_coders = Gtk.Label(
+                                css_name='sw_label',
+                                label=about_dict['about_code']
+                                )
+        title_coders.set_xalign(0)
+
+        label_coders = Gtk.Label(css_name='sw_label_desc', label=str_developers)
+        label_coders.set_xalign(0)
+        label_coders.set_wrap(True)
+        label_coders.set_wrap_mode(Pango.WrapMode.WORD)
+
+        title_members = Gtk.Label(
+                                css_name='sw_label',
+                                label=about_dict['about_members']
+                                )
+        title_members.set_xalign(0)
+
+        label_members = Gtk.Label(css_name='sw_label_desc', label=str_members)
+        label_members.set_xalign(0)
+        label_members.set_wrap(True)
+        label_members.set_wrap_mode(Pango.WrapMode.WORD)
+
+        title_projects = Gtk.Label(
+                                css_name='sw_label',
+                                label=about_dict['about_projects']
+                                )
+        title_projects.set_xalign(0)
+
+        label_projects = Gtk.Label(css_name='sw_label_desc', label=str_projects)
+        label_projects.set_xalign(0)
+        label_projects.set_wrap(True)
+        label_projects.set_wrap_mode(Pango.WrapMode.WORD)
+
+        title_design = Gtk.Label(
+                                css_name='sw_label',
+                                label=about_dict['about_design']
+                                )
+        title_design.set_xalign(0)
+
+        label_design = Gtk.Label(css_name='sw_label_desc', label=str_design)
+        label_design.set_xalign(0)
+        label_design.set_wrap(True)
+        label_design.set_wrap_mode(Pango.WrapMode.WORD)
+
+        pref_group_about_authors = Gtk.Box(
+                                        css_name='sw_action_row',
+                                        orientation=Gtk.Orientation.VERTICAL
+                                        )
+        pref_group_about_authors.set_size_request(280,-1)
+        pref_group_about_authors.append(title_authors)
+        pref_group_about_authors.append(label_authors)
+
+        pref_group_about_coders = Gtk.Box(
+                                        css_name='sw_action_row',
+                                        orientation=Gtk.Orientation.VERTICAL
+                                        )
+        pref_group_about_coders.set_size_request(280,-1)
+        pref_group_about_coders.append(title_coders)
+        pref_group_about_coders.append(label_coders)
+
+        pref_group_about_members = Gtk.Box(
+                                        css_name='sw_action_row',
+                                        orientation=Gtk.Orientation.VERTICAL
+                                        )
+        pref_group_about_members.set_size_request(280,-1)
+        pref_group_about_members.append(title_members)
+        pref_group_about_members.append(label_members)
+
+        pref_group_about_projects = Gtk.Box(
+                                        css_name='sw_action_row',
+                                        orientation=Gtk.Orientation.VERTICAL
+                                        )
+        pref_group_about_projects.set_size_request(280,-1)
+        pref_group_about_projects.append(title_projects)
+        pref_group_about_projects.append(label_projects)
+
+        pref_group_about_design = Gtk.Box(
+                                        css_name='sw_action_row',
+                                        orientation=Gtk.Orientation.VERTICAL
+                                        )
+        pref_group_about_design.set_size_request(280,-1)
+        pref_group_about_design.append(title_design)
+        pref_group_about_design.append(label_design)
+
+        grid_about_authors.attach(pref_group_about_authors, 0,1,1,1)
+        grid_about_authors.attach(pref_group_about_coders, 0,2,1,1)
+        grid_about_authors.attach(pref_group_about_members, 0,3,1,1)
+        grid_about_authors.attach(pref_group_about_projects, 0,4,1,1)
+        grid_about_authors.attach(pref_group_about_design, 0,5,1,1)
+
+        ####___About_license___.
+
+        label_btn_license = Gtk.Label(
+                                    css_name='sw_label',
+                                    label=about_dict['about_license']
+                                    )
+        btn_license = Gtk.LinkButton(css_name='sw_link')
+        btn_license.set_child(label_btn_license)
+        btn_license.connect('activate-link', cb_btn_license)
+
+        label_license = Gtk.Label(css_name='sw_label_desc', label=str_license)
+        label_license.set_xalign(0)
+        label_license.set_wrap(True)
+        label_license.set_wrap_mode(Pango.WrapMode.WORD)
+
+        title_license = Gtk.Label(
+                                css_name='sw_label',
+                                label=str_gpl
+                                )
+        title_license.set_xalign(0)
+
+        pref_group_about_license = Gtk.Box(
+                                        css_name='sw_action_row',
+                                        orientation=Gtk.Orientation.VERTICAL
+                                        )
+        pref_group_about_license.set_size_request(280,-1)
+        pref_group_about_license.append(title_license)
+        pref_group_about_license.append(label_license)
+
+        grid_about_license.attach(pref_group_about_license, 0, 1, 1, 1)
+        grid_about_license.attach(btn_license, 0, 2, 1, 1)
+
+        ####___About_donation___.
+        count = 1
+        for k, v in donation_source.items():
+            count += 1
+
+            label_link_donation = Gtk.Label(
+                                        css_name='sw_label',
+                                        label=v,
+                                        xalign=0,
+                                        wrap=True,
+                                        max_width_chars=4,
+                                        natural_wrap_mode=True,
+                                        selectable=False,
+            )
+            link_donation = Gtk.LinkButton(css_name='sw_link', name=v)
+            link_donation.set_child(label_link_donation)
+            link_donation.connect('activate-link', cb_btn_donation)
+            btn_expander = Gtk.Expander(label=k)
+            btn_expander.set_child(link_donation)
+            grid_about_donation.attach(btn_expander, 0, count, 1, 1)
+
+        label_donation = Gtk.Label(
+                                css_name='sw_label_desc',
+                                label=str_donation,
+                                xalign=0,
+                                wrap=True,
+                                wrap_mode=Pango.WrapMode.WORD,
+        )
+        title_donation = Gtk.Label(
+                                css_name='sw_label',
+                                label=str_contribute,
+                                xalign=0,
+        )
+        pref_group_about_donation = Gtk.Box(
+                                        css_name='sw_action_row',
+                                        orientation=Gtk.Orientation.VERTICAL
+        )
+        pref_group_about_donation.set_size_request(280,-1)
+        pref_group_about_donation.append(title_donation)
+        pref_group_about_donation.append(label_donation)
+
+        grid_about_donation.attach(pref_group_about_donation, 0, 1, 1, 1)
+
+        scrolled_about.set_child(grid_about)
+        scrolled_stack.set_child(swgs.stack_about)
+
+
+    def add_launch_settings_view():
+        '''___build lauch settings view page'''
+
+        swgs.label_ls_move = Gtk.Label(css_name='sw_label', label=str_move_settings)
+
+        swgs.btn_ls_move = Gtk.Button(css_name='sw_button')
+        swgs.btn_ls_move.set_hexpand(True)
+        swgs.btn_ls_move.set_halign(Gtk.Align.END)
+        swgs.btn_ls_move.set_valign(Gtk.Align.START)
+        swgs.btn_ls_move.set_child(swgs.label_ls_move)
+        swgs.btn_ls_move.set_tooltip_markup(msg.tt_dict['choose_app'])
+        swgs.btn_ls_move.connect('clicked', cb_btn_ls_move)
+
+        swgs.launch_settings = Gtk.Box(
+                                        css_name='sw_flowbox',
+                                        orientation=Gtk.Orientation.VERTICAL
+        )
+        swgs.pref_group_title = Gtk.Label(
+                                        css_name='sw_label_title',
+                                        label=vl_dict['launch_settings'],
+                                        xalign=0.0
+        )
+        swgs.pref_group_subtitle = Gtk.Label(
+                                        css_name='sw_label_desc',
+                                        label=str_lp_subtitle,
+                                        xalign=0.0,
+                                        wrap=True,
+                                        natural_wrap_mode=True
+        )
+        swgs.pref_group_ls_title_box = Gtk.Box(
+                                        css_name='sw_box_view',
+                                        orientation=Gtk.Orientation.VERTICAL
+        )
+        swgs.pref_group_ls_title_box.append(swgs.pref_group_title)
+        swgs.pref_group_ls_title_box.append(swgs.pref_group_subtitle)
+
+        swgs.pref_group_ls_title_grid = Gtk.Grid(css_name='sw_box')
+        swgs.pref_group_ls_title_grid.attach(swgs.pref_group_ls_title_box, 0,0,1,1)
+        swgs.pref_group_ls_title_grid.attach(swgs.btn_ls_move, 1,0,1,1)
+
+        swgs.launch_flow = Gtk.FlowBox(css_name='sw_preferencesgroup')
+        swgs.launch_flow.set_margin_top(16)
+        swgs.launch_flow.set_homogeneous(True)
+        swgs.launch_flow.set_min_children_per_line(1)
+        swgs.launch_flow.set_max_children_per_line(8)
+
+        swgs.pref_group_flow = Gtk.Box(
+                                css_name='sw_pref_box',
+                                orientation=Gtk.Orientation.VERTICAL,
+        )
+        swgs.pref_group_flow.append(swgs.pref_group_ls_title_grid)
+        swgs.pref_group_flow.append(swgs.launch_flow)
+
+        swgs.launch_settings.append(swgs.pref_group_flow)
+
+        swgs.winarch_list_model = Gtk.StringList()
+        swgs.winver_list_model = Gtk.StringList()
+        swgs.reg_list_model = Gtk.StringList()
+        swgs.dxvk_list_model = Gtk.StringList()
+        swgs.vkd3d_list_model = Gtk.StringList()
+        swgs.fsr_list_model = Gtk.StringList()
+        swgs.lang_mode_list_model = Gtk.StringList()
+
+        swgs.combo_list_model = []
+        swgs.combo_list_model.append(swgs.winarch_list_model)
+        swgs.combo_list_model.append(swgs.winver_list_model)
+        swgs.combo_list_model.append(swgs.reg_list_model)
+        swgs.combo_list_model.append(swgs.dxvk_list_model)
+        swgs.combo_list_model.append(swgs.vkd3d_list_model)
+        swgs.combo_list_model.append(swgs.fsr_list_model)
+        swgs.combo_list_model.append(swgs.lang_mode_list_model)
+
+        for a in winarch:
+            swgs.winarch_list_model.append(a)
+
+        for v in winver:
+            swgs.winver_list_model.append(v)
+
+        for r in reg_patches:
+            swgs.reg_list_model.append(r)
+
+        for dxvk in dxvk_ver:
+            swgs.dxvk_list_model.append(dxvk)
+
+        for vkd3d in vkd3d_ver:
+            swgs.vkd3d_list_model.append(vkd3d)
+
+        for key in fsr_mode.keys():
+            swgs.fsr_list_model.append(key)
+
+        for lang in lang_mode:
+            swgs.lang_mode_list_model.append(lang)
+
+        swgs.lp_combo_list_factory = Gtk.SignalListItemFactory()
+        swgs.lp_combo_list_factory.connect('setup', on_combo_setup)
+        swgs.lp_combo_list_factory.connect('bind', on_combo_bind)
+
+        ####___Entry_launch_parameters___.
+
+#        row_entry_list = list()
+        count = -1
+        for lpt, lpd in zip(lp_title, lp_desc):
+            count += 1
+            if lpt in lp_entry_list:
+
+                row_entry_title = Gtk.Label(css_name='sw_label', label=lpt)
+                row_entry_title.set_xalign(0)
+                row_entry_title.set_wrap(True)
+                row_entry_title.set_wrap_mode(Pango.WrapMode.CHAR)
+
+                row_entry = Gtk.Entry(css_name='sw_entry')
+                row_entry.set_progress_pulse_step(0.1)
+                row_entry.set_icon_from_icon_name(
+                                            Gtk.EntryIconPosition.SECONDARY, 'edit'
+                )
+                row_entry.set_activates_default(True)
+                row_entry.set_icon_sensitive(
+                                            Gtk.EntryIconPosition.SECONDARY, True
+                )
+                row_entry.set_icon_activatable(
+                                            Gtk.EntryIconPosition.SECONDARY, True
+                )
+                row_entry.set_icon_tooltip_markup(
+                                            Gtk.EntryIconPosition.SECONDARY,
+                                            msg.msg_dict['save']
+                )
+                row_entry.set_placeholder_text(str_example[count])
+                row_entry.set_hexpand(True)
+                row_entry.connect('icon-press', on_row_entry_icon_press)
+                row_entry.connect('activate', on_row_entry_enter)
+                row_entry.set_name(lpt)
+                row_entry_list.append(row_entry)
+
+                box_row_entry = Gtk.Box(
+                                        css_name='sw_box_view',
+                                        orientation=Gtk.Orientation.VERTICAL
+                                        )
+                box_row_entry.append(row_entry_title)
+                box_row_entry.append(row_entry)
+
+                entry_child = Gtk.FlowBoxChild(css_name='sw_flowboxchild')
+                entry_child.set_name(lpt)
+                entry_child.set_child(box_row_entry)
+                swgs.launch_flow.append(entry_child)
+
+        ####___Combobox_launch_parameters___.
+
+        count = -1
+        for lpt, lpd in zip(lp_title, lp_desc):
+            count += 1
+            if lpt in lp_combo_list:
+
+                row_combo_title = Gtk.Label(
+                                        css_name='sw_label',
+                                        label=lpt,
+                                        xalign=0,
+                                        wrap=True,
+                                        wrap_mode=Pango.WrapMode.WORD,
+                )
+                row_combo_desc = Gtk.Label(
+                                        css_name='sw_label_desc',
+                                        label=lpd,
+                                        hexpand=True,
+                                        xalign=0,
+                                        max_width_chars=4,
+                                        wrap=True,
+                                        natural_wrap_mode=True,
+                                        wrap_mode=Pango.WrapMode.WORD,
+                )
+                row_combo = Gtk.DropDown(
+                                        css_name='sw_dropdown',
+                                        name=lpt,
+                                        hexpand=True,
+                                        valign=Gtk.Align.CENTER,
+                                        halign=Gtk.Align.END,
+                                        show_arrow=True,
+                )
+                row_combo.set_size_request(240,-1)
+                row_combo_list.append(row_combo)
+
+                row_grid = Gtk.Grid(css_name='sw_grid')
+
+                if lpt == 'REGEDIT_PATCH':
+                    image_regedit_patch = Gtk.Image(css_name='sw_image')
+                    image_regedit_patch.set_from_file(IconPath.icon_save)
+
+                    btn_regedit_patch = Gtk.Button(
+                                                css_name='sw_button',
+                                                name=lpt,
+                                                child=image_regedit_patch,
+                                                hexpand=True,
+                                                halign=Gtk.Align.END,
+                                                valign=Gtk.Align.CENTER,
+                                                tooltip_markup=(msg.tt_dict['apply']
+                                                + ' ' + msg.tt_dict['registry']),
+                    )
+                    btn_regedit_patch.connect('clicked', cb_btn_regedit_patch, row_combo)
+
+                    box_reg_combo = Gtk.Box(
+                                        css_name='sw_box',
+                                        orientation=Gtk.Orientation.HORIZONTAL,
+                                        hexpand=True,
+                                        halign=Gtk.Align.END,
+                                        spacing=8,
+                    )
+                    box_reg_combo.append(btn_regedit_patch)
+                    box_reg_combo.append(row_combo)
+
+                    row_grid.attach(row_combo_desc,0,count,1,1)
+                    row_grid.attach(box_reg_combo,1,count,1,1)
+
+                else:
+                    row_grid.attach(row_combo_desc,0,count,1,1)
+                    row_grid.attach(row_combo,1,count,1,1)
+
+                try:
+                    if count < 9:
+                        row_combo.set_model(swgs.combo_list_model[count-2])
+                        #row_combo.set_factory(lp_combo_list_factory)
+                        row_combo.connect('notify::selected-item', on_row_combo_activate)
+                except:
+                    pass
+
+                box_row_combo = Gtk.Box(
+                                        css_name='sw_box_view',
+                                        orientation=Gtk.Orientation.VERTICAL
+                                        )
+                box_row_combo.append(row_combo_title)
+                box_row_combo.append(row_grid)
+
+                combo_child = Gtk.FlowBoxChild(css_name='sw_flowboxchild')
+                combo_child.set_name(lpt)
+                combo_child.set_child(box_row_combo)
+                swgs.launch_flow.append(combo_child)
+
+        ####___Fps_limit_parameters___.
+
+        swgs.lp_fps_title = Gtk.Label(css_name='sw_label', label=str_fps_limit)
+        swgs.lp_fps_title.set_xalign(0)
+        swgs.lp_fps_title.set_wrap(True)
+        swgs.lp_fps_title.set_wrap_mode(Pango.WrapMode.WORD)
+
+        swgs.lp_fps_desc = Gtk.Label(
+                                css_name='sw_label_desc',
+                                label=lp_desc_dict['fps_limit']
+                                )
+        swgs.lp_fps_desc.set_halign(Gtk.Align.START)
+        swgs.lp_fps_desc.set_xalign(0)
+        swgs.lp_fps_desc.set_wrap(True)
+        swgs.lp_fps_desc.set_natural_wrap_mode(True)
+        swgs.lp_fps_desc.set_wrap_mode(Pango.WrapMode.WORD)
+
+        swgs.fps_adjustment = Gtk.Adjustment()
+        swgs.fps_adjustment.set_lower(0)
+        swgs.fps_adjustment.set_upper(360)
+        swgs.fps_adjustment.set_step_increment(10)
+        swgs.fps_adjustment.set_page_increment(1)
+
+        swgs.btn_spin_fps = Gtk.SpinButton(css_name='sw_spinbutton')
+        swgs.btn_spin_fps.set_name(str_fps_limit)
+        swgs.btn_spin_fps.set_hexpand(True)
+        swgs.btn_spin_fps.set_size_request(160,-1)
+        swgs.btn_spin_fps.set_valign(Gtk.Align.CENTER)
+        swgs.btn_spin_fps.set_halign(Gtk.Align.END)
+        swgs.btn_spin_fps.set_adjustment(swgs.fps_adjustment)
+        swgs.btn_spin_fps.connect('value-changed', on_fps_adjustment)
+
+        swgs.grid_lp_fps = Gtk.Grid(css_name='sw_grid')
+        swgs.grid_lp_fps.set_hexpand(True)
+        swgs.grid_lp_fps.attach(swgs.lp_fps_desc,0,0,1,1)
+        swgs.grid_lp_fps.attach(swgs.btn_spin_fps,1,0,1,1)
+
+        swgs.box_lp_fps = Gtk.Box(
+                            css_name='sw_box_view',
+                            orientation=Gtk.Orientation.VERTICAL
+                            )
+        swgs.box_lp_fps.append(swgs.lp_fps_title)
+        swgs.box_lp_fps.append(swgs.grid_lp_fps)
+
+        swgs.fps_child = Gtk.FlowBoxChild(css_name='sw_flowboxchild')
+        swgs.fps_child.set_name(str_fps_limit)
+        swgs.fps_child.set_child(swgs.box_lp_fps)
+
+        swgs.launch_flow.append(swgs.fps_child)
+
+        ####___CPU_topology_parameters___.
+
+        swgs.lp_cpu_topology_title = Gtk.Label(css_name='sw_label', label=str_cpu_topology)
+        swgs.lp_cpu_topology_title.set_xalign(0)
+        swgs.lp_cpu_topology_title.set_wrap(True)
+        swgs.lp_cpu_topology_title.set_wrap_mode(Pango.WrapMode.WORD)
+
+        swgs.lp_cpu_topology_desc = Gtk.Label(
+                                css_name='sw_label_desc',
+                                label=lp_desc_dict['cpu_topology']
+                                )
+        swgs.lp_cpu_topology_desc.set_halign(Gtk.Align.START)
+        swgs.lp_cpu_topology_desc.set_xalign(0)
+        swgs.lp_cpu_topology_desc.set_wrap(True)
+        swgs.lp_cpu_topology_desc.set_natural_wrap_mode(True)
+        swgs.lp_cpu_topology_desc.set_wrap_mode(Pango.WrapMode.WORD)
+
+        cpu_core_num = get_cpu_core_num()
+
+        swgs.cpu_adjustment = Gtk.Adjustment()
+        swgs.cpu_adjustment.set_lower(0)
+
+        if cpu_core_num is not None:
+            swgs.cpu_adjustment.set_upper(cpu_core_num)
+        else:
+            swgs.cpu_adjustment.set_upper(0)
+
+        swgs.cpu_adjustment.set_step_increment(1)
+        swgs.cpu_adjustment.set_page_increment(1)
+
+        swgs.btn_spin_cpu = Gtk.SpinButton(css_name='sw_spinbutton')
+        swgs.btn_spin_cpu.set_name(str_cpu_topology)
+        swgs.btn_spin_cpu.set_hexpand(True)
+        swgs.btn_spin_cpu.set_size_request(160,-1)
+        swgs.btn_spin_cpu.set_valign(Gtk.Align.CENTER)
+        swgs.btn_spin_cpu.set_halign(Gtk.Align.END)
+        swgs.btn_spin_cpu.set_adjustment(swgs.cpu_adjustment)
+        swgs.btn_spin_cpu.connect('value-changed', on_cpu_adjustment)
+
+        swgs.grid_lp_cpu = Gtk.Grid(css_name='sw_grid')
+        swgs.grid_lp_cpu.set_hexpand(True)
+        swgs.grid_lp_cpu.attach(swgs.lp_cpu_topology_desc,0,0,1,1)
+        swgs.grid_lp_cpu.attach(swgs.btn_spin_cpu,1,0,1,1)
+
+        swgs.box_lp_cpu = Gtk.Box(
+                            css_name='sw_box_view',
+                            orientation=Gtk.Orientation.VERTICAL
+                            )
+        swgs.box_lp_cpu.append(swgs.lp_cpu_topology_title)
+        swgs.box_lp_cpu.append(swgs.grid_lp_cpu)
+
+        swgs.cpu_topology_child = Gtk.FlowBoxChild(css_name='sw_flowboxchild')
+        swgs.cpu_topology_child.set_name(str_cpu_topology)
+        swgs.cpu_topology_child.set_child(swgs.box_lp_cpu)
+
+        swgs.launch_flow.append(swgs.cpu_topology_child)
+
+        ####___Switch_launch_parameters___.
+
+#        switch_ls_list = list()
+        count = -1
+        for l, d in zip(switch_labels, switch_descriptions):
+            count += 1
+            switch_ls = Gtk.Switch(css_name='sw_switch')
+            switch_ls.set_margin_start(16)
+            switch_ls.set_name(l)
+            switch_ls.set_valign(Gtk.Align.CENTER)
+            switch_ls.set_halign(Gtk.Align.START)
+            switch_ls.connect('state-set', cb_btn_switch_ls)
+            switch_ls_list.append(switch_ls)
+
+            ls_title = Gtk.Label(css_name='sw_label', label=l)
+            ls_title.set_hexpand(True)
+            ls_title.set_halign(Gtk.Align.START)
+            ls_title.set_xalign(0)
+
+            ls_desc = Gtk.Label(css_name='sw_label_desc', label=d)
+            ls_desc.set_size_request(180,-1)
+            ls_desc.set_hexpand(True)
+            ls_desc.set_xalign(0)
+            ls_desc.set_max_width_chars(0)
+            ls_desc.set_wrap(True)
+            ls_desc.set_natural_wrap_mode(True)
+            ls_desc.set_wrap_mode(Pango.WrapMode.WORD)
+
+            grid_switch = Gtk.Grid(css_name='sw_grid')
+            grid_switch.attach(ls_desc, 0, count, 1, 1)
+            grid_switch.attach(switch_ls, 1, count, 1, 1)
+
+            ls_box = Gtk.Box(
+                            css_name='sw_box_view',
+                            orientation=Gtk.Orientation.VERTICAL
+                            )
+            ls_box.append(ls_title)
+            ls_box.append(grid_switch)
+
+            launch_child = Gtk.FlowBoxChild(css_name='sw_flowboxchild')
+            launch_child.set_name(l)
+            launch_child.set_child(ls_box)
+            swgs.launch_flow.append(launch_child)
+            swgs.launch_flow.connect('child-activated', on_launch_flow_activated, switch_ls)
+
+        scrolled_launch_settings.set_child(swgs.launch_settings)
+
+        return set_settings_widget(
+                            vw_dict['launch_settings'],
+                            swgs.pref_group_title,
+        )
+
+####___Install_launchers___.
+
+    def add_install_launchers_view():
+        '''___build install launchers view page___'''
+
+        swgs.launchers_menu = Gtk.Box(
+                                name='install_launchers',
+                                css_name='sw_flowbox',
+                                orientation=Gtk.Orientation.VERTICAL,
+                                halign=Gtk.Align.CENTER
+        )
+        swgs.pref_group_launchers_title = Gtk.Label(
+                                    css_name='sw_label_title',
+                                    label=msg.msg_dict['install_desc'],
+                                    xalign=0.0
+        )
+        swgs.pref_group_launchers_subtitle = Gtk.Label(
+                                        css_name='sw_label_desc',
+                                        label=str_il_subtitle,
+                                        xalign=0.0,
+                                        wrap=True,
+                                        natural_wrap_mode=True
+        )
+        swgs.pref_group_launchers_box = Gtk.Box(
+                                css_name='sw_box_view',
+                                orientation=Gtk.Orientation.VERTICAL
+        )
+        swgs.pref_group_launchers_box.append(swgs.pref_group_launchers_title)
+        swgs.pref_group_launchers_box.append(swgs.pref_group_launchers_subtitle)
+
+        swgs.pref_group_launchers_title_grid = Gtk.Grid(css_name='sw_box_view')
+        swgs.pref_group_launchers_title_grid.attach(swgs.pref_group_launchers_box, 0,0,1,1)
+
+        swgs.launchers_flow = Gtk.FlowBox(css_name='sw_preferencesgroup')
+        swgs.launchers_flow.set_margin_top(16)
+        swgs.launchers_flow.set_homogeneous(True)
+        swgs.launchers_flow.set_min_children_per_line(1)
+        swgs.launchers_flow.set_max_children_per_line(8)
+
+        swgs.pref_group_launchers_flow = Gtk.Box(
+                                css_name='sw_pref_box',
+                                orientation=Gtk.Orientation.VERTICAL,
+        )
+        swgs.pref_group_launchers_flow.append(swgs.pref_group_launchers_title_grid)
+        swgs.pref_group_launchers_flow.append(swgs.launchers_flow)
+
+        swgs.launchers_menu.append(swgs.pref_group_launchers_flow)
+
+        count = -1
+        for l in sorted(launchers_list):
+            count += 1
+            image_il = Gtk.Picture(css_name='sw_image')
+            image_il.add_css_class('sw_shadow')
+            paintable_launcher_icon = Gtk.IconPaintable.new_for_file(
+                                    Gio.File.new_for_path(bytes(Path(l))), 288, 1,
+            )
+            image_il.set_paintable(paintable_launcher_icon)
+            image_il.set_content_fit(Gtk.ContentFit.COVER)
+            image_il.set_size_request(320, 180)
+            image_il.set_halign(Gtk.Align.START)
+
+            image_btn_il = Gtk.Image(css_name='sw_image')
+            image_btn_il.set_from_file(IconPath.icon_download)
+            label_btn_il = Gtk.Label(css_name='sw_label_view', label=msg.msg_dict['install'])
+            box_btn_il = Gtk.Box(
+                                css_name='sw_box',
+                                orientation=Gtk.Orientation.HORIZONTAL,
+                                spacing=8,
+            )
+            box_btn_il.append(image_btn_il)
+            box_btn_il.append(label_btn_il)
+
+            btn_il = Gtk.Button(
+                                css_name='sw_button',
+                                name=Path(l).stem,
+                                valign=Gtk.Align.START,
+                                halign=Gtk.Align.END,
+                                child=box_btn_il
+            )
+            btn_il.set_size_request(160, -1)
+            btn_il.add_css_class('install')
+            btn_il.connect('clicked', cb_btn_install_launchers)
+            btn_il_list.append(btn_il)
+
+            il_name = Path(l).stem.replace('_', ' ')
+            il_title = Gtk.Label(css_name='sw_label_title', label=il_name)
+            il_title.set_hexpand(True)
+            il_title.set_halign(Gtk.Align.START)
+            il_title.set_valign(Gtk.Align.START)
+            il_title.set_xalign(0)
+
+            il_desc = Gtk.Label(
+                                css_name='sw_label_desc',
+                                label=str(launchers_descriptions[Path(l).stem]),
+                                valign=Gtk.Align.START,
+                                xalign=0,
+                                hexpand=True,
+                                max_width_chars=0,
+                                wrap=True,
+                                natural_wrap_mode=True,
+                                wrap_mode=Pango.WrapMode.WORD,
+            )
+            il_desc.set_size_request(260, -1)
+
+            box_il_title = Gtk.Box(
+                                css_name='sw_box',
+                                orientation=Gtk.Orientation.HORIZONTAL,
+                                spacing=16,
+            )
+            box_il_title.append(il_title)
+            box_il_title.append(btn_il)
+
+            box_il_desc = Gtk.Box(
+                                css_name='sw_box',
+                                orientation=Gtk.Orientation.HORIZONTAL,
+                                spacing=16,
+            )
+            box_il_desc.append(image_il)
+            box_il_desc.append(il_desc)
+
+            grid_il = Gtk.Grid(css_name='sw_grid')
+            grid_il.set_vexpand(True)
+            grid_il.set_row_spacing(8)
+            grid_il.set_margin_bottom(16)
+            grid_il.set_margin_top(16)
+            grid_il.set_margin_start(16)
+            grid_il.set_margin_end(16)
+            grid_il.set_valign(Gtk.Align.START)
+            grid_il.attach(box_il_title, 0, count, 1, 1)
+            grid_il.attach(box_il_desc, 0, count+1, 1, 1)
+
+            launchers_child = Gtk.FlowBoxChild(css_name='sw_flowboxchild')
+            launchers_child.set_name(Path(l).stem)
+            launchers_child.set_child(grid_il)
+            swgs.launchers_flow.append(launchers_child)
+            #launchers_flow.connect('child-activated', on_launchers_flow_activated, btn_il)
+
+        scrolled_install_launchers.set_child(swgs.launchers_menu)
+
+        return set_settings_widget(
+                            vw_dict['install_launchers'],
+                            None,
+        )
+
+####___Install_wine___.
+
+    def add_wine_view():
+        '''___build wine list view page___'''
+
+        swgs.label_update_wine_list = Gtk.Label(
+                                        css_name='sw_label',
+                                        label=msg.msg_dict['check_wine_updates']
+        )
+        swgs.btn_update_wine_list = Gtk.Button(
+                                css_name='sw_button',
+                                hexpand=True,
+                                halign=Gtk.Align.END,
+                                valign=Gtk.Align.START,
+                                child=swgs.label_update_wine_list,
+                                tooltip_markup=msg.tt_dict['check_wine_updates']
+        )
+        swgs.btn_update_wine_list.connect('clicked', cb_btn_update_wine_view)
+
+        swgs.wine_menu = Gtk.Box(
+                                css_name='sw_flowbox',
+                                orientation=Gtk.Orientation.VERTICAL,
+                                halign=Gtk.Align.CENTER
+        )
+        swgs.pref_group_wine_title = Gtk.Label(
+                                        css_name='sw_label_title',
+                                        label=vl_dict['install_wine'],
+                                        xalign=0.0
+        )
+        swgs.pref_group_wine_subtitle = Gtk.Label(
+                                        css_name='sw_label_desc',
+                                        label=str_iw_title_desc,
+                                        xalign=0.0,
+                                        wrap=True,
+                                        natural_wrap_mode=True
+        )
+        swgs.pref_group_wine_box = Gtk.Box(
+                                        css_name='sw_box_view',
+                                        orientation=Gtk.Orientation.VERTICAL
+        )
+        swgs.pref_group_wine_box.append(swgs.pref_group_wine_title)
+        swgs.pref_group_wine_box.append(swgs.pref_group_wine_subtitle)
+
+        swgs.pref_group_wine_title_grid = Gtk.Grid(css_name='sw_box_view')
+        swgs.pref_group_wine_title_grid.attach(swgs.pref_group_wine_box, 0,0,1,1)
+        swgs.pref_group_wine_title_grid.attach(swgs.btn_update_wine_list, 1,0,1,1)
+
+        swgs.wine_flow = Gtk.FlowBox(css_name='sw_preferencesgroup')
+        swgs.wine_flow.set_margin_top(16)
+        swgs.wine_flow.set_homogeneous(True)
+        swgs.wine_flow.set_min_children_per_line(1)
+        swgs.wine_flow.set_max_children_per_line(8)
+
+        swgs.pref_group_wine_flow = Gtk.Box(
+                                        css_name='sw_pref_box',
+                                        orientation=Gtk.Orientation.VERTICAL,
+        )
+        swgs.pref_group_wine_flow.append(swgs.pref_group_wine_title_grid)
+        swgs.pref_group_wine_flow.append(swgs.wine_flow)
+
+        swgs.wine_menu.append(swgs.pref_group_wine_flow)
+
+        count = 0
+        for wine, wine_image in zip(wine_list, wine_image_list):
+            count += 1
+            download_wine_model = Gio.ListStore()
+
+            factory_dropdown_wine_list = Gtk.SignalListItemFactory()
+            factory_dropdown_wine_list.connect('setup', cb_factory_dropdown_wine_setup)
+            factory_dropdown_wine_list.connect('bind', cb_factory_dropdown_wine_bind)
+
+            dropdown_download_wine = Gtk.DropDown(css_name='sw_dropdown')
+            dropdown_download_wine.set_size_request(280, 40)
+            dropdown_download_wine.set_hexpand(False)
+            dropdown_download_wine.set_valign(Gtk.Align.START)
+            dropdown_download_wine.set_halign(Gtk.Align.END)
+            dropdown_download_wine.set_name(wine)
+            dropdown_download_wine_list.append(dropdown_download_wine)
+            dropdown_download_wine.set_model(download_wine_model)
+            dropdown_download_wine.set_factory(factory_dropdown_wine_list)
+            drop_wine_list_view = (dropdown_download_wine
+                                    .get_last_child()
+                                        .get_first_child()
+                                            .get_first_child()
+                                                .get_first_child()
+                                                    .get_next_sibling()
+                                                        .get_first_child()
+            )
+            drop_wine_list_view.connect('activate', cb_dropdown_download_wine)
+
+            paintable_wine_icon = Gtk.IconPaintable.new_for_file(
+                        Gio.File.new_for_path(bytes(Path(wine_image))), 180, 1,
+            )
+            image_iw = Gtk.Picture(css_name='sw_picture')
+            image_iw.set_paintable(paintable_wine_icon)
+            image_iw.set_content_fit(Gtk.ContentFit.COVER)
+            image_iw.set_size_request(320, 180)
+
+            image_btn_iw = Gtk.Image(css_name='sw_image')
+            image_btn_iw.set_from_file(IconPath.icon_download)
+            label_btn_iw = Gtk.Label(
+                                    css_name='sw_label_view',
+                                    label=msg.msg_dict['install']
+            )
+            box_btn_iw = Gtk.Box(
+                                css_name='sw_box',
+                                orientation=Gtk.Orientation.HORIZONTAL,
+                                spacing=8,
+            )
+            box_btn_iw.append(image_btn_iw)
+            box_btn_iw.append(label_btn_iw)
+
+            btn_iw = Gtk.Button(css_name='sw_button')
+            btn_iw.set_name(f'WINE_{count}')
+            btn_iw.set_valign(Gtk.Align.CENTER)
+            btn_iw.set_halign(Gtk.Align.END)
+            btn_iw.set_child(box_btn_iw)
+            btn_iw.set_size_request(120, -1)
+            btn_iw.add_css_class('install')
+            btn_iw.connect('clicked', cb_btn_download_wine, dropdown_download_wine)
+            btn_iw_list.append(btn_iw)
+
+            image_btn_iw_rm = Gtk.Image(css_name='sw_image')
+            image_btn_iw_rm.set_from_file(IconPath.icon_remove)
+            label_btn_iw_rm = Gtk.Label(
+                                        css_name='sw_label_view',
+                                        label=msg.msg_dict['remove']
+            )
+            box_btn_iw_rm = Gtk.Box(
+                                css_name='sw_box',
+                                orientation=Gtk.Orientation.HORIZONTAL,
+                                spacing=8,
+            )
+            box_btn_iw_rm.append(image_btn_iw_rm)
+            box_btn_iw_rm.append(label_btn_iw_rm)
+
+            btn_iw_rm = Gtk.Button(css_name='sw_button')
+            btn_iw_rm.set_name(f'RM_WINE_{count}')
+            btn_iw_rm.set_valign(Gtk.Align.CENTER)
+            btn_iw_rm.set_halign(Gtk.Align.END)
+            btn_iw_rm.set_child(box_btn_iw_rm)
+            btn_iw_rm.set_size_request(120, -1)
+            btn_iw_rm.add_css_class('installed')
+            btn_iw_rm.connect('clicked', cb_btn_remove_wine, dropdown_download_wine)
+            btn_iw_rm_list.append(btn_iw_rm)
+
+            stack_btn_iw = Gtk.Stack(css_name='sw_stack')
+            stack_btn_iw.set_transition_duration(10)
+            stack_btn_iw.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
+            stack_btn_iw.add_named(btn_iw, f'WINE_{count}')
+            stack_btn_iw.add_named(btn_iw_rm, f'RM_WINE_{count}')
+
+            image_iw_source = Gtk.Image(css_name='sw_image')
+            image_iw_source.set_from_file(IconPath.icon_github)
+            label_iw_source = Gtk.Label(
+                                css_name='sw_label_info', label='GitHub Source'
+            )
+            box_btn_iw_source = Gtk.Box(
+                                css_name='sw_box',
+                                orientation=Gtk.Orientation.HORIZONTAL,
+                                spacing=16,
+            )
+            box_btn_iw_source.append(image_iw_source)
+            box_btn_iw_source.append(label_iw_source)
+
+            btn_iw_source = Gtk.LinkButton(
+                                        css_name='sw_link',
+                                        halign=Gtk.Align.START,
+                                        valign=Gtk.Align.START
+            )
+            btn_iw_source.set_name(wine)
+            btn_iw_source.set_child(box_btn_iw_source)
+            btn_iw_source.set_tooltip_markup(wine_source_dict[wine])
+            btn_iw_source.connect('activate-link', cb_btn_source_wine)
+
+            iw_title = Gtk.Label(
+                                css_name='sw_label_title',
+                                label=wine_dict[wine].replace('_', ' ').title(),
+                                hexpand=True,
+                                halign=Gtk.Align.START,
+                                valign=Gtk.Align.START,
+                                xalign=0,
+            )
+            iw_desc = Gtk.Label(
+                                css_name='sw_label_desc',
+                                label=str(wine_descriptions[wine]),
+                                valign=Gtk.Align.START,
+                                xalign=0,
+                                hexpand=True,
+                                max_width_chars=0,
+                                wrap=True,
+                                natural_wrap_mode=True,
+                                wrap_mode=Pango.WrapMode.WORD,
+            )
+            iw_desc.set_size_request(260,-1)
+
+            box_iw_title = Gtk.Box(
+                                css_name='sw_box',
+                                orientation=Gtk.Orientation.HORIZONTAL,
+                                spacing=8,
+            )
+            box_iw_title.append(iw_title)
+            box_iw_title.append(dropdown_download_wine)
+            box_iw_title.append(stack_btn_iw)
+
+            box_iw_desc_source = Gtk.Box(
+                                css_name='sw_box',
+                                orientation=Gtk.Orientation.VERTICAL,
+                                spacing=8,
+            )
+            box_iw_desc_source.append(iw_desc)
+            box_iw_desc_source.append(btn_iw_source)
+
+            box_iw_desc = Gtk.Box(
+                                css_name='sw_box',
+                                orientation=Gtk.Orientation.HORIZONTAL,
+                                spacing=16,
+            )
+            box_iw_desc.append(image_iw)
+            box_iw_desc.append(box_iw_desc_source)
+
+            grid_iw = Gtk.Grid(css_name='sw_grid')
+            grid_iw.set_vexpand(True)
+            grid_iw.set_row_spacing(16)
+            grid_iw.set_margin_bottom(16)
+            grid_iw.set_margin_top(16)
+            grid_iw.set_margin_start(16)
+            grid_iw.set_margin_end(16)
+            grid_iw.set_valign(Gtk.Align.START)
+            grid_iw.attach(box_iw_title, 0, count, 1, 1)
+            grid_iw.attach(box_iw_desc, 0, count+1, 1, 1)
+
+            wine_child = Gtk.FlowBoxChild(css_name='sw_flowboxchild')
+            wine_child.set_name(Path(l).stem)
+            wine_child.set_child(grid_iw)
+            swgs.wine_flow.append(wine_child)
+
+        scrolled_install_wine.set_child(swgs.wine_menu)
+        return set_settings_widget(vw_dict['install_wine'], None)
+
+#####___Mangohud_settings___.
+
+    def add_mangohud_settings_view():
+        '''___build mangohud settings view page___'''
+
+        swgs.label_mh_preview_0 = Gtk.Label(css_name='sw_label', label=preview_label)
+
+        swgs.btn_mh_preview_0 = Gtk.Button(css_name='sw_button')
+        swgs.btn_mh_preview_0.set_hexpand(True)
+        swgs.btn_mh_preview_0.set_halign(Gtk.Align.END)
+        swgs.btn_mh_preview_0.set_valign(Gtk.Align.START)
+        swgs.btn_mh_preview_0.set_child(swgs.label_mh_preview_0)
+        swgs.btn_mh_preview_0.connect('clicked', cb_btn_mh_preview)
+
+        swgs.pref_group_mh_title = Gtk.Label(
+                                        css_name='sw_label_title',
+                                        label=vl_dict['mangohud_settings'],
+                                        xalign=0.0,
+                                        wrap=True,
+                                        natural_wrap_mode=True
+                                        )
+
+        swgs.pref_group_mh_subtitle = Gtk.Label(
+                                        css_name='sw_label_desc',
+                                        label=str_mh_subtitle,
+                                        xalign=0.0,
+                                        wrap=True,
+                                        natural_wrap_mode=True
+                                        )
+
+        swgs.pref_group_mh_label_box = Gtk.Box(
+                                        css_name='sw_box_view',
+                                        orientation=Gtk.Orientation.VERTICAL
+                                        )
+        swgs.pref_group_mh_label_box.append(swgs.pref_group_mh_title)
+        swgs.pref_group_mh_label_box.append(swgs.pref_group_mh_subtitle)
+
+        swgs.pref_group_mh_title_grid = Gtk.Grid(css_name='sw_box_view')
+        swgs.pref_group_mh_title_grid.attach(swgs.pref_group_mh_label_box, 0,0,1,1)
+        swgs.pref_group_mh_title_grid.attach(swgs.btn_mh_preview_0, 1,0,1,1)
+
+        swgs.mangohud_flow = Gtk.FlowBox(css_name='sw_preferencesgroup')
+        swgs.mangohud_flow.set_margin_top(16)
+        swgs.mangohud_flow.set_homogeneous(True)
+        swgs.mangohud_flow.set_min_children_per_line(1)
+        swgs.mangohud_flow.set_max_children_per_line(8)
+
+        swgs.pref_group_mh_flow = Gtk.Box(
+                                    css_name='sw_pref_box',
+                                    orientation=Gtk.Orientation.VERTICAL
+                                    )
+        swgs.pref_group_mh_flow.append(swgs.pref_group_mh_title_grid)
+        swgs.pref_group_mh_flow.append(swgs.mangohud_flow)
+
+        swgs.mangohud_settings = Gtk.Box(
+                                    css_name='sw_flowbox',
+                                    orientation=Gtk.Orientation.VERTICAL
+                                    )
+        swgs.mangohud_settings.append(swgs.pref_group_mh_flow)
+
+        count = -1
+        for l, d in sorted(zip(check_mh_labels, check_mh_description)):
+            count += 1
+            btn_switch_mh = Gtk.Switch(
+                                    css_name='sw_switch',
+                                    valign=Gtk.Align.CENTER,
+                                    halign=Gtk.Align.START,
+                                    name=l,
+            )
+            btn_switch_mh.connect('state-set', cb_btn_switch_mh)
+            check_btn_mh_list.append(btn_switch_mh)
+
+            title_mh = Gtk.Label(
+                                css_name='sw_label',
+                                label=l.upper(),
+                                hexpand=True,
+                                halign=Gtk.Align.START,
+                                xalign=0,
+            )
+            desc_mh = Gtk.Label(
+                                css_name='sw_label_desc',
+                                label=d,
+                                hexpand=True,
+                                valign=Gtk.Align.CENTER,
+                                xalign=0,
+                                max_width_chars=0,
+                                wrap=True,
+                                natural_wrap_mode=True,
+                                wrap_mode=Pango.WrapMode.WORD,
+            )
+            desc_mh.set_size_request(280,-1)
+            grid_mh = Gtk.Grid(css_name='sw_grid')
+            grid_mh.attach(title_mh,0,count,1,1)
+            grid_mh.attach(btn_switch_mh,1,count,1,1)
+
+            pref_group_mh = Gtk.Box(
+                                    css_name='sw_box_view',
+                                    orientation=Gtk.Orientation.VERTICAL
+            )
+            pref_group_mh.append(grid_mh)
+            pref_group_mh.append(desc_mh)
+
+            mangohud_child = Gtk.FlowBoxChild(
+                                    css_name='sw_flowboxchild',
+                                    name=l,
+            )
+            mangohud_child.set_child(pref_group_mh)
+            swgs.mangohud_flow.append(mangohud_child)
+            swgs.mangohud_flow.connect('child-activated', on_mango_flow_activated, btn_switch_mh)
+
+    ####___Colors_settings___.
+
+        swgs.label_preview = Gtk.Label(css_name='sw_label', label=preview_label)
+
+        swgs.btn_mh_preview = Gtk.Button(css_name='sw_button')
+        swgs.btn_mh_preview.set_hexpand(True)
+        swgs.btn_mh_preview.set_valign(Gtk.Align.START)
+        swgs.btn_mh_preview.set_halign(Gtk.Align.END)
+        swgs.btn_mh_preview.set_margin_bottom(16)
+        swgs.btn_mh_preview.set_child(swgs.label_preview)
+        swgs.btn_mh_preview.connect('clicked', cb_btn_mh_preview)
+
+        ####___Mangohud_colors___.
+
+        swgs.colors_flow_mh = Gtk.FlowBox(css_name='sw_preferencesgroup')
+        swgs.colors_flow_mh.set_margin_bottom(32)
+        swgs.colors_flow_mh.set_homogeneous(True)
+        swgs.colors_flow_mh.set_min_children_per_line(1)
+        swgs.colors_flow_mh.set_max_children_per_line(4)
+
+        swgs.colors_mh_title = Gtk.Label(
+                                    css_name='sw_label_title',
+                                    label=str_mh_colors_title,
+                                    xalign=0.0,
+                                    wrap=True,
+                                    natural_wrap_mode=True
+                                    )
+
+        swgs.colors_mh_subtitle = Gtk.Label(
+                                    css_name='sw_label_desc',
+                                    label=str_mh_colors_subtitle,
+                                    xalign=0.0,
+                                    wrap=True,
+                                    natural_wrap_mode=True
+                                    )
+
+        swgs.colors_mh_label_box = Gtk.Box(
+                                    css_name='sw_box_view',
+                                    orientation=Gtk.Orientation.VERTICAL,
+                                    halign=Gtk.Align.START
+                                    )
+        swgs.colors_mh_label_box.append(swgs.colors_mh_title)
+        swgs.colors_mh_label_box.append(swgs.colors_mh_subtitle)
+
+        swgs.colors_mh_title_grid = Gtk.Grid(css_name='sw_box_view')
+        swgs.colors_mh_title_grid.attach(swgs.colors_mh_label_box, 0,0,1,1)
+        swgs.colors_mh_title_grid.attach(swgs.btn_mh_preview, 1,0,1,1)
+
+        swgs.colors_pref_mh = Gtk.Box(
+                                css_name='sw_pref_box',
+                                orientation=Gtk.Orientation.VERTICAL
+                                )
+        swgs.colors_pref_mh.append(swgs.colors_mh_title_grid)
+        swgs.colors_pref_mh.append(swgs.colors_flow_mh)
+
+        count = -1
+        for c, d in zip(mh_colors, mh_colors_description):
+            count += 1
+
+            entry_mh_color = Gtk.Entry(css_name='sw_entry')
+            entry_mh_color.set_tooltip_markup(msg.tt_dict['current'])
+            entry_mh_color.set_hexpand(True)
+            entry_mh_color.set_name(c)
+            entry_mh_color.set_sensitive(False)
+            entry_mh_color_list.append(entry_mh_color)
+
+            btn_mh_color = Gtk.ColorButton(css_name='sw_buttoncolor')
+            btn_mh_color.set_name(c)
+            btn_mh_color.set_hexpand(True)
+            btn_mh_color.set_valign(Gtk.Align.CENTER)
+            btn_mh_color.set_halign(Gtk.Align.END)
+            btn_mh_color.set_size_request(32, 32)
+            btn_mh_color.set_tooltip_markup(msg.tt_dict['color'])
+            btn_mh_color.connect('color-set', on_mh_color_set, entry_mh_color)
+            btn_mh_color_list.append(btn_mh_color)
+
+            btn_mh_color.get_first_child().remove_css_class('color')
+            btn_mh_color.get_first_child().add_css_class('sw_color')
+
+            title_mh_color = Gtk.Label(css_name='sw_label', label=d)
+            title_mh_color.set_size_request(200,-1)
+            title_mh_color.set_hexpand(True)
+            title_mh_color.set_halign(Gtk.Align.START)
+            title_mh_color.set_xalign(0)
+
+            grid_mh_color = Gtk.Grid(css_name='sw_grid')
+            grid_mh_color.attach(entry_mh_color,0,count,1,1)
+            grid_mh_color.attach(btn_mh_color,1,count,1,1)
+
+            pref_box_mh_color = Gtk.Box(
+                                        css_name='sw_box_view',
+                                        orientation=Gtk.Orientation.VERTICAL
+                                        )
+            pref_box_mh_color.append(title_mh_color)
+            pref_box_mh_color.append(grid_mh_color)
+
+            colors_flow_mh_child = Gtk.FlowBoxChild(css_name='sw_flowboxchild')
+            colors_flow_mh_child.set_name(d)
+            colors_flow_mh_child.set_child(pref_box_mh_color)
+
+            swgs.colors_flow_mh.append(colors_flow_mh_child)
+
+        swgs.mangohud_settings.append(swgs.colors_pref_mh)
+        scrolled_mangohud_settings.set_child(swgs.mangohud_settings)
+
+        return set_settings_widget(
+                            vw_dict['mangohud_settings'],
+                            swgs.pref_group_mh_title,
+        )
+
+#####___Vkbasalt_settings___.
+
+    def add_vkbasalt_settings_view():
+        '''___build vkbasalt settings view page___'''
+
+        swgs.label_vk_scale = Gtk.Label(
+                                css_name='sw_label_desc',
+                                label=str_vk_intensity,
+                                xalign=0,
+                                yalign=0.5,
+                                wrap=True,
+                                wrap_mode=Pango.WrapMode.WORD,
+                                )
+        swgs.vk_adjustment = Gtk.Adjustment()
+        swgs.vk_adjustment.set_lower(0)
+        swgs.vk_adjustment.set_upper(100)
+        swgs.vk_adjustment.connect('value-changed', on_set_vk_intensity)
+
+        swgs.btn_vk_scale = Gtk.Scale(css_name='sw_scale')
+        swgs.btn_vk_scale.set_hexpand(True)
+        swgs.btn_vk_scale.set_halign(Gtk.Align.END)
+        swgs.btn_vk_scale.set_valign(Gtk.Align.START)
+        swgs.btn_vk_scale.set_size_request(140,-1)
+        swgs.btn_vk_scale.set_draw_value(True)
+        swgs.btn_vk_scale.set_round_digits(0)
+        swgs.btn_vk_scale.set_adjustment(swgs.vk_adjustment)
+
+        swgs.vk_scale_box = Gtk.Box(
+                            css_name='sw_box_view',
+                            orientation=Gtk.Orientation.HORIZONTAL,
+                            halign=Gtk.Align.END,
+                            valign=Gtk.Align.START,
+                            spacing=8,
+                            )
+        swgs.vk_scale_box.append(swgs.label_vk_scale)
+        swgs.vk_scale_box.append(swgs.btn_vk_scale)
+
+        swgs.pref_group_vk_title = Gtk.Label(
+                                        css_name='sw_label_title',
+                                        label=vl_dict['vkbasalt_settings'],
+                                        xalign=0.0,
+                                        wrap=True,
+                                        natural_wrap_mode=True
+                                        )
+
+        swgs.pref_group_vk_subtitle = Gtk.Label(
+                                        css_name='sw_label_desc',
+                                        label=str_vk_subtitle,
+                                        xalign=0.0,
+                                        wrap=True,
+                                        natural_wrap_mode=True
+                                        )
+
+        swgs.pref_group_vk_label_box = Gtk.Box(
+                                        css_name='sw_box_view',
+                                        orientation=Gtk.Orientation.VERTICAL,
+                                        halign=Gtk.Align.START
+                                        )
+        swgs.pref_group_vk_label_box.append(swgs.pref_group_vk_title)
+        swgs.pref_group_vk_label_box.append(swgs.pref_group_vk_subtitle)
+
+        swgs.pref_group_vk_title_grid = Gtk.Grid(css_name='sw_box_view')
+        swgs.pref_group_vk_title_grid.attach(swgs.pref_group_vk_label_box, 0,0,1,1)
+        swgs.pref_group_vk_title_grid.attach(swgs.vk_scale_box, 1,0,1,1)
+
+        swgs.vkbasalt_flow = Gtk.FlowBox(css_name='sw_preferencesgroup')
+        swgs.vkbasalt_flow.set_homogeneous(True)
+        swgs.vkbasalt_flow.set_min_children_per_line(1)
+        swgs.vkbasalt_flow.set_max_children_per_line(8)
+
+        swgs.pref_group_vk_flow = Gtk.Box(
+                                    css_name='sw_pref_box',
+                                    orientation=Gtk.Orientation.VERTICAL
+                                    )
+        swgs.pref_group_vk_flow.append(swgs.pref_group_vk_title_grid)
+        swgs.pref_group_vk_flow.append(swgs.vkbasalt_flow)
+
+        swgs.vkbasalt_settings = Gtk.Box(
+                                    css_name='sw_flowbox',
+                                    orientation=Gtk.Orientation.VERTICAL
+                                    )
+        swgs.vkbasalt_settings.append(swgs.pref_group_vk_flow)
+
+        count = -1
+        for l, d in sorted(vkbasalt_dict.items()):
+            count += 1
+
+            btn_switch_vk = Gtk.Switch(css_name='sw_switch')
+            btn_switch_vk.set_name(l)
+            btn_switch_vk.set_valign(Gtk.Align.CENTER)
+            btn_switch_vk.set_halign(Gtk.Align.START)
+            btn_switch_vk.connect('state-set', cb_btn_switch_vk)
+            check_btn_vk_list.append(btn_switch_vk)
+
+            title_vk = Gtk.Label(css_name='sw_label', label=l.upper())
+            title_vk.set_hexpand(True)
+            title_vk.set_halign(Gtk.Align.START)
+            title_vk.set_xalign(0)
+
+            desc_vk = Gtk.Label(css_name='sw_label_desc', label=d)
+            desc_vk.set_size_request(280,-1)
+            desc_vk.set_hexpand(True)
+            desc_vk.set_valign(Gtk.Align.CENTER)
+            desc_vk.set_xalign(0)
+            desc_vk.set_max_width_chars(0)
+            desc_vk.set_wrap(True)
+            desc_vk.set_natural_wrap_mode(True)
+
+            grid_vk = Gtk.Grid(css_name='sw_grid')
+            grid_vk.attach(title_vk, 0, count, 1, 1)
+            grid_vk.attach(btn_switch_vk, 1, count, 1, 1)
+
+            pref_group_vk = Gtk.Box(
+                                    css_name='sw_box_view',
+                                    orientation=Gtk.Orientation.VERTICAL
+                                    )
+            pref_group_vk.append(grid_vk)
+            pref_group_vk.append(desc_vk)
+
+            vkbasalt_child = Gtk.FlowBoxChild(css_name='sw_flowboxchild')
+            vkbasalt_child.set_name(l)
+            vkbasalt_child.set_child(pref_group_vk)
+            swgs.vkbasalt_flow.insert(vkbasalt_child, position=count)
+            swgs.vkbasalt_flow.connect('child-activated', on_vk_flow_activated, btn_switch_vk)
+
+        scrolled_vkbasalt_settings.set_child(swgs.vkbasalt_settings)
+
+        app_name = get_out()
+        app_conf = f"{sw_app_config}/{app_name}"
+        app_dict = app_info(app_conf)
+        swgs.vk_adjustment.set_value(float(app_dict['export SW_USE_VKBASALT_CAS'][1:-1])*100)
+
+        return set_settings_widget(
+                                vw_dict['vkbasalt_settings'],
+                                swgs.pref_group_vk_title
+                                )
+
+#####___Global_settings___.
+
+    def add_global_settings_view():
+        '''___build global settings view page___'''
+
+        swgs.global_settings_title = Gtk.Label(
+                                        css_name='sw_label_title',
+                                        label=vl_dict['global_settings'],
+                                        xalign=0.0,
+                                        wrap=True,
+                                        natural_wrap_mode=True,
+        )
+        swgs.global_settings_subtitle = Gtk.Label(
+                                            css_name='sw_label_desc',
+                                            label=str_global_subtitle,
+                                            xalign=0.0,
+                                            wrap=True,
+                                            natural_wrap_mode=True,
+        )
+        swgs.label_btn_global_settings = Gtk.Label(css_name='sw_label', label=str_reset_menu_settings)
+
+        swgs.btn_global_settings_reset = Gtk.Button(css_name='sw_button')
+        swgs.btn_global_settings_reset.set_hexpand(True)
+        swgs.btn_global_settings_reset.set_halign(Gtk.Align.END)
+        swgs.btn_global_settings_reset.set_valign(Gtk.Align.START)
+        swgs.btn_global_settings_reset.set_child(swgs.label_btn_global_settings)
+        swgs.btn_global_settings_reset.connect('clicked', cb_btn_menu_json_default)
+
+        swgs.global_settings_label_box = Gtk.Box(
+                                    css_name='sw_box_view',
+                                    orientation=Gtk.Orientation.VERTICAL,
+                                    halign=Gtk.Align.START
+        )
+        swgs.global_settings_label_box.append(swgs.global_settings_title)
+        swgs.global_settings_label_box.append(swgs.global_settings_subtitle)
+
+        swgs.global_settings_title_grid = Gtk.Grid(css_name='sw_box_view')
+        swgs.global_settings_title_grid.attach(swgs.global_settings_label_box,0,0,1,1)
+        swgs.global_settings_title_grid.attach(swgs.btn_global_settings_reset,1,0,1,1)
+
+        ####___autostart_row___.
+
+        swgs.title_autostart = Gtk.Label(
+                            css_name='sw_label',
+                            label=str_title_autostart,
+                            xalign=0,
+                            margin_start=4,
+                            )
+
+        swgs.subtitle_autostart = Gtk.Label(
+                            css_name='sw_label_desc',
+                            label=str_subtitle_autostart,
+                            xalign=0,
+                            margin_start=4,
+                            )
+
+        swgs.grid_autostart_labels = Gtk.Grid(css_name='sw_grid')
+        swgs.grid_autostart_labels.set_hexpand(True)
+        swgs.grid_autostart_labels.attach(swgs.title_autostart,0,0,1,1)
+        swgs.grid_autostart_labels.attach(swgs.subtitle_autostart,0,1,1,1)
+
+        swgs.switch_autostart = Gtk.Switch(css_name='sw_switch', margin_end=4)
+        swgs.switch_autostart.set_valign(Gtk.Align.CENTER)
+        swgs.switch_autostart.set_halign(Gtk.Align.END)
+        swgs.switch_autostart.connect('state-set', on_switch_autostart)
+
+        swgs.row_autostart = Gtk.Box(
+                        css_name='sw_action_row',
+                        orientation=Gtk.Orientation.HORIZONTAL,
+                        spacing=4
+                        )
+        swgs.row_autostart.set_size_request(-1, 48)
+        swgs.row_autostart.append(swgs.grid_autostart_labels)
+        swgs.row_autostart.append(swgs.switch_autostart)
+
+        ####___language_row___.
+
+        swgs.title_lang = Gtk.Label(
+                            css_name='sw_label',
+                            label=str_title_lang,
+                            xalign=0,
+                            margin_start=4,
+                            )
+
+        swgs.subtitle_lang = Gtk.Label(
+                            css_name='sw_label_desc',
+                            label=str_subtitle_lang,
+                            xalign=0,
+                            margin_start=4,
+                            )
+
+        swgs.grid_lang_labels = Gtk.Grid(css_name='sw_grid')
+        swgs.grid_lang_labels.set_hexpand(True)
+        swgs.grid_lang_labels.attach(swgs.title_lang, 0, 0, 1, 1)
+        swgs.grid_lang_labels.attach(swgs.subtitle_lang, 0, 1, 1, 1)
+
+        swgs.lang_list_model = Gtk.StringList()
+
+        for lang in lang_labels:
+            swgs.lang_list_model.append(lang)
+
+        swgs.lang_list_factory = Gtk.SignalListItemFactory()
+        swgs.lang_list_factory.connect('setup', on_lang_setup)
+        swgs.lang_list_factory.connect('bind', on_lang_bind)
+
+        swgs.dropdown_lang = Gtk.DropDown(css_name='sw_dropdown')
+        swgs.dropdown_lang.set_valign(Gtk.Align.CENTER)
+        swgs.dropdown_lang.set_halign(Gtk.Align.END)
+        swgs.dropdown_lang.set_model(swgs.lang_list_model)
+        swgs.dropdown_lang.connect('notify::selected-item', on_lang_activate)
+
+        swgs.row_lang = Gtk.Box(
+                        css_name='sw_action_row',
+                        orientation=Gtk.Orientation.HORIZONTAL,
+                        spacing=4
+                        )
+        swgs.row_lang.set_size_request(-1,48)
+        swgs.row_lang.append(swgs.grid_lang_labels)
+        swgs.row_lang.append(swgs.dropdown_lang)
+
+        ####___icon_mode_row___.
+
+        swgs.title_icons = Gtk.Label(
+                            css_name='sw_label',
+                            label=str_title_icons,
+                            xalign=0,
+                            margin_start=4,
+                            )
+
+        swgs.subtitle_icons = Gtk.Label(
+                            css_name='sw_label_desc',
+                            label=str_subtitle_icons,
+                            xalign=0,
+                            margin_start=4,
+                            )
+
+        swgs.grid_icons_labels = Gtk.Grid(css_name='sw_grid')
+        swgs.grid_icons_labels.set_hexpand(True)
+        swgs.grid_icons_labels.attach(swgs.title_icons,0,0,1,1)
+        swgs.grid_icons_labels.attach(swgs.subtitle_icons,0,1,1,1)
+
+        swgs.switch_icons = Gtk.Switch(css_name='sw_switch', margin_end=4)
+        swgs.switch_icons.set_valign(Gtk.Align.CENTER)
+        swgs.switch_icons.set_halign(Gtk.Align.END)
+        swgs.switch_icons.connect('state-set', on_switch_icons)
+
+        swgs.row_icons = Gtk.Box(
+                        css_name='sw_action_row',
+                        orientation=Gtk.Orientation.HORIZONTAL,
+                        spacing=4
+                        )
+        swgs.row_icons.set_size_request(-1, 48)
+        swgs.row_icons.append(swgs.grid_icons_labels)
+        swgs.row_icons.append(swgs.switch_icons)
+
+        ####___restore_menu_mode_row___.
+
+        swgs.title_restore_menu = Gtk.Label(
+                            css_name='sw_label',
+                            label=str_title_restore_menu,
+                            xalign=0,
+                            margin_start=4,
+                            )
+
+        swgs.subtitle_restore_menu = Gtk.Label(
+                            css_name='sw_label_desc',
+                            label=str_subtitle_restore_menu,
+                            xalign=0,
+                            margin_start=4,
+                            )
+
+        swgs.grid_restore_menu_labels = Gtk.Grid(css_name='sw_grid')
+        swgs.grid_restore_menu_labels.set_hexpand(True)
+        swgs.grid_restore_menu_labels.attach(swgs.title_restore_menu,0,0,1,1)
+        swgs.grid_restore_menu_labels.attach(swgs.subtitle_restore_menu,0,1,1,1)
+
+        swgs.switch_restore_menu = Gtk.Switch(css_name='sw_switch', margin_end=4)
+        swgs.switch_restore_menu.set_valign(Gtk.Align.CENTER)
+        swgs.switch_restore_menu.set_halign(Gtk.Align.END)
+        swgs.switch_restore_menu.connect('state-set', on_switch_restore_menu)
+
+        swgs.row_restore_menu = Gtk.Box(
+                        css_name='sw_action_row',
+                        orientation=Gtk.Orientation.HORIZONTAL,
+                        spacing=4
+                        )
+        swgs.row_restore_menu.set_size_request(-1, 48)
+        swgs.row_restore_menu.append(swgs.grid_restore_menu_labels)
+        swgs.row_restore_menu.append(swgs.switch_restore_menu)
+
+        ####___auto_stop_mode___.
+
+        swgs.title_auto_stop = Gtk.Label(
+                            css_name='sw_label',
+                            label=str_title_auto_stop,
+                            xalign=0,
+                            margin_start=4,
+                            )
+
+        swgs.subtitle_auto_stop = Gtk.Label(
+                            css_name='sw_label_desc',
+                            label=str_subtitle_auto_stop,
+                            xalign=0,
+                            margin_start=4,
+                            wrap=True,
+                            natural_wrap_mode=True,
+        )
+        swgs.grid_auto_stop_labels = Gtk.Grid(css_name='sw_grid')
+        swgs.grid_auto_stop_labels.set_hexpand(True)
+        swgs.grid_auto_stop_labels.attach(swgs.title_auto_stop, 0, 0, 1, 1)
+        swgs.grid_auto_stop_labels.attach(swgs.subtitle_auto_stop, 0, 1, 1, 1)
+
+        swgs.switch_auto_stop = Gtk.Switch(css_name='sw_switch', margin_end=4)
+        swgs.switch_auto_stop.set_valign(Gtk.Align.CENTER)
+        swgs.switch_auto_stop.set_halign(Gtk.Align.END)
+        swgs.switch_auto_stop.connect('state-set', on_switch_auto_stop)
+
+        swgs.row_auto_stop = Gtk.Box(
+                        css_name='sw_action_row',
+                        orientation=Gtk.Orientation.HORIZONTAL,
+                        spacing=4
+        )
+        swgs.row_auto_stop.set_size_request(-1, 48)
+        swgs.row_auto_stop.append(swgs.grid_auto_stop_labels)
+        swgs.row_auto_stop.append(swgs.switch_auto_stop)
+
+        ####___auto_hide_top_header_mode___.
+
+        swgs.title_auto_hide_top = Gtk.Label(
+                            css_name='sw_label',
+                            label=str_title_auto_hide_top,
+                            xalign=0,
+                            margin_start=4,
+                            )
+
+        swgs.subtitle_auto_hide_top = Gtk.Label(
+                            css_name='sw_label_desc',
+                            label=str_subtitle_auto_hide_top,
+                            xalign=0,
+                            margin_start=4,
+                            wrap=True,
+                            natural_wrap_mode=True,
+        )
+        swgs.grid_auto_hide_top = Gtk.Grid(css_name='sw_grid')
+        swgs.grid_auto_hide_top.set_hexpand(True)
+        swgs.grid_auto_hide_top.attach(swgs.title_auto_hide_top, 0, 0, 1, 1)
+        swgs.grid_auto_hide_top.attach(swgs.subtitle_auto_hide_top, 0, 1, 1, 1)
+
+        swgs.switch_auto_hide_top = Gtk.Switch(css_name='sw_switch', margin_end=4)
+        swgs.switch_auto_hide_top.set_valign(Gtk.Align.CENTER)
+        swgs.switch_auto_hide_top.set_halign(Gtk.Align.END)
+        swgs.switch_auto_hide_top.connect('state-set', on_switch_auto_hide_top_header)
+
+        swgs.row_auto_hide_top = Gtk.Box(
+                        css_name='sw_action_row',
+                        orientation=Gtk.Orientation.HORIZONTAL,
+                        spacing=4
+        )
+        swgs.row_auto_hide_top.set_size_request(-1, 48)
+        swgs.row_auto_hide_top.append(swgs.grid_auto_hide_top)
+        swgs.row_auto_hide_top.append(swgs.switch_auto_hide_top)
+
+        ####___auto_hide_bottom_header_mode___.
+
+        swgs.title_auto_hide_bottom = Gtk.Label(
+                            css_name='sw_label',
+                            label=str_title_auto_hide_bottom,
+                            xalign=0,
+                            margin_start=4,
+                            )
+
+        swgs.subtitle_auto_hide_bottom = Gtk.Label(
+                            css_name='sw_label_desc',
+                            label=str_subtitle_auto_hide_bottom,
+                            xalign=0,
+                            margin_start=4,
+                            wrap=True,
+                            natural_wrap_mode=True,
+                            hexpand=True,
+        )
+        swgs.grid_auto_hide_bottom = Gtk.Grid(css_name='sw_grid')
+        swgs.grid_auto_hide_bottom.attach(swgs.title_auto_hide_bottom, 0, 0, 1, 1)
+        swgs.grid_auto_hide_bottom.attach(swgs.subtitle_auto_hide_bottom, 0, 1, 1, 1)
+
+        swgs.switch_auto_hide_bottom = Gtk.Switch(css_name='sw_switch', margin_end=4)
+        swgs.switch_auto_hide_bottom.set_valign(Gtk.Align.CENTER)
+        swgs.switch_auto_hide_bottom.set_halign(Gtk.Align.END)
+        swgs.switch_auto_hide_bottom.connect('state-set', on_switch_auto_hide_bottom_header)
+
+        swgs.row_auto_hide_bottom = Gtk.Box(
+                        css_name='sw_action_row',
+                        orientation=Gtk.Orientation.HORIZONTAL,
+                        spacing=4,
+        )
+        swgs.row_auto_hide_bottom.set_size_request(-1, 48)
+        swgs.row_auto_hide_bottom.append(swgs.grid_auto_hide_bottom)
+        swgs.row_auto_hide_bottom.append(swgs.switch_auto_hide_bottom)
+
+        ####___default_file_manager_directory_row___.
+
+        swgs.title_def_dir = Gtk.Label(
+                            css_name='sw_label_title',
+                            label=str_title_def_dir,
+                            xalign=0,
+                            margin_start=4,
+                            )
+
+        swgs.subtitle_def_dir = Gtk.Label(
+                            css_name='sw_label_info',
+                            label=str_subtitle_def_dir,
+                            xalign=0,
+                            margin_start=4,
+                            wrap=True,
+                            natural_wrap_mode=True
+                            )
+
+        swgs.grid_def_dir_labels = Gtk.Grid(css_name='sw_grid', row_spacing=4)
+        swgs.grid_def_dir_labels.set_hexpand(True)
+        swgs.grid_def_dir_labels.attach(swgs.title_def_dir,0,0,1,1)
+        swgs.grid_def_dir_labels.attach(swgs.subtitle_def_dir,0,1,1,1)
+
+        swgs.entry_def_dir = Gtk.Entry(css_name='sw_entry')
+        swgs.entry_def_dir.set_hexpand(True)
+        swgs.entry_def_dir.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY, 'edit')
+        swgs.entry_def_dir.set_icon_sensitive(Gtk.EntryIconPosition.SECONDARY, True)
+        swgs.entry_def_dir.set_icon_activatable(Gtk.EntryIconPosition.SECONDARY, True)
+        swgs.entry_def_dir.set_icon_tooltip_markup(
+                                            Gtk.EntryIconPosition.SECONDARY,
+                                            msg.tt_dict['save']
+                                            )
+        swgs.entry_def_dir.connect('icon-press', cb_entry_def_dir)
+
+        swgs.image_def_dir = Gtk.Image(css_name='sw_image')
+        swgs.image_def_dir.set_from_file(IconPath.icon_folder)
+
+        swgs.btn_def_dir = Gtk.Button(css_name='sw_button', margin_end=4)
+        swgs.btn_def_dir.set_valign(Gtk.Align.CENTER)
+        swgs.btn_def_dir.set_halign(Gtk.Align.END)
+        swgs.btn_def_dir.set_tooltip_markup(msg.tt_dict['directory'])
+        swgs.btn_def_dir.set_child(swgs.image_def_dir)
+        swgs.btn_def_dir.connect('clicked', cb_btn_def_dir)
+
+        swgs.row_def_dir = Gtk.Box(
+                        css_name='sw_action_row',
+                        orientation=Gtk.Orientation.HORIZONTAL,
+                        spacing=4
+                        )
+        swgs.row_def_dir.set_size_request(-1, 48)
+        swgs.row_def_dir.append(swgs.entry_def_dir)
+        swgs.row_def_dir.append(swgs.btn_def_dir)
+
+        ####___opengl_background_row___.
+
+        swgs.title_opengl = Gtk.Label(
+                            css_name='sw_label_title',
+                            label=str_title_opengl,
+                            xalign=0,
+                            margin_start=4,
+                            hexpand=True
+                            )
+
+        swgs.subtitle_opengl = Gtk.Label(
+                            css_name='sw_label_warning',
+                            label=str_subtitle_opengl,
+                            xalign=0,
+                            margin_start=4,
+                            wrap=True,
+                            natural_wrap_mode=True,
+                            hexpand=True
+                            )
+
+        swgs.title_shaders = Gtk.Label(
+                            css_name='sw_label',
+                            label=str_title_shaders,
+                            xalign=0,
+                            margin_start=4,
+                            )
+
+        swgs.subtitle_shaders = Gtk.Label(
+                            css_name='sw_label_desc',
+                            label=str_subtitle_shaders,
+                            xalign=0,
+                            margin_start=4,
+                            wrap=True,
+                            natural_wrap_mode=True
+                            )
+
+        swgs.switch_opengl = Gtk.Switch(css_name='sw_switch', margin_end=4)
+        swgs.switch_opengl.set_halign(Gtk.Align.END)
+        swgs.switch_opengl.set_valign(Gtk.Align.CENTER)
+        swgs.switch_opengl.connect('state-set', on_switch_opengl_bg)
+
+        swgs.grid_opengl_labels = Gtk.Grid(css_name='sw_grid')
+        swgs.grid_opengl_labels.attach(swgs.title_opengl,0,0,1,1)
+        swgs.grid_opengl_labels.attach(swgs.subtitle_opengl,0,1,1,1)
+        swgs.grid_opengl_labels.attach(swgs.switch_opengl,1,0,1,1)
+
+        swgs.grid_shader_labels = Gtk.Grid(css_name='sw_grid')
+        swgs.grid_shader_labels.set_hexpand(True)
+        swgs.grid_shader_labels.attach(swgs.title_shaders,0,0,1,1)
+        swgs.grid_shader_labels.attach(swgs.subtitle_shaders,0,1,1,1)
+
+        swgs.shaders_list_model = Gtk.StringList()
+
+        for l in fragments_labels:
+            swgs.shaders_list_model.append(l)
+
+        swgs.shaders_list_factory = Gtk.SignalListItemFactory()
+        swgs.shaders_list_factory.connect('setup', on_shaders_setup)
+        swgs.shaders_list_factory.connect('bind', on_shaders_bind)
+
+        swgs.dropdown_shaders = Gtk.DropDown(css_name='sw_dropdown')
+        swgs.dropdown_shaders.set_valign(Gtk.Align.CENTER)
+        swgs.dropdown_shaders.set_halign(Gtk.Align.END)
+        swgs.dropdown_shaders.set_model(swgs.shaders_list_model)
+        swgs.dropdown_shaders.connect('notify::selected-item', on_shaders_activate)
+
+        swgs.row_shaders = Gtk.Box(
+                            css_name='sw_action_row',
+                            orientation=Gtk.Orientation.HORIZONTAL,
+                            spacing=4
+                            )
+        swgs.row_shaders.set_size_request(-1, 48)
+        swgs.row_shaders.append(swgs.grid_shader_labels)
+        swgs.row_shaders.append(swgs.dropdown_shaders)
+
+        ###___groups___.
+
+        swgs.title_startup = Gtk.Label(
+                                css_name='sw_label_title',
+                                label=str_title_startup,
+                                xalign=0,
+                                margin_top=4,
+                                margin_start=4,
+                                )
+        swgs.subtitle_startup = Gtk.Label(
+                                css_name='sw_label_info',
+                                label=str_subtitle_startup,
+                                xalign=0,
+                                margin_start=4,
+                                wrap=True,
+                                natural_wrap_mode=True,
+        )
+        swgs.title_startup_grid = Gtk.Grid(css_name='sw_grid')
+        swgs.title_startup_grid.attach(swgs.title_startup,0,0,1,1)
+        swgs.title_startup_grid.attach(swgs.subtitle_startup,0,1,1,1)
+
+        swgs.flow_startup = Gtk.FlowBox(
+                            css_name='sw_preferencesgroup',
+                            min_children_per_line=1,
+                            max_children_per_line=4,
+                            homogeneous=True,
+        )
+        swgs.flow_startup.append(swgs.row_autostart)
+        swgs.flow_startup.append(swgs.row_restore_menu)
+        swgs.flow_startup.append(swgs.row_lang)
+        swgs.flow_startup.append(swgs.row_icons)
+        swgs.flow_startup.append(swgs.row_auto_stop)
+        swgs.flow_startup.append(swgs.row_auto_hide_top)
+        swgs.flow_startup.append(swgs.row_auto_hide_bottom)
+
+        swgs.group_startup = Gtk.Box(
+                            css_name='sw_preferencesgroup',
+                            orientation=Gtk.Orientation.VERTICAL,
+                            spacing=4,
+                            margin_start=16,
+                            margin_end=16,
+        )
+        swgs.group_startup.append(swgs.title_startup_grid)
+        swgs.group_startup.append(swgs.flow_startup)
+
+        swgs.group_fm = Gtk.Box(
+                            css_name='sw_preferencesgroup',
+                            orientation=Gtk.Orientation.VERTICAL,
+                            spacing=4,
+                            margin_start=16,
+                            margin_end=16,
+        )
+        swgs.group_fm.append(swgs.grid_def_dir_labels)
+        swgs.group_fm.append(swgs.row_def_dir)
+
+        swgs.group_opengl = Gtk.Box(
+                            css_name='sw_preferencesgroup',
+                            orientation=Gtk.Orientation.VERTICAL,
+                            spacing=4,
+                            margin_start=16,
+                            margin_end=16,
+        )
+        swgs.group_opengl.append(swgs.grid_opengl_labels)
+        swgs.group_opengl.append(swgs.row_shaders)
+
+        ####___Custom_theme_colors___.
+
+        swgs.colors_flow_theme = Gtk.FlowBox(css_name='sw_preferencesgroup')
+        swgs.colors_flow_theme.set_margin_bottom(32)
+        swgs.colors_flow_theme.set_homogeneous(True)
+        swgs.colors_flow_theme.set_min_children_per_line(1)
+        swgs.colors_flow_theme.set_max_children_per_line(4)
+
+        swgs.colors_theme_title = Gtk.Label(
+                                    css_name='sw_label_title',
+                                    label=str_theme_colors_title,
+                                    xalign=0.0,
+                                    wrap=True,
+                                    natural_wrap_mode=True
+        )
+        swgs.colors_theme_subtitle = Gtk.Label(
+                                    css_name='sw_label_info',
+                                    label=str_theme_colors_subtitle,
+                                    xalign=0.0,
+                                    wrap=True,
+                                    natural_wrap_mode=True
+        )
+        swgs.colors_theme_label_box = Gtk.Box(
+                                    css_name='sw_box_view',
+                                    orientation=Gtk.Orientation.VERTICAL,
+                                    halign=Gtk.Align.START
+        )
+        swgs.colors_theme_label_box.append(swgs.colors_theme_title)
+        swgs.colors_theme_label_box.append(swgs.colors_theme_subtitle)
+
+        swgs.dropdown_theme = Gtk.DropDown(
+                                        css_name='sw_dropdown',
+                                        hexpand=True,
+                                        valign=Gtk.Align.CENTER,
+                                        halign=Gtk.Align.START,
+                                        show_arrow=True,
+        )
+        swgs.dropdown_theme.set_size_request(280, -1)
+        swgs.themes_model = Gtk.StringList()
+        for t in list(default_themes):
+            swgs.themes_model.append(t)
+
+        swgs.themes_list_factory = Gtk.SignalListItemFactory()
+        swgs.themes_list_factory.connect('setup', on_combo_setup)
+        swgs.themes_list_factory.connect('bind', on_combo_bind)
+
+        #dropdown_theme.set_factory(themes_list_factory)
+        swgs.dropdown_theme.set_model(swgs.themes_model)
+        swgs.dropdown_theme.connect('notify::selected-item', on_row_theme_activate)
+
+        swgs.label_sample = Gtk.Label(
+                            css_name='sw_label',
+                            xalign=0,
+                            label=str_sample.capitalize(),
+        )
+        swgs.box_theme = Gtk.Box(
+                            css_name='sw_box',
+                            orientation=Gtk.Orientation.HORIZONTAL,
+                            spacing=8,
+                            margin_start=8,
+        )
+        swgs.box_theme.append(swgs.label_sample)
+        swgs.box_theme.append(swgs.dropdown_theme)
+
+        swgs.label_save = Gtk.Label(css_name='sw_label', label=confirm_label)
+
+        swgs.btn_save_theme = Gtk.Button(css_name='sw_button')
+        swgs.btn_save_theme.set_hexpand(True)
+        swgs.btn_save_theme.set_valign(Gtk.Align.START)
+        swgs.btn_save_theme.set_halign(Gtk.Align.END)
+        swgs.btn_save_theme.set_margin_bottom(16)
+        swgs.btn_save_theme.set_child(swgs.label_save)
+        swgs.btn_save_theme.connect('clicked', cb_btn_save_theme)
+
+        swgs.colors_theme_title_grid = Gtk.Grid(css_name='sw_box_view')
+        swgs.colors_theme_title_grid.attach(swgs.colors_theme_label_box, 0,0,1,1)
+        swgs.colors_theme_title_grid.attach(swgs.btn_save_theme, 1,0,1,1)
+        swgs.colors_theme_title_grid.attach(swgs.box_theme, 0,1,1,1)
+
+        swgs.colors_theme = Gtk.Box(
+                                css_name='sw_preferencesgroup',
+                                orientation=Gtk.Orientation.VERTICAL,
+                                valign=Gtk.Align.START,
+                                spacing=4,
+                                margin_start=16,
+                                margin_end=16,
+        )
+        swgs.colors_theme.append(swgs.colors_theme_title_grid)
+        swgs.colors_theme.append(swgs.colors_flow_theme)
+
+        count = -1
+        for n, l in zip(dcolor_names, dcolor_labels):
+            count += 1
+
+            entry_theme_color = Gtk.Entry(css_name='sw_entry')
+            entry_theme_color.set_icon_from_icon_name(
+                                            Gtk.EntryIconPosition.SECONDARY, 'edit'
+            )
+            entry_theme_color.set_icon_sensitive(
+                                            Gtk.EntryIconPosition.SECONDARY, True
+            )
+            entry_theme_color.set_icon_activatable(
+                                            Gtk.EntryIconPosition.SECONDARY, True
+            )
+            entry_theme_color.set_icon_tooltip_markup(
+                                            Gtk.EntryIconPosition.SECONDARY,
+                                            msg.tt_dict['save']
+            )
+            entry_theme_color.set_hexpand(True)
+            entry_theme_color.set_tooltip_markup(msg.tt_dict['edit'])
+            entry_theme_color.connect('icon-press', on_row_entry_color)
+            entry_theme_color.set_name(n)
+            entry_theme_color_list.append(entry_theme_color)
+
+            color_dialog = Gtk.ColorDialog()
+
+            btn_theme_color = Gtk.ColorDialogButton(css_name='sw_buttoncolor')
+            btn_theme_color.set_vexpand(True)
+            btn_theme_color.set_hexpand(True)
+            btn_theme_color.set_valign(Gtk.Align.CENTER)
+            btn_theme_color.set_halign(Gtk.Align.END)
+            btn_theme_color.set_size_request(32, 32)
+            btn_theme_color.set_name(n)
+            btn_theme_color.set_tooltip_markup(msg.tt_dict['color'])
+            btn_theme_color.set_dialog(color_dialog)
+            btn_theme_color.connect('notify::rgba', on_theme_color_set, entry_theme_color)
+            btn_theme_color_list.append(btn_theme_color)
+
+            btn_theme_color.get_first_child().remove_css_class('color')
+            btn_theme_color.get_first_child().add_css_class('sw_color')
+
+            title_theme_color = Gtk.Label(css_name='sw_label', label=l)
+            title_theme_color.set_size_request(200,-1)
+            title_theme_color.set_hexpand(True)
+            title_theme_color.set_halign(Gtk.Align.START)
+            title_theme_color.set_xalign(0)
+
+            grid_theme_color = Gtk.Grid(css_name='sw_grid')
+            grid_theme_color.attach(entry_theme_color,0,count,1,1)
+            grid_theme_color.attach(btn_theme_color,1,count,1,1)
+
+            pref_box_theme_color = Gtk.Box(
+                                        css_name='sw_box_view',
+                                        orientation=Gtk.Orientation.VERTICAL
+            )
+            pref_box_theme_color.append(title_theme_color)
+            pref_box_theme_color.append(grid_theme_color)
+
+            colors_flow_theme_child = Gtk.FlowBoxChild(css_name='sw_flowboxchild')
+            colors_flow_theme_child.set_name(l)
+            colors_flow_theme_child.set_child(pref_box_theme_color)
+            swgs.colors_flow_theme.append(colors_flow_theme_child)
+
+        swgs.global_box = Gtk.Box(
+                            css_name='sw_pref_box',
+                            orientation=Gtk.Orientation.VERTICAL,
+                            spacing=16,
+                            halign=Gtk.Align.CENTER
+        )
+        swgs.global_box.append(swgs.global_settings_title_grid)
+        swgs.global_box.append(swgs.group_startup)
+        swgs.global_box.append(swgs.group_fm)
+        swgs.global_box.append(swgs.group_opengl)
+        swgs.global_box.append(swgs.colors_theme)
+
+        swgs.global_settings = Gtk.Box(
+                                css_name='sw_flowbox',
+                                orientation=Gtk.Orientation.VERTICAL,
+                                halign=Gtk.Align.CENTER
+        )
+        swgs.global_settings.append(swgs.global_box)
+        scrolled_global_settings.set_child(swgs.global_settings)
+
+        activate_global_settings()
+        return set_settings_widget(
+                                vw_dict['global_settings'],
+                                None
+        )
+
+    ####___Winetricks_dll_column_view___.
+
+    def add_winetricks_view():
+        '''___build winetricks view page___'''
+
+        swgs.list_store_dll_0 = Gio.ListStore()
+        swgs.list_store_dll_1 = Gio.ListStore()
+        swgs.item_list_dll = Gtk.ListItem()
+
+        swgs.factory_dll_0 = Gtk.SignalListItemFactory()
+        swgs.factory_dll_0.connect('setup', cb_factory_dll_0_setup)
+        swgs.factory_dll_0.connect('bind', cb_factory_dll_0_bind)
+
+        swgs.factory_dll_desc_0 = Gtk.SignalListItemFactory()
+        swgs.factory_dll_desc_0.connect('setup', cb_factory_dll_0_desc_setup)
+        swgs.factory_dll_desc_0.connect('bind', cb_factory_dll_0_desc_bind)
+
+        swgs.factory_dll_1 = Gtk.SignalListItemFactory()
+        swgs.factory_dll_1.connect('setup', cb_factory_dll_1_setup)
+        swgs.factory_dll_1.connect('bind', cb_factory_dll_1_bind)
+
+        swgs.factory_dll_desc_1 = Gtk.SignalListItemFactory()
+        swgs.factory_dll_desc_1.connect('setup', cb_factory_dll_1_desc_setup)
+        swgs.factory_dll_desc_1.connect('bind', cb_factory_dll_1_desc_bind)
+
+        swgs.model_dll_0 = Gtk.SingleSelection.new(swgs.list_store_dll_0)
+        swgs.model_dll_1 = Gtk.SingleSelection.new(swgs.list_store_dll_1)
+
+        swgs.column_view_dll_0 = Gtk.ColumnViewColumn(
+                                    title=libs_column_label,
+                                    visible=True,
+                                    factory=swgs.factory_dll_0,
+                                    fixed_width=240,
+        )
+        swgs.column_view_desc_0 = Gtk.ColumnViewColumn(
+                                    title=description_label,
+                                    expand=True,
+                                    factory=swgs.factory_dll_desc_0,
+        )
+        swgs.column_view_dll_1 = Gtk.ColumnViewColumn(
+                                    title=libs_column_label,
+                                    visible=True,
+                                    factory=swgs.factory_dll_1,
+                                    fixed_width=240,
+        )
+        swgs.column_view_desc_1 = Gtk.ColumnViewColumn(
+                                    title=description_label,
+                                    expand=True,
+                                    factory=swgs.factory_dll_desc_1,
+        )
+        swgs.view_dll_0 = Gtk.ColumnView(
+                                    css_name='sw_columnview',
+                                    show_column_separators=True,
+                                    show_row_separators=True,
+                                    model=swgs.model_dll_0,
+        )
+        swgs.view_dll_0.append_column(swgs.column_view_dll_0)
+        swgs.view_dll_0.append_column(swgs.column_view_desc_0)
+        swgs.dll_0_title = swgs.view_dll_0.get_first_child().get_first_child()
+        swgs.dll_0_title.add_css_class('title')
+        swgs.desc_0_title = swgs.dll_0_title.get_next_sibling()
+        swgs.desc_0_title.add_css_class('title')
+
+        swgs.view_dll_1 = Gtk.ColumnView(
+                                    css_name='sw_columnview',
+                                    show_column_separators=True,
+                                    show_row_separators=True,
+                                    model=swgs.model_dll_1,
+        )
+        swgs.view_dll_1.append_column(swgs.column_view_dll_1)
+        swgs.view_dll_1.append_column(swgs.column_view_desc_1)
+        swgs.dll_1_title = swgs.view_dll_1.get_first_child().get_first_child()
+        swgs.dll_1_title.add_css_class('title')
+        swgs.desc_1_title = swgs.dll_1_title.get_next_sibling()
+        swgs.desc_1_title.add_css_class('title')
+
+        swgs.view_dll = Gtk.Box(
+                        orientation=Gtk.Orientation.VERTICAL,
+                        vexpand=True,
+                        hexpand=True,
+                        homogeneous=True,
+        )
+        swgs.view_dll.append(swgs.view_dll_0)
+        swgs.view_dll.append(swgs.view_dll_1)
+
+        ####___Winetricks fonts_column_view___.
+
+        swgs.list_store_fonts = Gio.ListStore()
+        swgs.item_list_fonts = Gtk.ListItem()
+
+        swgs.factory_fonts = Gtk.SignalListItemFactory()
+        swgs.factory_fonts.connect('setup', cb_factory_fonts_setup)
+        swgs.factory_fonts.connect('bind', cb_factory_fonts_bind)
+
+        swgs.factory_fonts_desc = Gtk.SignalListItemFactory()
+        swgs.factory_fonts_desc.connect('setup', cb_factory_fonts_desc_setup)
+        swgs.factory_fonts_desc.connect('bind', cb_factory_fonts_desc_bind)
+
+        swgs.model_fonts = Gtk.SingleSelection.new(swgs.list_store_fonts)
+
+        swgs.column_view_fonts = Gtk.ColumnViewColumn(fixed_width=240)
+        swgs.column_view_fonts.set_title(fonts_column_label)
+        swgs.column_view_fonts.set_factory(swgs.factory_fonts)
+
+        swgs.column_view_fonts_desc = Gtk.ColumnViewColumn(fixed_width=240)
+        swgs.column_view_fonts_desc.set_title(description_label)
+        swgs.column_view_fonts_desc.set_expand(True)
+        swgs.column_view_fonts_desc.set_factory(swgs.factory_fonts_desc)
+
+        swgs.view_fonts = Gtk.ColumnView(css_name='sw_columnview')
+        swgs.view_fonts.set_show_column_separators(True)
+        swgs.view_fonts.set_show_row_separators(True)
+        swgs.view_fonts.append_column(swgs.column_view_fonts)
+        swgs.view_fonts.append_column(swgs.column_view_fonts_desc)
+        swgs.view_fonts.set_model(swgs.model_fonts)
+
+        swgs.fonts_title = swgs.view_fonts.get_first_child().get_first_child()
+        swgs.fonts_title.add_css_class('title')
+        swgs.fonts_desc_title = swgs.fonts_title.get_next_sibling()
+        swgs.fonts_desc_title.add_css_class('title')
+
+        swgs.scrolled_dll = Gtk.ScrolledWindow(
+                                        css_name='sw_scrolledwindow',
+                                        name=vw_dict['winetricks'],
+                                        vexpand=True,
+                                        hexpand=True,
+                                        valign=Gtk.Align.FILL,
+                                        halign=Gtk.Align.FILL,
+                                        child=swgs.view_dll,
+        )
+        swgs.scrolled_fonts = Gtk.ScrolledWindow(
+                                        css_name='sw_scrolledwindow',
+                                        name=vw_dict['winetricks'],
+                                        vexpand=True,
+                                        hexpand=True,
+                                        valign=Gtk.Align.FILL,
+                                        halign=Gtk.Align.FILL,
+                                        child=swgs.view_fonts,
+        )
+
+        ###___Winetricks_Tabs___.
+
+        swgs.label_install_dll = Gtk.Label(
+                                    css_name='sw_label',
+                                    label=confirm_install_label
+        )
+        swgs.btn_install_dll = Gtk.Button(
+                                    css_name='sw_button',
+                                    hexpand=True,
+                                    halign=Gtk.Align.END,
+                                    valign=Gtk.Align.START,
+                                    child=swgs.label_install_dll,
+        )
+        swgs.btn_install_dll.connect('clicked', cb_btn_install_dll)
+
+        swgs.label_tab_dll = Gtk.Label(
+                                css_name='sw_label',
+                                label=libs_tab_label
+        )
+        swgs.label_tab_fonts = Gtk.Label(
+                                css_name='sw_label',
+                                label=fonts_tab_label
+        )
+        swgs.btn_tab_dll = Gtk.Button(css_name='sw_button')
+        swgs.btn_tab_dll.set_child(swgs.label_tab_dll)
+        swgs.btn_tab_dll.connect('clicked', on_tab_dll)
+
+        swgs.btn_tab_fonts = Gtk.Button(css_name='sw_button')
+        swgs.btn_tab_fonts.set_child(swgs.label_tab_fonts)
+        swgs.btn_tab_fonts.connect('clicked', on_tab_fonts)
+
+        swgs.model_templates_dll = Gio.ListStore()
+        swgs.factory_dll_templates = Gtk.SignalListItemFactory()
+        swgs.factory_dll_templates.connect('setup', cb_factory_dll_templates_setup)
+        swgs.factory_dll_templates.connect('bind', cb_factory_dll_templates_bind)
+
+        for k, v in dll_templates_dict.items():
+            l = Gtk.Label(name=v, label=k)
+            swgs.model_templates_dll.append(l)
+
+        swgs.dropdown_dll_templates = Gtk.DropDown(
+                                            css_name='sw_dropdown',
+                                            hexpand=True,
+                                            selected=0,
+        )
+        swgs.dropdown_dll_templates.set_size_request(180, -1)
+        swgs.dropdown_dll_templates.set_model(swgs.model_templates_dll)
+        swgs.dropdown_dll_templates.set_factory(swgs.factory_dll_templates)
+
+        swgs.label_templates = Gtk.Label(
+                                    css_name='sw_label',
+                                    label=str_sample.capitalize(),
+        )
+        swgs.box_templates = Gtk.Box(
+                        css_name='sw_box_tab',
+                        orientation=Gtk.Orientation.HORIZONTAL,
+                        hexpand=True,
+                        spacing=8,
+                        halign=Gtk.Align.END
+        )
+        swgs.box_templates.append(swgs.label_templates)
+        swgs.box_templates.append(swgs.dropdown_dll_templates)
+
+        swgs.box_tabs = Gtk.Box(
+                        css_name='sw_box_tab',
+                        orientation=Gtk.Orientation.HORIZONTAL,
+                        hexpand=True,
+                        spacing=8,
+        )
+        swgs.box_tabs.append(swgs.btn_tab_dll)
+        swgs.box_tabs.append(swgs.btn_tab_fonts)
+        swgs.box_tabs.append(swgs.box_templates)
+
+        swgs.stack_tabs = Gtk.Stack(css_name='sw_stack')
+        swgs.stack_tabs.add_child(swgs.scrolled_dll)
+        swgs.stack_tabs.add_child(swgs.scrolled_fonts)
+
+        swgs.winetricks_title = Gtk.Label(
+                                    css_name='sw_label_title',
+                                    label=vl_dict['winetricks'],
+                                    xalign=0.0,
+        )
+        swgs.winetricks_subtitle = Gtk.Label(
+                                    css_name='sw_label_desc',
+                                    label=str_winetricks_subtitle,
+                                    xalign=0.0,
+                                    wrap=True,
+                                    natural_wrap_mode=True
+        )
+        swgs.winetricks_label_box = Gtk.Box(
+                                    css_name='sw_box_view',
+                                    orientation=Gtk.Orientation.VERTICAL,
+                                    halign=Gtk.Align.START
+        )
+        swgs.winetricks_label_box.append(swgs.winetricks_title)
+        swgs.winetricks_label_box.append(swgs.winetricks_subtitle)
+
+        swgs.winetricks_title_grid = Gtk.Grid(css_name='sw_box_view')
+        swgs.winetricks_title_grid.attach(swgs.winetricks_label_box, 0,0,1,1)
+        swgs.winetricks_title_grid.attach(swgs.btn_install_dll, 1,0,1,1)
+
+        swgs.pref_group_winetricks = Gtk.Box(
+                                    css_name='sw_pref_box',
+                                    orientation=Gtk.Orientation.VERTICAL
+        )
+        swgs.pref_group_winetricks.append(swgs.winetricks_title_grid)
+        swgs.pref_group_winetricks.append(swgs.box_tabs)
+        swgs.pref_group_winetricks.append(swgs.stack_tabs)
+
+        scrolled_winetricks.set_child(swgs.pref_group_winetricks)
+
+    def add_column_view():
+        '''___build files_column_view___'''
+
+        swgs.column_view = Gtk.ColumnView(
+                                    name='left_column_view',
+                                    css_name='sw_columnview_view',
+                                    show_row_separators=True,
+                                    show_column_separators=True,
+        )
+        #swgs.column_view.remove_css_class('view')
+        #swgs.column_view.add_css_class('sw_view')
+
+        column_factory_file = Gtk.SignalListItemFactory()
+        column_factory_file.connect('setup', cb_factory_setup, swgs.column_view)
+        column_factory_file.connect('bind', cb_factory_bind, swgs.column_view)
+
+        column_factory_size = Gtk.SignalListItemFactory()
+        column_factory_size.connect('setup', cb_column_factory_size_setup)
+        column_factory_size.connect('bind', cb_column_factory_size_bind)
+
+        column_factory_type = Gtk.SignalListItemFactory()
+        column_factory_type.connect('setup', cb_column_factory_type_setup)
+        column_factory_type.connect('bind', cb_column_factory_type_bind)
+
+        column_factory_uid = Gtk.SignalListItemFactory()
+        column_factory_uid.connect('setup', cb_column_factory_uid_setup)
+        column_factory_uid.connect('bind', cb_column_factory_uid_bind)
+
+        column_factory_created = Gtk.SignalListItemFactory()
+        column_factory_created.connect('setup', cb_column_factory_created_setup)
+        column_factory_created.connect('bind', cb_column_factory_created_bind)
+
+        swgs.column_view_file = Gtk.ColumnViewColumn()
+        swgs.column_view_file.set_resizable(False)
+        swgs.column_view_file.set_factory(column_factory_file)
+
+        swgs.column_view_type = Gtk.ColumnViewColumn()
+        swgs.column_view_type.set_resizable(True)
+        swgs.column_view_type.set_expand(True)
+        swgs.column_view_type.set_factory(column_factory_type)
+
+        swgs.column_view_size = Gtk.ColumnViewColumn()
+        swgs.column_view_size.set_resizable(True)
+        swgs.column_view_size.set_expand(True)
+        swgs.column_view_size.set_factory(column_factory_size)
+
+        swgs.column_view_uid = Gtk.ColumnViewColumn()
+        swgs.column_view_uid.set_resizable(True)
+        swgs.column_view_uid.set_expand(True)
+        swgs.column_view_uid.set_factory(column_factory_uid)
+
+        swgs.column_view_created = Gtk.ColumnViewColumn()
+        swgs.column_view_created.set_resizable(True)
+        swgs.column_view_created.set_expand(True)
+        swgs.column_view_created.set_factory(column_factory_created)
+
+        swgs.column_view.append_column(swgs.column_view_file)
+        swgs.column_view.append_column(swgs.column_view_type)
+        swgs.column_view.append_column(swgs.column_view_size)
+        swgs.column_view.append_column(swgs.column_view_uid)
+        swgs.column_view.append_column(swgs.column_view_created)
+        swgs.column_view.set_model(list_model)
+        swgs.column_view.connect('activate', cb_item_activate)
+
+        ctrl_lclick_column_view = Gtk.GestureClick()
+        ctrl_lclick_column_view.connect('pressed', cb_ctrl_lclick_view)
+        ctrl_lclick_column_view.set_button(1)
+
+        ctrl_rclick_column_view = Gtk.GestureClick()
+        ctrl_rclick_column_view.connect('pressed', cb_ctrl_rclick_view)
+        ctrl_rclick_column_view.set_button(3)
+
+        swgs.column_view.add_controller(ctrl_lclick_column_view)
+        swgs.column_view.add_controller(ctrl_rclick_column_view)
+
+        swgs.title_file = swgs.column_view.get_first_child().get_first_child()
+        swgs.title_file.add_css_class('title')
+
+        swgs.title_size = swgs.title_file.get_next_sibling()
+        swgs.title_size.add_css_class('title')
+
+        swgs.title_type = swgs.title_size.get_next_sibling()
+        swgs.title_type.add_css_class('title')
+
+        swgs.title_user = swgs.title_type.get_next_sibling()
+        swgs.title_user.add_css_class('title')
+
+        swgs.title_created = swgs.title_user.get_next_sibling()
+        swgs.title_created.add_css_class('title')
+
+        scrolled_left_files.set_child(swgs.column_view)
+
+    ####___Gvolume_column_view___
+
+    def add_gvol_view():
+        '''___build gio volumes view___'''
+
+        swgs.list_gvol_store = Gio.ListStore()
+        list_gvol_item = Gtk.ListItem()
+        list_gvol_item.set_activatable(True)
+
+        gvol_model = Gtk.SingleSelection.new(swgs.list_gvol_store)
+
+        gvol_factory = Gtk.SignalListItemFactory()
+        gvol_factory.connect('setup', cb_gvol_factory_setup)
+        gvol_factory.connect('bind', cb_gvol_factory_bind)
+
+        gvol_id_factory = Gtk.SignalListItemFactory()
+        gvol_id_factory.connect('setup', cb_gvol_id_factory_setup)
+        gvol_id_factory.connect('bind', cb_gvol_id_factory_bind)
+
+        gvol_uuid_factory = Gtk.SignalListItemFactory()
+        gvol_uuid_factory.connect('setup', cb_gvol_uuid_factory_setup)
+        gvol_uuid_factory.connect('bind', cb_gvol_uuid_factory_bind)
+
+        gvol_drive_factory = Gtk.SignalListItemFactory()
+        gvol_drive_factory.connect('setup', cb_gvol_drive_factory_setup)
+        gvol_drive_factory.connect('bind', cb_gvol_drive_factory_bind)
+
+        gvol_size_factory = Gtk.SignalListItemFactory()
+        gvol_size_factory.connect('setup', cb_gvol_size_factory_setup)
+        gvol_size_factory.connect('bind', cb_gvol_size_factory_bind)
+
+        column_gvol = Gtk.ColumnViewColumn()
+        column_gvol.set_title(msg.msg_dict['device_name'])
+        column_gvol.set_expand(True)
+        column_gvol.set_factory(gvol_factory)
+
+        column_gvol_id = Gtk.ColumnViewColumn()
+        column_gvol_id.set_title(msg.msg_dict['device_id'])
+        column_gvol_id.set_expand(True)
+        column_gvol_id.set_factory(gvol_id_factory)
+
+        column_gvol_uuid = Gtk.ColumnViewColumn()
+        column_gvol_uuid.set_title(msg.msg_dict['device_uuid'])
+        column_gvol_uuid.set_expand(True)
+        column_gvol_uuid.set_factory(gvol_uuid_factory)
+
+        swgs.column_gvol_drive = Gtk.ColumnViewColumn()
+        swgs.column_gvol_drive.set_title(msg.msg_dict['device_drive'])
+        swgs.column_gvol_drive.set_expand(True)
+        swgs.column_gvol_drive.set_factory(gvol_drive_factory)
+
+        column_gvol_size = Gtk.ColumnViewColumn()
+        column_gvol_size.set_title(msg.msg_dict['device_size'])
+        column_gvol_size.set_expand(True)
+        column_gvol_size.set_factory(gvol_size_factory)
+
+        column_gvol_view = Gtk.ColumnView(
+                                    css_name='sw_columnview_view',
+                                    show_row_separators=True,
+                                    show_column_separators=True,
+        )
+        column_gvol_view.append_column(column_gvol)
+        column_gvol_view.append_column(column_gvol_size)
+        column_gvol_view.append_column(column_gvol_id)
+        column_gvol_view.append_column(swgs.column_gvol_drive)
+        column_gvol_view.append_column(column_gvol_uuid)
+        column_gvol_view.set_model(gvol_model)
+        column_gvol_view.connect('activate', cb_gvol_activate)
+
+        vol_title = column_gvol_view.get_first_child().get_first_child()
+        vol_title.add_css_class('title')
+        dev_title = vol_title.get_next_sibling()
+        dev_title.add_css_class('title')
+        uuid_title = dev_title.get_next_sibling()
+        uuid_title.add_css_class('title')
+        drive_title = uuid_title.get_next_sibling()
+        drive_title.add_css_class('title')
+        size_title = drive_title.get_next_sibling()
+        size_title.add_css_class('title')
+
+        ####___Get_volume_info___
+
+        swgs.gmount_ops = Gtk.MountOperation.new(parent)
+        swgs.gmount_ops.set_display(display)
+
+        swgs.gvolume_monitor = Gio.VolumeMonitor.get()
+
+        swgs.gvolume_monitor.connect('volume-added', cb_volume_ops)
+        swgs.gvolume_monitor.connect('volume-changed', cb_volume_ops)
+        swgs.gvolume_monitor.connect('volume-removed', cb_volume_ops)
+
+        swgs.gvolume_monitor.connect('mount-added', cb_volume_ops)
+        swgs.gvolume_monitor.connect('mount-changed', cb_volume_ops)
+        swgs.gvolume_monitor.connect('mount-removed', cb_volume_ops)
+
+        swgs.gvolume_monitor.connect('drive-changed', cb_volume_ops)
+        swgs.gvolume_monitor.connect('drive-connected', cb_volume_ops)
+        swgs.gvolume_monitor.connect('drive-disconnected', cb_volume_ops)
+
+        gvolume_list = swgs.gvolume_monitor.get_volumes()
+        gmount_list = swgs.gvolume_monitor.get_mounts()
+        gdrive_list = swgs.gvolume_monitor.get_connected_drives()
+
+        scrolled_gvol.set_child(column_gvol_view)
+
+    ####___Bookmarks_list_view___.
+
+    def add_bookmarks_menu():
+        '''___build bookmarks menu___'''
+
+        swgs.bookmarks_store = Gio.ListStore()
+        bookmarks_model = Gtk.SingleSelection.new(swgs.bookmarks_store)
+
+        bookmarks_factory = Gtk.SignalListItemFactory()
+        bookmarks_factory.connect('setup', cb_bookmarks_factory_setup)
+        bookmarks_factory.connect('bind', cb_bookmarks_factory_bind)
+
+        list_view_bookmarks = Gtk.ListView(
+                                    css_name='sw_listview',
+                                    single_click_activate=True,
+                                    show_separators=True,
+        )
+        list_view_bookmarks.set_factory(bookmarks_factory)
+        list_view_bookmarks.set_model(bookmarks_model)
+        list_view_bookmarks.connect('activate', cb_bookmark_activate)
+
+        scrolled_bookmarks.set_child(list_view_bookmarks)
+
+
+####___Game_controller_settings___.
+
+    def add_controller_settings_view():
+        ''''''
+        pass
+
+    def get_define_colors():
+        '''Get current define colors from css provider'''
+
+        css_list = css_provider.to_string().splitlines()
+        define_colors = dict()
+        for x in css_list:
+            if '@define-color sw_' in x:
+                if len([x.split(' ')[2].strip(';') ]) > 0:
+                    define_colors[x.split(' ')[1]] = [x.split(' ')[2].strip(';') ][0]
+
+        return define_colors
+
+    def set_define_colors():
+
+        dcolors = get_define_colors()
+        progress_main.set_font_size(8)
+        progress_main.set_foreground(dcolors['sw_invert_header_bg_color'])
+        progress_main.set_background(dcolors['sw_header_bg_color'])
+        progress_main.set_progress_color(
+                                        dcolors['sw_invert_progress_color'],
+                                        dcolors['sw_accent_fg_color'],
+        )
+        progress_main.set_border_color(dcolors['sw_accent_fg_color'])
+        progress_main.set_shadow_color(dcolors['sw_header_bg_color'])
+
+    def set_parent_layer(window, monitor):
+        '''Set parent window surface as a background layer.'''
+
+        LayerShell.init_for_window(window)
+        LayerShell.set_layer(window, LayerShell.Layer.BACKGROUND)
+        #LayerShell.set_anchor(window, LayerShell.Edge.TOP, True)
+        LayerShell.set_monitor(window, monitor)
+
+        LayerShell.set_margin(window, LayerShell.Edge.BOTTOM, 0)
+        LayerShell.set_margin(window, LayerShell.Edge.TOP, 0)
+        LayerShell.auto_exclusive_zone_enable(window)
 
 ####___Build_main_menu___.
-
-####___Get_default_display___.
 
     display = Gdk.Display().get_default()
 
@@ -10520,16 +15148,16 @@ def sw_activate(app):
 
 ####___Parent_window___.
 
-    parent = Gtk.Window(application=app, css_name='sw_window', name='parent_window')
+    parent = Gtk.Window(application=swgs, css_name='sw_window', name='parent_window')
     parent.remove_css_class('background')
     parent.add_css_class('sw_background')
     parent.set_default_size(sw_width, sw_height)
     parent.set_resizable(True)
     parent.set_default_icon_name(sw_program_name)
 
-    app.connection.register_object(
+    swgs.connection.register_object(
                             "/ru/project/StartWine",
-                            app.gdbus_node.interfaces[0],
+                            swgs.gdbus_node.interfaces[0],
                             gdbus_method_call,
                             None,
                             None
@@ -10545,7 +15173,7 @@ def sw_activate(app):
                                 valign=Gtk.Align.CENTER,
                                 hexpand=True,
                                 search_delay=500,
-                                )
+    )
     entry_search.connect('search-changed', cb_entry_search_changed)
 
     entry_web = Gtk.Entry(
@@ -10553,16 +15181,16 @@ def sw_activate(app):
                         placeholder_text='url...',
                         valign=Gtk.Align.CENTER,
                         hexpand=True,
-                        )
+    )
     entry_web.connect('activate', cb_entry_web_activate)
 
     entry_path = Gtk.Entry(
                         name = str(sw_default_dir),
-                        css_name='sw_entry_path',
+                        css_name='sw_entry',
                         text=str(sw_default_dir),
                         valign=Gtk.Align.CENTER,
                         hexpand=True,
-                        )
+    )
     entry_path.connect("activate", cb_entry_path_activate)
 
     image_search = Gtk.Image(css_name='sw_image')
@@ -10636,6 +15264,7 @@ def sw_activate(app):
     scrolled_path.add_controller(ctrl_scroll_path)
 
     box_path = Gtk.Box(
+                    css_name='sw_box',
                     orientation=Gtk.Orientation.HORIZONTAL,
                     spacing=4,
                     valign=Gtk.Align.CENTER,
@@ -10706,8 +15335,8 @@ def sw_activate(app):
                         valign=Gtk.Align.CENTER,
                         tooltip_markup=msg.tt_dict['back_main'],
                         child=image_back,
+                        visible=False,
     )
-    btn_back_main.set_visible(False)
     btn_back_main.connect('clicked', cb_btn_back_main)
 
     btn_more = Gtk.Button(
@@ -10770,15 +15399,6 @@ def sw_activate(app):
     top_headerbar_center_box.append(btn_more)
     top_headerbar_center_box.append(btn_back_up)
 
-    image_wc_resize = Gtk.Image()
-    image_wc_resize.set_from_file(IconPath.icon_resize)
-
-    wc_resize = Gtk.Button(css_name='sw_wc_resize')
-    wc_resize.set_valign(Gtk.Align.CENTER)
-    wc_resize.set_tooltip_markup(msg.tt_dict['resize_window'])
-    wc_resize.set_child(image_wc_resize)
-    #wc_resize.connect('clicked', on_parent_resize)
-
     wc_close = Gtk.Button(css_name='sw_wc_close')
     wc_close.connect('clicked', on_parent_close)
 
@@ -10802,7 +15422,9 @@ def sw_activate(app):
     top_headerbar.set_size_request(-1,46)
     top_headerbar.set_show_title_buttons(False)
 
-    parent.set_titlebar(top_headerbar)
+    header_box = Gtk.Box(css_name='sw_box')
+    header_box.set_visible(False)
+    parent.set_titlebar(header_box)
 
     ####___Bottom_headerbar buttons___.
 
@@ -10836,22 +15458,19 @@ def sw_activate(app):
     btn_bookmarks.connect('clicked', cb_btn_bookmarks)
     btn_bookmarks.set_visible(False)
 
-    progress_main = Gtk.ProgressBar(
+    ####___Bottom_headerbar stack panel___.
+
+    progress_main = SwProgressBar(
                         css_name='sw_progressbar',
                         valign=Gtk.Align.CENTER,
                         halign=Gtk.Align.CENTER,
                         hexpand=True,
                         vexpand=True,
-                        )
-    progress_main.set_size_request(200,-1)
+    )
+    progress_main.set_size_request(320, 20)
+    progress_main.set_visible(False)
 
-    spinner = Gtk.Spinner(
-                        css_name='sw_spinner',
-                        valign=Gtk.Align.CENTER,
-                        halign=Gtk.Align.CENTER,
-                        hexpand=True,
-                        vexpand=True,
-                        )
+    spinner = Gtk.Spinner(css_name='sw_spinner')
 
     progress_main_grid = Gtk.Grid(css_name='sw_grid')
     progress_main_grid.attach(progress_main,0,0,1,1)
@@ -10866,43 +15485,117 @@ def sw_activate(app):
                             transition_duration=250,
                             transition_type=Gtk.StackTransitionType.SLIDE_LEFT_RIGHT,
                             valign=Gtk.Align.CENTER,
+                            halign=Gtk.Align.CENTER,
                             hexpand=True,
                             margin_start=16,
                             margin_end=16,
-                            )
+    )
+    stack_panel = Gtk.Stack(
+                            css_name='sw_stack',
+                            transition_duration=350,
+                            transition_type=Gtk.StackTransitionType.SLIDE_LEFT_RIGHT,
+                            halign=Gtk.Align.CENTER
+    )
+    for k, v in vl_dict.items():
+        box = Gtk.Box(
+                    css_name='sw_box', orientation=Gtk.Orientation.HORIZONTAL,
+                    spacing=8,
+                    halign=Gtk.Align.CENTER,
+        )
+        stack_panel.add_named(box, k)
+        for i in range(3):
+            if i == 0:
+                image = Gtk.Image(css_name='sw_image')
+                image.set_from_file(IconPath.icon_back)
+                label = Gtk.Label(css_name='sw_label_desc', ellipsize=Pango.EllipsizeMode.END)
+                label.set_size_request(100, -1)
+                box_child = Gtk.Box(
+                    css_name='sw_box', orientation=Gtk.Orientation.HORIZONTAL,
+                    spacing=8,
+                )
+                box_child.append(label)
+                box_child.append(image)
+                btn_prev = Gtk.Button(css_name='sw_box', name='btn_prev', child=box_child)
+                btn_prev.connect('clicked', cb_btn_overlay)
+                box.append(btn_prev)
+            if i == 1:
+                label = Gtk.Label(css_name='sw_label')
+                label.set_size_request(200, -1)
+                label.add_css_class('button')
+                box.append(label)
+            if i == 2:
+                image = Gtk.Image(css_name='sw_image')
+                image.set_from_file(IconPath.icon_next)
+                label = Gtk.Label(css_name='sw_label_desc', ellipsize=Pango.EllipsizeMode.END)
+                label.set_size_request(100, -1)
+                box_child = Gtk.Box(
+                    css_name='sw_box', orientation=Gtk.Orientation.HORIZONTAL,
+                    spacing=8,
+                )
+                box_child.append(image)
+                box_child.append(label)
+                btn_next = Gtk.Button(css_name='sw_box', name='btn_next', child=box_child)
+                btn_next.connect('clicked', cb_btn_overlay)
+                box.append(btn_next)
+
+    stack_progress_main.add_child(stack_panel)
     stack_progress_main.add_child(progress_main_grid)
     stack_progress_main.add_child(media_controls)
-    stack_progress_main.set_visible_child(progress_main_grid)
+
+    scroll_data = list()
+    ctrl_scroll_view = Gtk.EventControllerScroll()
+    ctrl_scroll_view.set_flags(Gtk.EventControllerScrollFlags.VERTICAL)
+    ctrl_scroll_view.connect('scroll', cb_ctrl_scroll_view, scroll_data)
+
+    ctrl_swipe = Gtk.GestureSwipe()
+    ctrl_swipe.set_button(1)
+    ctrl_swipe.set_propagation_phase(Gtk.PropagationPhase.BUBBLE)
+    #ctrl_swipe.connect('swipe', cb_ctrl_swipe_panel, stack_panel)
+
+    stack_panel.add_controller(ctrl_swipe)
+    stack_panel.add_controller(ctrl_scroll_view)
 
     ####___bottom headerbar popovers___.
 
-    adjustment_icon = Gtk.Adjustment()
-    adjustment_icon.set_lower(2)
-    adjustment_icon.set_upper(9)
-    adjustment_icon.set_step_increment(1)
-    adjustment_icon.set_page_increment(1)
-    adjustment_icon.set_value(sw_icon_size / 24)
-    adjustment_icon.connect('value-changed', on_set_px_size)
+    scale_step = 12
 
-    btn_scale = Gtk.Scale(css_name='sw_scale')
-    btn_scale.set_hexpand(True)
-    btn_scale.set_halign(Gtk.Align.FILL)
-    btn_scale.set_draw_value(False)
-    btn_scale.set_round_digits(0)
-    btn_scale.add_mark(2, Gtk.PositionType.BOTTOM)
-    btn_scale.add_mark(3, Gtk.PositionType.BOTTOM)
-    btn_scale.add_mark(4, Gtk.PositionType.BOTTOM)
-    btn_scale.add_mark(5, Gtk.PositionType.BOTTOM)
-    btn_scale.add_mark(6, Gtk.PositionType.BOTTOM)
-    btn_scale.add_mark(7, Gtk.PositionType.BOTTOM)
-    btn_scale.add_mark(8, Gtk.PositionType.BOTTOM)
-    btn_scale.set_adjustment(adjustment_icon)
+    btn_scale_icons = Gtk.SpinButton(css_name='sw_spinbutton')
+    btn_scale_icons.set_hexpand(True)
+    btn_scale_icons.set_halign(Gtk.Align.FILL)
+    btn_scale_icons.set_climb_rate(0)
+    btn_scale_icons.set_digits(0)
+    btn_scale_icons.set_increments(scale_step,1)
+    btn_scale_icons.set_numeric(True)
+    btn_scale_icons.set_range(24, 216)
+    btn_scale_icons.set_snap_to_ticks(True)
+    btn_scale_icons.set_update_policy(Gtk.SpinButtonUpdatePolicy.IF_VALID)
+    btn_scale_icons.set_value(sw_icon_size)
+    btn_scale_icons.connect('value-changed', on_set_px_size)
+
+    btn_scale_shortcuts = Gtk.SpinButton(css_name='sw_spinbutton')
+    btn_scale_shortcuts.set_hexpand(True)
+    btn_scale_shortcuts.set_halign(Gtk.Align.FILL)
+    btn_scale_shortcuts.set_climb_rate(0)
+    btn_scale_shortcuts.set_digits(0)
+    btn_scale_shortcuts.set_increments(scale_step,1)
+    btn_scale_shortcuts.set_numeric(True)
+    btn_scale_shortcuts.set_range(96, 288)
+    btn_scale_shortcuts.set_snap_to_ticks(True)
+    btn_scale_shortcuts.set_update_policy(Gtk.SpinButtonUpdatePolicy.IF_VALID)
+    btn_scale_shortcuts.set_value(sw_sc_size)
+    btn_scale_shortcuts.connect('value-changed', on_set_px_size)
 
     menu_box = Gtk.Grid()
     menu_box.set_size_request(width*0.1, height*0.01)
     menu_box.set_hexpand(True)
     menu_box.set_halign(Gtk.Align.FILL)
-    menu_box.attach(btn_scale, 0,0,1,1)
+    menu_box.attach(btn_scale_icons, 0,0,1,1)
+
+    menu_box_sc = Gtk.Grid()
+    menu_box_sc.set_size_request(width*0.1, height*0.01)
+    menu_box_sc.set_hexpand(True)
+    menu_box_sc.set_halign(Gtk.Align.FILL)
+    menu_box_sc.attach(btn_scale_shortcuts, 0,0,1,1)
 
     image_scale = Gtk.Image(css_name='sw_image')
     image_scale.set_from_file(IconPath.icon_scale)
@@ -10918,6 +15611,12 @@ def sw_activate(app):
     popover_scale.set_autohide(True)
     popover_scale.set_default_widget(btn_popover_scale)
     popover_scale.set_parent(btn_popover_scale)
+
+    popover_scale_sc = Gtk.Popover(css_name='sw_popover', position=Gtk.PositionType.LEFT)
+    popover_scale_sc.set_child(menu_box_sc)
+    popover_scale_sc.set_autohide(True)
+    popover_scale_sc.set_default_widget(btn_popover_scale)
+    popover_scale_sc.set_parent(btn_popover_scale)
 
     ####___popover_colors___.
     label_dark = Gtk.Label(
@@ -11051,13 +15750,13 @@ def sw_activate(app):
     bottom_headerbar.pack_start(bottom_headerbar_start_box)
     bottom_headerbar.pack_end(bottom_headerbar_end_box)
 
-####___Sidebar grids___.
+####___Sidebar main grids___.
 
     grid_main = Gtk.Grid()
     grid_main.set_hexpand(True)
     grid_main.set_vexpand(True)
 
-    grid_start_mode = Gtk.Grid()
+    grid_start_mode = Gtk.Grid(css_name='sw_grid')
     grid_start_mode.set_vexpand(True)
     grid_start_mode.set_valign(Gtk.Align.START)
     grid_start_mode.set_row_spacing(10)
@@ -11071,129 +15770,11 @@ def sw_activate(app):
     grid_main_btn.set_margin_bottom(16)
     grid_main_btn.set_halign(Gtk.Align.CENTER)
 
-    grid_create_shortcut = Gtk.Grid()
-    grid_create_shortcut.set_vexpand(True)
-    grid_create_shortcut.set_row_spacing(10)
-    grid_create_shortcut.set_margin_top(16)
-    grid_create_shortcut.set_margin_bottom(16)
-    grid_create_shortcut.set_margin_start(16)
-    grid_create_shortcut.set_margin_end(16)
-    grid_create_shortcut.set_halign(Gtk.Align.CENTER)
-
-    grid_prefix_tools = Gtk.Grid()
-    grid_prefix_tools.set_vexpand(True)
-    grid_prefix_tools.set_row_spacing(10)
-    grid_prefix_tools.set_margin_top(16)
-    grid_prefix_tools.set_margin_bottom(16)
-    grid_prefix_tools.set_margin_start(16)
-    grid_prefix_tools.set_margin_end(16)
-    grid_prefix_tools.set_halign(Gtk.Align.CENTER)
-
-    grid_wine_tools = Gtk.Grid()
-    grid_wine_tools.set_vexpand(True)
-    grid_wine_tools.set_row_spacing(10)
-    grid_wine_tools.set_margin_top(16)
-    grid_wine_tools.set_margin_bottom(16)
-    grid_wine_tools.set_margin_start(16)
-    grid_wine_tools.set_margin_end(16)
-    grid_wine_tools.set_halign(Gtk.Align.CENTER)
-
-    grid_download_wine = Gtk.Grid()
-    grid_download_wine.set_vexpand(True)
-    grid_download_wine.set_row_spacing(10)
-    grid_download_wine.set_margin_top(16)
-    grid_download_wine.set_margin_bottom(16)
-    grid_download_wine.set_margin_start(16)
-    grid_download_wine.set_margin_end(16)
-    grid_download_wine.set_halign(Gtk.Align.CENTER)
-
-    grid_settings = Gtk.Grid()
-    grid_settings.set_vexpand(True)
-    grid_settings.set_row_spacing(10)
-    grid_settings.set_margin_top(16)
-    grid_settings.set_margin_bottom(16)
-    grid_settings.set_margin_start(16)
-    grid_settings.set_margin_end(16)
-    grid_settings.set_halign(Gtk.Align.CENTER)
-
-    grid_files_info = Gtk.Grid()
-    grid_files_info.set_vexpand(True)
-    grid_files_info.set_row_spacing(10)
-    grid_files_info.set_margin_top(16)
-    grid_files_info.set_margin_bottom(16)
-    grid_files_info.set_margin_start(16)
-    grid_files_info.set_margin_end(16)
-    grid_files_info.set_halign(Gtk.Align.CENTER)
-
-    grid_menu_wine_custom = Gtk.Grid()
-    grid_menu_wine_custom.set_column_spacing(10)
-
-    grid_wine_custom = Gtk.Grid()
-    grid_wine_custom.set_row_spacing(10)
-
-####___Images___.
+####___Image next___.
 
     image_next = Gtk.Image(css_name='sw_image')
     image_next.set_from_file(IconPath.icon_next)
     image_next.set_halign(Gtk.Align.END)
-
-    image_create = Gtk.Picture(css_name='sw_picture')
-    image_create.set_margin_start(32)
-    image_create.set_margin_end(32)
-    image_create.set_margin_bottom(16)
-
-    paintable_icon_create = Gtk.IconPaintable.new_for_file(
-                            Gio.File.new_for_path(IconPath.icon_create), 256, 1
-                            )
-    image_create.set_paintable(paintable_icon_create)
-
-    image_menu_wine_custom = Gtk.Image(css_name='sw_image')
-    image_menu_wine_custom.set_from_file(IconPath.icon_wine)
-
-    image_github = Gtk.Picture(css_name='sw_picture')
-    image_github.set_margin_start(32)
-    image_github.set_margin_end(32)
-    image_github.set_margin_bottom(16)
-
-    paintable_icon_source = Gtk.IconPaintable.new_for_file(
-                            Gio.File.new_for_path(IconPath.icon_github),256,1,
-                            )
-    image_github.set_paintable(paintable_icon_source)
-
-    image_ptools = Gtk.Picture(css_name='sw_picture')
-    image_ptools.set_margin_start(32)
-    image_ptools.set_margin_end(32)
-    image_ptools.set_margin_bottom(16)
-
-    paintable_icon_tools = Gtk.IconPaintable.new_for_file(
-                            Gio.File.new_for_path(IconPath.icon_toolbox),256,1,
-                            )
-    image_ptools.set_paintable(paintable_icon_tools)
-
-    image_wtools = Gtk.Picture(css_name='sw_picture')
-    image_wtools.set_margin_start(32)
-    image_wtools.set_margin_end(32)
-    image_wtools.set_margin_bottom(16)
-
-    paintable_icon_wtools = Gtk.IconPaintable.new_for_file(
-                            Gio.File.new_for_path(IconPath.icon_toolbars),256, 1,
-                            )
-    image_wtools.set_paintable(paintable_icon_wtools)
-
-    image_settings_tools = Gtk.Picture(css_name='sw_picture')
-    image_settings_tools.set_margin_start(32)
-    image_settings_tools.set_margin_end(32)
-    image_settings_tools.set_margin_bottom(16)
-
-    paintable_icon_settings = Gtk.IconPaintable.new_for_file(
-                            Gio.File.new_for_path(IconPath.icon_tool), 256, 1,
-                            )
-    image_settings_tools.set_paintable(paintable_icon_settings)
-
-    image_file_info = Gtk.Image(css_name='sw_image')
-    image_file_info.set_margin_start(32)
-    image_file_info.set_margin_end(32)
-    image_file_info.set_margin_bottom(16)
 
 ####___Sidebar_widgets___.
 
@@ -11213,7 +15794,7 @@ def sw_activate(app):
 
     label_shortcuts = Gtk.Label(
                                 css_name='sw_label',
-                                label=btn_dict['shortcuts']
+                                label=msg.msg_dict['shortcuts']
     )
     label_create_shortcut = Gtk.Label(
                                     css_name='sw_label',
@@ -11234,26 +15815,32 @@ def sw_activate(app):
     box_btn_shortcuts.append(image_shortcuts)
     box_btn_shortcuts.append(label_shortcuts)
 
-    box_btn_create_shortcut = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-    box_btn_create_shortcut.set_spacing(8)
-    box_btn_create_shortcut.append(image_create_shortcut)
-    box_btn_create_shortcut.append(label_create_shortcut)
+    box_btn_files = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+    box_btn_files.set_spacing(8)
+    box_btn_files.append(image_create_shortcut)
+    box_btn_files.append(label_create_shortcut)
 
-    btn_shortcuts = Gtk.Button(css_name='sw_button')
+    btn_shortcuts = Gtk.Button(css_name='sw_button_custom')
     btn_shortcuts.set_name(btn_dict['shortcuts'])
+    btn_shortcuts.set_vexpand(True)
+    btn_shortcuts.set_valign(Gtk.Align.END)
     btn_shortcuts.set_child(box_btn_shortcuts)
     btn_shortcuts.connect('clicked', cb_btn_main)
 
-    btn_create_shortcut = Gtk.Button(css_name='sw_button')
-    btn_create_shortcut.set_name(btn_dict['create_shortcut'])
-    btn_create_shortcut.set_child(box_btn_create_shortcut)
-    btn_create_shortcut.connect('clicked', cb_btn_main)
+    btn_files = Gtk.Button(css_name='sw_button_custom')
+    btn_files.set_name(btn_dict['create_shortcut'])
+    btn_files.set_child(box_btn_files)
+    btn_files.connect('clicked', cb_btn_main)
 
-    box_btn_start_mode = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+    box_btn_start_mode = Gtk.Box(css_name='sw_box', orientation=Gtk.Orientation.VERTICAL)
+    box_btn_start_mode.set_margin_start(8)
+    box_btn_start_mode.set_margin_end(8)
+    box_btn_start_mode.set_margin_bottom(8)
     box_btn_start_mode.set_spacing(8)
+    box_btn_start_mode.set_vexpand(True)
     box_btn_start_mode.set_valign(Gtk.Align.END)
     box_btn_start_mode.append(btn_shortcuts)
-    box_btn_start_mode.append(btn_create_shortcut)
+    box_btn_start_mode.append(btn_files)
 
     reveal_start_mode = Gtk.Revealer()
     reveal_start_mode.set_child(box_btn_start_mode)
@@ -11265,7 +15852,7 @@ def sw_activate(app):
     ctrl_moition_start_mode.connect('enter', cb_ctrl_enter_start_mode)
     ctrl_moition_start_mode.connect('leave', cb_ctrl_leave_start_mode)
 
-    overlay_start_mode = Gtk.Overlay()
+    overlay_start_mode = Gtk.Overlay(css_name='sw_overlay')
     overlay_start_mode.set_child(image_start_mode)
     overlay_start_mode.add_overlay(reveal_start_mode)
     overlay_start_mode.set_valign(Gtk.Align.CENTER)
@@ -11400,7 +15987,6 @@ def sw_activate(app):
     grid_label_install = Gtk.Grid(
                                 css_name='sw_box',
                                 orientation=Gtk.Orientation.VERTICAL,
-                                #row_spacing=4,
                                 column_spacing=4,
     )
     grid_label_install.attach(image_install, 0, 0, 1, 1)
@@ -11415,2545 +16001,6 @@ def sw_activate(app):
 
     grid_btn_tools.attach(btn_install,0,2,1,1)
     grid_start_mode.attach(grid_btn_tools,0,2,1,1)
-
-####___wine_create_chortcut_buttons___.
-
-    count = 0
-    for w, l in zip(wine_list, wine_labels):
-        count += 1
-
-        image_wine = Gtk.Image(css_name='sw_image')
-        image_wine.set_from_file(IconPath.icon_wine)
-
-        label_wine = Gtk.Label(css_name='sw_label', label=l)
-
-        box_wine = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        box_wine.set_spacing(8)
-        box_wine.append(image_wine)
-        box_wine.append(label_wine)
-
-        btn_wine = Gtk.Button(css_name='sw_button')
-        btn_wine.set_hexpand(True)
-        btn_wine.set_name(w)
-        btn_wine.set_child(box_wine)
-        btn_wine.connect('clicked', cb_btn_cs_wine)
-
-        grid_create_shortcut.attach(btn_wine,0,count,1,1)
-
-####_Cutom_wines___.
-
-    list_store_wine_custom = Gio.ListStore()
-    model_wine_custom = Gtk.SingleSelection.new(list_store_wine_custom)
-
-    factory_wine_custom = Gtk.SignalListItemFactory()
-    factory_wine_custom.connect('setup', cb_factory_wine_custom_setup)
-    factory_wine_custom.connect('bind', cb_factory_wine_custom_bind)
-
-    list_view_wine_custom = Gtk.ListView(
-                                css_name='sw_listview',
-                                single_click_activate=True,
-                                show_separators=True,
-                                margin_top = 16,
-    )
-    list_view_wine_custom.set_factory(factory_wine_custom)
-    list_view_wine_custom.set_model(model_wine_custom)
-    list_view_wine_custom.connect('activate', cb_btn_cs_wine_custom)
-
-    scrolled_wine_custom = Gtk.ScrolledWindow(
-                                            css_name='sw_scrolledwindow',
-                                            vexpand=True,
-                                            hexpand=False,
-                                            propagate_natural_height=True,
-                                            min_content_width=(280),
-                                            child=list_view_wine_custom,
-    )
-    label_menu_wine_custom = Gtk.Label(css_name='sw_label')
-    label_menu_wine_custom.set_label('Wine Custom')
-
-    btn_menu_wine_custom = Gtk.Button(css_name='sw_button')
-    btn_menu_wine_custom.set_child(grid_menu_wine_custom)
-    btn_menu_wine_custom.connect('clicked', cb_btn_menu_wine_custom)
-
-    popover_wines = Gtk.Popover(css_name='sw_popover')
-    popover_wines.set_child(scrolled_wine_custom)
-    popover_wines.set_autohide(True)
-    popover_wines.set_has_arrow(False)
-    popover_wines.set_position(Gtk.PositionType.TOP)
-    popover_wines.set_parent(btn_menu_wine_custom)
-
-####___Prefix_tools_buttons___.
-
-    change_pfx_list_model = Gtk.StringList()
-
-    for l in prefix_labels:
-        change_pfx_list_model.append(l)
-
-    change_pfx_factory = Gtk.SignalListItemFactory()
-    change_pfx_factory.connect('setup', on_change_pfx_setup)
-    change_pfx_factory.connect('bind', on_change_pfx_bind)
-
-    dropdown_change_pfx = Gtk.DropDown(css_name='sw_dropdown')
-    dropdown_change_pfx.set_valign(Gtk.Align.CENTER)
-    dropdown_change_pfx.set_model(change_pfx_list_model)
-    dropdown_change_pfx.set_name(str_sw_use_pfx)
-    dropdown_change_pfx.connect('notify::selected-item', on_change_pfx_activate)
-
-    grid_prefix_tools.attach(dropdown_change_pfx,0,1,1,1)
-
-    count = 1
-    for l, i in zip(prefix_tools_labels, prefix_tools_icons):
-        count +=1
-
-        image_pfx_tools = Gtk.Image(css_name='sw_image')
-        image_pfx_tools.set_from_file(i)
-        label_pfx_tools = Gtk.Label(css_name='sw_label', label=l)
-
-        box_pfx_tools = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        box_pfx_tools.set_spacing(8)
-        box_pfx_tools.append(image_pfx_tools)
-        box_pfx_tools.append(label_pfx_tools)
-
-        btn_pfx_tools = Gtk.Button(css_name='sw_button')
-        btn_pfx_tools.set_size_request(280,-1)
-        btn_pfx_tools.set_name(l)
-        btn_pfx_tools.set_child(box_pfx_tools)
-        btn_pfx_tools.connect('clicked', cb_btn_prefix_tools)
-
-        grid_prefix_tools.attach(btn_pfx_tools,0,count,1,1)
-
-####___Wine_tools_buttons___.
-
-    change_wine_store = Gio.ListStore()
-    change_wine_model = Gtk.SingleSelection.new(change_wine_store)
-
-    change_wine_factory = Gtk.SignalListItemFactory()
-    change_wine_factory.connect('setup', on_change_wine_setup)
-    change_wine_factory.connect('bind', on_change_wine_bind)
-
-    dropdown_change_wine = Gtk.DropDown(css_name='sw_dropdown')
-    dropdown_change_wine.set_size_request(160, -1)
-    dropdown_change_wine.set_hexpand(False)
-    dropdown_change_wine.set_valign(Gtk.Align.CENTER)
-    dropdown_change_wine.set_model(change_wine_model)
-    dropdown_change_wine.set_factory(change_wine_factory)
-    dropdown_change_wine.set_name(str_sw_use_wine)
-    #dropdown_change_wine.connect('notify::selected-item', cb_change_wine_activate)
-
-    drop_list_view = (dropdown_change_wine
-                        .get_last_child()
-                            .get_first_child()
-                                .get_first_child()
-                                    .get_first_child()
-                                        .get_next_sibling()
-                                            .get_first_child()
-    )
-    drop_list_view.connect('activate', cb_change_wine_activate)
-    grid_wine_tools.attach(dropdown_change_wine,0,1,1,1)
-
-    count = 1
-    for l, i in zip(wine_tools_labels, wine_tools_icons):
-        count +=1
-
-        image_wine_tools = Gtk.Image(css_name='sw_image')
-        image_wine_tools.set_from_file(i)
-        label_wine_tools = Gtk.Label(css_name='sw_label', label=l)
-
-        box_wine_tools = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        box_wine_tools.set_spacing(8)
-        box_wine_tools.append(image_wine_tools)
-        box_wine_tools.append(label_wine_tools)
-
-        btn_wine_tools = Gtk.Button(css_name='sw_button')
-        btn_wine_tools.set_size_request(280,-1)
-        btn_wine_tools.set_name(l)
-        btn_wine_tools.set_child(box_wine_tools)
-        btn_wine_tools.connect('clicked', cb_btn_wine_tools)
-
-        grid_wine_tools.attach(btn_wine_tools,0,count,1,1)
-
-####___Files_info___.
-
-    ####___Name, type, size info___.
-
-    label_file_name = Gtk.Label(
-                                css_name='sw_label_desc',
-                                wrap=True,
-                                wrap_mode=Pango.WrapMode.CHAR,
-                                natural_wrap_mode=True,
-                                selectable=True
-                                )
-    label_file_mime = Gtk.Label(
-                                css_name='sw_label_desc',
-                                wrap=True,
-                                natural_wrap_mode=True,
-                                selectable=True
-                                )
-    label_file_size = Gtk.Label(
-                                css_name='sw_label_desc',
-                                wrap=True,
-                                natural_wrap_mode=True,
-                                selectable=True
-                                )
-
-    box_header_info = Gtk.Box(
-                            css_name='sw_action_row',
-                            orientation=Gtk.Orientation.VERTICAL,
-                            spacing=4
-                            )
-
-    box_header_info.append(image_file_info)
-    box_header_info.append(label_file_name)
-    box_header_info.append(label_file_mime)
-    box_header_info.append(label_file_size)
-
-    ####___file path info___.
-
-    box_file_path = Gtk.Box(
-                            css_name='sw_action_row',
-                            orientation=Gtk.Orientation.VERTICAL,
-                            spacing=4
-                            )
-
-    title_file_path = Gtk.Label(
-                            css_name='sw_label',
-                            xalign=0,
-                            label=str_title_file_path
-                            )
-
-    label_file_path = Gtk.Label(
-                            css_name='sw_label_desc',
-                            wrap=True,
-                            wrap_mode=Pango.WrapMode.CHAR,
-                            natural_wrap_mode=True,
-                            xalign=0,
-                            selectable=True
-                            )
-
-    box_file_path.append(title_file_path)
-    box_file_path.append(label_file_path)
-
-    ####___file user, group, time info___.
-
-    title_file_uid = Gtk.Label(
-                            css_name='sw_label',
-                            xalign=0,
-                            label=str_title_file_uid
-                            )
-
-    title_file_rw = Gtk.Label(
-                            css_name='sw_label',
-                            xalign=0,
-                            label=str_title_file_rw
-                            )
-
-    title_file_modified = Gtk.Label(
-                            css_name='sw_label',
-                            xalign=0,
-                            label=str_title_file_modified
-                            )
-
-    title_file_created = Gtk.Label(
-                            css_name='sw_label',
-                            xalign=0,
-                            label=str_title_file_created
-                            )
-
-    label_file_uid = Gtk.Label(
-                            css_name='sw_label_desc',
-                            wrap=True,
-                            natural_wrap_mode=True,
-                            xalign=0
-                            )
-
-    label_file_gid = Gtk.Label(
-                            css_name='sw_label_desc',
-                            wrap=True,
-                            natural_wrap_mode=True,
-                            xalign=0
-                            )
-
-    label_file_rw = Gtk.Label(
-                            css_name='sw_label_desc',
-                            wrap=True,
-                            natural_wrap_mode=True,
-                            xalign=0
-                            )
-
-    label_file_modified = Gtk.Label(
-                            css_name='sw_label_desc',
-                            wrap=True,
-                            natural_wrap_mode=True,
-                            xalign=0
-                            )
-    label_file_created = Gtk.Label(
-                            css_name='sw_label_desc',
-                            wrap=True,
-                            natural_wrap_mode=True,
-                            xalign=0
-                            )
-
-    box_file_info = Gtk.Box(
-                            css_name='sw_action_row',
-                            orientation=Gtk.Orientation.VERTICAL,
-                            spacing=4
-                            )
-
-    box_file_info.append(title_file_uid)
-    box_file_info.append(label_file_uid)
-    box_file_info.append(title_file_rw)
-    box_file_info.append(label_file_rw)
-    box_file_info.append(title_file_modified)
-    box_file_info.append(label_file_modified)
-    box_file_info.append(title_file_created)
-    box_file_info.append(label_file_created)
-
-    ####___file executable info___.
-
-    box_file_execute = Gtk.Box(
-                            css_name='sw_action_row',
-                            orientation=Gtk.Orientation.HORIZONTAL,
-                            spacing=4
-                            )
-    title_file_execute = Gtk.Label(
-                            css_name='sw_label',
-                            xalign=0,
-                            label=str_title_file_execute.title(),
-                            hexpand=True
-                            )
-    switch_file_execute = Gtk.Switch(css_name='sw_switch', margin_end=4)
-    switch_file_execute.set_halign(Gtk.Align.END)
-    switch_file_execute.set_valign(Gtk.Align.CENTER)
-    switch_file_execute.connect('state-set', on_switch_file_exec)
-
-    box_file_execute.append(title_file_execute)
-    box_file_execute.append(switch_file_execute)
-
-    grid_files_info.attach(box_header_info, 0,0,1,1)
-    grid_files_info.attach(box_file_path, 0,1,1,1)
-    grid_files_info.attach(box_file_info, 0,2,1,1)
-    grid_files_info.attach(box_file_execute, 0,3,1,1)
-
-####___Install_launchers___.
-
-    launchers_menu = Gtk.Box(
-                            css_name='sw_flowbox',
-                            orientation=Gtk.Orientation.VERTICAL,
-                            halign=Gtk.Align.CENTER
-    )
-    pref_group_launchers_title = Gtk.Label(
-                                css_name='sw_label_title',
-                                label=msg.msg_dict['install_desc'],
-                                xalign=0.0
-    )
-    pref_group_launchers_subtitle = Gtk.Label(
-                                    css_name='sw_label_desc',
-                                    label=str_il_subtitle,
-                                    xalign=0.0,
-                                    wrap=True,
-                                    natural_wrap_mode=True
-    )
-    pref_group_launchers_box = Gtk.Box(
-                            css_name='sw_box_view',
-                            orientation=Gtk.Orientation.VERTICAL
-    )
-    pref_group_launchers_box.append(pref_group_launchers_title)
-    pref_group_launchers_box.append(pref_group_launchers_subtitle)
-
-    pref_group_launchers_title_grid = Gtk.Grid(css_name='sw_grid')
-    pref_group_launchers_title_grid.attach(pref_group_launchers_box, 0,0,1,1)
-
-    launchers_flow = Gtk.FlowBox(css_name='sw_preferencesgroup')
-    launchers_flow.set_margin_top(16)
-    launchers_flow.set_homogeneous(True)
-    launchers_flow.set_min_children_per_line(1)
-    launchers_flow.set_max_children_per_line(8)
-
-    pref_group_launchers_flow = Gtk.Box(
-                            css_name='sw_pref_box',
-                            orientation=Gtk.Orientation.VERTICAL,
-    )
-    pref_group_launchers_flow.append(pref_group_launchers_title_grid)
-    pref_group_launchers_flow.append(launchers_flow)
-
-    launchers_menu.append(pref_group_launchers_flow)
-
-    btn_il_list = list()
-    count = -1
-    for l in sorted(launchers_list):
-        count += 1
-        image_il = Gtk.Picture(css_name='sw_image')
-        paintable_launcher_icon = Gtk.IconPaintable.new_for_file(
-                                Gio.File.new_for_path(bytes(Path(l))), 162, 1,
-        )
-        image_il.set_paintable(paintable_launcher_icon)
-        image_il.set_content_fit(Gtk.ContentFit.COVER)
-        image_il.set_size_request(288, 162)
-
-        image_btn_il = Gtk.Image(css_name='sw_image')
-        image_btn_il.set_from_file(IconPath.icon_download)
-        label_btn_il = Gtk.Label(css_name='sw_label_view', label=msg.msg_dict['install'])
-        box_btn_il = Gtk.Box(
-                            css_name='sw_box',
-                            orientation=Gtk.Orientation.HORIZONTAL,
-                            spacing=8,
-        )
-        box_btn_il.append(image_btn_il)
-        box_btn_il.append(label_btn_il)
-
-        btn_il = Gtk.Button(css_name='sw_button')
-        btn_il.set_name(Path(l).stem)
-        btn_il.set_valign(Gtk.Align.START)
-        btn_il.set_halign(Gtk.Align.END)
-        btn_il.set_child(box_btn_il)
-        btn_il.set_size_request(160, -1)
-        btn_il.add_css_class('install')
-        btn_il.connect('clicked', cb_btn_install_launchers)
-        btn_il_list.append(btn_il)
-
-        il_name = Path(l).stem.replace('_', ' ')
-        il_title = Gtk.Label(css_name='sw_label_title', label=il_name)
-        il_title.set_hexpand(True)
-        il_title.set_halign(Gtk.Align.START)
-        il_title.set_valign(Gtk.Align.START)
-        il_title.set_xalign(0)
-
-        il_desc = Gtk.Label(
-                            css_name='sw_label_desc',
-                            label=str(launchers_descriptions[Path(l).stem]),
-                            valign=Gtk.Align.START,
-                            xalign=0,
-                            hexpand=True,
-                            max_width_chars=0,
-                            wrap=True,
-                            natural_wrap_mode=True,
-                            wrap_mode=Pango.WrapMode.WORD,
-        )
-        il_desc.set_size_request(280,-1)
-
-        box_il_title = Gtk.Box(
-                            css_name='sw_box',
-                            orientation=Gtk.Orientation.HORIZONTAL,
-                            spacing=8,
-        )
-        box_il_title.append(il_title)
-        box_il_title.append(btn_il)
-
-        box_il_desc = Gtk.Box(
-                            css_name='sw_box',
-                            orientation=Gtk.Orientation.HORIZONTAL,
-                            spacing=16,
-        )
-        box_il_desc.append(image_il)
-        box_il_desc.append(il_desc)
-
-        grid_il = Gtk.Grid(css_name='sw_grid')
-        grid_il.set_vexpand(True)
-        grid_il.set_row_spacing(16)
-        grid_il.set_margin_bottom(16)
-        grid_il.set_margin_top(16)
-        grid_il.set_margin_start(16)
-        grid_il.set_margin_end(16)
-        grid_il.set_valign(Gtk.Align.START)
-        grid_il.attach(box_il_title, 0, count, 1, 1)
-        grid_il.attach(box_il_desc, 0, count+1, 1, 1)
-
-        launchers_child = Gtk.FlowBoxChild(css_name='sw_flowboxchild')
-        launchers_child.set_name(Path(l).stem)
-        launchers_child.set_child(grid_il)
-        launchers_flow.append(launchers_child)
-        #launchers_flow.connect('child-activated', on_launchers_flow_activated, btn_il)
-
-####___Install_wine___.
-
-    wine_menu = Gtk.Box(
-                            css_name='sw_flowbox',
-                            orientation=Gtk.Orientation.VERTICAL,
-                            halign=Gtk.Align.CENTER
-    )
-    pref_group_wine_title = Gtk.Label(
-                                css_name='sw_label_title',
-                                label=vl_dict['install_wine'],
-                                xalign=0.0
-    )
-    pref_group_wine_subtitle = Gtk.Label(
-                                    css_name='sw_label_desc',
-                                    label=str_iw_title_desc,
-                                    xalign=0.0,
-                                    wrap=True,
-                                    natural_wrap_mode=True
-    )
-    pref_group_wine_box = Gtk.Box(
-                            css_name='sw_box_view',
-                            orientation=Gtk.Orientation.VERTICAL
-    )
-    pref_group_wine_box.append(pref_group_wine_title)
-    pref_group_wine_box.append(pref_group_wine_subtitle)
-
-    pref_group_wine_title_grid = Gtk.Grid(css_name='sw_grid')
-    pref_group_wine_title_grid.attach(pref_group_wine_box, 0,0,1,1)
-
-    wine_flow = Gtk.FlowBox(css_name='sw_preferencesgroup')
-    wine_flow.set_margin_top(16)
-    wine_flow.set_homogeneous(True)
-    wine_flow.set_min_children_per_line(1)
-    wine_flow.set_max_children_per_line(8)
-
-    pref_group_wine_flow = Gtk.Box(
-                            css_name='sw_pref_box',
-                            orientation=Gtk.Orientation.VERTICAL,
-    )
-    pref_group_wine_flow.append(pref_group_wine_title_grid)
-    pref_group_wine_flow.append(wine_flow)
-
-    wine_menu.append(pref_group_wine_flow)
-
-    btn_iw_list = list()
-    btn_iw_rm_list = list()
-    wine_dir_list = list()
-    dropdown_download_wine_list = list()
-    count = 0
-    for wine, wine_image in zip(wine_list, wine_image_list):
-        count += 1
-        download_wine_model = Gtk.StringList()
-        if winever_data is not None:
-            for x in winever_data[wine].split(' '):
-                if x != '':
-                    wine_dir = Path(Path(x).stem).stem
-                    wine_dir_list.append(wine_dir)
-                    download_wine_model.append(wine_dir)
-
-        dropdown_download_wine = Gtk.DropDown(css_name='sw_dropdown')
-        dropdown_download_wine.set_size_request(280, 40)
-        dropdown_download_wine.set_hexpand(False)
-        dropdown_download_wine.set_valign(Gtk.Align.START)
-        dropdown_download_wine.set_halign(Gtk.Align.END)
-        dropdown_download_wine.set_name(wine)
-        dropdown_download_wine_list.append(dropdown_download_wine)
-        dropdown_download_wine.set_model(download_wine_model)
-        drop_wine_list_view = (dropdown_download_wine
-                                .get_last_child()
-                                    .get_first_child()
-                                        .get_first_child()
-                                            .get_first_child()
-                                                .get_next_sibling()
-                                                    .get_first_child()
-        )
-        drop_wine_list_view.connect('activate', cb_dropdown_download_wine)
-
-        paintable_wine_icon = Gtk.IconPaintable.new_for_file(
-                                Gio.File.new_for_path(bytes(Path(wine_image))), 180, 1,
-        )
-        image_iw = Gtk.Picture(css_name='sw_picture')
-        image_iw.set_paintable(paintable_wine_icon)
-        image_iw.set_content_fit(Gtk.ContentFit.COVER)
-        image_iw.set_size_request(320, 180)
-
-        image_btn_iw = Gtk.Image(css_name='sw_image')
-        image_btn_iw.set_from_file(IconPath.icon_download)
-        label_btn_iw = Gtk.Label(css_name='sw_label_view', label=msg.msg_dict['install'])
-        box_btn_iw = Gtk.Box(
-                            css_name='sw_box',
-                            orientation=Gtk.Orientation.HORIZONTAL,
-                            spacing=8,
-        )
-        box_btn_iw.append(image_btn_iw)
-        box_btn_iw.append(label_btn_iw)
-
-        btn_iw = Gtk.Button(css_name='sw_button')
-        btn_iw.set_name(f'WINE_{count}')
-        btn_iw.set_valign(Gtk.Align.CENTER)
-        btn_iw.set_halign(Gtk.Align.END)
-        btn_iw.set_child(box_btn_iw)
-        btn_iw.set_size_request(120, -1)
-        btn_iw.add_css_class('install')
-        btn_iw.connect('clicked', cb_btn_download_wine, dropdown_download_wine)
-        btn_iw_list.append(btn_iw)
-
-        image_btn_iw_rm = Gtk.Image(css_name='sw_image')
-        image_btn_iw_rm.set_from_file(IconPath.icon_remove)
-        label_btn_iw_rm = Gtk.Label(css_name='sw_label_view', label=msg.msg_dict['remove'])
-        box_btn_iw_rm = Gtk.Box(
-                            css_name='sw_box',
-                            orientation=Gtk.Orientation.HORIZONTAL,
-                            spacing=8,
-        )
-        box_btn_iw_rm.append(image_btn_iw_rm)
-        box_btn_iw_rm.append(label_btn_iw_rm)
-
-        btn_iw_rm = Gtk.Button(css_name='sw_button')
-        btn_iw_rm.set_name(f'RM_WINE_{count}')
-        btn_iw_rm.set_valign(Gtk.Align.CENTER)
-        btn_iw_rm.set_halign(Gtk.Align.END)
-        btn_iw_rm.set_child(box_btn_iw_rm)
-        btn_iw_rm.set_size_request(120, -1)
-        btn_iw_rm.add_css_class('installed')
-        btn_iw_rm.connect('clicked', cb_btn_remove_wine, dropdown_download_wine)
-        btn_iw_rm_list.append(btn_iw_rm)
-
-        stack_btn_iw = Gtk.Stack(css_name='sw_stack')
-        stack_btn_iw.set_transition_duration(10)
-        stack_btn_iw.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
-        stack_btn_iw.add_named(btn_iw, f'WINE_{count}')
-        stack_btn_iw.add_named(btn_iw_rm, f'RM_WINE_{count}')
-
-        image_iw_source = Gtk.Image(css_name='sw_image')
-        image_iw_source.set_from_file(IconPath.icon_github)
-        label_iw_source = Gtk.Label(css_name='sw_label_info', label='GitHub Source')
-
-        box_btn_iw_source = Gtk.Box(
-                            css_name='sw_box',
-                            orientation=Gtk.Orientation.HORIZONTAL,
-                            spacing=16,
-        )
-        box_btn_iw_source.append(image_iw_source)
-        box_btn_iw_source.append(label_iw_source)
-
-        btn_iw_source = Gtk.LinkButton(
-                                    css_name='sw_link',
-                                    halign=Gtk.Align.START,
-                                    valign=Gtk.Align.START
-        )
-        btn_iw_source.set_name(wine)
-        btn_iw_source.set_child(box_btn_iw_source)
-        btn_iw_source.set_tooltip_markup(wine_source_dict[wine])
-        btn_iw_source.connect('activate-link', cb_btn_source_wine)
-
-        iw_title = Gtk.Label(
-                            css_name='sw_label_title',
-                            label=wine_dict[wine].replace('_', ' ').title(),
-                            hexpand=True,
-                            halign=Gtk.Align.START,
-                            valign=Gtk.Align.START,
-                            xalign=0,
-        )
-        iw_desc = Gtk.Label(
-                            css_name='sw_label_desc',
-                            label=str(wine_descriptions[wine]),
-                            valign=Gtk.Align.START,
-                            xalign=0,
-                            hexpand=True,
-                            max_width_chars=0,
-                            wrap=True,
-                            natural_wrap_mode=True,
-                            wrap_mode=Pango.WrapMode.WORD,
-        )
-        iw_desc.set_size_request(280,-1)
-
-        box_iw_title = Gtk.Box(
-                            css_name='sw_box',
-                            orientation=Gtk.Orientation.HORIZONTAL,
-                            spacing=8,
-        )
-        box_iw_title.append(iw_title)
-        box_iw_title.append(dropdown_download_wine)
-        box_iw_title.append(stack_btn_iw)
-
-        box_iw_desc_source = Gtk.Box(
-                            css_name='sw_box',
-                            orientation=Gtk.Orientation.VERTICAL,
-                            spacing=8,
-        )
-        box_iw_desc_source.append(iw_desc)
-        box_iw_desc_source.append(btn_iw_source)
-
-        box_iw_desc = Gtk.Box(
-                            css_name='sw_box',
-                            orientation=Gtk.Orientation.HORIZONTAL,
-                            spacing=16,
-        )
-        box_iw_desc.append(image_iw)
-        box_iw_desc.append(box_iw_desc_source)
-
-        grid_il = Gtk.Grid(css_name='sw_grid')
-        grid_il.set_vexpand(True)
-        grid_il.set_row_spacing(16)
-        grid_il.set_margin_bottom(16)
-        grid_il.set_margin_top(16)
-        grid_il.set_margin_start(16)
-        grid_il.set_margin_end(16)
-        grid_il.set_valign(Gtk.Align.START)
-        grid_il.attach(box_iw_title, 0, count, 1, 1)
-        grid_il.attach(box_iw_desc, 0, count+1, 1, 1)
-
-        wine_child = Gtk.FlowBoxChild(css_name='sw_flowboxchild')
-        wine_child.set_name(Path(l).stem)
-        wine_child.set_child(grid_il)
-        wine_flow.append(wine_child)
-        #wine_flow.connect('child-activated', on_wine_flow_activated, btn_il)
-
-####___Settings___.
-
-    count = 0
-    for l, i in zip(settings_labels, settings_icons):
-        count += 1
-
-        image_settings = Gtk.Image(css_name='sw_image')
-        image_settings.set_from_file(i)
-        label_settings = Gtk.Label(css_name='sw_label', label=l)
-
-        box_settings = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        box_settings.set_spacing(8)
-        box_settings.append(image_settings)
-        box_settings.append(label_settings)
-
-        btn_settings = Gtk.Button(css_name='sw_button')
-        btn_settings.set_size_request(280,-1)
-        btn_settings.set_name(l)
-        btn_settings.set_child(box_settings)
-        btn_settings.connect('clicked', cb_btn_settings)
-
-        grid_settings.attach(btn_settings,0,count,1,1)
-
-####___Settings_stack___.
-
-    ####___Launch_settings___.
-
-    label_ls_move = Gtk.Label(css_name='sw_label', label=str_move_settings)
-
-    btn_ls_move = Gtk.Button(css_name='sw_button')
-    btn_ls_move.set_hexpand(True)
-    btn_ls_move.set_halign(Gtk.Align.END)
-    btn_ls_move.set_valign(Gtk.Align.START)
-    btn_ls_move.set_child(label_ls_move)
-    btn_ls_move.set_tooltip_markup(msg.tt_dict['choose_app'])
-    btn_ls_move.connect('clicked', cb_btn_ls_move)
-
-    launch_settings = Gtk.Box(
-                            css_name='sw_flowbox',
-                            orientation=Gtk.Orientation.VERTICAL
-                            )
-
-    pref_group_title = Gtk.Label(
-                                css_name='sw_label_title',
-                                label=vl_dict['launch_settings'],
-                                xalign=0.0
-                                )
-
-    pref_group_subtitle = Gtk.Label(
-                                    css_name='sw_label_desc',
-                                    label=str_lp_subtitle,
-                                    xalign=0.0,
-                                    wrap=True,
-                                    natural_wrap_mode=True
-                                    )
-
-    pref_group_box = Gtk.Box(
-                            css_name='sw_box_view',
-                            orientation=Gtk.Orientation.VERTICAL
-                            )
-
-    pref_group_box.append(pref_group_title)
-    pref_group_box.append(pref_group_subtitle)
-
-    pref_group_ls_title_grid = Gtk.Grid(css_name='sw_grid')
-    pref_group_ls_title_grid.attach(pref_group_box, 0,0,1,1)
-    pref_group_ls_title_grid.attach(btn_ls_move, 1,0,1,1)
-
-    launch_flow = Gtk.FlowBox(css_name='sw_preferencesgroup')
-    launch_flow.set_margin_top(16)
-    launch_flow.set_homogeneous(True)
-    launch_flow.set_min_children_per_line(1)
-    launch_flow.set_max_children_per_line(8)
-
-    pref_group_flow = Gtk.Box(
-                            css_name='sw_pref_box',
-                            orientation=Gtk.Orientation.VERTICAL,
-    )
-    pref_group_flow.append(pref_group_ls_title_grid)
-    pref_group_flow.append(launch_flow)
-
-    launch_settings.append(pref_group_flow)
-
-    winarch_list_model = Gtk.StringList()
-    winver_list_model = Gtk.StringList()
-    reg_list_model = Gtk.StringList()
-    dxvk_list_model = Gtk.StringList()
-    vkd3d_list_model = Gtk.StringList()
-    fsr_list_model = Gtk.StringList()
-    lang_mode_list_model = Gtk.StringList()
-
-    combo_list_model = []
-    combo_list_model.append(winarch_list_model)
-    combo_list_model.append(winver_list_model)
-    combo_list_model.append(reg_list_model)
-    combo_list_model.append(dxvk_list_model)
-    combo_list_model.append(vkd3d_list_model)
-    combo_list_model.append(fsr_list_model)
-    combo_list_model.append(lang_mode_list_model)
-
-    for a in winarch:
-        winarch_list_model.append(a)
-
-    for v in winver:
-        winver_list_model.append(v)
-
-    for r in reg_patches:
-        reg_list_model.append(r)
-
-    for dxvk in dxvk_ver:
-        dxvk_list_model.append(dxvk)
-
-    for vkd3d in vkd3d_ver:
-        vkd3d_list_model.append(vkd3d)
-
-    for mode in fsr_mode:
-        fsr_list_model.append(mode)
-
-    for lang in lang_mode:
-        lang_mode_list_model.append(lang)
-
-    lp_combo_list_factory = Gtk.SignalListItemFactory()
-    lp_combo_list_factory.connect('setup', on_combo_setup)
-    lp_combo_list_factory.connect('bind', on_combo_bind)
-
-    ####___Entry_launch_parameters___.
-
-    row_entry_list = list()
-    count = -1
-    for lpt, lpd in zip(lp_title, lp_desc):
-        count += 1
-        if lpt in lp_entry_list:
-
-            row_entry_title = Gtk.Label(css_name='sw_label', label=lpt)
-            row_entry_title.set_xalign(0)
-            row_entry_title.set_wrap(True)
-            row_entry_title.set_wrap_mode(Pango.WrapMode.CHAR)
-
-            row_entry = Gtk.Entry(css_name='sw_entry')
-            row_entry.set_progress_pulse_step(0.1)
-            row_entry.set_icon_from_icon_name(
-                                        Gtk.EntryIconPosition.SECONDARY, 'edit'
-            )
-            row_entry.set_activates_default(True)
-            row_entry.set_icon_sensitive(
-                                        Gtk.EntryIconPosition.SECONDARY, True
-            )
-            row_entry.set_icon_activatable(
-                                        Gtk.EntryIconPosition.SECONDARY, True
-            )
-            row_entry.set_icon_tooltip_markup(
-                                        Gtk.EntryIconPosition.SECONDARY,
-                                        msg.msg_dict['save']
-            )
-            row_entry.set_placeholder_text(str_example[count])
-            row_entry.set_hexpand(True)
-            row_entry.connect('icon-press', on_row_entry_icon_press)
-            row_entry.connect('activate', on_row_entry_enter)
-            row_entry.set_name(lpt)
-            row_entry_list.append(row_entry)
-
-            box_row_entry = Gtk.Box(
-                                    css_name='sw_box_view',
-                                    orientation=Gtk.Orientation.VERTICAL
-                                    )
-            box_row_entry.append(row_entry_title)
-            box_row_entry.append(row_entry)
-
-            entry_child = Gtk.FlowBoxChild(css_name='sw_flowboxchild')
-            entry_child.set_name(lpt)
-            entry_child.set_child(box_row_entry)
-            launch_flow.append(entry_child)
-
-    ####___Combobox_launch_parameters___.
-
-    row_combo_list = list()
-    count = -1
-    for lpt, lpd in zip(lp_title, lp_desc):
-        count += 1
-        if lpt in lp_combo_list:
-
-            row_combo_title = Gtk.Label(
-                                    css_name='sw_label',
-                                    label=lpt,
-                                    xalign=0,
-                                    wrap=True,
-                                    wrap_mode=Pango.WrapMode.WORD,
-                                    )
-
-            row_combo_desc = Gtk.Label(
-                                    css_name='sw_label_desc',
-                                    label=lpd,
-                                    hexpand=True,
-                                    xalign=0,
-                                    max_width_chars=4,
-                                    wrap=True,
-                                    natural_wrap_mode=True,
-                                    wrap_mode=Pango.WrapMode.WORD,
-                                    )
-
-            row_combo = Gtk.DropDown(
-                                    css_name='sw_dropdown',
-                                    name=lpt,
-                                    hexpand=True,
-                                    valign=Gtk.Align.CENTER,
-                                    halign=Gtk.Align.END,
-                                    show_arrow=True,
-                                    )
-            row_combo.set_size_request(240,-1)
-            row_combo_list.append(row_combo)
-
-            row_grid = Gtk.Grid(css_name='sw_grid')
-
-            if lpt == 'REGEDIT_PATCH':
-                image_regedit_patch = Gtk.Image(css_name='sw_image')
-                image_regedit_patch.set_from_file(IconPath.icon_save)
-
-                btn_regedit_patch = Gtk.Button(
-                                            css_name='sw_button',
-                                            name=lpt,
-                                            child=image_regedit_patch,
-                                            hexpand=True,
-                                            halign=Gtk.Align.END,
-                                            tooltip_markup=(msg.tt_dict['apply']
-                                            + ' ' + msg.tt_dict['registry']),
-                                            )
-                btn_regedit_patch.connect('clicked', cb_btn_regedit_patch, row_combo)
-
-                box_reg_combo = Gtk.Box(
-                                    css_name='sw_box',
-                                    orientation=Gtk.Orientation.HORIZONTAL,
-                                    hexpand=True,
-                                    halign=Gtk.Align.END,
-                                    spacing=8,
-                                    )
-                box_reg_combo.append(btn_regedit_patch)
-                box_reg_combo.append(row_combo)
-
-                row_grid.attach(row_combo_desc,0,count,1,1)
-                row_grid.attach(box_reg_combo,1,count,1,1)
-
-            else:
-                row_grid.attach(row_combo_desc,0,count,1,1)
-                row_grid.attach(row_combo,1,count,1,1)
-
-            try:
-                if count < 9:
-                    row_combo.set_model(combo_list_model[count-2])
-                    row_combo.connect('notify::selected-item', on_row_combo_activate)
-            except:
-                pass
-
-            box_row_combo = Gtk.Box(
-                                    css_name='sw_box_view',
-                                    orientation=Gtk.Orientation.VERTICAL
-                                    )
-            box_row_combo.append(row_combo_title)
-            box_row_combo.append(row_grid)
-
-            combo_child = Gtk.FlowBoxChild(css_name='sw_flowboxchild')
-            combo_child.set_name(lpt)
-            combo_child.set_child(box_row_combo)
-            launch_flow.append(combo_child)
-
-    ####___Fps_limit_parameters___.
-
-    lp_fps_title = Gtk.Label(css_name='sw_label', label=str_fps_limit)
-    lp_fps_title.set_xalign(0)
-    lp_fps_title.set_wrap(True)
-    lp_fps_title.set_wrap_mode(Pango.WrapMode.WORD)
-
-    lp_fps_desc = Gtk.Label(
-                            css_name='sw_label_desc',
-                            label=lp_desc_dict['fps_limit']
-                            )
-    lp_fps_desc.set_halign(Gtk.Align.START)
-    lp_fps_desc.set_xalign(0)
-    lp_fps_desc.set_wrap(True)
-    lp_fps_desc.set_natural_wrap_mode(True)
-    lp_fps_desc.set_wrap_mode(Pango.WrapMode.WORD)
-
-    fps_adjustment = Gtk.Adjustment()
-    fps_adjustment.set_lower(0)
-    fps_adjustment.set_upper(360)
-    fps_adjustment.set_step_increment(10)
-    fps_adjustment.set_page_increment(1)
-
-    btn_spin_fps = Gtk.SpinButton(css_name='sw_spinbutton')
-    btn_spin_fps.set_name(str_fps_limit)
-    btn_spin_fps.set_hexpand(True)
-    btn_spin_fps.set_size_request(160,-1)
-    btn_spin_fps.set_valign(Gtk.Align.CENTER)
-    btn_spin_fps.set_halign(Gtk.Align.END)
-    btn_spin_fps.set_adjustment(fps_adjustment)
-    btn_spin_fps.connect('value-changed', on_fps_adjustment)
-
-    grid_lp_fps = Gtk.Grid(css_name='sw_grid')
-    grid_lp_fps.set_hexpand(True)
-    grid_lp_fps.attach(lp_fps_desc,0,0,1,1)
-    grid_lp_fps.attach(btn_spin_fps,1,0,1,1)
-
-    box_lp_fps = Gtk.Box(
-                        css_name='sw_box_view',
-                        orientation=Gtk.Orientation.VERTICAL
-                        )
-    box_lp_fps.append(lp_fps_title)
-    box_lp_fps.append(grid_lp_fps)
-
-    fps_child = Gtk.FlowBoxChild(css_name='sw_flowboxchild')
-    fps_child.set_name(str_fps_limit)
-    fps_child.set_child(box_lp_fps)
-
-    launch_flow.append(fps_child)
-
-    ####___CPU_topology_parameters___.
-
-    lp_cpu_topology_title = Gtk.Label(css_name='sw_label', label=str_cpu_topology)
-    lp_cpu_topology_title.set_xalign(0)
-    lp_cpu_topology_title.set_wrap(True)
-    lp_cpu_topology_title.set_wrap_mode(Pango.WrapMode.WORD)
-
-    lp_cpu_topology_desc = Gtk.Label(
-                            css_name='sw_label_desc',
-                            label=lp_desc_dict['cpu_topology']
-                            )
-    lp_cpu_topology_desc.set_halign(Gtk.Align.START)
-    lp_cpu_topology_desc.set_xalign(0)
-    lp_cpu_topology_desc.set_wrap(True)
-    lp_cpu_topology_desc.set_natural_wrap_mode(True)
-    lp_cpu_topology_desc.set_wrap_mode(Pango.WrapMode.WORD)
-
-    cpu_core_num = get_cpu_core_num()
-
-    cpu_adjustment = Gtk.Adjustment()
-    cpu_adjustment.set_lower(0)
-
-    if cpu_core_num is not None:
-        cpu_adjustment.set_upper(cpu_core_num)
-    else:
-        cpu_adjustment.set_upper(0)
-
-    cpu_adjustment.set_step_increment(1)
-    cpu_adjustment.set_page_increment(1)
-
-    btn_spin_cpu = Gtk.SpinButton(css_name='sw_spinbutton')
-    btn_spin_cpu.set_name(str_cpu_topology)
-    btn_spin_cpu.set_hexpand(True)
-    btn_spin_cpu.set_size_request(160,-1)
-    btn_spin_cpu.set_valign(Gtk.Align.CENTER)
-    btn_spin_cpu.set_halign(Gtk.Align.END)
-    btn_spin_cpu.set_adjustment(cpu_adjustment)
-    btn_spin_cpu.connect('value-changed', on_cpu_adjustment)
-
-    grid_lp_cpu = Gtk.Grid(css_name='sw_grid')
-    grid_lp_cpu.set_hexpand(True)
-    grid_lp_cpu.attach(lp_cpu_topology_desc,0,0,1,1)
-    grid_lp_cpu.attach(btn_spin_cpu,1,0,1,1)
-
-    box_lp_cpu = Gtk.Box(
-                        css_name='sw_box_view',
-                        orientation=Gtk.Orientation.VERTICAL
-                        )
-    box_lp_cpu.append(lp_cpu_topology_title)
-    box_lp_cpu.append(grid_lp_cpu)
-
-    cpu_topology_child = Gtk.FlowBoxChild(css_name='sw_flowboxchild')
-    cpu_topology_child.set_name(str_cpu_topology)
-    cpu_topology_child.set_child(box_lp_cpu)
-
-    launch_flow.append(cpu_topology_child)
-
-    ####___Switch_launch_parameters___.
-
-    switch_ls_list = list()
-    count = -1
-    for l, d in zip(switch_labels, switch_descriptions):
-        count += 1
-        switch_ls = Gtk.Switch(css_name='sw_switch')
-        switch_ls.set_margin_start(16)
-        switch_ls.set_name(l)
-        switch_ls.set_valign(Gtk.Align.CENTER)
-        switch_ls.set_halign(Gtk.Align.START)
-        switch_ls.connect('state-set', cb_btn_switch_ls)
-        switch_ls_list.append(switch_ls)
-
-        ls_title = Gtk.Label(css_name='sw_label', label=l)
-        ls_title.set_hexpand(True)
-        ls_title.set_halign(Gtk.Align.START)
-        ls_title.set_xalign(0)
-
-        ls_desc = Gtk.Label(css_name='sw_label_desc', label=d)
-        ls_desc.set_size_request(180,-1)
-        ls_desc.set_hexpand(True)
-        ls_desc.set_xalign(0)
-        ls_desc.set_max_width_chars(0)
-        ls_desc.set_wrap(True)
-        ls_desc.set_natural_wrap_mode(True)
-        ls_desc.set_wrap_mode(Pango.WrapMode.WORD)
-
-        grid_switch = Gtk.Grid(css_name='sw_grid')
-        grid_switch.attach(ls_desc, 0, count, 1, 1)
-        grid_switch.attach(switch_ls, 1, count, 1, 1)
-
-        ls_box = Gtk.Box(
-                        css_name='sw_box_view',
-                        orientation=Gtk.Orientation.VERTICAL
-                        )
-        ls_box.append(ls_title)
-        ls_box.append(grid_switch)
-
-        launch_child = Gtk.FlowBoxChild(css_name='sw_flowboxchild')
-        launch_child.set_name(l)
-        launch_child.set_child(ls_box)
-        launch_flow.append(launch_child)
-        launch_flow.connect('child-activated', on_launch_flow_activated, switch_ls)
-
-####___Mangohud_settings___.
-
-    label_mh_preview_0 = Gtk.Label(css_name='sw_label', label=preview_label)
-
-    btn_mh_preview_0 = Gtk.Button(css_name='sw_button')
-    btn_mh_preview_0.set_hexpand(True)
-    btn_mh_preview_0.set_halign(Gtk.Align.END)
-    btn_mh_preview_0.set_valign(Gtk.Align.START)
-    btn_mh_preview_0.set_child(label_mh_preview_0)
-    btn_mh_preview_0.connect('clicked', cb_btn_mh_preview)
-
-    pref_group_mh_title = Gtk.Label(
-                                    css_name='sw_label_title',
-                                    label=vl_dict['mangohud_settings'],
-                                    xalign=0.0,
-                                    wrap=True,
-                                    natural_wrap_mode=True
-                                    )
-
-    pref_group_mh_subtitle = Gtk.Label(
-                                    css_name='sw_label_desc',
-                                    label=str_mh_subtitle,
-                                    xalign=0.0,
-                                    wrap=True,
-                                    natural_wrap_mode=True
-                                    )
-
-    pref_group_mh_label_box = Gtk.Box(
-                                    css_name='sw_box_view',
-                                    orientation=Gtk.Orientation.VERTICAL
-                                    )
-    pref_group_mh_label_box.append(pref_group_mh_title)
-    pref_group_mh_label_box.append(pref_group_mh_subtitle)
-
-    pref_group_mh_title_grid = Gtk.Grid(css_name='sw_grid')
-    pref_group_mh_title_grid.attach(pref_group_mh_label_box, 0,0,1,1)
-    pref_group_mh_title_grid.attach(btn_mh_preview_0, 1,0,1,1)
-
-    mangohud_flow = Gtk.FlowBox(css_name='sw_preferencesgroup')
-    mangohud_flow.set_margin_top(16)
-    mangohud_flow.set_homogeneous(True)
-    mangohud_flow.set_min_children_per_line(1)
-    mangohud_flow.set_max_children_per_line(8)
-
-    pref_group_mh_flow = Gtk.Box(
-                                css_name='sw_pref_box',
-                                orientation=Gtk.Orientation.VERTICAL
-                                )
-    pref_group_mh_flow.append(pref_group_mh_title_grid)
-    pref_group_mh_flow.append(mangohud_flow)
-
-    mangohud_settings = Gtk.Box(
-                                css_name='sw_flowbox',
-                                orientation=Gtk.Orientation.VERTICAL
-                                )
-    mangohud_settings.append(pref_group_mh_flow)
-
-    check_btn_mh_list = list()
-    count = -1
-    for l, d in sorted(zip(check_mh_labels, check_mh_description)):
-        count += 1
-        btn_switch_mh = Gtk.Switch(
-                                css_name='sw_switch',
-                                valign=Gtk.Align.CENTER,
-                                halign=Gtk.Align.START,
-                                name=l,
-        )
-        btn_switch_mh.connect('state-set', cb_btn_switch_mh)
-        check_btn_mh_list.append(btn_switch_mh)
-
-        title_mh = Gtk.Label(
-                            css_name='sw_label',
-                            label=l.upper(),
-                            hexpand=True,
-                            halign=Gtk.Align.START,
-                            xalign=0,
-        )
-        desc_mh = Gtk.Label(
-                            css_name='sw_label_desc',
-                            label=d,
-                            hexpand=True,
-                            valign=Gtk.Align.CENTER,
-                            xalign=0,
-                            max_width_chars=0,
-                            wrap=True,
-                            natural_wrap_mode=True,
-                            wrap_mode=Pango.WrapMode.WORD,
-        )
-        desc_mh.set_size_request(280,-1)
-        grid_mh = Gtk.Grid(css_name='sw_grid')
-        grid_mh.attach(title_mh,0,count,1,1)
-        grid_mh.attach(btn_switch_mh,1,count,1,1)
-
-        pref_group_mh = Gtk.Box(
-                                css_name='sw_box_view',
-                                orientation=Gtk.Orientation.VERTICAL
-        )
-        pref_group_mh.append(grid_mh)
-        pref_group_mh.append(desc_mh)
-
-        mangohud_child = Gtk.FlowBoxChild(
-                                css_name='sw_flowboxchild',
-                                name=l,
-        )
-        mangohud_child.set_child(pref_group_mh)
-        mangohud_flow.append(mangohud_child)
-        mangohud_flow.connect('child-activated', on_mango_flow_activated, btn_switch_mh)
-
-####___Vkbasalt_settings___.
-
-    label_vk_scale = Gtk.Label(
-                            css_name='sw_label_desc',
-                            label=str_vk_intensity,
-                            xalign=0,
-                            yalign=0.5,
-                            wrap=True,
-                            wrap_mode=Pango.WrapMode.WORD,
-                            )
-    vk_adjustment = Gtk.Adjustment()
-    vk_adjustment.set_lower(0)
-    vk_adjustment.set_upper(100)
-    vk_adjustment.connect('value-changed', on_set_vk_intensity)
-
-    btn_vk_scale = Gtk.Scale(css_name='sw_scale')
-    btn_vk_scale.set_hexpand(True)
-    btn_vk_scale.set_halign(Gtk.Align.END)
-    btn_vk_scale.set_valign(Gtk.Align.START)
-    btn_vk_scale.set_size_request(140,-1)
-    btn_vk_scale.set_draw_value(True)
-    btn_vk_scale.set_round_digits(0)
-    btn_vk_scale.set_adjustment(vk_adjustment)
-
-    vk_scale_box = Gtk.Box(
-                        css_name='sw_box_view',
-                        orientation=Gtk.Orientation.HORIZONTAL,
-                        halign=Gtk.Align.END,
-                        valign=Gtk.Align.START,
-                        spacing=8,
-                        )
-    vk_scale_box.append(label_vk_scale)
-    vk_scale_box.append(btn_vk_scale)
-
-    pref_group_vk_title = Gtk.Label(
-                                    css_name='sw_label_title',
-                                    label=vl_dict['vkbasalt_settings'],
-                                    xalign=0.0,
-                                    wrap=True,
-                                    natural_wrap_mode=True
-                                    )
-
-    pref_group_vk_subtitle = Gtk.Label(
-                                    css_name='sw_label_desc',
-                                    label=str_vk_subtitle,
-                                    xalign=0.0,
-                                    wrap=True,
-                                    natural_wrap_mode=True
-                                    )
-
-    pref_group_vk_label_box = Gtk.Box(
-                                    css_name='sw_box_view',
-                                    orientation=Gtk.Orientation.VERTICAL,
-                                    halign=Gtk.Align.START
-                                    )
-    pref_group_vk_label_box.append(pref_group_vk_title)
-    pref_group_vk_label_box.append(pref_group_vk_subtitle)
-
-    pref_group_vk_title_grid = Gtk.Grid(css_name='sw_grid')
-    pref_group_vk_title_grid.attach(pref_group_vk_label_box, 0,0,1,1)
-    pref_group_vk_title_grid.attach(vk_scale_box, 1,0,1,1)
-
-    vkbasalt_flow = Gtk.FlowBox(css_name='sw_preferencesgroup')
-    vkbasalt_flow.set_homogeneous(True)
-    vkbasalt_flow.set_min_children_per_line(1)
-    vkbasalt_flow.set_max_children_per_line(8)
-
-    pref_group_vk_flow = Gtk.Box(
-                                css_name='sw_pref_box',
-                                orientation=Gtk.Orientation.VERTICAL
-                                )
-    pref_group_vk_flow.append(pref_group_vk_title_grid)
-    pref_group_vk_flow.append(vkbasalt_flow)
-
-    vkbasalt_settings = Gtk.Box(
-                                css_name='sw_flowbox',
-                                orientation=Gtk.Orientation.VERTICAL
-                                )
-    vkbasalt_settings.append(pref_group_vk_flow)
-
-    check_btn_vk_list = list()
-    count = -1
-    for l, d in sorted(vkbasalt_dict.items()):
-        count += 1
-
-        btn_switch_vk = Gtk.Switch(css_name='sw_switch')
-        btn_switch_vk.set_name(l)
-        btn_switch_vk.set_valign(Gtk.Align.CENTER)
-        btn_switch_vk.set_halign(Gtk.Align.START)
-        btn_switch_vk.connect('state-set', cb_btn_switch_vk)
-        check_btn_vk_list.append(btn_switch_vk)
-
-        title_vk = Gtk.Label(css_name='sw_label', label=l.upper())
-        title_vk.set_hexpand(True)
-        title_vk.set_halign(Gtk.Align.START)
-        title_vk.set_xalign(0)
-
-        desc_vk = Gtk.Label(css_name='sw_label_desc', label=d)
-        desc_vk.set_size_request(280,-1)
-        desc_vk.set_hexpand(True)
-        desc_vk.set_valign(Gtk.Align.CENTER)
-        desc_vk.set_xalign(0)
-        desc_vk.set_max_width_chars(0)
-        desc_vk.set_wrap(True)
-        desc_vk.set_natural_wrap_mode(True)
-
-        grid_vk = Gtk.Grid(css_name='sw_grid')
-        grid_vk.attach(title_vk, 0, count, 1, 1)
-        grid_vk.attach(btn_switch_vk, 1, count, 1, 1)
-
-        pref_group_vk = Gtk.Box(
-                                css_name='sw_box_view',
-                                orientation=Gtk.Orientation.VERTICAL
-                                )
-        pref_group_vk.append(grid_vk)
-        pref_group_vk.append(desc_vk)
-
-        vkbasalt_child = Gtk.FlowBoxChild(css_name='sw_flowboxchild')
-        vkbasalt_child.set_name(l)
-        vkbasalt_child.set_child(pref_group_vk)
-        vkbasalt_flow.insert(vkbasalt_child, position=count)
-        vkbasalt_flow.connect('child-activated', on_vk_flow_activated, btn_switch_vk)
-
-####___Colors_settings___.
-
-    colors_settings = Gtk.Box(
-                            css_name='sw_flowbox',
-                            orientation=Gtk.Orientation.VERTICAL
-    )
-    label_preview = Gtk.Label(css_name='sw_label', label=preview_label)
-
-    btn_mh_preview = Gtk.Button(css_name='sw_button')
-    btn_mh_preview.set_hexpand(True)
-    btn_mh_preview.set_valign(Gtk.Align.START)
-    btn_mh_preview.set_halign(Gtk.Align.END)
-    btn_mh_preview.set_margin_bottom(16)
-    btn_mh_preview.set_child(label_preview)
-    btn_mh_preview.connect('clicked', cb_btn_mh_preview)
-
-    label_save = Gtk.Label(css_name='sw_label', label=confirm_label)
-
-    btn_save_theme = Gtk.Button(css_name='sw_button')
-    btn_save_theme.set_hexpand(True)
-    btn_save_theme.set_valign(Gtk.Align.START)
-    btn_save_theme.set_halign(Gtk.Align.END)
-    btn_save_theme.set_margin_bottom(16)
-    btn_save_theme.set_child(label_save)
-    btn_save_theme.connect('clicked', cb_btn_save_theme)
-
-    ####___Mangohud_colors___.
-
-    colors_flow_mh = Gtk.FlowBox(css_name='sw_preferencesgroup')
-    colors_flow_mh.set_margin_bottom(32)
-    colors_flow_mh.set_homogeneous(True)
-    colors_flow_mh.set_min_children_per_line(1)
-    colors_flow_mh.set_max_children_per_line(4)
-
-    colors_mh_title = Gtk.Label(
-                                css_name='sw_label_title',
-                                label=str_mh_colors_title,
-                                xalign=0.0,
-                                wrap=True,
-                                natural_wrap_mode=True
-                                )
-
-    colors_mh_subtitle = Gtk.Label(
-                                css_name='sw_label_desc',
-                                label=str_mh_colors_subtitle,
-                                xalign=0.0,
-                                wrap=True,
-                                natural_wrap_mode=True
-                                )
-
-    colors_mh_label_box = Gtk.Box(
-                                css_name='sw_box_view',
-                                orientation=Gtk.Orientation.VERTICAL,
-                                halign=Gtk.Align.START
-                                )
-    colors_mh_label_box.append(colors_mh_title)
-    colors_mh_label_box.append(colors_mh_subtitle)
-
-    colors_mh_title_grid = Gtk.Grid(css_name='sw_grid')
-    colors_mh_title_grid.attach(colors_mh_label_box, 0,0,1,1)
-    colors_mh_title_grid.attach(btn_mh_preview, 1,0,1,1)
-
-    colors_pref_mh = Gtk.Box(
-                            css_name='sw_pref_box',
-                            orientation=Gtk.Orientation.VERTICAL
-                            )
-    colors_pref_mh.append(colors_mh_title_grid)
-    colors_pref_mh.append(colors_flow_mh)
-
-    btn_mh_color_list = list()
-    entry_mh_color_list = list()
-    count = -1
-
-    for c, d in zip(mh_colors, mh_colors_description):
-        count += 1
-
-        entry_mh_color = Gtk.Entry(css_name='sw_entry')
-        entry_mh_color.set_tooltip_markup(msg.tt_dict['current'])
-        entry_mh_color.set_hexpand(True)
-        entry_mh_color.set_name(c)
-        entry_mh_color.set_sensitive(False)
-        entry_mh_color_list.append(entry_mh_color)
-
-        btn_mh_color = Gtk.ColorButton(css_name='sw_buttoncolor')
-        btn_mh_color.set_name(c)
-        btn_mh_color.set_hexpand(True)
-        btn_mh_color.set_valign(Gtk.Align.CENTER)
-        btn_mh_color.set_halign(Gtk.Align.END)
-        btn_mh_color.set_size_request(32, 32)
-        btn_mh_color.set_tooltip_markup(msg.tt_dict['color'])
-        btn_mh_color.connect('color-set', on_mh_color_set, entry_mh_color)
-        btn_mh_color_list.append(btn_mh_color)
-
-        btn_mh_color.get_first_child().remove_css_class('color')
-        btn_mh_color.get_first_child().add_css_class('sw_color')
-
-        title_mh_color = Gtk.Label(css_name='sw_label', label=d)
-        title_mh_color.set_size_request(200,-1)
-        title_mh_color.set_hexpand(True)
-        title_mh_color.set_halign(Gtk.Align.START)
-        title_mh_color.set_xalign(0)
-
-        grid_mh_color = Gtk.Grid(css_name='sw_grid')
-        grid_mh_color.attach(entry_mh_color,0,count,1,1)
-        grid_mh_color.attach(btn_mh_color,1,count,1,1)
-
-        pref_box_mh_color = Gtk.Box(
-                                    css_name='sw_box_view',
-                                    orientation=Gtk.Orientation.VERTICAL
-                                    )
-        pref_box_mh_color.append(title_mh_color)
-        pref_box_mh_color.append(grid_mh_color)
-
-        colors_flow_mh_child = Gtk.FlowBoxChild(css_name='sw_flowboxchild')
-        colors_flow_mh_child.set_name(d)
-        colors_flow_mh_child.set_child(pref_box_mh_color)
-
-        colors_flow_mh.append(colors_flow_mh_child)
-
-    ####___Custom_theme_colors___.
-
-    colors_flow_theme = Gtk.FlowBox(css_name='sw_preferencesgroup')
-    colors_flow_theme.set_margin_bottom(32)
-    colors_flow_theme.set_homogeneous(True)
-    colors_flow_theme.set_min_children_per_line(1)
-    colors_flow_theme.set_max_children_per_line(4)
-
-    colors_theme_title = Gtk.Label(
-                                css_name='sw_label_title',
-                                label=str_theme_colors_title,
-                                xalign=0.0,
-                                wrap=True,
-                                natural_wrap_mode=True
-                                )
-
-    colors_theme_subtitle = Gtk.Label(
-                                css_name='sw_label_desc',
-                                label=str_theme_colors_subtitle,
-                                xalign=0.0,
-                                wrap=True,
-                                natural_wrap_mode=True
-                                )
-
-    colors_theme_label_box = Gtk.Box(
-                                css_name='sw_box_view',
-                                orientation=Gtk.Orientation.VERTICAL,
-                                halign=Gtk.Align.START
-                                )
-    colors_theme_label_box.append(colors_theme_title)
-    colors_theme_label_box.append(colors_theme_subtitle)
-
-    dropdown_theme = Gtk.DropDown(
-                                    css_name='sw_dropdown',
-                                    hexpand=True,
-                                    valign=Gtk.Align.CENTER,
-                                    halign=Gtk.Align.START,
-                                    show_arrow=True,
-    )
-    dropdown_theme.set_size_request(280, -1)
-    themes_model = Gtk.StringList()
-    for t in list(default_themes):
-        themes_model.append(t)
-
-    themes_list_factory = Gtk.SignalListItemFactory()
-    themes_list_factory.connect('setup', on_combo_setup)
-    themes_list_factory.connect('bind', on_combo_bind)
-
-    dropdown_theme.set_factory(themes_list_factory)
-    dropdown_theme.set_model(themes_model)
-    dropdown_theme.connect('notify::selected-item', on_row_theme_activate)
-
-    label_sample = Gtk.Label(
-                        css_name='sw_label_sub',
-                        xalign=0,
-                        label=str_sample.capitalize(),
-    )
-    box_theme = Gtk.Box(
-                        css_name='sw_box',
-                        orientation=Gtk.Orientation.HORIZONTAL,
-                        spacing=8,
-                        margin_start=8,
-    )
-    box_theme.append(label_sample)
-    box_theme.append(dropdown_theme)
-
-    colors_theme_title_grid = Gtk.Grid(css_name='sw_grid')
-    colors_theme_title_grid.attach(colors_theme_label_box, 0,0,1,1)
-    colors_theme_title_grid.attach(btn_save_theme, 1,0,1,1)
-    colors_theme_title_grid.attach(box_theme, 0,1,1,1)
-
-    colors_pref_theme = Gtk.Box(
-                            css_name='sw_pref_box',
-                            orientation=Gtk.Orientation.VERTICAL,
-                            valign=Gtk.Align.START,
-                            )
-    colors_pref_theme.append(colors_theme_title_grid)
-    colors_pref_theme.append(colors_flow_theme)
-
-    btn_theme_color_list = list()
-    entry_theme_color_list = list()
-    count = -1
-
-    for n, l in zip(dcolor_names, dcolor_labels):
-        count += 1
-
-        entry_theme_color = Gtk.Entry(css_name='sw_entry')
-        entry_theme_color.set_icon_from_icon_name(
-                                        Gtk.EntryIconPosition.SECONDARY, 'edit'
-                                        )
-        entry_theme_color.set_icon_sensitive(
-                                        Gtk.EntryIconPosition.SECONDARY, True
-                                        )
-        entry_theme_color.set_icon_activatable(
-                                        Gtk.EntryIconPosition.SECONDARY, True
-                                        )
-        entry_theme_color.set_icon_tooltip_markup(
-                                        Gtk.EntryIconPosition.SECONDARY,
-                                        msg.tt_dict['save']
-                                        )
-        entry_theme_color.set_hexpand(True)
-        entry_theme_color.set_tooltip_markup(msg.tt_dict['edit'])
-        entry_theme_color.connect('icon-press', on_row_entry_color)
-        entry_theme_color.set_name(n)
-        entry_theme_color_list.append(entry_theme_color)
-
-        color_dialog = Gtk.ColorDialog()
-
-        btn_theme_color = Gtk.ColorDialogButton(css_name='sw_buttoncolor')
-        btn_theme_color.set_vexpand(True)
-        btn_theme_color.set_hexpand(True)
-        btn_theme_color.set_valign(Gtk.Align.CENTER)
-        btn_theme_color.set_halign(Gtk.Align.END)
-        btn_theme_color.set_size_request(32, 32)
-        btn_theme_color.set_name(n)
-        btn_theme_color.set_tooltip_markup(msg.tt_dict['color'])
-        btn_theme_color.set_dialog(color_dialog)
-        btn_theme_color.connect('notify::rgba', on_theme_color_set, entry_theme_color)
-        btn_theme_color_list.append(btn_theme_color)
-
-        btn_theme_color.get_first_child().remove_css_class('color')
-        btn_theme_color.get_first_child().add_css_class('sw_color')
-
-        title_theme_color = Gtk.Label(css_name='sw_label', label=l)
-        title_theme_color.set_size_request(200,-1)
-        title_theme_color.set_hexpand(True)
-        title_theme_color.set_halign(Gtk.Align.START)
-        title_theme_color.set_xalign(0)
-
-        grid_theme_color = Gtk.Grid(css_name='sw_grid')
-        grid_theme_color.attach(entry_theme_color,0,count,1,1)
-        grid_theme_color.attach(btn_theme_color,1,count,1,1)
-
-        pref_box_theme_color = Gtk.Box(
-                                    css_name='sw_box_view',
-                                    orientation=Gtk.Orientation.VERTICAL
-                                    )
-        pref_box_theme_color.append(title_theme_color)
-        pref_box_theme_color.append(grid_theme_color)
-
-        colors_flow_theme_child = Gtk.FlowBoxChild(css_name='sw_flowboxchild')
-        colors_flow_theme_child.set_name(l)
-        colors_flow_theme_child.set_child(pref_box_theme_color)
-        colors_flow_theme.append(colors_flow_theme_child)
-
-    colors_settings.append(colors_pref_mh)
-    colors_settings.append(colors_pref_theme)
-
-####___Global_settings___.
-
-    global_settings_title = Gtk.Label(
-                                    css_name='sw_label_title',
-                                    label=vl_dict['global_settings'],
-                                    xalign=0.0,
-                                    wrap=True,
-                                    natural_wrap_mode=True,
-                                    )
-
-    global_settings_subtitle = Gtk.Label(
-                                        css_name='sw_label_desc',
-                                        label=str_global_subtitle,
-                                        xalign=0.0,
-                                        wrap=True,
-                                        natural_wrap_mode=True,
-                                        )
-
-    global_settings_title_grid = Gtk.Grid(css_name='sw_box_view')
-    global_settings_title_grid.attach(global_settings_title,0,0,1,1)
-    global_settings_title_grid.attach(global_settings_subtitle,0,1,1,1)
-
-    ####___autostart_row___.
-
-    title_autostart = Gtk.Label(
-                        css_name='sw_label',
-                        label=str_title_autostart,
-                        xalign=0,
-                        margin_start=4,
-                        )
-
-    subtitle_autostart = Gtk.Label(
-                        css_name='sw_label_desc',
-                        label=str_subtitle_autostart,
-                        xalign=0,
-                        margin_start=4,
-                        )
-
-    grid_autostart_labels = Gtk.Grid(css_name='sw_grid')
-    grid_autostart_labels.set_hexpand(True)
-    grid_autostart_labels.attach(title_autostart,0,0,1,1)
-    grid_autostart_labels.attach(subtitle_autostart,0,1,1,1)
-
-    switch_autostart = Gtk.Switch(css_name='sw_switch', margin_end=4)
-    switch_autostart.set_valign(Gtk.Align.CENTER)
-    switch_autostart.set_halign(Gtk.Align.END)
-    switch_autostart.connect('state-set', on_switch_autostart)
-
-    row_autostart = Gtk.Box(
-                    css_name='sw_action_row',
-                    orientation=Gtk.Orientation.HORIZONTAL,
-                    spacing=4
-                    )
-    row_autostart.set_size_request(-1, 48)
-    row_autostart.append(grid_autostart_labels)
-    row_autostart.append(switch_autostart)
-
-    ####___language_row___.
-
-    title_lang = Gtk.Label(
-                        css_name='sw_label',
-                        label=str_title_lang,
-                        xalign=0,
-                        margin_start=4,
-                        )
-
-    subtitle_lang = Gtk.Label(
-                        css_name='sw_label_desc',
-                        label=str_subtitle_lang,
-                        xalign=0,
-                        margin_start=4,
-                        )
-
-    grid_lang_labels = Gtk.Grid(css_name='sw_grid')
-    grid_lang_labels.set_hexpand(True)
-    grid_lang_labels.attach(title_lang,0,0,1,1)
-    grid_lang_labels.attach(subtitle_lang,0,1,1,1)
-
-    lang_list_model = Gtk.StringList()
-
-    for lang in lang_labels:
-        lang_list_model.append(lang)
-
-    lang_list_factory = Gtk.SignalListItemFactory()
-    lang_list_factory.connect('setup', on_lang_setup)
-    lang_list_factory.connect('bind', on_lang_bind)
-
-    dropdown_lang = Gtk.DropDown(css_name='sw_dropdown')
-    dropdown_lang.set_valign(Gtk.Align.CENTER)
-    dropdown_lang.set_halign(Gtk.Align.END)
-    dropdown_lang.set_model(lang_list_model)
-    dropdown_lang.connect('notify::selected-item', on_lang_activate)
-
-    row_lang = Gtk.Box(
-                    css_name='sw_action_row',
-                    orientation=Gtk.Orientation.HORIZONTAL,
-                    spacing=4
-                    )
-    row_lang.set_size_request(-1,48)
-    row_lang.append(grid_lang_labels)
-    row_lang.append(dropdown_lang)
-
-    ####___icon_mode_row___.
-
-    title_icons = Gtk.Label(
-                        css_name='sw_label',
-                        label=str_title_icons,
-                        xalign=0,
-                        margin_start=4,
-                        )
-
-    subtitle_icons = Gtk.Label(
-                        css_name='sw_label_desc',
-                        label=str_subtitle_icons,
-                        xalign=0,
-                        margin_start=4,
-                        )
-
-    grid_icons_labels = Gtk.Grid(css_name='sw_grid')
-    grid_icons_labels.set_hexpand(True)
-    grid_icons_labels.attach(title_icons,0,0,1,1)
-    grid_icons_labels.attach(subtitle_icons,0,1,1,1)
-
-    switch_icons = Gtk.Switch(css_name='sw_switch', margin_end=4)
-    switch_icons.set_valign(Gtk.Align.CENTER)
-    switch_icons.set_halign(Gtk.Align.END)
-    switch_icons.connect('state-set', on_switch_icons)
-
-    row_icons = Gtk.Box(
-                    css_name='sw_action_row',
-                    orientation=Gtk.Orientation.HORIZONTAL,
-                    spacing=4
-                    )
-    row_icons.set_size_request(-1, 48)
-    row_icons.append(grid_icons_labels)
-    row_icons.append(switch_icons)
-
-    ####___restore_menu_mode_row___.
-
-    title_restore_menu = Gtk.Label(
-                        css_name='sw_label',
-                        label=str_title_restore_menu,
-                        xalign=0,
-                        margin_start=4,
-                        )
-
-    subtitle_restore_menu = Gtk.Label(
-                        css_name='sw_label_desc',
-                        label=str_subtitle_restore_menu,
-                        xalign=0,
-                        margin_start=4,
-                        )
-
-    grid_restore_menu_labels = Gtk.Grid(css_name='sw_grid')
-    grid_restore_menu_labels.set_hexpand(True)
-    grid_restore_menu_labels.attach(title_restore_menu,0,0,1,1)
-    grid_restore_menu_labels.attach(subtitle_restore_menu,0,1,1,1)
-
-    switch_restore_menu = Gtk.Switch(css_name='sw_switch', margin_end=4)
-    switch_restore_menu.set_valign(Gtk.Align.CENTER)
-    switch_restore_menu.set_halign(Gtk.Align.END)
-    switch_restore_menu.connect('state-set', on_switch_restore_menu)
-
-    row_restore_menu = Gtk.Box(
-                    css_name='sw_action_row',
-                    orientation=Gtk.Orientation.HORIZONTAL,
-                    spacing=4
-                    )
-    row_restore_menu.set_size_request(-1, 48)
-    row_restore_menu.append(grid_restore_menu_labels)
-    row_restore_menu.append(switch_restore_menu)
-
-    ####___auto_stop_mode_row___.
-
-    title_auto_stop = Gtk.Label(
-                        css_name='sw_label',
-                        label=str_title_auto_stop,
-                        xalign=0,
-                        margin_start=4,
-                        )
-
-    subtitle_auto_stop = Gtk.Label(
-                        css_name='sw_label_desc',
-                        label=str_subtitle_auto_stop,
-                        xalign=0,
-                        margin_start=4,
-                        wrap=True,
-                        natural_wrap_mode=True,
-    )
-    grid_auto_stop_labels = Gtk.Grid(css_name='sw_grid')
-    grid_auto_stop_labels.set_hexpand(True)
-    grid_auto_stop_labels.attach(title_auto_stop, 0, 0, 1, 1)
-    grid_auto_stop_labels.attach(subtitle_auto_stop, 0, 1, 1, 1)
-
-    switch_auto_stop = Gtk.Switch(css_name='sw_switch', margin_end=4)
-    switch_auto_stop.set_valign(Gtk.Align.CENTER)
-    switch_auto_stop.set_halign(Gtk.Align.END)
-    switch_auto_stop.connect('state-set', on_switch_auto_stop)
-
-    row_auto_stop = Gtk.Box(
-                    css_name='sw_action_row',
-                    orientation=Gtk.Orientation.HORIZONTAL,
-                    spacing=4
-    )
-    row_auto_stop.set_size_request(-1, 48)
-    row_auto_stop.append(grid_auto_stop_labels)
-    row_auto_stop.append(switch_auto_stop)
-
-    ####___size_mode_row___.
-
-    title_menu_size = Gtk.Label(
-                        css_name='sw_label',
-                        label=str_title_menu_size,
-                        xalign=0,
-                        margin_start=4,
-                        )
-
-    subtitle_menu_size = Gtk.Label(
-                        css_name='sw_label_desc',
-                        label=str_subtitle_menu_size,
-                        xalign=0,
-                        margin_start=4,
-                        )
-
-    grid_menu_size_labels = Gtk.Grid(css_name='sw_grid')
-    grid_menu_size_labels.set_hexpand(True)
-    grid_menu_size_labels.attach(title_menu_size,0,0,1,1)
-    grid_menu_size_labels.attach(subtitle_menu_size,0,1,1,1)
-
-    switch_menu_size = Gtk.Switch(css_name='sw_switch', margin_end=4)
-    switch_menu_size.set_valign(Gtk.Align.CENTER)
-    switch_menu_size.set_halign(Gtk.Align.END)
-    switch_menu_size.connect('state-set', on_switch_menu_size)
-
-    row_menu_size = Gtk.Box(
-                    css_name='sw_action_row',
-                    orientation=Gtk.Orientation.HORIZONTAL,
-                    spacing=4
-                    )
-    row_menu_size.set_size_request(-1, 48)
-    row_menu_size.append(grid_menu_size_labels)
-    row_menu_size.append(switch_menu_size)
-
-    ####___default_file_manager_directory_row___.
-
-    title_def_dir = Gtk.Label(
-                        css_name='sw_label_title',
-                        label=str_title_def_dir,
-                        xalign=0,
-                        margin_start=4,
-                        )
-
-    subtitle_def_dir = Gtk.Label(
-                        css_name='sw_label_info',
-                        label=str_subtitle_def_dir,
-                        xalign=0,
-                        margin_start=4,
-                        wrap=True,
-                        natural_wrap_mode=True
-                        )
-
-    grid_def_dir_labels = Gtk.Grid(css_name='sw_grid', row_spacing=4)
-    grid_def_dir_labels.set_hexpand(True)
-    grid_def_dir_labels.attach(title_def_dir,0,0,1,1)
-    grid_def_dir_labels.attach(subtitle_def_dir,0,1,1,1)
-
-    entry_def_dir = Gtk.Entry(css_name='sw_entry')
-    entry_def_dir.set_hexpand(True)
-    entry_def_dir.set_placeholder_text(sw_default_dir)
-    entry_def_dir.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY, 'edit')
-    entry_def_dir.set_icon_sensitive(Gtk.EntryIconPosition.SECONDARY, True)
-    entry_def_dir.set_icon_activatable(Gtk.EntryIconPosition.SECONDARY, True)
-    entry_def_dir.set_icon_tooltip_markup(
-                                        Gtk.EntryIconPosition.SECONDARY,
-                                        msg.tt_dict['save']
-                                        )
-    entry_def_dir.connect('icon-press', cb_entry_def_dir)
-
-    image_def_dir = Gtk.Image(css_name='sw_image')
-    image_def_dir.set_from_file(IconPath.icon_folder)
-
-    btn_def_dir = Gtk.Button(css_name='sw_button', margin_end=4)
-    btn_def_dir.set_valign(Gtk.Align.CENTER)
-    btn_def_dir.set_halign(Gtk.Align.END)
-    btn_def_dir.set_tooltip_markup(msg.tt_dict['directory'])
-    btn_def_dir.set_child(image_def_dir)
-    btn_def_dir.connect('clicked', cb_btn_def_dir)
-
-    row_def_dir = Gtk.Box(
-                    css_name='sw_action_row',
-                    orientation=Gtk.Orientation.HORIZONTAL,
-                    spacing=4
-                    )
-    row_def_dir.set_size_request(-1, 48)
-    row_def_dir.append(entry_def_dir)
-    row_def_dir.append(btn_def_dir)
-
-    ####___opengl_background_row___.
-
-    title_opengl = Gtk.Label(
-                        css_name='sw_label_title',
-                        label=str_title_opengl,
-                        xalign=0,
-                        margin_start=4,
-                        hexpand=True
-                        )
-
-    subtitle_opengl = Gtk.Label(
-                        css_name='sw_label_warning',
-                        label=str_subtitle_opengl,
-                        xalign=0,
-                        margin_start=4,
-                        wrap=True,
-                        natural_wrap_mode=True,
-                        hexpand=True
-                        )
-
-    title_shaders = Gtk.Label(
-                        css_name='sw_label',
-                        label=str_title_shaders,
-                        xalign=0,
-                        margin_start=4,
-                        )
-
-    subtitle_shaders = Gtk.Label(
-                        css_name='sw_label_desc',
-                        label=str_subtitle_shaders,
-                        xalign=0,
-                        margin_start=4,
-                        wrap=True,
-                        natural_wrap_mode=True
-                        )
-
-    switch_opengl = Gtk.Switch(css_name='sw_switch', margin_end=4)
-    switch_opengl.set_halign(Gtk.Align.END)
-    switch_opengl.set_valign(Gtk.Align.CENTER)
-    switch_opengl.connect('state-set', on_switch_opengl_bg)
-
-    grid_opengl_labels = Gtk.Grid(css_name='sw_grid')
-    grid_opengl_labels.attach(title_opengl,0,0,1,1)
-    grid_opengl_labels.attach(subtitle_opengl,0,1,1,1)
-    grid_opengl_labels.attach(switch_opengl,1,0,1,1)
-
-    grid_shader_labels = Gtk.Grid(css_name='sw_grid')
-    grid_shader_labels.set_hexpand(True)
-    grid_shader_labels.attach(title_shaders,0,0,1,1)
-    grid_shader_labels.attach(subtitle_shaders,0,1,1,1)
-
-    shaders_list_model = Gtk.StringList()
-
-    for l in fragments_labels:
-        shaders_list_model.append(l)
-
-    shaders_list_factory = Gtk.SignalListItemFactory()
-    shaders_list_factory.connect('setup', on_shaders_setup)
-    shaders_list_factory.connect('bind', on_shaders_bind)
-
-    dropdown_shaders = Gtk.DropDown(css_name='sw_dropdown')
-    dropdown_shaders.set_valign(Gtk.Align.CENTER)
-    dropdown_shaders.set_halign(Gtk.Align.END)
-    dropdown_shaders.set_model(shaders_list_model)
-    dropdown_shaders.connect('notify::selected-item', on_shaders_activate)
-
-    row_shaders = Gtk.Box(
-                        css_name='sw_action_row',
-                        orientation=Gtk.Orientation.HORIZONTAL,
-                        spacing=4
-                        )
-    row_shaders.set_size_request(-1, 48)
-    row_shaders.append(grid_shader_labels)
-    row_shaders.append(dropdown_shaders)
-
-    ####___hotkeys___.
-
-    grid_keys_0 = Gtk.Grid(css_name='sw_grid')
-    grid_keys_0.set_column_spacing(8)
-    grid_keys_0.set_row_spacing(8)
-
-    grid_keys_1 = Gtk.Grid(css_name='sw_grid')
-    grid_keys_1.set_column_spacing(8)
-    grid_keys_1.set_row_spacing(8)
-
-    keys_flow_child_0 = Gtk.FlowBoxChild(css_name='sw_grid')
-    keys_flow_child_0.set_child(grid_keys_0)
-    keys_flow_child_1 = Gtk.FlowBoxChild(css_name='sw_grid')
-    keys_flow_child_1.set_child(grid_keys_1)
-
-    keys_flow = Gtk.FlowBox(
-                            css_name='sw_grid',
-                            margin_bottom=16,
-                            column_spacing=8,
-                            row_spacing=8,
-                            homogeneous=True,
-                            min_children_per_line=1,
-                            max_children_per_line=4,
-                            )
-    keys_flow.append(keys_flow_child_0)
-    keys_flow.append(keys_flow_child_1)
-
-    count = -1
-
-    for k, d in zip(hotkey_list, hotkey_desc):
-        count += 1
-
-        label_mod = Gtk.Label(css_name='sw_label', label=k[0])
-        label_x = Gtk.Label(css_name='sw_label', label=k[1])
-        label_y = Gtk.Label(css_name='sw_label', label=k[2])
-
-        key_mod = Gtk.Button(css_name='sw_action_row')
-        key_mod.set_sensitive(False)
-        key_mod.set_size_request(72,-1)
-        key_mod.set_child(label_mod)
-
-        label_desc_x = Gtk.Label(
-                                css_name='sw_label_desc',
-                                label=d.capitalize(),
-                                xalign=0,
-                                wrap=True,
-                                natural_wrap_mode=True
-                                )
-        label_desc_x.set_xalign(0)
-
-        if k[2] == '':
-            plus_y = Gtk.Label(css_name='sw_label', label='')
-            key_y = Gtk.Label(css_name='sw_label', label='')
-        else:
-            plus_y = Gtk.Label(css_name='sw_label', label='+')
-            key_y = Gtk.Button(css_name='sw_action_row')
-            key_y.set_size_request(72,-1)
-            key_y.set_sensitive(False)
-            key_y.set_child(label_y)
-
-        if k[1] == '':
-            plus_x = Gtk.Label(css_name='sw_label', label='')
-            key_x = Gtk.Label(css_name='sw_label', label='')
-        else:
-            plus_x = Gtk.Label(css_name='sw_label', label='+')
-            key_x = Gtk.Button(css_name='sw_action_row')
-            key_x.set_size_request(72,-1)
-            key_x.set_sensitive(False)
-            key_x.set_child(label_x)
-
-        if count < len(hotkey_list) / 2:
-            grid_keys_0.attach(key_mod, 0,count,1,1)
-            grid_keys_0.attach(plus_x, 1, count,1,1)
-            grid_keys_0.attach(key_x, 2, count,1,1)
-            grid_keys_0.attach(plus_y, 3, count,1,1)
-            grid_keys_0.attach(key_y, 4, count,1,1)
-            grid_keys_0.attach(label_desc_x, 5, count,1,1)
-        else:
-            grid_keys_1.attach(key_mod, 0,count,1,1)
-            grid_keys_1.attach(plus_x, 1, count,1,1)
-            grid_keys_1.attach(key_x, 2, count,1,1)
-            grid_keys_1.attach(plus_y, 3, count,1,1)
-            grid_keys_1.attach(key_y, 4, count,1,1)
-            grid_keys_1.attach(label_desc_x, 5, count,1,1)
-
-    ###___groups___.
-
-    title_startup = Gtk.Label(
-                            css_name='sw_label_title',
-                            label=str_title_startup,
-                            xalign=0,
-                            margin_top=4,
-                            margin_start=4,
-                            )
-    subtitle_startup = Gtk.Label(
-                            css_name='sw_label_info',
-                            label=str_subtitle_startup,
-                            xalign=0,
-                            margin_start=4,
-                            wrap=True,
-                            natural_wrap_mode=True,
-                            )
-
-    title_startup_grid = Gtk.Grid(css_name='sw_grid')
-    title_startup_grid.attach(title_startup,0,0,1,1)
-    title_startup_grid.attach(subtitle_startup,0,1,1,1)
-
-    flow_startup = Gtk.FlowBox(
-                        css_name='sw_preferencesgroup',
-                        min_children_per_line=1,
-                        max_children_per_line=4,
-                        homogeneous=True,
-                        )
-    flow_startup.append(row_autostart)
-    flow_startup.append(row_menu_size)
-    flow_startup.append(row_restore_menu)
-    flow_startup.append(row_lang)
-    flow_startup.append(row_icons)
-    flow_startup.append(row_auto_stop)
-
-    group_startup = Gtk.Box(
-                        css_name='sw_preferencesgroup',
-                        orientation=Gtk.Orientation.VERTICAL,
-                        spacing=4,
-                        margin_start=16,
-                        margin_end=16,
-                        )
-    group_startup.append(title_startup_grid)
-    group_startup.append(flow_startup)
-
-    group_fm = Gtk.Box(
-                        css_name='sw_preferencesgroup',
-                        orientation=Gtk.Orientation.VERTICAL,
-                        spacing=4,
-                        margin_start=16,
-                        margin_end=16,
-                        )
-    group_fm.append(grid_def_dir_labels)
-    group_fm.append(row_def_dir)
-
-    group_opengl = Gtk.Box(
-                        css_name='sw_preferencesgroup',
-                        orientation=Gtk.Orientation.VERTICAL,
-                        spacing=4,
-                        margin_start=16,
-                        margin_end=16,
-                        )
-    group_opengl.append(grid_opengl_labels)
-    group_opengl.append(row_shaders)
-
-    title_hotkeys = Gtk.Label(
-                            css_name='sw_label_title',
-                            label=str_title_hotkeys,
-                            xalign=0,
-                            )
-    subtitle_hotkeys = Gtk.Label(
-                            css_name='sw_label_info',
-                            label=str_subtitle_hotkeys,
-                            xalign=0,
-                            )
-    group_hotkeys = Gtk.Box(
-                            css_name='sw_preferencesgroup',
-                            orientation=Gtk.Orientation.VERTICAL,
-                            spacing=4,
-                            margin_start=16,
-                            margin_end=16,
-                            )
-    group_hotkeys.append(title_hotkeys)
-    group_hotkeys.append(subtitle_hotkeys)
-    group_hotkeys.append(keys_flow)
-
-    global_box = Gtk.Box(
-                        css_name='sw_pref_box',
-                        orientation=Gtk.Orientation.VERTICAL,
-                        spacing=16,
-                        halign=Gtk.Align.CENTER
-                        )
-    global_box.append(global_settings_title_grid)
-    global_box.append(group_startup)
-    global_box.append(group_fm)
-    global_box.append(group_opengl)
-    global_box.append(group_hotkeys)
-
-    global_settings = Gtk.Box(
-                            css_name='sw_flowbox',
-                            orientation=Gtk.Orientation.VERTICAL,
-                            halign=Gtk.Align.CENTER
-    )
-    global_settings.append(global_box)
-
-####___About___.
-
-    paintable_about = Gtk.IconPaintable.new_for_file(
-                                        Gio.File.new_for_path(IconPath.icon_app),256,1,
-                                        )
-    about_picture = Gtk.Picture(css_name='sw_picture')
-    about_picture.set_margin_start(32)
-    about_picture.set_margin_end(32)
-    about_picture.set_size_request(-1,32)
-    about_picture.set_paintable(paintable_about)
-
-    about_name = Gtk.Label(
-                        css_name='sw_label',
-                        label=sw_program_name.upper()
-                        )
-    about_version = Gtk.Label(css_name='sw_label', label=str_sw_version)
-
-    box_about_version = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-    box_about_version.set_spacing(12)
-    box_about_version.append(about_picture)
-    box_about_version.append(about_name)
-    box_about_version.append(about_version)
-
-    pref_group_about = Gtk.Box(
-                            css_name='sw_preferencesgroup',
-                            orientation=Gtk.Orientation.VERTICAL,
-                            spacing=8
-                            )
-    pref_group_about.set_size_request(280,-1)
-
-    grid_about = Gtk.Grid()
-    grid_about.set_vexpand(True)
-    grid_about.set_row_spacing(10)
-    grid_about.set_margin_top(16)
-    grid_about.set_margin_bottom(16)
-    grid_about.set_margin_start(16)
-    grid_about.set_margin_end(16)
-    grid_about.set_halign(Gtk.Align.CENTER)
-    grid_about.attach(box_about_version,0,0,1,1)
-    grid_about.attach(pref_group_about,0,1,1,1)
-
-####___About_menu_stack___.
-
-    stack_about = Gtk.Stack()
-    stack_about.set_transition_duration(250)
-    stack_about.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
-
-    image_back_about = Gtk.Image()
-    image_back_about.set_from_file(IconPath.icon_back)
-
-    label_back_about = Gtk.Label(css_name='sw_label')
-
-    box_btn_back_about = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-    box_btn_back_about.set_spacing(8)
-    box_btn_back_about.append(image_back_about)
-    box_btn_back_about.append(label_back_about)
-
-    btn_back_about = Gtk.Button(css_name='sw_button')
-    btn_back_about.set_size_request(280,-1)
-    btn_back_about.set_child(box_btn_back_about)
-    btn_back_about.connect('clicked', cb_btn_back_about)
-
-    count = 0
-    for l, w in zip(about_labels, about_widgets):
-        count += 1
-
-        if count < 7:
-
-            label_a = Gtk.Label(
-                                css_name='sw_label',
-                                label=l,
-                                xalign=0.0
-                                )
-            btn_a = Gtk.Button(css_name='sw_button')
-            btn_a.set_child(label_a)
-            btn_a.set_name(w)
-            btn_a.connect('clicked', cb_btn_about)
-
-            pref_group_about.append(btn_a)
-
-            grid_about_content = Gtk.Grid()
-            grid_about_content.set_row_spacing(10)
-            grid_about_content.set_vexpand(True)
-            grid_about_content.set_margin_top(16)
-            grid_about_content.set_margin_start(16)
-            grid_about_content.set_margin_end(16)
-            grid_about_content.set_margin_bottom(16)
-            grid_about_content.set_halign(Gtk.Align.CENTER)
-            grid_about_content.set_name(w)
-
-            stack_about.add_named(grid_about_content, w)
-
-    grid_about_news = stack_about.get_child_by_name(list(about_dict)[0])
-    grid_about_details = stack_about.get_child_by_name(list(about_dict)[1])
-    grid_about_authors = stack_about.get_child_by_name(list(about_dict)[2])
-    grid_about_license = stack_about.get_child_by_name(list(about_dict)[3])
-    grid_about_donation = stack_about.get_child_by_name(list(about_dict)[4])
-    grid_about_update = stack_about.get_child_by_name(list(about_dict)[5])
-
-    ####___About_news___.
-    format_news = '\n \u2022 '.join([s for s in str_news.splitlines()])
-    label_news = Gtk.Label(css_name='sw_label_desc', label=format_news)
-    label_news.set_xalign(0)
-    label_news.set_wrap(True)
-    label_news.set_wrap_mode(Pango.WrapMode.WORD)
-
-    title_news = Gtk.Label(
-                            css_name='sw_label',
-                            label=sw_program_name + ' ' + str_sw_version,
-                            )
-    title_news.set_xalign(0)
-
-    pref_group_about_news = Gtk.Box(
-                                    css_name='sw_action_row',
-                                    orientation=Gtk.Orientation.VERTICAL
-                                    )
-    pref_group_about_news.set_size_request(280,-1)
-    pref_group_about_news.append(title_news)
-    pref_group_about_news.append(label_news)
-
-    grid_about_news.attach(pref_group_about_news, 0,1,1,1)
-
-    ####___About_details___.
-
-    image_btn_website = Gtk.Image(css_name='sw_image')
-    image_btn_website.set_from_file(IconPath.icon_global)
-
-    label_btn_website = Gtk.Label(
-                                css_name='sw_label',
-                                label=about_dict['about_website']
-                                )
-    label_btn_website.set_xalign(0)
-
-    box_btn_website = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-    box_btn_website.set_spacing(8)
-    box_btn_website.append(image_btn_website)
-    box_btn_website.append(label_btn_website)
-
-    btn_website = Gtk.LinkButton(css_name='sw_link')
-    btn_website.set_child(box_btn_website)
-    btn_website.connect('activate-link', cb_btn_website)
-
-    image_btn_github = Gtk.Image(css_name='sw_image')
-    image_btn_github.set_from_file(IconPath.icon_github)
-
-    label_btn_github = Gtk.Label(
-                                css_name='sw_label',
-                                label=about_dict['about_github']
-                                )
-    label_btn_github.set_xalign(0)
-
-    box_btn_github = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-    box_btn_github.set_spacing(8)
-    box_btn_github.append(image_btn_github)
-    box_btn_github.append(label_btn_github)
-
-    btn_github = Gtk.LinkButton(css_name='sw_link')
-    btn_github.set_child(box_btn_github)
-    btn_github.connect('activate-link', cb_btn_github)
-
-    image_btn_discord = Gtk.Image()
-    image_btn_discord.set_from_file(IconPath.icon_discord)
-
-    label_btn_discord = Gtk.Label(
-                                css_name='sw_label',
-                                label=about_dict['about_discord']
-                                )
-    label_btn_discord.set_xalign(0)
-
-    box_btn_discord = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-    box_btn_discord.set_spacing(8)
-    box_btn_discord.append(image_btn_discord)
-    box_btn_discord.append(label_btn_discord)
-
-    btn_discord = Gtk.LinkButton(css_name='sw_link')
-    btn_discord.set_child(box_btn_discord)
-    btn_discord.connect('activate-link', cb_btn_discord)
-
-    image_btn_telegram = Gtk.Image()
-    image_btn_telegram.set_from_file(IconPath.icon_telegram)
-
-    label_btn_telegram = Gtk.Label(
-                                css_name='sw_label',
-                                label=about_dict['about_telegram']
-                                )
-    label_btn_telegram.set_xalign(0)
-
-    box_btn_telegram = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-    box_btn_telegram.set_spacing(8)
-    box_btn_telegram.append(image_btn_telegram)
-    box_btn_telegram.append(label_btn_telegram)
-
-    btn_telegram = Gtk.LinkButton(css_name='sw_link')
-    btn_telegram.set_child(box_btn_telegram)
-    btn_telegram.connect('activate-link', cb_btn_telegram)
-
-    label_details = Gtk.Label(css_name='sw_label_desc', label=str_about)
-    label_details.set_xalign(0)
-    label_details.set_wrap(True)
-    label_details.set_wrap_mode(Pango.WrapMode.WORD)
-
-    title_details = Gtk.Label(
-                            css_name='sw_label',
-                            label=sw_program_name,
-                            )
-    title_details.set_xalign(0)
-
-    pref_group_about_details = Gtk.Box(
-                                    css_name='sw_action_row',
-                                    orientation=Gtk.Orientation.VERTICAL
-                                    )
-    pref_group_about_details.set_size_request(280,-1)
-    pref_group_about_details.append(title_details)
-    pref_group_about_details.append(label_details)
-
-    grid_about_details.attach(pref_group_about_details, 0, 1, 1, 1)
-    grid_about_details.attach(btn_website, 0, 2, 1, 1)
-    grid_about_details.attach(btn_github, 0, 3, 1, 1)
-    grid_about_details.attach(btn_discord, 0, 4, 1, 1)
-    grid_about_details.attach(btn_telegram, 0, 5, 1, 1)
-
-    ####___About_autors___.
-
-    title_authors = Gtk.Label(
-                            css_name='sw_label',
-                            label=about_dict['about_authors']
-                            )
-    title_authors.set_xalign(0)
-
-    label_authors = Gtk.Label(css_name='sw_label_desc', label=str_authors)
-    label_authors.set_xalign(0)
-    label_authors.set_wrap(True)
-    label_authors.set_wrap_mode(Pango.WrapMode.WORD)
-
-    title_coders = Gtk.Label(
-                            css_name='sw_label',
-                            label=about_dict['about_code']
-                            )
-    title_coders.set_xalign(0)
-
-    label_coders = Gtk.Label(css_name='sw_label_desc', label=str_developers)
-    label_coders.set_xalign(0)
-    label_coders.set_wrap(True)
-    label_coders.set_wrap_mode(Pango.WrapMode.WORD)
-
-    title_members = Gtk.Label(
-                            css_name='sw_label',
-                            label=about_dict['about_members']
-                            )
-    title_members.set_xalign(0)
-
-    label_members = Gtk.Label(css_name='sw_label_desc', label=str_members)
-    label_members.set_xalign(0)
-    label_members.set_wrap(True)
-    label_members.set_wrap_mode(Pango.WrapMode.WORD)
-
-    title_projects = Gtk.Label(
-                            css_name='sw_label',
-                            label=about_dict['about_projects']
-                            )
-    title_projects.set_xalign(0)
-
-    label_projects = Gtk.Label(css_name='sw_label_desc', label=str_projects)
-    label_projects.set_xalign(0)
-    label_projects.set_wrap(True)
-    label_projects.set_wrap_mode(Pango.WrapMode.WORD)
-
-    title_design = Gtk.Label(
-                            css_name='sw_label',
-                            label=about_dict['about_design']
-                            )
-    title_design.set_xalign(0)
-
-    label_design = Gtk.Label(css_name='sw_label_desc', label=str_design)
-    label_design.set_xalign(0)
-    label_design.set_wrap(True)
-    label_design.set_wrap_mode(Pango.WrapMode.WORD)
-
-    pref_group_about_authors = Gtk.Box(
-                                    css_name='sw_action_row',
-                                    orientation=Gtk.Orientation.VERTICAL
-                                    )
-    pref_group_about_authors.set_size_request(280,-1)
-    pref_group_about_authors.append(title_authors)
-    pref_group_about_authors.append(label_authors)
-
-    pref_group_about_coders = Gtk.Box(
-                                    css_name='sw_action_row',
-                                    orientation=Gtk.Orientation.VERTICAL
-                                    )
-    pref_group_about_coders.set_size_request(280,-1)
-    pref_group_about_coders.append(title_coders)
-    pref_group_about_coders.append(label_coders)
-
-    pref_group_about_members = Gtk.Box(
-                                    css_name='sw_action_row',
-                                    orientation=Gtk.Orientation.VERTICAL
-                                    )
-    pref_group_about_members.set_size_request(280,-1)
-    pref_group_about_members.append(title_members)
-    pref_group_about_members.append(label_members)
-
-    pref_group_about_projects = Gtk.Box(
-                                    css_name='sw_action_row',
-                                    orientation=Gtk.Orientation.VERTICAL
-                                    )
-    pref_group_about_projects.set_size_request(280,-1)
-    pref_group_about_projects.append(title_projects)
-    pref_group_about_projects.append(label_projects)
-
-    pref_group_about_design = Gtk.Box(
-                                    css_name='sw_action_row',
-                                    orientation=Gtk.Orientation.VERTICAL
-                                    )
-    pref_group_about_design.set_size_request(280,-1)
-    pref_group_about_design.append(title_design)
-    pref_group_about_design.append(label_design)
-
-    grid_about_authors.attach(pref_group_about_authors, 0,1,1,1)
-    grid_about_authors.attach(pref_group_about_coders, 0,2,1,1)
-    grid_about_authors.attach(pref_group_about_members, 0,3,1,1)
-    grid_about_authors.attach(pref_group_about_projects, 0,4,1,1)
-    grid_about_authors.attach(pref_group_about_design, 0,5,1,1)
-
-    ####___About_license___.
-
-    label_btn_license = Gtk.Label(
-                                css_name='sw_label',
-                                label=about_dict['about_license']
-                                )
-    btn_license = Gtk.LinkButton(css_name='sw_link')
-    btn_license.set_child(label_btn_license)
-    btn_license.connect('activate-link', cb_btn_license)
-
-    label_license = Gtk.Label(css_name='sw_label_desc', label=str_license)
-    label_license.set_xalign(0)
-    label_license.set_wrap(True)
-    label_license.set_wrap_mode(Pango.WrapMode.WORD)
-
-    title_license = Gtk.Label(
-                            css_name='sw_label',
-                            label=str_gpl
-                            )
-    title_license.set_xalign(0)
-
-    pref_group_about_license = Gtk.Box(
-                                    css_name='sw_action_row',
-                                    orientation=Gtk.Orientation.VERTICAL
-                                    )
-    pref_group_about_license.set_size_request(280,-1)
-    pref_group_about_license.append(title_license)
-    pref_group_about_license.append(label_license)
-
-    grid_about_license.attach(pref_group_about_license, 0, 1, 1, 1)
-    grid_about_license.attach(btn_license, 0, 2, 1, 1)
-
-    ####___About_donation___.
-    count = 1
-    for k, v in donation_source.items():
-        count += 1
-
-        label_btn_donation = Gtk.Label(
-                                    css_name='sw_label',
-                                    label=v,
-                                    xalign=0,
-                                    wrap=True,
-                                    wrap_mode=True,
-                                    max_width_chars=4,
-                                    natural_wrap_mode=True,
-                                    selectable=True,
-        )
-        btn_expander = Gtk.Expander(label=k)
-        btn_expander.set_child(label_btn_donation)
-
-        grid_about_donation.attach(btn_expander, 0, count, 1, 1)
-
-    label_donation = Gtk.Label(
-                            css_name='sw_label_desc',
-                            label=str_donation,
-                            xalign=0,
-                            wrap=True,
-                            wrap_mode=Pango.WrapMode.WORD,
-    )
-    title_donation = Gtk.Label(
-                            css_name='sw_label',
-                            label=str_contribute,
-                            xalign=0,
-    )
-    pref_group_about_donation = Gtk.Box(
-                                    css_name='sw_action_row',
-                                    orientation=Gtk.Orientation.VERTICAL
-    )
-    pref_group_about_donation.set_size_request(280,-1)
-    pref_group_about_donation.append(title_donation)
-    pref_group_about_donation.append(label_donation)
-
-    grid_about_donation.attach(pref_group_about_donation, 0, 1, 1, 1)
 
 ####___Vte_terminal___.
 
@@ -14028,29 +16075,39 @@ def sw_activate(app):
         terminal.set_color_background(term_bg)
         terminal.set_color_foreground(term_fg)
         terminal.set_colors(term_fg, term_bg, term_pallete)
-        terminal.set_hexpand(True)
-        terminal.set_vexpand(True)
-        terminal.set_halign(Gtk.Align.FILL)
-        terminal.set_valign(Gtk.Align.FILL)
         terminal.set_visible(False)
         terminal.add_controller(ctrl_rclick_term)
         terminal.add_controller(ctrl_key_term)
 
-####___View_lists___.
+####___file_view_lists___.
 
     list_store = Gio.ListStore()
-    dir_list = Gtk.DirectoryList()
-    cur_dir = Gio.File.new_for_commandline_arg(bytes(Path(sw_default_dir)))
-    dir_list.set_file(cur_dir)
-    dir_list.set_monitored(True)
+    left_dir_list = Gtk.DirectoryList()
+    left_dir_list.set_monitored(True)
+
+    right_list_store = Gio.ListStore()
+    right_dir_list = Gtk.DirectoryList()
+    right_dir_list.set_monitored(True)
 
     grid_factory = Gtk.SignalListItemFactory()
-    grid_factory.connect('setup', cb_grid_factory_setup)
-    grid_factory.connect('bind', cb_factory_bind)
+    list_model = Gtk.MultiSelection.new(list_store)
+    list_model.connect('selection-changed', cb_model_selection_changed)
+
+    left_grid_view = Gtk.GridView(name='left_grid_view', css_name='sw_gridview')
+    left_grid_view.set_enable_rubberband(True)
+    left_grid_view.set_min_columns(1)
+    left_grid_view.set_max_columns(16)
+    left_grid_view.set_tab_behavior(Gtk.ListTabBehavior.ITEM)
+
+
+    left_grid_view.set_factory(grid_factory)
+    left_grid_view.set_model(list_model)
+    left_grid_view.connect('activate', cb_item_activate)
+
+    grid_factory.connect('setup', cb_factory_setup, left_grid_view)
+    grid_factory.connect('bind', cb_factory_bind, left_grid_view)
     grid_factory.connect('teardown', cb_grid_factory_teardown)
     grid_factory.connect('unbind', cb_grid_factory_unbind)
-
-    list_model = Gtk.MultiSelection.new(list_store)
 
     ctrl_lclick_view = Gtk.GestureClick()
     ctrl_lclick_view.connect('pressed', cb_ctrl_lclick_view)
@@ -14077,263 +16134,18 @@ def sw_activate(app):
     ctrl_drop_target.set_preload(True)
     ctrl_drop_target.connect('drop', cb_ctrl_drop_target)
 
-    grid_view = Gtk.GridView(css_name='sw_gridview')
-    grid_view.set_enable_rubberband(True)
-    grid_view.set_min_columns(1)
-    grid_view.set_max_columns(16)
+    ctrl_left_view_motion = Gtk.EventControllerMotion()
+    ctrl_left_view_motion.connect('enter', cb_ctrl_left_view_motion)
 
-    grid_view.set_factory(grid_factory)
-    grid_view.set_model(list_model)
-    grid_view.connect('activate', cb_item_activate)
+    ctrl_left_view_focus = Gtk.EventControllerFocus()
+    ctrl_left_view_focus.connect('enter', cb_ctrl_left_view_focus)
+    #ctrl_left_view_focus.connect('leave', cb_ctrl_left_view_focus)
 
-    grid_view.add_controller(ctrl_drag_source)
-    grid_view.add_controller(ctrl_lclick_view)
-    grid_view.add_controller(ctrl_rclick_view)
-
-    ####___Gvolume_column_view___
-
-    list_gvol_store = Gio.ListStore()
-    list_gvol_item = Gtk.ListItem()
-    list_gvol_item.set_activatable(True)
-
-    gvol_model = Gtk.SingleSelection.new(list_gvol_store)
-
-    gvol_factory = Gtk.SignalListItemFactory()
-    gvol_factory.connect('setup', cb_gvol_factory_setup)
-    gvol_factory.connect('bind', cb_gvol_factory_bind)
-
-    gvol_id_factory = Gtk.SignalListItemFactory()
-    gvol_id_factory.connect('setup', cb_gvol_id_factory_setup)
-    gvol_id_factory.connect('bind', cb_gvol_id_factory_bind)
-
-    gvol_uuid_factory = Gtk.SignalListItemFactory()
-    gvol_uuid_factory.connect('setup', cb_gvol_uuid_factory_setup)
-    gvol_uuid_factory.connect('bind', cb_gvol_uuid_factory_bind)
-
-    gvol_drive_factory = Gtk.SignalListItemFactory()
-    gvol_drive_factory.connect('setup', cb_gvol_drive_factory_setup)
-    gvol_drive_factory.connect('bind', cb_gvol_drive_factory_bind)
-
-    gvol_size_factory = Gtk.SignalListItemFactory()
-    gvol_size_factory.connect('setup', cb_gvol_size_factory_setup)
-    gvol_size_factory.connect('bind', cb_gvol_size_factory_bind)
-
-    column_gvol = Gtk.ColumnViewColumn()
-    column_gvol.set_title(msg.msg_dict['device_name'])
-    column_gvol.set_expand(True)
-    column_gvol.set_factory(gvol_factory)
-
-    column_gvol_id = Gtk.ColumnViewColumn()
-    column_gvol_id.set_title(msg.msg_dict['device_id'])
-    column_gvol_id.set_expand(True)
-    column_gvol_id.set_factory(gvol_id_factory)
-
-    column_gvol_uuid = Gtk.ColumnViewColumn()
-    column_gvol_uuid.set_title(msg.msg_dict['device_uuid'])
-    column_gvol_uuid.set_expand(True)
-    column_gvol_uuid.set_factory(gvol_uuid_factory)
-
-    column_gvol_drive = Gtk.ColumnViewColumn()
-    column_gvol_drive.set_title(msg.msg_dict['device_drive'])
-    column_gvol_drive.set_expand(True)
-    column_gvol_drive.set_factory(gvol_drive_factory)
-
-    column_gvol_size = Gtk.ColumnViewColumn()
-    column_gvol_size.set_title(msg.msg_dict['device_size'])
-    column_gvol_size.set_expand(True)
-    column_gvol_size.set_factory(gvol_size_factory)
-
-    column_gvol_view = Gtk.ColumnView(
-                                css_name='sw_columnview_view',
-                                show_row_separators=True,
-                                show_column_separators=True,
-    )
-    column_gvol_view.append_column(column_gvol)
-    column_gvol_view.append_column(column_gvol_size)
-    column_gvol_view.append_column(column_gvol_id)
-    column_gvol_view.append_column(column_gvol_drive)
-    column_gvol_view.append_column(column_gvol_uuid)
-    column_gvol_view.set_model(gvol_model)
-    column_gvol_view.connect('activate', cb_gvol_activate)
-
-    vol_title = column_gvol_view.get_first_child().get_first_child()
-    vol_title.add_css_class('title')
-    dev_title = vol_title.get_next_sibling()
-    dev_title.add_css_class('title')
-    uuid_title = dev_title.get_next_sibling()
-    uuid_title.add_css_class('title')
-    drive_title = uuid_title.get_next_sibling()
-    drive_title.add_css_class('title')
-    size_title = drive_title.get_next_sibling()
-    size_title.add_css_class('title')
-
-    ####___Get_volume_info___
-
-    gmount_ops = Gtk.MountOperation.new(parent)
-    gmount_ops.set_display(display)
-
-    gvolume_monitor = Gio.VolumeMonitor.get()
-
-    gvolume_monitor.connect('volume-added', cb_volume_ops)
-    gvolume_monitor.connect('volume-changed', cb_volume_ops)
-    gvolume_monitor.connect('volume-removed', cb_volume_ops)
-
-    gvolume_monitor.connect('mount-added', cb_volume_ops)
-    gvolume_monitor.connect('mount-changed', cb_volume_ops)
-    gvolume_monitor.connect('mount-removed', cb_volume_ops)
-
-    gvolume_monitor.connect('drive-changed', cb_volume_ops)
-    gvolume_monitor.connect('drive-connected', cb_volume_ops)
-    gvolume_monitor.connect('drive-disconnected', cb_volume_ops)
-
-    gvolume_list = gvolume_monitor.get_volumes()
-    gmount_list = gvolume_monitor.get_mounts()
-    gdrive_list = gvolume_monitor.get_connected_drives()
-
-#    for v in gvolume_list:
-#        print('Volume: ' + v.get_name())
-#    for m in gmount_list:
-#        print('Mount: ' + m.get_name())
-#    for d in gdrive_list:
-#        print('Drive: ' + d.get_name())
-
-    ####___Bookmarks_list_view___.
-
-    bmarks_store = Gio.ListStore()
-    bmarks_model = Gtk.SingleSelection.new(bmarks_store)
-
-    bmarks_factory = Gtk.SignalListItemFactory()
-    bmarks_factory.connect('setup', cb_bmarks_factory_setup)
-    bmarks_factory.connect('bind', cb_bmarks_factory_bind)
-
-    list_view_bmarks = Gtk.ListView(
-                                css_name='sw_listview',
-                                single_click_activate=True,
-                                show_separators=True,
-    )
-    list_view_bmarks.set_factory(bmarks_factory)
-    list_view_bmarks.set_model(bmarks_model)
-    list_view_bmarks.connect('activate', cb_bookmark_activate)
-
-    #list_view_bmarks.add_controller(ctrl_drag_source)
-    #list_view_bmarks.add_controller(left_click_view)
-    #list_view_bmarks.add_controller(right_click_view)
-
-    ####___Winetricks_dll_column_view___.
-
-    list_store_dll_0 = Gio.ListStore()
-    list_store_dll_1 = Gio.ListStore()
-    item_list_dll = Gtk.ListItem()
-
-    factory_dll_0 = Gtk.SignalListItemFactory()
-    factory_dll_0.connect('setup', cb_factory_dll_0_setup)
-    factory_dll_0.connect('bind', cb_factory_dll_0_bind)
-
-    factory_dll_desc_0 = Gtk.SignalListItemFactory()
-    factory_dll_desc_0.connect('setup', cb_factory_dll_0_desc_setup)
-    factory_dll_desc_0.connect('bind', cb_factory_dll_0_desc_bind)
-
-    factory_dll_1 = Gtk.SignalListItemFactory()
-    factory_dll_1.connect('setup', cb_factory_dll_1_setup)
-    factory_dll_1.connect('bind', cb_factory_dll_1_bind)
-
-    factory_dll_desc_1 = Gtk.SignalListItemFactory()
-    factory_dll_desc_1.connect('setup', cb_factory_dll_1_desc_setup)
-    factory_dll_desc_1.connect('bind', cb_factory_dll_1_desc_bind)
-
-    model_dll_0 = Gtk.SingleSelection.new(list_store_dll_0)
-    model_dll_1 = Gtk.SingleSelection.new(list_store_dll_1)
-
-    column_view_dll_0 = Gtk.ColumnViewColumn(
-                                title=libs_column_label,
-                                visible=True,
-                                factory=factory_dll_0,
-    )
-    column_view_desc_0 = Gtk.ColumnViewColumn(
-                                title=description_label,
-                                expand=True,
-                                factory=factory_dll_desc_0,
-    )
-    column_view_dll_1 = Gtk.ColumnViewColumn(
-                                title=libs_column_label,
-                                visible=True,
-                                factory=factory_dll_1,
-    )
-    column_view_desc_1 = Gtk.ColumnViewColumn(
-                                title=description_label,
-                                expand=True,
-                                factory=factory_dll_desc_1,
-    )
-    view_dll_0 = Gtk.ColumnView(
-                                css_name='sw_columnview',
-                                show_column_separators=True,
-                                show_row_separators=True,
-                                model=model_dll_0,
-    )
-    view_dll_0.append_column(column_view_dll_0)
-    view_dll_0.append_column(column_view_desc_0)
-    dll_0_title = view_dll_0.get_first_child().get_first_child()
-    dll_0_title.add_css_class('title')
-    desc_0_title = dll_0_title.get_next_sibling()
-    desc_0_title.add_css_class('title')
-
-    view_dll_1 = Gtk.ColumnView(
-                                css_name='sw_columnview',
-                                show_column_separators=True,
-                                show_row_separators=True,
-                                model=model_dll_1,
-    )
-    view_dll_1.append_column(column_view_dll_1)
-    view_dll_1.append_column(column_view_desc_1)
-    dll_1_title = view_dll_1.get_first_child().get_first_child()
-    dll_1_title.add_css_class('title')
-    desc_1_title = dll_1_title.get_next_sibling()
-    desc_1_title.add_css_class('title')
-
-    view_dll = Gtk.Box(
-                    orientation=Gtk.Orientation.VERTICAL,
-                    vexpand=True,
-                    hexpand=True,
-                    homogeneous=True,
-    )
-    view_dll.append(view_dll_0)
-    view_dll.append(view_dll_1)
-
-    ####___Winetricks fonts_column_view___.
-
-    list_store_fonts = Gio.ListStore()
-    item_list_fonts = Gtk.ListItem()
-
-    factory_fonts = Gtk.SignalListItemFactory()
-    factory_fonts.connect('setup', cb_factory_fonts_setup)
-    factory_fonts.connect('bind', cb_factory_fonts_bind)
-
-    factory_fonts_desc = Gtk.SignalListItemFactory()
-    factory_fonts_desc.connect('setup', cb_factory_fonts_desc_setup)
-    factory_fonts_desc.connect('bind', cb_factory_fonts_desc_bind)
-
-    model_fonts = Gtk.SingleSelection.new(list_store_fonts)
-
-    column_view_fonts = Gtk.ColumnViewColumn()
-    column_view_fonts.set_title(fonts_column_label)
-    column_view_fonts.set_factory(factory_fonts)
-
-    column_view_fonts_desc = Gtk.ColumnViewColumn()
-    column_view_fonts_desc.set_title(description_label)
-    column_view_fonts_desc.set_expand(True)
-    column_view_fonts_desc.set_factory(factory_fonts_desc)
-
-    view_fonts = Gtk.ColumnView(css_name='sw_columnview')
-    view_fonts.set_show_column_separators(True)
-    view_fonts.set_show_row_separators(True)
-    view_fonts.append_column(column_view_fonts)
-    view_fonts.append_column(column_view_fonts_desc)
-    view_fonts.set_model(model_fonts)
-
-    fonts_title = view_fonts.get_first_child().get_first_child()
-    fonts_title.add_css_class('title')
-    fonts_desc_title = fonts_title.get_next_sibling()
-    fonts_desc_title.add_css_class('title')
+    left_grid_view.add_controller(ctrl_drag_source)
+    left_grid_view.add_controller(ctrl_lclick_view)
+    left_grid_view.add_controller(ctrl_rclick_view)
+    left_grid_view.add_controller(ctrl_left_view_motion)
+    left_grid_view.add_controller(ctrl_left_view_focus)
 
 ####___Scrolled_window___.
 
@@ -14349,65 +16161,56 @@ def sw_activate(app):
                                     vexpand=True,
                                     valign=Gtk.Align.FILL,
                                     halign=Gtk.Align.FILL,
-                                    child=grid_create_shortcut,
+                                    #child=grid_create_shortcut,
     )
     scrolled_prefix_tools = Gtk.ScrolledWindow(
                                     css_name='sw_scrolledwindow',
                                     vexpand=True,
                                     valign=Gtk.Align.FILL,
                                     halign=Gtk.Align.FILL,
-                                    child=grid_prefix_tools,
+                                    #child=grid_prefix_tools,
     )
     scrolled_wine_tools = Gtk.ScrolledWindow(
                                     css_name='sw_scrolledwindow',
                                     vexpand=True,
                                     valign=Gtk.Align.FILL,
                                     halign=Gtk.Align.FILL,
-                                    child=grid_wine_tools,
+                                    #child=grid_wine_tools,
     )
     scrolled_settings = Gtk.ScrolledWindow(
                                     css_name='sw_scrolledwindow',
                                     vexpand=True,
                                     valign=Gtk.Align.FILL,
                                     halign=Gtk.Align.FILL,
-                                    child=grid_settings,
+                                    #child=grid_settings,
     )
     scrolled_about = Gtk.ScrolledWindow(
                                     css_name='sw_scrolledwindow',
                                     vexpand=True,
                                     valign=Gtk.Align.FILL,
                                     halign=Gtk.Align.FILL,
-                                    child=grid_about,
+                                    #child=grid_about,
     )
     scrolled_stack = Gtk.ScrolledWindow(
                                     css_name='sw_scrolledwindow',
                                     vexpand=True,
                                     valign=Gtk.Align.FILL,
                                     halign=Gtk.Align.FILL,
-                                    child=stack_about,
+                                    #child=stack_about,
     )
     scrolled_files_info = Gtk.ScrolledWindow(
                                     css_name='sw_scrolledwindow',
                                     vexpand=True,
                                     valign=Gtk.Align.FILL,
                                     halign=Gtk.Align.FILL,
-                                    child=grid_files_info,
+                                    #child=grid_files_info,
     )
     scrolled_bookmarks = Gtk.ScrolledWindow(
                                     css_name='sw_scrolledwindow',
                                     vexpand=True,
                                     valign=Gtk.Align.FILL,
                                     halign=Gtk.Align.FILL,
-                                    child=list_view_bmarks,
-    )
-    scrolled_files = Gtk.ScrolledWindow(
-                                    css_name='sw_scrolled_view',
-                                    name='files',
-                                    vexpand=True,
-                                    hexpand=True,
-                                    valign=Gtk.Align.FILL,
-                                    halign=Gtk.Align.FILL,
-                                    child=grid_view,
+                                    #child=list_view_bookmarks,
     )
     scrolled_gvol = Gtk.ScrolledWindow(
                                     css_name='sw_scrolledwindow',
@@ -14415,25 +16218,49 @@ def sw_activate(app):
                                     propagate_natural_width=True,
                                     halign=Gtk.Align.FILL,
                                     valign=Gtk.Align.FILL,
-                                    child=column_gvol_view,
+                                    #child=column_gvol_view,
     )
     terminal_stack.add_child(scrolled_gvol)
     terminal_stack.add_child(terminal)
     terminal_revealer.set_child(terminal_stack)
 
-    files_view_grid = Gtk.Grid(css_name='sw_grid')
-    files_view_grid.set_name('files')
-    files_view_grid.attach(scrolled_files, 0,0,1,1)
-    files_view_grid.attach(terminal_revealer, 0,1,1,1)
-
-    scrolled_install_wine = Gtk.ScrolledWindow(
-                                    css_name='sw_scrolledwindow',
-                                    name=vw_dict['install_launchers'],
+    scrolled_left_files = Gtk.ScrolledWindow(
+                                    css_name='sw_scrolled_view',
+                                    name='left_files',
                                     vexpand=True,
                                     hexpand=True,
                                     valign=Gtk.Align.FILL,
                                     halign=Gtk.Align.FILL,
-                                    child=wine_menu,
+                                    child=left_grid_view,
+    )
+    paned_grid_view = Gtk.Paned(
+                                css_name='sw_grid',
+                                orientation=Gtk.Orientation.HORIZONTAL,
+                                min_position=320,
+                                wide_handle=False,
+    )
+    paned_grid_view.set_start_child(scrolled_left_files)
+    paned_grid_view.connect('cycle_child_focus', cb_paned_cycle_child_focus)
+    paned_grid_view.connect('cycle_handle_focus', cb_paned_cycle_handle_focus)
+
+    files_view_grid = Gtk.Paned(name='files', css_name='sw_grid', orientation=Gtk.Orientation.VERTICAL)
+    files_view_grid.set_start_child(paned_grid_view)
+    files_view_grid.set_end_child(terminal_revealer)
+
+    scrolled_startapp_page = Gtk.ScrolledWindow(
+                                    css_name='sw_scrolledwindow',
+                                    vexpand=True,
+                                    hexpand=True,
+                                    valign=Gtk.Align.FILL,
+                                    halign=Gtk.Align.FILL,
+    )
+    scrolled_install_wine = Gtk.ScrolledWindow(
+                                    css_name='sw_scrolledwindow',
+                                    name=vw_dict['install_wine'],
+                                    vexpand=True,
+                                    hexpand=True,
+                                    valign=Gtk.Align.FILL,
+                                    halign=Gtk.Align.FILL,
     )
     scrolled_install_launchers = Gtk.ScrolledWindow(
                                     css_name='sw_scrolledwindow',
@@ -14442,7 +16269,6 @@ def sw_activate(app):
                                     hexpand=True,
                                     valign=Gtk.Align.FILL,
                                     halign=Gtk.Align.FILL,
-                                    child=launchers_menu,
     )
     scrolled_launch_settings = Gtk.ScrolledWindow(
                                     css_name='sw_scrolledwindow',
@@ -14451,7 +16277,6 @@ def sw_activate(app):
                                     hexpand=True,
                                     valign=Gtk.Align.FILL,
                                     halign=Gtk.Align.FILL,
-                                    child=launch_settings,
     )
     scrolled_mangohud_settings = Gtk.ScrolledWindow(
                                     css_name='sw_scrolledwindow',
@@ -14460,7 +16285,6 @@ def sw_activate(app):
                                     hexpand=True,
                                     valign=Gtk.Align.FILL,
                                     halign=Gtk.Align.FILL,
-                                    child=mangohud_settings,
     )
     scrolled_vkbasalt_settings = Gtk.ScrolledWindow(
                                     css_name='sw_scrolledwindow',
@@ -14469,16 +16293,6 @@ def sw_activate(app):
                                     hexpand=True,
                                     valign=Gtk.Align.FILL,
                                     halign=Gtk.Align.FILL,
-                                    child=vkbasalt_settings,
-    )
-    scrolled_colors_settings = Gtk.ScrolledWindow(
-                                    css_name='sw_scrolledwindow',
-                                    name=vw_dict['colors_settings'],
-                                    vexpand=True,
-                                    hexpand=True,
-                                    valign=Gtk.Align.FILL,
-                                    halign=Gtk.Align.FILL,
-                                    child=colors_settings,
     )
     scrolled_global_settings = Gtk.ScrolledWindow(
                                     css_name='sw_scrolledwindow',
@@ -14487,25 +16301,6 @@ def sw_activate(app):
                                     hexpand=True,
                                     valign=Gtk.Align.FILL,
                                     halign=Gtk.Align.FILL,
-                                    child=global_settings,
-    )
-    scrolled_dll = Gtk.ScrolledWindow(
-                                    css_name='sw_scrolledwindow',
-                                    name=vw_dict['winetricks'],
-                                    vexpand=True,
-                                    hexpand=True,
-                                    valign=Gtk.Align.FILL,
-                                    halign=Gtk.Align.FILL,
-                                    child=view_dll,
-    )
-    scrolled_fonts = Gtk.ScrolledWindow(
-                                    css_name='sw_scrolledwindow',
-                                    name=vw_dict['winetricks'],
-                                    vexpand=True,
-                                    hexpand=True,
-                                    valign=Gtk.Align.FILL,
-                                    halign=Gtk.Align.FILL,
-                                    child=view_fonts,
     )
     box_web_bar = Gtk.Box(
                         orientation=Gtk.Orientation.HORIZONTAL,
@@ -14536,7 +16331,7 @@ def sw_activate(app):
                                         child=box_web_bar,
     )
     scrolled_web_bar.set_policy(Gtk.PolicyType.EXTERNAL, Gtk.PolicyType.NEVER)
-    stack_web = Gtk.Notebook(css_name='sw_stack')
+    stack_web = Gtk.Notebook(css_name='sw_stack', scrollable=True)
     overlay_web = Gtk.Overlay(css_name='sw_overlay')
     overlay_web.set_child(stack_web)
     label_overlay = Gtk.Label(
@@ -14554,107 +16349,20 @@ def sw_activate(app):
     grid_web.attach(scrolled_web_bar, 0, 0, 1, 1)
     grid_web.attach(overlay_web, 0, 1, 1, 1)
 
-####___Winetricks_Tabs___.
-
-    label_install_dll = Gtk.Label(
-                                css_name='sw_label',
-                                label=confirm_install_label
+    scrolled_gc_settings = Gtk.ScrolledWindow(
+                                    css_name='sw_scrolledwindow',
+                                    name=vw_dict['gc_settings'],
+                                    vexpand=True,
+                                    hexpand=True,
+                                    valign=Gtk.Align.FILL,
+                                    halign=Gtk.Align.FILL,
+                                    #child=gc_settings,
     )
-    btn_install_dll = Gtk.Button(
-                                css_name='sw_button',
-                                child=label_install_dll,
-                                hexpand=True,
-                                halign=Gtk.Align.END,
-                                valign=Gtk.Align.START,
-    )
-    btn_install_dll.connect('clicked', cb_btn_install_dll)
-
-    label_tab_dll = Gtk.Label(
-                            css_name='sw_label',
-                            label=libs_tab_label
-    )
-    label_tab_fonts = Gtk.Label(
-                            css_name='sw_label',
-                            label=fonts_tab_label
-    )
-    btn_tab_dll = Gtk.Button(css_name='sw_button')
-    btn_tab_dll.set_child(label_tab_dll)
-    btn_tab_dll.connect('clicked', on_tab_dll)
-
-    btn_tab_fonts = Gtk.Button(css_name='sw_button')
-    btn_tab_fonts.set_child(label_tab_fonts)
-    btn_tab_fonts.connect('clicked', on_tab_fonts)
-
-    model_templates_dll = Gio.ListStore()
-    factory_dll_templates = Gtk.SignalListItemFactory()
-    factory_dll_templates.connect('setup', cb_factory_dll_templates_setup)
-    factory_dll_templates.connect('bind', cb_factory_dll_templates_bind)
-
-    for k, v in dll_templates_dict.items():
-        l = Gtk.Label(name=v, label=k)
-        model_templates_dll.append(l)
-
-    dropdown_dll_templates = Gtk.DropDown(
-                                        css_name='sw_dropdown',
-                                        hexpand=True,
-                                        halign=Gtk.Align.END,
-                                        selected=0,
-    )
-    dropdown_dll_templates.set_size_request(180, -1)
-    dropdown_dll_templates.set_model(model_templates_dll)
-    dropdown_dll_templates.set_factory(factory_dll_templates)
-
-    box_tabs = Gtk.Box(
-                    css_name='sw_box_tab',
-                    orientation=Gtk.Orientation.HORIZONTAL,
-                    hexpand=True,
-                    spacing=8,
-    )
-    box_tabs.append(btn_tab_dll)
-    box_tabs.append(btn_tab_fonts)
-    box_tabs.append(dropdown_dll_templates)
-
-    stack_tabs = Gtk.Stack(css_name='sw_stack')
-    stack_tabs.add_child(scrolled_dll)
-    stack_tabs.add_child(scrolled_fonts)
-
-    winetricks_title = Gtk.Label(
-                                css_name='sw_label_title',
-                                label=vl_dict['winetricks'],
-                                xalign=0.0,
-    )
-    winetricks_subtitle = Gtk.Label(
-                                css_name='sw_label_desc',
-                                label=str_winetricks_subtitle,
-                                xalign=0.0,
-                                wrap=True,
-                                natural_wrap_mode=True
-    )
-    winetricks_label_box = Gtk.Box(
-                                css_name='sw_box_view',
-                                orientation=Gtk.Orientation.VERTICAL,
-                                halign=Gtk.Align.START
-    )
-    winetricks_label_box.append(winetricks_title)
-    winetricks_label_box.append(winetricks_subtitle)
-
-    winetricks_title_grid = Gtk.Grid(css_name='sw_grid')
-    winetricks_title_grid.attach(winetricks_label_box, 0,0,1,1)
-    winetricks_title_grid.attach(btn_install_dll, 1,0,1,1)
-
-    pref_group_winetricks = Gtk.Box(
-                                css_name='sw_pref_box',
-                                orientation=Gtk.Orientation.VERTICAL
-    )
-    pref_group_winetricks.append(winetricks_title_grid)
-    pref_group_winetricks.append(box_tabs)
-    pref_group_winetricks.append(stack_tabs)
-
     scrolled_winetricks = Gtk.ScrolledWindow(
                                 css_name='sw_flowbox',
                                 name=vw_dict['winetricks'],
-                                child=pref_group_winetricks,
                                 visible=False,
+                                #child=pref_group_winetricks,
     )
 
 ####___Sidebar_frames___.
@@ -14767,72 +16475,33 @@ def sw_activate(app):
     stack_sidebar.add_child(frame_files_info)
     stack_sidebar.add_child(frame_bookmarks)
 
-    ####___Add_widgets_to_revelear_side___.
+    ####___Add_view_pages_to_stack___.
 
     reveal_stack = Gtk.Stack(css_name='sw_stack')
     reveal_stack.set_transition_duration(250)
     reveal_stack.set_transition_type(Gtk.StackTransitionType.ROTATE_LEFT_RIGHT)
-    #reveal_stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
-    reveal_stack.add_child(scrolled_launch_settings)
-    reveal_stack.add_child(scrolled_mangohud_settings)
-    reveal_stack.add_child(scrolled_vkbasalt_settings)
-    reveal_stack.add_child(scrolled_colors_settings)
-    reveal_stack.add_child(scrolled_global_settings)
-    reveal_stack.add_child(scrolled_winetricks)
-    reveal_stack.add_child(scrolled_install_launchers)
-    reveal_stack.add_child(files_view_grid)
-    reveal_stack.add_child(scrolled_install_wine)
-    reveal_stack.add_child(grid_web)
+    reveal_stack.add_named(files_view_grid, vw_dict['files'])
+    reveal_stack.add_named(scrolled_launch_settings, vw_dict['launch_settings'])
+    reveal_stack.add_named(scrolled_mangohud_settings, vw_dict['mangohud_settings'])
+    reveal_stack.add_named(scrolled_vkbasalt_settings, vw_dict['vkbasalt_settings'])
+    reveal_stack.add_named(scrolled_global_settings, vw_dict['global_settings'])
+    reveal_stack.add_named(scrolled_install_launchers, vw_dict['install_launchers'])
+    reveal_stack.add_named(scrolled_install_wine, vw_dict['install_wine'])
+    reveal_stack.add_named(scrolled_winetricks, vw_dict['winetricks'])
+    reveal_stack.add_named(grid_web, vw_dict['web_view'])
+    reveal_stack.add_named(scrolled_gc_settings, vw_dict['gc_settings'])
+
+    main_stack = Gtk.Stack(css_name='sw_stack')
+    main_stack.set_transition_duration(250)
+    main_stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
+    main_stack.add_named(reveal_stack, 'main_page')
+    main_stack.add_named(scrolled_startapp_page, 'startapp_page')
 
     ####___Overlay___.
 
-    overlay_image_next = Gtk.Image(css_name='sw_image')
-    overlay_image_next.set_from_file(IconPath.icon_next)
-    overlay_image_prev = Gtk.Image(css_name='sw_image')
-    overlay_image_prev.set_from_file(IconPath.icon_prev)
-
-    overlay_btn_next = Gtk.Button(css_name='sw_button', name='btn_next')
-    overlay_btn_prev = Gtk.Button(css_name='sw_button', name='btn_prev')
-
-    overlay_btn_next.set_child(overlay_image_next)
-    overlay_btn_prev.set_child(overlay_image_prev)
-
-    overlay_btn_next.set_valign(Gtk.Align.CENTER)
-    overlay_btn_next.set_halign(Gtk.Align.END)
-
-    overlay_btn_prev.set_valign(Gtk.Align.CENTER)
-    overlay_btn_prev.set_halign(Gtk.Align.START)
-
-    overlay_btn_next.connect('clicked', cb_btn_overlay)
-    overlay_btn_prev.connect('clicked', cb_btn_overlay)
-
-    overlay_label = Gtk.Label(css_name='sw_label')
-    overlay_label.set_xalign(0.5)
-    overlay_label.set_size_request(200,-1)
-
-    scroll_data = list()
-    ctrl_scroll_view = Gtk.EventControllerScroll()
-    ctrl_scroll_view.set_flags(Gtk.EventControllerScrollFlags.VERTICAL)
-    ctrl_scroll_view.connect('scroll', cb_ctrl_scroll_view, scroll_data)
-
-    overlay_panel = Gtk.Box(css_name='sw_row', orientation=Gtk.Orientation.HORIZONTAL)
-    overlay_panel.set_spacing(8)
-    overlay_panel.set_margin_start(8)
-    overlay_panel.set_margin_end(8)
-    overlay_panel.set_margin_top(8)
-    overlay_panel.set_margin_bottom(8)
-    overlay_panel.set_valign(Gtk.Align.END)
-    overlay_panel.set_halign(Gtk.Align.CENTER)
-    overlay_panel.append(overlay_btn_prev)
-    overlay_panel.append(overlay_label)
-    overlay_panel.append(overlay_btn_next)
-    overlay_panel.set_visible(False)
-
     overlay = Gtk.Overlay(css_name='sw_overlay')
     overlay.set_name('launch_settings')
-    overlay.set_child(reveal_stack)
-    overlay.add_overlay(overlay_panel)
-    overlay_panel.add_controller(ctrl_scroll_view)
+    overlay.set_child(main_stack)
 
     ####___Grid_info___.
 
@@ -14894,25 +16563,6 @@ def sw_activate(app):
 
     ####___Revealer___.
 
-    revealer = Gtk.Revealer(css_name='sw_revealer')
-    revealer.set_child(overlay)
-    revealer.set_transition_duration(250)
-    revealer.set_transition_type(Gtk.RevealerTransitionType.CROSSFADE)
-    revealer.set_reveal_child(False)
-
-    ####___Add_widgets_to_grid___.
-
-    grid_create_shortcut.attach(image_create, 0,0,1,1)
-    grid_create_shortcut.attach(btn_menu_wine_custom,0,6,1,1)
-
-    grid_menu_wine_custom.attach(image_menu_wine_custom,0,0,1,1)
-    grid_menu_wine_custom.attach(label_menu_wine_custom,1,0,1,1)
-
-    grid_prefix_tools.attach(image_ptools,0,0,1,1)
-    grid_wine_tools.attach(image_wtools,0,0,1,1)
-    grid_download_wine.attach(image_github,0,0,1,1)
-    grid_settings.attach(image_settings_tools,0,0,1,1)
-
     sidebar_revealer = Gtk.Revealer(css_name='sw_revealer')
     sidebar_revealer.set_name('sidebar')
     sidebar_revealer.set_hexpand(True)
@@ -14926,7 +16576,7 @@ def sw_activate(app):
 
     flap_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
     flap_box.append(empty_box)
-    flap_box.append(revealer)
+    flap_box.append(overlay)
 
     flap_overlay = Gtk.Overlay()
     flap_overlay.set_vexpand(True)
@@ -14934,8 +16584,21 @@ def sw_activate(app):
     flap_overlay.add_overlay(sidebar_revealer)
     flap_overlay.connect('get-child-position', get_sidebar_position)
 
-    grid_main.attach(flap_overlay, 0,0,1,1)
-    grid_main.attach(bottom_headerbar, 0,1,1,1)
+    top_headerbar_revealer = Gtk.Revealer(css_name='sw_revealer')
+    top_headerbar_revealer.set_transition_duration(250)
+    top_headerbar_revealer.set_transition_type(Gtk.RevealerTransitionType.SLIDE_DOWN)
+    top_headerbar_revealer.set_child(top_headerbar)
+    top_headerbar_revealer.set_reveal_child(True)
+
+    bottom_headerbar_revealer = Gtk.Revealer(css_name='sw_revealer')
+    bottom_headerbar_revealer.set_transition_duration(250)
+    bottom_headerbar_revealer.set_transition_type(Gtk.RevealerTransitionType.SLIDE_UP)
+    bottom_headerbar_revealer.set_child(bottom_headerbar)
+    bottom_headerbar_revealer.set_reveal_child(True)
+
+    grid_main.attach(top_headerbar_revealer, 0,0,1,1)
+    grid_main.attach(flap_overlay, 0,1,1,1)
+    grid_main.attach(bottom_headerbar_revealer, 0,2,1,1)
 
     ####___Event_controllers___.
     ctrl_key = Gtk.EventControllerKey()
@@ -14945,34 +16608,32 @@ def sw_activate(app):
     ctrl_lclick.connect('pressed', cb_ctrl_lclick_parent)
     ctrl_lclick.set_button(1)
 
-#    ctrl_forward_click = Gtk.GestureClick()
-#    ctrl_forward_click.connect('pressed', cb_ctrl_fclick_parent)
-#    ctrl_forward_click.set_button(4)
-
-#    ctrl_back_click = Gtk.GestureClick()
-#    ctrl_back_click.connect('pressed', cb_ctrl_bclick_parent)
-#    ctrl_back_click.set_button(5)
+    ctrl_motion = Gtk.EventControllerMotion()
+    ctrl_motion.connect('motion', cb_ctrl_motion_headerbar, parent)
 
     ####___GL_Area_overlay___.
     gl_image = get_gl_image()
     gl_cover = Gtk.Overlay()
     gl_cover.add_overlay(grid_main)
     gl_cover.set_child(RenderArea(parent, gl_image))
+    gl_cover.set_size_request(768,508)
 
-    ####___Parent_window_present___.
+    ####___add controllers to widgets___.
     parent.set_child(gl_cover)
     parent.add_controller(ctrl_key)
     parent.add_controller(ctrl_lclick)
-    #parent.add_controller(ctrl_forward_click)
-    #parent.add_controller(ctrl_back_click)
+    parent.add_controller(ctrl_motion)
     parent.add_controller(ctrl_drop_target)
     parent.connect('close-request', on_write_parent_state)
 
     ####___Check_states___.
     check_reveal_flap()
     check_parent_state()
+    preload_runlib(True)
 
     if not '--silent' in argv:
+        #parent.set_default_size(width+16, height+64)
+        #set_parent_layer(parent, monitor)
         parent.present()
 
     ####___Reveal flap sidebar handler___.
@@ -14994,7 +16655,12 @@ def sw_activate(app):
 
 if __name__ == '__main__':
 
-    echo_run(None)
+    if len(argv) < 3:
+        check_arg(None)
+
+    elif len(argv) == 3:
+        check_arg(argv[2])
+
     create_app_conf()
     get_exe_icon()
 
@@ -15003,8 +16669,11 @@ if __name__ == '__main__':
 
     try_get_exe_logo()
 
-    app = StartWine()
-    app.run()
+    sw = StartWineGraphicalShell()
+    try:
+        sw.run()
+    except KeyboardInterrupt as e:
+        exit(0)
 
     set_print_mem_info(False)
-
+    exit(0)
