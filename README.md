@@ -15,7 +15,7 @@
 7. [License](#license)
 
 ## Setup
-To start using the program, download SrartWine itself from the GitHub page under sw_releases or from the discord server
+To start using the program, download StartWine itself from the GitHub page under sw_releases or from the discord server
 
 GitHub > [Click](https://github.com/RusNor/StartWine-Launcher/releases)
 
