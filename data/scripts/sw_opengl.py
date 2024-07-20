@@ -30,7 +30,7 @@ sw_themes = f"{sw_img}/sw_themes"
 fragments_list = [s.value for s in list(sdr)]
 
 vertex_src = '''
-#version 450
+#version 330
 
 uniform vec3 iResolution;
 in vec2 position;
@@ -43,7 +43,7 @@ void main() {
 '''
 
 fragment_prefix = '''
-    #version 450
+    #version 330
 
     uniform vec3      iResolution;
     uniform float     iTime;
@@ -75,7 +75,7 @@ fragment_main = '''
 '''
 
 img_vertex_src = '''
-#version 450
+#version 330
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec2 texture;
@@ -90,7 +90,7 @@ void main()
 '''
 
 img_fragment_src = '''
-#version 450
+#version 330
 
 in vec2 fragCoord;
 uniform sampler2D sTexture;

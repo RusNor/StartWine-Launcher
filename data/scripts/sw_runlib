@@ -4,7 +4,7 @@ export START_WINE_PATH="$(cd "$(dirname "$(realpath "$0")")"/../../ && pwd)"
 
 ###############################   VERSION   ####################################
 
-export SW_VER="404"
+export SW_VER="405"
 export UTILS_VER="2.5"
 export PFX_DEF_VER="0.1"
 
@@ -194,6 +194,12 @@ sw_win_ver () {
 
 }
 
+try_rm_broken_link () {
+
+    find -L "$1" -maxdepth 1 -type l -exec rm -rfv {} \; 2>/dev/null
+
+}
+
 try_fix_pfx () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/drive_c/windows/system32/start.exe" ]; then
@@ -231,8 +237,6 @@ try_fix_pfx () {
         print_error 'system.reg not found in prefix!'
         return 1
     fi
-
-    try_rm_broken_link() { find -L "$1" -maxdepth 1 -type l -exec rm -rfv {} \; 2>/dev/null; }
 
     check_wine_drive() { ls -l "$WINEPREFIX/dosdevices"/[a-z]: 2>/dev/null|grep -w "${1}$"|grep -o '[a-z]:' &>/dev/null; }
 
@@ -460,7 +464,7 @@ try_update_sw () {
         if [[ "${SW_VER}" -lt "$GIT_VER" ]]; then
             msg="$(eval_gettext "Update to \$GIT_VER version?")"
             crier=`"$CRIER" -q "$msg"`
-            if [ "$(echo $crier)" == "0" ]; then
+            if [ "$(echo "$crier" | tail -1)" == "0" ]; then
 
                 [ ! -f "${HOME}/.config/swrc" ] && \
                     echo "${START_WINE_PATH}" > "${HOME}/.config/swrc"
@@ -477,9 +481,6 @@ try_update_sw () {
                 echo "Extension release $GIT_VER done"
 
                 if [ -d "${START_WINE_PATH}/data/tmp/StartWine" ]; then
-
-                    [ -f "${START_WINE_PATH}/data/scripts/sw_menu.json" ] && \
-                        try_copy "${START_WINE_PATH}/data/scripts/sw_menu.json" "${START_WINE_PATH}/data/tmp"
 
                     [ -d "${START_WINE_PATH}/data/scripts" ] && \
                         try_remove "${START_WINE_PATH}/data/scripts"
@@ -506,12 +507,6 @@ try_update_sw () {
                         try_remove "${START_WINE_PATH}/data/img/launcher_icons"
 
                     try_copy "${START_WINE_PATH}/data/tmp/StartWine/data" "${START_WINE_PATH}"
-
-                    [ -f "${START_WINE_PATH}/data/tmp/sw_menu.json" ] && \
-                        try_copy "${START_WINE_PATH}/data/tmp/sw_menu.json" "${START_WINE_PATH}/data/scripts"
-
-                    [ -f "${START_WINE_PATH}/data/tmp/sw_menu.json" ] && \
-                        try_remove "${START_WINE_PATH}/data/tmp/sw_menu.json"
 
                     [ -d "${START_WINE_PATH}/data/tmp/StartWine" ] && \
                         try_remove "${START_WINE_PATH}/data/tmp/StartWine"
@@ -603,6 +598,7 @@ export SW_RUN_RUNIMAGE="${START_WINE_PATH}/data/runtime/sw"
 
 ##################################   CREATE   ##################################
 
+try_create_dir "$HOME/.local/bin"
 try_create_dir "${START_WINE_PATH}/Games"
 try_create_dir "${START_WINE_PATH}/data/tmp"
 try_create_dir "${START_WINE_PATH}/data/pfx"
@@ -623,6 +619,12 @@ try_create_dir "${START_WINE_PATH}/data/tmp/vulkan_shader_cache"
 
 [ ! -f "${START_WINE_PATH}/data/scripts/version" ] && \
     echo "${SW_VER}" > "${START_WINE_PATH}/data/scripts/version"
+
+[ ! -f "$HOME/.local/bin/sw" ] && \
+    try_link "${START_WINE_PATH}/data/runtime/sw_runtime" "$HOME/.local/bin/sw"
+
+[ ! -f "${START_WINE_PATH}/data/runtime/sw" ] && \
+    try_link "${START_WINE_PATH}/data/runtime/sw_runtime" "${START_WINE_PATH}/data/runtime/sw"
 
 if [ ! -f "${HOME}/.local/share/applications/StartWine.desktop" ] && [ ! -f "/usr/share/applications/StartWine.desktop" ]; then
     sw_desktop_name="StartWine.desktop"
@@ -981,7 +983,7 @@ RUN_VULKAN () {
         unset VK_INSTANCE_LAYERS
 
         if [ "${WINEARCH}" != "win32" ]; then
-            for wine_build_dll in d3d12 d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
+            for wine_build_dll in d3d12 d3d11 d3d10 d3d10core d3d10_1 d3d9 d3d8 dxgi ; do
                 [ -f "${WINEDIR}/lib/wine/i386-windows/${wine_build_dll}.dll" ] && \
                     try_copy "${WINEDIR}/lib/wine/i386-windows/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
                 [ -f "${WINEDIR}/lib64/wine/x86_64-windows/${wine_build_dll}.dll" ] && \
@@ -994,7 +996,7 @@ RUN_VULKAN () {
                     try_copy "${WINEDIR}/lib64/vkd3d/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
             done
         else
-            for wine_build_dll in d3d12 d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
+            for wine_build_dll in d3d12 d3d11 d3d10 d3d10core d3d10_1 d3d9 d3d8 dxgi ; do
                 [ -f "${WINEDIR}/lib/wine/i386-windows/${wine_build_dll}.dll" ] && \
                     try_copy "${WINEDIR}/lib/wine/i386-windows/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
             done
@@ -1004,7 +1006,7 @@ RUN_VULKAN () {
             done
         fi
 
-        try_winedlloverride_update "d3d12,d3d11,d3d10,d3d10core,d3d10_1,d3d9,dxgi=b"
+        try_winedlloverride_update "d3d12,d3d11,d3d10,d3d10core,d3d10_1,d3d9,d3d8,dxgi=b"
 
         try_winedlloverride_update "openvr_api_dxvk,d3d12core="
 
@@ -1040,14 +1042,14 @@ RUN_VULKAN () {
 
             if [ "${SW_USE_DXVK_GE}" == "1" ]; then
                 if [ ! -d "${START_WINE_PATH}/data/wine/${SW_USE_WINE}/bin" ]; then
-                    for wine_dxvk_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
+                    for wine_dxvk_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 d3d8 dxgi ; do
                         [ -f "${START_WINE_PATH}/data/tools/vulkan/dxvk-${DXVK_VER}/x32/${wine_dxvk_dll}.dll" ] && \
                             try_copy "${START_WINE_PATH}/data/tools/vulkan/dxvk-${DXVK_VER}/x32/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
                         [ -f "${START_WINE_PATH}/data/tools/vulkan/dxvk-${DXVK_VER}/x64/${wine_dxvk_dll}.dll" ] && \
                             try_copy "${START_WINE_PATH}/data/tools/vulkan/dxvk-${DXVK_VER}/x64/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
                     done
                 else
-                    for wine_dxvk_dll in openvr_api_dxvk d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
+                    for wine_dxvk_dll in openvr_api_dxvk d3d11 d3d10 d3d10core d3d10_1 d3d9 d3d8 dxgi ; do
                         [ -f "${START_WINE_PATH}/data/wine/${SW_USE_WINE}/lib/wine/dxvk/${wine_dxvk_dll}.dll" ] && \
                             try_copy "${START_WINE_PATH}/data/wine/${SW_USE_WINE}/lib/wine/dxvk/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
                         [ -f "${START_WINE_PATH}/data/wine/${SW_USE_WINE}/lib64/wine/dxvk/${wine_dxvk_dll}.dll" ] && \
@@ -1055,7 +1057,7 @@ RUN_VULKAN () {
                     done
                 fi
             else
-                for wine_dxvk_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
+                for wine_dxvk_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 d3d8 dxgi ; do
                     [ -f "${START_WINE_PATH}/data/tools/vulkan/dxvk-${DXVK_VER}/x32/${wine_dxvk_dll}.dll" ] && \
                         try_copy "${START_WINE_PATH}/data/tools/vulkan/dxvk-${DXVK_VER}/x32/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
                     [ -f "${START_WINE_PATH}/data/tools/vulkan/dxvk-${DXVK_VER}/x64/${wine_dxvk_dll}.dll" ] && \
@@ -1119,18 +1121,18 @@ RUN_VULKAN () {
 
             if [ "${SW_USE_DXVK_GE}" == "1" ]; then
                 if [ ! -d "${START_WINE_PATH}/data/wine/${SW_USE_WINE}/bin" ]; then
-                    for wine_dxvk_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
+                    for wine_dxvk_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 d3d8 dxgi ; do
                         [ -f "${START_WINE_PATH}/data/tools/vulkan/dxvk-${DXVK_VER}/x32/${wine_dxvk_dll}.dll" ] && \
                             try_copy "${START_WINE_PATH}/data/tools/vulkan/dxvk-${DXVK_VER}/x32/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
                     done
                 else
-                    for wine_dxvk_dll in openvr_api_dxvk d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
+                    for wine_dxvk_dll in openvr_api_dxvk d3d11 d3d10 d3d10core d3d10_1 d3d9 d3d8 dxgi ; do
                         [ -f "${START_WINE_PATH}/data/wine/${SW_USE_WINE}/lib/wine/dxvk/${wine_dxvk_dll}.dll" ] && \
                             try_copy "${START_WINE_PATH}/data/wine/${SW_USE_WINE}/lib/wine/dxvk/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
                     done
                 fi
             else
-                for wine_dxvk_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 dxgi ; do
+                for wine_dxvk_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 d3d8 dxgi ; do
                     [ -f "${START_WINE_PATH}/data/tools/vulkan/dxvk-${DXVK_VER}/x32/${wine_dxvk_dll}.dll" ] && \
                         try_copy "${START_WINE_PATH}/data/tools/vulkan/dxvk-${DXVK_VER}/x32/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
                 done
@@ -1179,7 +1181,7 @@ RUN_VULKAN () {
 
         fi
 
-        try_winedlloverride_update "libvkd3d-1,libvkd3d-shader-1,d3d12,d3d12core,openvr_api_dxvk,d3d11,d3d10,d3d10core,d3d10_1,d3d9,dxgi=n"
+        try_winedlloverride_update "libvkd3d-1,libvkd3d-shader-1,d3d12,d3d12core,openvr_api_dxvk,d3d11,d3d10,d3d10core,d3d10_1,d3d9,d3d8,dxgi=n"
 
         if [ "${SW_USE_SHADER_CACHE}" == 1 ]; then
             try_create_dir "${START_WINE_PATH}/data/tmp/vulkan_shader_cache/${SW_GAME_NAME}"
@@ -1243,7 +1245,7 @@ CREATE_SHORTCUT () {
 
     crier=`"$CRIER" -q "$(eval_gettext 'Create a prefix for this application?')"`
 
-    if [ "$(echo $crier)" == "0" ]; then
+    if [ "$(echo "$crier" | tail -1)" == "0" ]; then
         export SW_USE_PFX="pfx_${SW_GAME_NAME}"
     else
         export SW_USE_PFX="pfx_default"
@@ -1262,7 +1264,7 @@ CREATE_SHORTCUT () {
     else
         if [ "${SW_USE_PFX}" != "pfx_default" ]; then
             crier=`"$CRIER" -q "$(eval_gettext "Restore prefix from backup?")"`
-            if [ "$(echo $crier)" == "0" ]; then
+            if [ "$(echo "$crier" | tail -1)" == "0" ]; then
                 try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
                 unsquashfs -d "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}" "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" &&
                 try_copy "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}" "${START_WINE_PATH}/data/app_config"
@@ -1279,7 +1281,7 @@ WINEBOOT_CS () {
 
     crier=`"$CRIER" -q "$(eval_gettext "You have a backup of the default prefix with recommended libraries. Use it to create a new prefix?")"`
 
-    if [ "$(echo $crier)" == "0" ]; then
+    if [ "$(echo "$crier" | tail -1)" == "0" ]; then
 
         unsquashfs -d "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}" "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso"
 
@@ -1355,19 +1357,19 @@ ADD_SHORTCUT_TO_STEAM () {
 
                 printf '\x00%s\x00' "$NEW_DATA"
                 printf '\x02%s\x00%b' "appid" "$ID_HEX"
-                printf '\x01%s\x00%s\x00' "appname" "$APP_NAME"
+                printf '\x01%s\x00%s\x00' "AppName" "$APP_NAME"
                 printf '\x01%s\x00%s\x00' "Exe" "$EXE_PATH"
                 printf '\x01%s\x00%s\x00' "StartDir" "$START_DIR"
                 printf '\x01%s\x00%s\x00' "icon" "$ICON_PATH"
-                printf '\x01%s\x00\x00' "ShortcutPath" "${START_WINE_PATH}/Shortcuts"
+                printf '\x01%s\x00\x00' "ShortcutPath" ""
                 printf '\x01%s\x00%s\x00' "LaunchOptions" "$LAUNCH_OPTIONS"
-                printf '\x02%s\x00\x00\x00\x00\x00' "IsHidden"
-                printf '\x02%s\x00\x00\x00\x00\x00' "AllowDesktopConfig"
-                printf '\x02%s\x00\x00\x00\x00\x00' "AllowOverlay"
-                printf '\x02%s\x00\x00\x00\x00\x00' "openvr"
-                printf '\x02%s\x00\x00\x00\x00\x00' "Devkit"
-                printf '\x01%s\x00\x00' "DevkitGameID"
-                printf '\x02%s\x00\x00\x00\x00\x00' "LastPlayTime"
+                printf '\x02%s\x00\x00\x00\x00\x00' "IsHidden" "0"
+                printf '\x02%s\x00\x00\x00\x00\x00' "AllowDesktopConfig" "1"
+                printf '\x02%s\x00\x00\x00\x00\x00' "AllowOverlay" "1"
+                printf '\x02%s\x00\x00\x00\x00\x00' "OpenVR" "0"
+                printf '\x02%s\x00\x00\x00\x00\x00' "Devkit" "0"
+                printf '\x01%s\x00\x00' "DevkitGameID" ""
+                printf '\x02%s\x00\x00\x00\x00\x00' "LastPlayTime" "0"
                 printf '\x00%s\x00' "tags"
                 printf '\x08'
                 printf '\x08'
@@ -1389,7 +1391,7 @@ ADD_SHORTCUT_TO_STEAM () {
 REMOVE_PFX () {
 
     crier=`"$CRIER" -q "$(eval_gettext "Do you really want to remove the prefix?")"`
-    if [ "$(echo $crier)" == "0" ]; then
+    if [ "$(echo "$crier" | tail -1)" == "0" ]; then
         try_remove "${START_WINE_PATH}/data/pfx/pfx_${SW_GAME_NAME}"
         try_remove "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.swd"
         try_remove "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.desktop"
@@ -1415,24 +1417,24 @@ REINSTALL_PFX () {
 
     if [ "${SW_USE_PFX}" == "pfx_default" ]; then
         crier=`"$CRIER" -q "$(eval_gettext "Do you really want to reinstall the default prefix?")"`
-        if [ "$(echo $crier)" == "0" ]; then
+        if [ "$(echo "$crier" | tail -1)" == "0" ]; then
             try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
             unsquashfs -d "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}" "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso" &&
             "$CRIER" -i "$(eval_gettext "Restore completed successfully")"
         fi
     else
         crier=`"$CRIER" -q "$(eval_gettext "Do you really want to reinstall the prefix?")"`
-        if [ "$(echo $crier)" == "0" ]; then
+        if [ "$(echo "$crier" | tail -1)" == "0" ]; then
             if [ ! -f "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" ]; then
                 crier=`"$CRIER" -q "$(eval_gettext "Remove old prefix?")"`
-                if [ "$(echo $crier)" == "0" ]; then
+                if [ "$(echo "$crier" | tail -1)" == "0" ]; then
                     try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
                     export REIN_PFX=1
                     WINEBOOT_CS
                 fi
             else
                 crier=`"$CRIER" -q "$(eval_gettext "Restore prefix from backup?")"`
-                if [ "$(echo $crier)" == "0" ]; then
+                if [ "$(echo "$crier" | tail -1)" == "0" ]; then
                     try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
                     unsquashfs -d "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}" "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" &&
                     try_copy "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}/${SW_GAME_NAME}" "${START_WINE_PATH}/data/app_config"
@@ -1443,7 +1445,7 @@ REINSTALL_PFX () {
                     "$CRIER" -i "$(eval_gettext "Restore prefix completed successfully")"
                 else
                     crier=`"$CRIER" -q "$(eval_gettext "Remove old prefix?")"`
-                    if [ "$(echo $crier)" == "0" ]; then
+                    if [ "$(echo "$crier" | tail -1)" == "0" ]; then
                         try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
                         export REIN_PFX=1
                         WINEBOOT_CS
@@ -1461,10 +1463,10 @@ SW_PFX_BACKUP () {
         "$CRIER" -i "$(eval_gettext "You can not overwrite the default prefix backup")"
     else
         crier=`"$CRIER" -q "$(eval_gettext "Do you really want to backup the prefix?")"`
-        if [ "$(echo $crier)" == "0" ]; then
+        if [ "$(echo "$crier" | tail -1)" == "0" ]; then
             if [ -f "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" ]; then
                 crier=`"$CRIER" -q "$(eval_gettext "Overwrite old backup?")"`
-                if [ "$(echo $crier)" == "0" ]; then
+                if [ "$(echo "$crier" | tail -1)" == "0" ]; then
                     try_copy "${START_WINE_PATH}/data/app_config/${SW_GAME_NAME}" "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
                     try_remove "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso"
                     mksquashfs "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}" "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" -noappend -b 1M -comp zstd -Xcompression-level 1 &&
@@ -1487,7 +1489,7 @@ SW_PFX_RESTORE () {
 
     if [ "${SW_USE_PFX}" == "pfx_default" ]; then
         crier=`"$CRIER" -q "$(eval_gettext "Do you really want to restore the prefix?")"`
-        if [ "$(echo $crier)" == "0" ]; then
+        if [ "$(echo "$crier" | tail -1)" == "0" ]; then
             if [ -f "${START_WINE_PATH}/data/pfx_backup/pfx_${SW_GAME_NAME}.iso" ]; then
                 try_remove "${START_WINE_PATH}/data/pfx/pfx_${SW_GAME_NAME}"
                 unsquashfs -d "${START_WINE_PATH}/data/pfx/pfx_${SW_GAME_NAME}" "${START_WINE_PATH}/data/pfx_backup/pfx_${SW_GAME_NAME}.iso" &&
@@ -1497,7 +1499,7 @@ SW_PFX_RESTORE () {
                 "$CRIER" -i "$(eval_gettext "Restore completed successfully")"
             else
                 crier=`"$CRIER" -q "$(eval_gettext "Do you really want to restore the default prefix?")"`
-                if [ "$(echo $crier)" == "0" ]; then
+                if [ "$(echo "$crier" | tail -1)" == "0" ]; then
                     try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
                     unsquashfs -d "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}" "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso" &&
                     "$CRIER" -i "$(eval_gettext "Restore completed successfully")"
@@ -1506,7 +1508,7 @@ SW_PFX_RESTORE () {
         fi
     else
         crier=`"$CRIER" -q "$(eval_gettext "Do you really want to restore the prefix?")"`
-        if [ "$(echo $crier)" == "0" ]; then
+        if [ "$(echo "$crier" | tail -1)" == "0" ]; then
             if [ -f "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" ]; then
                 try_remove "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
                 unsquashfs -d "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}" "${START_WINE_PATH}/data/pfx_backup/${SW_USE_PFX}.iso" &&
@@ -1524,10 +1526,10 @@ SW_PFX_RESTORE () {
 SW_PFX_FULL_BACKUP () {
 
     crier=`"$CRIER" -q "$(eval_gettext "Do you really want to backup all the prefixes?")"`
-    if [ "$(echo $crier)" == "0" ]; then
+    if [ "$(echo "$crier" | tail -1)" == "0" ]; then
         if [ -f "${START_WINE_PATH}/data/pfx_backup/pfx_full_backup.iso" ]; then
             crier=`"$CRIER" -q "$(eval_gettext "Overwrite old backup?")"`
-            if [ "$(echo $crier)" == "0" ]; then
+            if [ "$(echo "$crier" | tail -1)" == "0" ]; then
                 try_remove "${START_WINE_PATH}/data/pfx_backup/pfx_full_backup.iso"
                 mksquashfs "${START_WINE_PATH}/data/pfx" "${START_WINE_PATH}/data/pfx_backup/pfx_full_backup.iso" -noappend -b 1M -comp zstd -Xcompression-level 1 &&
                 "$CRIER" -i "$(eval_gettext "Full backup completed successfully")"
@@ -1543,12 +1545,12 @@ SW_PFX_FULL_BACKUP () {
 SW_PFX_FULL_RESTORE () {
 
     crier=`"$CRIER" -q "$(eval_gettext "Do you really want to restore all the prefixes?")"`
-    if [ "$(echo $crier)" == "0" ]; then
+    if [ "$(echo "$crier" | tail -1)" == "0" ]; then
         if [ ! -f "${START_WINE_PATH}/data/pfx_backup/pfx_full_backup.iso" ]; then
             "$CRIER" -i "$(eval_gettext "You do not have a backup create it first")"
         else
             crier=`"$CRIER" -q "$(eval_gettext "Would you like to save the current prefixes?")"`
-            if [ "$(echo $crier)" == "0" ]; then
+            if [ "$(echo "$crier" | tail -1)" == "0" ]; then
                 mv "${START_WINE_PATH}/data/pfx" "${START_WINE_PATH}/data/pfx_old"
                 unsquashfs -d "${START_WINE_PATH}/data/pfx" "${START_WINE_PATH}/data/pfx_backup/pfx_full_backup.iso" &&
                 "$CRIER" -i "$(eval_gettext "Full Restore completed successfully")"
@@ -1566,7 +1568,7 @@ SW_CLEAR_PFX () {
 
     crier=`"$CRIER" -q "$(eval_gettext "Do you really want to clear the prefix?")"`
 
-    if [ "$(echo $crier)" == "0" ]; then
+    if [ "$(echo "$crier" | tail -1)" == "0" ]; then
         try_clear_pfx
     fi
 
@@ -1932,7 +1934,7 @@ RM_WINE_1 () {
 
     crier=`"$CRIER" -q "$(eval_gettext "Do you really want to remove the wine staging?")"`
 
-    if [ "$(echo $crier)" == "0" ]; then
+    if [ "$(echo "$crier" | tail -1)" == "0" ]; then
         try_remove "${START_WINE_PATH}/data/wine/wine-${STAG_VER}-staging-amd64"
     fi
 
@@ -1942,7 +1944,7 @@ RM_WINE_2 () {
 
     crier=`"$CRIER" -q "$(eval_gettext "Do you really want to remove the wine steam proton?")"`
 
-    if [ "$(echo $crier)" == "0" ]; then
+    if [ "$(echo "$crier" | tail -1)" == "0" ]; then
         try_remove "${START_WINE_PATH}/data/wine/steam-proton-${SP_VER}"
     fi
 
@@ -1952,7 +1954,7 @@ RM_WINE_3 () {
 
     crier=`"$CRIER" -q "$(eval_gettext "Do you really want to remove the wine proton ge?")"`
 
-    if [ "$(echo $crier)" == "0" ]; then
+    if [ "$(echo "$crier" | tail -1)" == "0" ]; then
         try_remove "${START_WINE_PATH}/data/wine/GE-Proton${GE_VER}"
     fi
 
@@ -1962,7 +1964,7 @@ RM_WINE_4 () {
 
     crier=`"$CRIER" -q "$(eval_gettext "Do you really want to remove the wine staging tkg?")"`
 
-    if [ "$(echo $crier)" == "0" ]; then
+    if [ "$(echo "$crier" | tail -1)" == "0" ]; then
         try_remove "${START_WINE_PATH}/data/wine/wine-${STAG_VER}-staging-tkg-amd64"
     fi
 

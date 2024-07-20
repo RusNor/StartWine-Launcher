@@ -2422,44 +2422,46 @@ def sw_activate(swgs):
         wv_name = reveal_stack.get_visible_child().get_name()
         parent_file = get_parent_file()
 
-        if wv_name == vw_dict['shortcuts']:
-            if reveal_stack.get_visible_child() == files_view_grid:
-                if parent_file.get_path() is not None:
-                    on_view_search()
-                else:
-                    overlay_info(overlay, None, msg.msg_dict['action_not_supported'], None, 3)
+        if parent_file is not None:
 
-        elif wv_name == vw_dict['files']:
-            if reveal_stack.get_visible_child() == files_view_grid:
-                if parent_file.get_path() is not None:
-                    on_view_search()
-                else:
-                    overlay_info(overlay, None, msg.msg_dict['action_not_supported'], None, 3)
+            if wv_name == vw_dict['shortcuts']:
+                if reveal_stack.get_visible_child() == files_view_grid:
+                    if parent_file.get_path() is not None:
+                        on_view_search()
+                    else:
+                        overlay_info(overlay, None, msg.msg_dict['action_not_supported'], None, 3)
 
-        elif wv_name == vw_dict['install_launchers']:
-            if reveal_stack.get_visible_child() == scrolled_install_launchers:
-                swgs.launchers_flow.set_filter_func(on_flowbox_search_filter, launchers_list)
+            elif wv_name == vw_dict['files']:
+                if reveal_stack.get_visible_child() == files_view_grid:
+                    if parent_file.get_path() is not None:
+                        on_view_search()
+                    else:
+                        overlay_info(overlay, None, msg.msg_dict['action_not_supported'], None, 3)
 
-        elif wv_name == vw_dict['launch_settings']:
-            if reveal_stack.get_visible_child() == scrolled_launch_settings:
-                ls_names = lp_title + switch_labels
-                swgs.launch_flow.set_filter_func(on_flowbox_search_filter, ls_names)
+            elif wv_name == vw_dict['install_launchers']:
+                if reveal_stack.get_visible_child() == scrolled_install_launchers:
+                    swgs.launchers_flow.set_filter_func(on_flowbox_search_filter, launchers_list)
 
-        elif wv_name == vw_dict['mangohud_settings']:
-            if reveal_stack.get_visible_child() == scrolled_mangohud_settings:
-                swgs.mangohud_flow.set_filter_func(on_flowbox_search_filter, check_mh_labels)
-                swgs.colors_flow_mh.set_filter_func(on_flowbox_search_filter, mh_colors_description)
+            elif wv_name == vw_dict['launch_settings']:
+                if reveal_stack.get_visible_child() == scrolled_launch_settings:
+                    ls_names = lp_title + switch_labels
+                    swgs.launch_flow.set_filter_func(on_flowbox_search_filter, ls_names)
 
-        elif wv_name == vw_dict['vkbasalt_settings']:
-            if reveal_stack.get_visible_child() == scrolled_vkbasalt_settings:
-                swgs.vkbasalt_flow.set_filter_func(on_flowbox_search_filter, vkbasalt_dict)
+            elif wv_name == vw_dict['mangohud_settings']:
+                if reveal_stack.get_visible_child() == scrolled_mangohud_settings:
+                    swgs.mangohud_flow.set_filter_func(on_flowbox_search_filter, check_mh_labels)
+                    swgs.colors_flow_mh.set_filter_func(on_flowbox_search_filter, mh_colors_description)
 
-        elif wv_name == vw_dict['winetricks']:
-            if reveal_stack.get_visible_child() == scrolled_winetricks:
-                if swgs.stack_tabs.get_visible_child() == swgs.scrolled_dll:
-                    on_winetricks_search(swgs.list_store_dll_0, dll_dict)
-                elif swgs.stack_tabs.get_visible_child() == swgs.scrolled_fonts:
-                    on_winetricks_search(swgs.list_store_fonts, fonts_dict)
+            elif wv_name == vw_dict['vkbasalt_settings']:
+                if reveal_stack.get_visible_child() == scrolled_vkbasalt_settings:
+                    swgs.vkbasalt_flow.set_filter_func(on_flowbox_search_filter, vkbasalt_dict)
+
+            elif wv_name == vw_dict['winetricks']:
+                if reveal_stack.get_visible_child() == scrolled_winetricks:
+                    if swgs.stack_tabs.get_visible_child() == swgs.scrolled_dll:
+                        on_winetricks_search(swgs.list_store_dll_0, dll_dict)
+                    elif swgs.stack_tabs.get_visible_child() == swgs.scrolled_fonts:
+                        on_winetricks_search(swgs.list_store_fonts, fonts_dict)
 
     def on_view_search():
         '''___recursive search for files in the current directory___'''
@@ -7304,7 +7306,7 @@ def sw_activate(swgs):
                 swgs.column_view_type.set_title(msg.msg_dict['startup_mode'])
 
                 stat_dict = app_info(item.get_path())
-                app_path = stat_dict['Exec'].strip('"').replace(' ', '_')
+                app_path = stat_dict['Exec'].replace(f'env "{sw_start}" ', '').strip('"').replace(' ', '_')
                 stat_name = app_path.replace('/', '_').replace('.', '_')
                 stat_path = f'{sw_fm_cache_stats}/{stat_name}'
 

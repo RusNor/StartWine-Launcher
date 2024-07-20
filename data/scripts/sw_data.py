@@ -292,35 +292,34 @@ default_bookmarks = str(
     + f'{sw_wine}\n'
     + f'{sw_tmp}/logs\n'
 )
-default_ini = '''
-{
-"view_mode": "grid",
-"view_widget": "files",
-"icon_size": "60",
-"shortcut_size": "120",
-"icon_position": "horizontal",
-"color_scheme": "dark",
-"control_panel": "show",
-"autostart": "0",
-"restore_menu": "on",
-"width": "1280",
-"height": "720",
-"hidden_files": "True",
-"sorting_files": "name",
-"sorting_reverse": "False",
-"opengl_bg": "True",
-"shader_src": "0",
-"on_tray": "True",
-"language": "ru_RU",
-"icons": "builtin",
-"sound": "on",
-"auto_stop": "on",
-"auto_hide_top_header": "off",
-"auto_hide_bottom_header": "off",
-"default_dir": "'''f"{Path.home()}"'''",
-"current_dir": "'''f"{Path.home()}"'''"
+default_ini = {
+    "view_mode": "grid",
+    "view_widget": "files",
+    "icon_size": "60",
+    "shortcut_size": "120",
+    "icon_position": "horizontal",
+    "color_scheme": "dark",
+    "control_panel": "show",
+    "autostart": "0",
+    "restore_menu": "on",
+    "width": "1280",
+    "height": "720",
+    "hidden_files": "True",
+    "sorting_files": "name",
+    "sorting_reverse": "False",
+    "opengl_bg": "True",
+    "shader_src": "0",
+    "on_tray": "True",
+    "language": "ru_RU",
+    "icons": "builtin",
+    "sound": "on",
+    "auto_stop": "on",
+    "auto_hide_top_header": "off",
+    "auto_hide_bottom_header": "off",
+    "default_dir": f"{Path.home()}",
+    "current_dir": f"{Path.home()}"
 }
-'''
+
 default_dark_css = '''
 /* Global color definitions */
 @define-color sw_bg_color rgba(28,32,36,0.8);
@@ -740,32 +739,26 @@ def clear_app_icons():
 
 ####___Create sw_menu.json file___.
 
-def check_menu_json():
+def create_menu_json():
     '''___create menu configuration file___'''
-    try:
-        with open(sw_menu_json, 'w', encoding='utf-8') as f:
-            f.write(default_ini)
-            f.close()
-    except IOError as e:
-        print(f'{TermColors.VIOLET2}SW_MENU_JSON: {TermColors.RED}{e}' + TermColors.END)
-    else:
-        print(f'{TermColors.VIOLET2}SW_MENU_JSON: {TermColors.GREEN}create sw_menu.json: done' + TermColors.END)
+
+    with open(sw_menu_json, 'w', encoding='utf-8') as f:
+        json.dump(default_ini, f)
+        print(f'{TermColors.VIOLET2}SW_MENU_JSON: '
+            + f'{TermColors.GREEN}create sw_menu.json: done' + TermColors.END)
 
 def set_menu_json_default():
     '''___reset menu configuration file to default___'''
     try:
         Path(sw_menu_json).unlink()
     except IOError as e:
-        print(f'{TermColors.VIOLET2}SW_MENU_JSON: {TermColors.RED}{e}' + TermColors.END)
+        print(f'{TermColors.VIOLET2}SW_MENU_JSON: '
+            + f'{TermColors.RED}{e}' + TermColors.END)
     else:
-        try:
-            with open(sw_menu_json, 'w', encoding='utf-8') as f:
-                f.write(default_ini)
-                f.close()
-        except IOError as e:
-            print(f'{TermColors.VIOLET2}SW_MENU_JSON: {TermColors.RED}{e}' + TermColors.END)
-        else:
-            print(f'{TermColors.VIOLET2}SW_MENU_JSON: {TermColors.GREEN}create sw_menu.json: done' + TermColors.END)
+        with open(sw_menu_json, 'w', encoding='utf-8') as f:
+            json.dump(default_ini, f)
+            print(f'{TermColors.VIOLET2}SW_MENU_JSON: '
+                + f'{TermColors.GREEN}create sw_menu.json: done' + TermColors.END)
 
 def read_menu_conf():
     '''___return dict from menu configuration file___'''
@@ -784,7 +777,19 @@ def write_menu_conf(dict_ini):
         f.write(json.dumps(dict_ini))
         f.close()
 
+def diff_menu_conf():
+    '''___checking differences between current and default menu config___'''
+
+    dict_ini = read_menu_conf()
+    diff_list = []
+    for k, v in default_ini.items():
+        if not k in dict_ini.keys():
+            dict_ini[k] = default_ini[k]
+    else:
+        write_menu_conf(dict_ini)
+
 def get_roman(number):
+    '''___get roman number from arabic___'''
 
     roman = ''
     number = int(number)
@@ -796,6 +801,7 @@ def get_roman(number):
     return roman
 
 def str_to_roman(string):
+    '''___string arabic numbers to roman numbers___'''
 
     for e in string:
         if e.isdigit():
@@ -890,7 +896,9 @@ if (not sw_app_vicons.exists()
         create_app_icons()
 
 if not sw_menu_json.exists():
-    check_menu_json()
+    create_menu_json()
+else:
+    diff_menu_conf()
 
 ################################___Menu_settings___:
 
@@ -917,7 +925,6 @@ environ['SW_LOCALE'] = sw_lang
 environ['SW_SCRIPTS_PATH'] = f'{sw_scripts}'
 environ['GTK_THEME'] = "Adwaita-dark"
 
-#gsettings set org.gnome.desktop.interface gtk-color-scheme 'prefer-dark'
 ################################____Locale___:
 
 def set_locale(sw_lang):
@@ -1877,11 +1884,11 @@ reg_patches = [''] + [
 ]
 dxvk_ver = [
     '1.9', '1.9.1', '1.9.2', '1.9.3', '1.9.4', '1.10', '1.10.1', '1.10.2',
-    '1.10.3', '2.0', '2.1', '2.2', '2.3', '2.3.1',
+    '1.10.3', '2.0', '2.1', '2.2', '2.3', '2.3.1', '2.4',
 ]
 vkd3d_ver = [
     '2.0', '2.1', '2.2', '2.3', '2.3.1', '2.4', '2.5', '2.6', '2.7', '2.8',
-    '2.9', '2.10', '2.11','2.11.1', '2.12',
+    '2.9', '2.10', '2.11', '2.11.1', '2.12', '2.13',
 ]
 combo_list = winarch + winver + reg_patches + dxvk_ver + vkd3d_ver
 fsr_mode = {_('Ultra'): 'ultra', _('Quality'): 'quality', _('Balanced'): 'balanced', _('Performance'): 'performance'}
@@ -3119,7 +3126,7 @@ exe_mime_types = [
     'application/x-bat',
     'application/x-msi',
     'application/x-msdownload',
-    'application/vnd.microsoft.portable-executable'
+    'application/vnd.microsoft.portable-executable',
     'application/x-wine-extension-msp',
     'application/x-msdos-program',
 ]
