@@ -1,0 +1,15 @@
+/* Global color definitions */
+@define-color sw_bg_color rgba(210,210,220,0.9);
+@define-color sw_accent_fg_color rgba(0,160,255,0.8);
+@define-color sw_accent_bg_color rgba(210,210,220,0.8);
+@define-color sw_header_bg_color rgba(240,240,250,0.99);
+@define-color sw_pop_bg_color rgba(220,220,230,0.99);
+@define-color sw_invert_bg_color rgba(61,61,61, 1.0);
+@define-color sw_invert_accent_fg_color rgba(61,61,61, 1.0);
+@define-color sw_invert_accent_bg_color rgba(61,61,61, 1.0);
+@define-color sw_invert_header_bg_color rgba(61,61,61, 1.0);
+@define-color sw_invert_pop_bg_color rgba(61,61,61, 1.0);
+@define-color sw_invert_progress_color rgba(255,95,0,1.0);
+@define-color sw_view_bg_color rgba(0,0,0,0.5);
+@define-color sw_flow_bg_color rgba(0,0,0,0.5);
+@import url("../default.css");

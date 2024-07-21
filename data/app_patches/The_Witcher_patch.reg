@@ -1,0 +1,16 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\Software\Wow6432Node\CD Projekt Red]
+
+[HKEY_LOCAL_MACHINE\Software\Wow6432Node\CD Projekt Red\The Witcher]
+"InstallFolder"="C:\\Games\\The Witcher.Gold Edition.v 1.5.0.1304 + 8 DLC"
+"IsDjinniInstalled"=dword:00000001
+"Language"="14"
+"RegionVersion"=""
+
+[HKEY_LOCAL_MACHINE\Software\Wow6432Node\1C]
+
+[HKEY_LOCAL_MACHINE\Software\Wow6432Node\1C\{EE7C4A60-4568-459E-BDDB-D3100BF2BC1C}]
+"AppFile"="C:\\Games\\The Witcher.Gold Edition.v 1.5.0.1304 + 8 DLC\\launcher.exe"
+"AppVersion"="1.5.0.1304"
+"InstallFlag"=dword:00000001

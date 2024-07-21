@@ -1,12 +1,23 @@
 #!/usr/bin/env bash
 
-. "$(dirname $(readlink -f "$0"))/sw_runlib"
+export LANGUAGE="${SW_LOCALE}.UTF-8"
 
+. gettext.sh
+export TEXTDOMAIN="StartWine"
+export TEXTDOMAINDIR="${SW_SCRIPTS_PATH}/locale"
+
+RED='\033[1;31m'
+
+winedevice_pids="$(pgrep 'winedevice')"
 wine_pids="$(ls -l /proc/*/exe 2>/dev/null | grep -E 'wine(64)?-preloader|wineserver' | awk -F/ '{print $3}')"
-if [ ! -z "${wine_pids}" ]; then
-    kill -n 9 ${wine_pids}
-fi
 
-notify-send -a "StartWine" "$(eval_gettext "Kill wine porocesses")"
+for wine_pid in $winedevice_pids $wine_pids ; do
+    if [ ! -z "${wine_pid}" ]; then
+        kill -n 9 ${wine_pid}
+        echo -e "$RED $wine_pid"
+    fi
+done
 
-exit
+notify-send -t 1500 -a "StartWine" "$(eval_gettext "Termination of active processes...")"
+
+exit 0

@@ -4,61 +4,13 @@ Windows Registry Editor Version 5.00
 "wineoss.drv"="N"
 
 [HKEY_CURRENT_USER\Software\Wine\AppDefaults\steam.exe]
-"Version"="win7"
-
-[HKEY_CURRENT_USER\Software\Valve\Steam]
-"DWriteEnable"="dword:00000000"
-
-[HKEY_CURRENT_USER\Software\Wine\Fonts\Replacements]
-"Lucida Console"="MS Sans Serif"
-
-HKEY_CURRENT_USER\Software\Wine\Fonts\Replacements
-"Meiryo"="Source Han Sans TC"
-
-[HKEY_CURRENT_USER\Software\Wine\Fonts\Replacements]
-"Meiryo"="Source Han Sans SC"
-
-[HKEY_CURRENT_USER\Software\Valve\Steam]
-"GPUAccelWebViews"="dword:1"
-
-[HKEY_CURRENT_USER\Software\Wine\Fonts\Replacements]
-"Meiryo"="Microsoft YaHei"
+"Version"="win10"
 
 [HKEY_CURRENT_USER\Software\Wine\DllOverrides]
 "msxml3"="native,builtin"
 
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Fonts]
-"Source Han Sans SC Bold"="C:\Windows\fonts\SourceHanSansSC-Bold.otf"
+[HKEY_CURRENT_USER\Software\Valve\Steam]
+"DWriteEnable"="dword:00000000"
 
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Fonts]
-"Source Han Sans SC ExtraLight"="C:\Windows\fonts\SourceHanSansSC-ExtraLight.otf"
-
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Fonts]
-"Source Han Sans SC Heavy"="C:\Windows\fonts\SourceHanSansSC-Heavy.otf"
-
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Fonts]
-"Source Han Sans SC Light"="C:\Windows\fonts\SourceHanSansSC-Light.otf"
-
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Fonts]
-"Source Han Sans SC Medium"="C:\Windows\fonts\SourceHanSansSC-Medium.ot"
-
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Fonts]
-"Source Han Sans SC Normal"="C:\Windows\fonts\SourceHanSansSC-Normal.otf"
-
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Fonts]
-"Source Han Sans SC Regular"="C:\Windows\fonts\SourceHanSansSC-Regular.otf"
-
-[HKEY_CURRENT_USER\Software\Wine\Fonts\Replacements]
-"SimSun"="Source Han Sans SC Regular"
-
-[HKEY_CURRENT_USER\Software\Wine\Fonts\Replacements]
-"宋体"="Source Han Sans SC Regular"
-
-[HKEY_CURRENT_USER\Software\Wine\Fonts\Replacements]
-"新宋体"="Source Han Sans SC Regular"
-
-[HKEY_CURRENT_USER\Software\Wine\Fonts\Replacements]
-"NSimSun"="Source Han Sans SC Regular"
-
-[HKEY_CURRENT_USER\Software\Wine\Fonts\Replacements]
-"Microsoft YaHei UI"="Source Han Sans SC"
+[HKEY_CURRENT_USER\Software\Valve\Steam]
+"GPUAccelWebViews"="dword:1"
