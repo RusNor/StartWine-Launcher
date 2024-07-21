@@ -307,11 +307,11 @@ if [[ "$RUNTIME_VER" -lt "$RUNTIME_FORMAT_VER" ]]; then
     chmod +x "${SW_RUNTIME}"
 
     if [ -f "${SW_RUNTIME}" ]; then
-        [ ! -f "${START_WINE_PATH}/data/runtime/sw" ] && \
-            ln -sf "${SW_RUNTIME}" "${START_WINE_PATH}/data/runtime/sw"
-
         [ ! -f "$HOME/.local/bin/sw" ] && \
-            ln -sf "${SW_RUNTIME}" "$HOME/.local/bin/sw"
+            ln -sfr "${SW_RUNTIME}" "$HOME/.local/bin/sw"
+
+        [ ! -f "${START_WINE_PATH}/data/runtime/sw" ] && \
+            ln -sfr "${SW_RUNTIME}" "${START_WINE_PATH}/data/runtime/sw"
 
         echo "${RUNTIME_GIT_VER}" > "${START_WINE_PATH}/data/runtime/version"
     fi
