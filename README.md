@@ -118,7 +118,7 @@ StartWine was written from scratch, but using already ready-made components with
 - Lintech
 - LinuxShef
 - Sheridan
-- Wilk
+- Wik
 
 > **Project design**
 
