@@ -96,12 +96,12 @@ StartWine was written from scratch, but using already ready-made components with
 
 > **Developers**
 
-- [Rustan Normatov](https://github.com/RusNor)
+- [Rustam Normatov](https://github.com/RusNor)
 - [Nikita Maslov](https://github.com/nix-on-nix)
 
 > **Created and helped write code**
 
-- [Rustan Normatov](https://github.com/RusNor)
+- [Rustam Normatov](https://github.com/RusNor)
 - [Nikita Maslov](https://github.com/nix-on-nix)
 - [Maxim Tarasov](https://github.com/VHSgunzo)
 
