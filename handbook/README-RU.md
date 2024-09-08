@@ -19,8 +19,6 @@ GitHub > [Click](https://github.com/RusNor/StartWine-Launcher/releases)
 
 AUR > [I use Arch :p](https://aur.archlinux.org/packages/startwine)
 
-RPM-based > [Releases](https://github.com/RusNor/StartWine-Launcher/releases)
-
 Discord > [Click](https://discord.gg/jjY3auVdfm)
 
 Сделайте файл исполняемым и запустите двойным кликом
