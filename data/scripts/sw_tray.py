@@ -5,16 +5,15 @@
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gdk', '3.0')
-from gi.repository import Gtk, GLib, Gdk, Gio
+from gi.repository import Gtk, GLib, Gio
 
 import os
-from os import environ
 from sys import argv
 from pathlib import Path
-from subprocess import Popen, PIPE, run
+from subprocess import Popen
 
-from sw_data import (str_tray_open, str_tray_hide, str_tray_run, str_tray_shortcuts,
-                    str_tray_stop, str_tray_shutdown
+from sw_data import (
+    str_tray_open, str_tray_hide, str_tray_run, str_tray_shortcuts, str_tray_stop, str_tray_shutdown
 )
 
 sw_link = Path(argv[0]).absolute().parent
@@ -23,7 +22,7 @@ sw_path = Path(sw_scripts).parent.parent
 sw_fsh = Path(f"{sw_scripts}/sw_function.sh")
 sw_run = Path(f"{sw_scripts}/sw_run")
 sw_menu = Path(f"{sw_scripts}/sw_menu.py")
-sw_shortcuts = sw_shortcuts = Path(f"{sw_path}/Shortcuts")
+sw_shortcuts = Path(f"{sw_path}/Shortcuts")
 
 ####___SET_PROGRAM_NAME___:
 
@@ -36,12 +35,11 @@ appind = 1
 try:
     gi.require_version('AyatanaAppIndicator3', '0.1')
     from gi.repository import AyatanaAppIndicator3 as appindicator
-except:
+except (Exception,):
     try:
         gi.require_version('AppIndicator3', '0.1')
         from gi.repository import AppIndicator3 as appindicator
-    except ImportError as e:
-        print(f'{e}')
+    except (Exception,):
         appind = 0
 
 APPINDICATOR_ID = 'StartWine'
@@ -49,10 +47,11 @@ DIRPATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 ####___TRAY_MENU___:
 
+
 def tray_main():
 
     def on_startwine(_):
-        '''___Show or hide StartWine window___'''
+        """___Show or hide StartWine window___"""
 
         if _.get_label() == str_tray_open:
             _.set_label(str_tray_hide)
@@ -60,14 +59,14 @@ def tray_main():
             _.set_label(str_tray_open)
 
         try:
-            ret_var = proxy.call_sync(
+            proxy.call_sync(
                     "ShowHide", None, Gio.DBusCallFlags.NO_AUTO_START, 500, None
             )
-        except Exception as e:
+        except (Exception,):
             Popen(f'{sw_menu}', shell=True)
 
     def on_shortcuts_fr_item(_):
-        '''___Show shortcuts list for run app___'''
+        """___Show shortcuts list for run app___"""
 
         fr_label = _.get_label()
         fr_name = _.get_name()
@@ -98,7 +97,7 @@ def tray_main():
                     text = f'"{x_path}"'
                     message = GLib.Variant("(s)", (text,))
                     try:
-                        ret_var = proxy.call_sync(
+                        proxy.call_sync(
                                 "Run", message, Gio.DBusCallFlags.NO_AUTO_START, 500, None
                         )
                     except Exception as e:
@@ -107,27 +106,25 @@ def tray_main():
                     try:
                         text = 'lnk_error'
                         message = GLib.Variant("(s)", (text,))
-                        ret_var = proxy.call_sync(
+                        proxy.call_sync(
                                 "Message", message, Gio.DBusCallFlags.NO_AUTO_START, 500, None
                         )
-                    except Exception as e:
+                    except (Exception,):
                         pass
 
     def on_shortcuts_sc_item(_):
-        '''___Show shortcuts list for open app___'''
+        """___Show shortcuts list for open app___"""
 
         sc_label = _.get_label()
         sc_name = _.get_name()
         cmd_startwine.set_label(str_tray_hide)
 
         if sc_label == f'StartWine':
-            text = 'None'
-            message = GLib.Variant("(s)", (text,))
             try:
-                ret_var = proxy.call_sync(
+                proxy.call_sync(
                         "Show", None, Gio.DBusCallFlags.NO_AUTO_START, 500, None
                 )
-            except Exception as e:
+            except (Exception,):
                 pass
         else:
             d_exec = [x.split('=')[1] for x in Path(sc_name).read_text().splitlines() if 'Exec=' in x]
@@ -156,7 +153,7 @@ def tray_main():
                     text = f'"{x_path}"'
                     message = GLib.Variant("(s)", (text,))
                     try:
-                        ret_var = proxy.call_sync(
+                        proxy.call_sync(
                                 "Show", message, Gio.DBusCallFlags.NO_AUTO_START, 500, None
                         )
                     except Exception as e:
@@ -165,26 +162,26 @@ def tray_main():
                     try:
                         text = 'lnk_error'
                         message = GLib.Variant("(s)", (text,))
-                        ret_var = proxy.call_sync(
+                        proxy.call_sync(
                                 "Message", message, Gio.DBusCallFlags.NO_AUTO_START, 500, None
                         )
-                    except Exception as e:
+                    except (Exception,):
                         pass
 
     def stop(_):
-        '''___Stop all wine processes___'''
+        """___Stop all wine processes___"""
 
         cmd = f"{sw_scripts}/sw_stop"
         Popen(cmd, shell=True)
 
     def shutdown(_):
-        '''___StartWine shutdown___'''
+        """___StartWine shutdown___"""
 
         try:
-            ret_var = proxy.call_sync(
+            proxy.call_sync(
                             "Shutdown", None, Gio.DBusCallFlags.NO_AUTO_START, 500, None
             )
-        except Exception as e:
+        except (Exception,):
             cmd = f"{sw_scripts}/sw_stop"
             Popen(cmd, shell=True)
             Gtk.main_quit()
@@ -196,7 +193,7 @@ def tray_main():
     def on_check_sc(_):
 
         sc_path = [sc for sc in list(Path(sw_shortcuts).iterdir())]
-        if sc_path == []:
+        if len(sc_path) == 0:
             pass
 
     ############################___MAIN_MENU___:
@@ -294,10 +291,10 @@ def tray_main():
     menu.show_all()
     Gtk.main()
 
+
 if __name__ == "__main__":
 
     if appind == 1:
         tray_main()
     else:
         print('SW_TRAY: error, appindicator not found')
-

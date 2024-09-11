@@ -2,8 +2,8 @@
 ################################
 
 # Core modules.
-from os import environ, pathsep, getenv
-from sys import argv, orig_argv
+from os import environ, getenv
+from sys import argv
 from pathlib import Path
 import shutil
 import json
@@ -11,6 +11,7 @@ import json
 # Third party modules.
 import gi
 from gi.repository import GLib
+
 import psutil
 from psutil import Process
 
@@ -23,8 +24,9 @@ sw_program_name = 'StartWine'
 
 ################################
 
-class TermColors():
-    '''___terminal colors pallete___'''
+
+class TermColors:
+    """___terminal colors pallete___"""
 
     END = '\33[0m'
     BOLD = '\33[1m'
@@ -72,6 +74,7 @@ class TermColors():
 
 ################################___Empty lists and dicts___:
 
+
 dict_ini = dict()
 app_dict = dict()
 app_conf_dict = dict()
@@ -102,15 +105,8 @@ thumbnail_video_dict = dict()
 thumbnail_image_dict = dict()
 action_list = list()
 timeout_list = list()
-
-global flap_locked
-flap_locked = True
-
-global f_mon_event
-f_mon_event = list()
-
-global scheme
-scheme = ''
+process_workers = list()
+parent_path_list = list()
 
 ################################___Paths___:
 
@@ -126,7 +122,6 @@ sw_tray = Path(f"{sw_scripts}/sw_tray.py")
 sw_cube = Path(f"{sw_scripts}/sw_cube.py")
 sw_localedir = Path(f"{sw_scripts}/locale")
 sw_version = Path(f'{sw_scripts}/version')
-sw_winever_json = Path(f'{sw_scripts}/wine_version.json')
 
 sw_path = Path(sw_scripts).parent.parent
 sw_default_path = Path(f"{Path.home()}/.local/share/StartWine")
@@ -141,6 +136,7 @@ sw_app_icons = Path(f'{sw_img}/app_icons')
 sw_app_vicons = Path(f'{sw_img}/app_icons/vertical')
 sw_app_hicons = Path(f'{sw_img}/app_icons/horizontal')
 sw_app_heroes_icons = Path(f'{sw_img}/app_icons/heroes')
+sw_app_default_icons = Path(f'{sw_img}/app_icons/default')
 sw_launchers = Path(f'{sw_img}/launcher_icons/install_launchers')
 sw_launchers_vertical = Path(f'{sw_img}/launcher_icons/vertical')
 sw_launchers_horizontal = Path(f'{sw_img}/launcher_icons/horizontal')
@@ -152,7 +148,6 @@ sw_tmp = Path(f"{sw_data_dir}/tmp")
 sw_logs = Path(f"{sw_tmp}/logs")
 sw_tools = Path(f"{sw_data_dir}/tools")
 sw_wine = Path(f"{sw_data_dir}/wine")
-sw_wine_custom = Path(f"{sw_data_dir}/wine/wine_custom")
 sw_games = Path(f"{sw_path}/Games")
 sw_shortcuts = Path(f"{sw_path}/Shortcuts")
 sw_themes = Path(f"{sw_img}/sw_themes")
@@ -167,9 +162,6 @@ sw_fm_cache_database = Path(f'{sw_fm_cache}/database')
 sw_fm_cache_donloads = Path(f'{sw_fm_cache}/downloads')
 sw_fm_cache_stats = Path(f'{sw_fm_cache}/stats')
 sw_runtime = Path(f"{sw_path}/data/runtime/sw_runtime")
-sw_appid_source = Path(f'{sw_scripts}/appid_source.json')
-sw_appid_json = Path(f'{sw_scripts}/appid.json')
-sw_menu_json = Path(f'{sw_scripts}/sw_menu.json')
 sys_sounds = Path(f'/usr/share/sounds/freedesktop/stereo')
 sw_sounds = Path(f'{sw_themes}/sounds')
 sw_startup_sounds = f'{sw_sounds}/startup'
@@ -177,60 +169,104 @@ sw_bookmarks = Path(f'{Path.home()}/.cache/sw_fm/bookmarks')
 sw_background = Path(f'{sw_themes}/background')
 sw_mesa_shader_cache = Path(f'{sw_tmp}/mesa_shader_cache_sf')
 sw_gl_shader_cache = Path(f'{sw_tmp}/gl_shader_cache')
-sw_vkd3d_shader_cache = Path(f'{sw_tmp}/vkd3d_cache')
-sw_dxvk_shader_cache = Path(f'{sw_tmp}/dxvk_cache')
-sw_gst_cache = Path(f'{sw_tmp}/gstreamer-1.0')
+sw_vulkan_shader_cache = Path(f'{sw_tmp}/vulkan_shader_cache')
 sw_gst_home_cache = Path(f'{Path.home()}/.cache/gstreamer-1.0')
 
+sw_winever_json = Path(f'{sw_scripts}/wine_version.json')
+sw_appid_source = Path(f'{sw_scripts}/appid_source.json')
+sw_appid_json = Path(f'{sw_scripts}/appid.json')
+sw_menu_json = Path(f'{sw_scripts}/sw_menu.json')
+
 if not sw_shortcuts.exists():
-    try:
-        sw_shortcuts.mkdir(parents=True, exist_ok=True)
-    except Exception as e:
-        print(TermColors.RED, e, TermColors.END)
+    sw_shortcuts.mkdir(parents=True, exist_ok=True)
 
-dir_home = GLib.get_home_dir()
-if dir_home is None:
+try:
+    dir_home = GLib.get_home_dir()
+except (Exception,):
     dir_home = f'{Path.home()}'
+else:
+    if dir_home is None:
+        dir_home = f'{Path.home()}'
 
-dir_docs = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DOCUMENTS)
-if dir_docs is None:
+try:
+    dir_docs = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DOCUMENTS)
+except (Exception,):
     dir_docs = f'{Path.home()}/Documents'
+else:
+    if dir_docs is None:
+        dir_docs = f'{Path.home()}/Documents'
 
-dir_desktop = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DESKTOP)
-if dir_desktop is None:
+try:
+    dir_desktop = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DESKTOP)
+except (Exception,):
     dir_desktop = f'{Path.home()}/Desktop'
+else:
+    if dir_desktop is None:
+        dir_desktop = f'{Path.home()}/Desktop'
 
-dir_pics = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_PICTURES)
-if dir_pics is None:
+try:
+    dir_pics = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_PICTURES)
+except (Exception,):
     dir_pics = f'{Path.home()}/Pictures'
+else:
+    if dir_pics is None:
+        dir_pics = f'{Path.home()}/Pictures'
 
-dir_videos = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_VIDEOS)
-if dir_videos is None:
+try:
+    dir_videos = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_VIDEOS)
+except (Exception,):
     dir_videos = f'{Path.home()}/Video'
+else:
+    if dir_videos is None:
+        dir_videos = f'{Path.home()}/Video'
 
-dir_music = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_MUSIC)
-if dir_music is None:
+try:
+    dir_music = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_MUSIC)
+except (Exception,):
     dir_music = f'{Path.home()}/Music'
+else:
+    if dir_music is None:
+        dir_music = f'{Path.home()}/Music'
 
-dir_downloads = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DOWNLOAD)
-if dir_downloads is None:
+try:
+    dir_downloads = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DOWNLOAD)
+except (Exception,):
     dir_downloads = f'{Path.home()}/Downloads'
+else:
+    if dir_downloads is None:
+        dir_downloads = f'{Path.home()}/Downloads'
 
-dir_public = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_PUBLIC_SHARE)
-if dir_public is None:
+try:
+    dir_public = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_PUBLIC_SHARE)
+except (Exception,):
     dir_public = f'{Path.home()}/Public'
+else:
+    if dir_public is None:
+        dir_public = f'{Path.home()}/Public'
 
-dir_templates = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_TEMPLATES)
-if dir_templates is None:
+try:
+    dir_templates = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_TEMPLATES)
+except (Exception,):
     dir_templates = f'{Path.home()}/Templates'
+else:
+    if dir_templates is None:
+        dir_templates = f'{Path.home()}/Templates'
 
-xdg_config_home = GLib.get_user_config_dir()
-if xdg_config_home is None:
+try:
+    xdg_config_home = GLib.get_user_config_dir()
+except (Exception,):
     xdg_config_home = f'{Path.home()}/.config'
+else:
+    if xdg_config_home is None:
+        xdg_config_home = f'{Path.home()}/.config'
 
-user_name = GLib.get_user_name()
-if user_name is None:
+try:
+    user_name = GLib.get_user_name()
+except (Exception,):
     user_name = getenv('USER')
+else:
+    if user_name is None:
+        user_name = getenv('USER')
 
 dir_autostart = f'{xdg_config_home}/autostart'
 sw_tray_autostart = Path(f'{xdg_config_home}/autostart/StartWine-Tray.desktop')
@@ -323,32 +359,32 @@ default_ini = {
 default_dark_css = '''
 /* Global color definitions */
 @define-color sw_bg_color rgba(28,32,36,0.8);
-@define-color sw_accent_fg_color rgba(80,177,252,0.8);
+@define-color sw_accent_fg_color rgba(80,176,251,0.8);
 @define-color sw_accent_bg_color rgba(40,48,56,0.5);
 @define-color sw_header_bg_color rgba(0,0,0,0.99);
 @define-color sw_pop_bg_color rgba(40,48,56,0.99);
-@define-color sw_invert_bg_color rgba(224,224,224, 1.0);
+@define-color sw_invert_bg_color rgba(160,160,160, 1.0);
 @define-color sw_invert_accent_fg_color rgba(41,41,41, 1.0);
-@define-color sw_invert_accent_bg_color rgba(240,240,240, 1.0);
-@define-color sw_invert_header_bg_color rgba(192,192,192, 1.0);
-@define-color sw_invert_pop_bg_color rgba(240,240,240, 1.0);
-@define-color sw_invert_progress_color rgba(175,78,3,1.0);
+@define-color sw_invert_accent_bg_color rgba(176,176,176, 1.0);
+@define-color sw_invert_header_bg_color rgba(128,128,128, 1.0);
+@define-color sw_invert_pop_bg_color rgba(176,176,176, 1.0);
+@define-color sw_invert_progress_color rgba(175,79,4,1.0);
 @define-color sw_view_bg_color rgba(0,0,0,0.5);
 @define-color sw_flow_bg_color rgba(0,0,0,0.5);
 @import url("../default.css");
 '''
 default_light_css = '''
 /* GLOBAL COLOR DEFINITIONS */
-@define-color sw_bg_color rgba(210,210,220,0.9);
+@define-color sw_bg_color rgba(210,210,220,0.99);
 @define-color sw_accent_fg_color rgba(0,160,255,0.8);
-@define-color sw_accent_bg_color rgba(210,210,220,0.8);
+@define-color sw_accent_bg_color rgba(220,220,230,0.99);
 @define-color sw_header_bg_color rgba(240,240,250,0.99);
 @define-color sw_pop_bg_color rgba(220,220,230,0.99);
-@define-color sw_invert_bg_color rgba(45,45,35,1.0);
-@define-color sw_invert_accent_fg_color rgba(255,95,0,1.0);
-@define-color sw_invert_accent_bg_color rgba(45,45,35,1.0);
-@define-color sw_invert_header_bg_color rgba(15,15,5,1.0);
-@define-color sw_invert_pop_bg_color rgba(35,35,25,1.0);
+@define-color sw_invert_bg_color rgba(60,60,60,1.0);
+@define-color sw_invert_accent_fg_color rgba(60,60,60,1.0);
+@define-color sw_invert_accent_bg_color rgba(60,60,60,1.0);
+@define-color sw_invert_header_bg_color rgba(60,60,60,1.0);
+@define-color sw_invert_pop_bg_color rgba(60,60,60,1.0);
 @define-color sw_invert_progress_color rgba(255,95,0,1.0);
 @define-color sw_view_bg_color rgba(0,0,0,0.5);
 @define-color sw_flow_bg_color rgba(0,0,0,0.5);
@@ -512,9 +548,9 @@ Icon='''f"{sw_path}/data/img/gui_icons/sw_icon.svg"'''
 '''
 
 default_mangohud = (
-'fps_color_change,round_corners=12,cpu_load_change,gpu_load_change,core_load_change\
-,background_alpha=0.2,font_size=20,background_color=020202,position=top-right\
-,toggle_hud_position='
+    'fps_color_change,round_corners=12,cpu_load_change,gpu_load_change,core_load_change'
+    + ',background_alpha=0.2,font_size=20,background_color=020202,position=top-right'
+    + ',toggle_hud_position='
 )
 
 default_mangohud_colors = {
@@ -544,7 +580,9 @@ default_themes = {
     'yellow': default_custom_css_yellow,
 }
 
+
 def check_sw_version():
+    """___reading StartWine version from version file___"""
 
     if sw_version.exists():
         version = sw_version.read_text().splitlines()[0]
@@ -554,22 +592,21 @@ def check_sw_version():
 
     return str_sw_version
 
+
 def read_wine_ver_data():
+    """___reading Wine version from JSON file___"""
 
     if sw_winever_json.exists():
         with open(sw_winever_json, 'r', encoding='utf-8') as f:
             winever_data = json.load(f)
             f.close()
-
         return winever_data
     else:
-        winever_data = None
-        return winever_data
+        return None
 
-####___Create cache directory___.
 
 def check_cache_dir():
-    '''___create file manager cache directory___'''
+    """___create file manager cache directory___"""
 
     if not sw_fm_cache.exists():
         try:
@@ -601,10 +638,9 @@ def check_cache_dir():
         except Exception as e:
             print(TermColors.RED, e, TermColors.END)
 
-####___Clear cache directory___.
 
 def clear_cache_dir():
-    '''___clear file manager cache directory___'''
+    """___clear file manager cache directory___"""
 
     for f in sw_fm_cache.iterdir():
         if str(f) != f'{sw_fm_cache}/stats':
@@ -623,23 +659,25 @@ def clear_cache_dir():
     else:
         print(f'{TermColors.VIOLET2}SW_FM_CACHE: {TermColors.GREEN}clear_cache_directory: done{TermColors.END}')
 
-####___Create css custom file___.
 
 def check_css_dark():
-    '''___create css colorscheme samples___'''
+    """___create css colorscheme samples___"""
+
     try:
         sw_css_dark.parent.mkdir(parents=True, exist_ok=True)
     except IOError as e:
-        print(f'{TermColors.VIOLET2}SW_CSS:  {TermColors.RED}{e}')
+        print(f'{TermColors.VIOLET2} SW_CSS_DARK:  {TermColors.RED}{e}')
     else:
         try:
             sw_css_dark.write_text(default_dark_css)
         except IOError as e:
-            print(f'{TermColors.VIOLET2}SW_CSS:  {TermColors.RED}{e}')
+            print(f'{TermColors.VIOLET2} SW_CSS_DARK:  {TermColors.RED}{e}')
         else:
-            print(f'{TermColors.VIOLET2}SW_CSS:  {TermColors.GREEN}create sw_css_dark: done')
+            print(f'{TermColors.VIOLET2} SW_CSS_DARK:  {TermColors.GREEN}create sw_css_dark: done')
 
-def diff_css(current, default):
+
+def diff_css(current, default, css_name):
+    """___check differences in CSS files___"""
 
     cur_css_lines = [x.split(' ')[1] for x in current.read_text().splitlines() if '@' in x]
     def_css_lines = [x for x in default.splitlines() if '@' in x]
@@ -650,44 +688,52 @@ def diff_css(current, default):
     else:
         if len(diff_list) > 0:
             current.write_text(default)
-            print(f'{TermColors.VIOLET2}SW_CSS: {TermColors.GREEN}mismatches '
-                + f'found, {current} overwritten by default{TermColors.END}')
+            print(
+                f'{TermColors.VIOLET2} {css_name}: {TermColors.GREEN}mismatches '
+                + f'found, {current} overwritten by default{TermColors.END}'
+            )
         else:
-            print(f'{TermColors.VIOLET2}SW_CSS: {TermColors.GREEN}Files have no '
-                +f'differences{TermColors.END}')
+            print(
+                f'{TermColors.VIOLET2} {css_name}: {TermColors.GREEN}Files have no '
+                + f'differences{TermColors.END}'
+            )
+
 
 def check_css_light():
-    '''___create css colorscheme samples___'''
+    """___create css colorscheme samples___"""
+
     try:
         sw_css_light.parent.mkdir(parents=True, exist_ok=True)
     except IOError as e:
-        print(f'{TermColors.VIOLET2}SW_CSS:  {TermColors.RED}{e}')
+        print(f'{TermColors.VIOLET2} SW_CSS:  {TermColors.RED}{e}')
     else:
         try:
             sw_css_light.write_text(default_light_css)
         except IOError as e:
-            print(f'{TermColors.VIOLET2}SW_CSS:  {TermColors.RED}{e}')
+            print(f'{TermColors.VIOLET2} SW_CSS:  {TermColors.RED}{e}')
         else:
-            print(f'{TermColors.VIOLET2}SW_CSS:  {TermColors.GREEN}create sw_css_light: done')
+            print(f'{TermColors.VIOLET2} SW_CSS:  {TermColors.GREEN}create sw_css_light: done')
+
 
 def check_css_custom():
-    '''___create css colorscheme samples___'''
+    """___create css colorscheme samples___"""
+
     try:
         sw_css_custom.parent.mkdir(parents=True, exist_ok=True)
     except IOError as e:
-        print(f'{TermColors.VIOLET2}SW_CSS:  {TermColors.RED}{e}')
+        print(f'{TermColors.VIOLET2} SW_CSS:  {TermColors.RED}{e}')
     else:
         try:
             sw_css_custom.write_text(default_custom_css_brown)
         except IOError as e:
-            print(f'{TermColors.VIOLET2}SW_CSS:  {TermColors.RED}{e}')
+            print(f'{TermColors.VIOLET2} SW_CSS:  {TermColors.RED}{e}')
         else:
-            print(f'{TermColors.VIOLET2}SW_CSS:  {TermColors.GREEN}create sw_css_custom: done')
+            print(f'{TermColors.VIOLET2} SW_CSS:  {TermColors.GREEN}create sw_css_custom: done')
 
-####___Create bookmarks file___.
 
 def check_bookmarks():
-    '''___create default bookmarks list___'''
+    """___create default bookmarks list___"""
+
     try:
         with open(sw_bookmarks, 'w', encoding='utf-8') as f:
             f.write(default_bookmarks)
@@ -697,10 +743,10 @@ def check_bookmarks():
     else:
         print(f'{TermColors.VIOLET2}SW_BOOKMARKS: {TermColors.GREEN}create bookmarks: done' + TermColors.END)
 
-####___Create application icons directory___.
 
 def create_app_icons():
-    '''___create application icons directory___'''
+    """___create application icons directory___"""
+
     try:
         sw_app_hicons.mkdir(parents=True, exist_ok=True)
     except IOError as e:
@@ -717,9 +763,14 @@ def create_app_icons():
         Path(f'{sw_app_icons}/tmp').mkdir(parents=True, exist_ok=True)
     except IOError as e:
         print(f'{TermColors.RED}{e}{TermColors.END}')
+    try:
+        Path(f'{sw_app_icons}/default').mkdir(parents=True, exist_ok=True)
+    except IOError as e:
+        print(f'{TermColors.RED}{e}{TermColors.END}')
+
 
 def clear_app_icons():
-    '''___clear application icons directory___'''
+    """___clear application icons directory___"""
 
     for f in sw_app_hicons.iterdir():
         try:
@@ -737,31 +788,39 @@ def clear_app_icons():
         else:
             print(f'{TermColors.VIOLET2}SW_ICONS: {TermColors.GREEN}remove_icon {f.name}: done{TermColors.END}')
 
-####___Create sw_menu.json file___.
 
 def create_menu_json():
-    '''___create menu configuration file___'''
+    """___create menu configuration file___"""
 
     with open(sw_menu_json, 'w', encoding='utf-8') as f:
         json.dump(default_ini, f)
-        print(f'{TermColors.VIOLET2}SW_MENU_JSON: '
-            + f'{TermColors.GREEN}create sw_menu.json: done' + TermColors.END)
+        print(
+            f'{TermColors.VIOLET2}SW_MENU_JSON: '
+            + f'{TermColors.GREEN}create sw_menu.json: done' + TermColors.END
+        )
+
 
 def set_menu_json_default():
-    '''___reset menu configuration file to default___'''
+    """___reset menu configuration file to default___"""
+
     try:
         Path(sw_menu_json).unlink()
     except IOError as e:
-        print(f'{TermColors.VIOLET2}SW_MENU_JSON: '
-            + f'{TermColors.RED}{e}' + TermColors.END)
+        print(
+            f'{TermColors.VIOLET2}SW_MENU_JSON: '
+            + f'{TermColors.RED}{e}' + TermColors.END
+        )
     else:
         with open(sw_menu_json, 'w', encoding='utf-8') as f:
             json.dump(default_ini, f)
-            print(f'{TermColors.VIOLET2}SW_MENU_JSON: '
-                + f'{TermColors.GREEN}create sw_menu.json: done' + TermColors.END)
+            print(
+                f'{TermColors.VIOLET2}SW_MENU_JSON: '
+                + f'{TermColors.GREEN}create sw_menu.json: done' + TermColors.END
+            )
+
 
 def read_menu_conf():
-    '''___return dict from menu configuration file___'''
+    """___return dict from menu configuration file___"""
 
     with open(sw_menu_json, 'r', encoding='utf-8') as f:
         json_data = json.load(f)
@@ -770,26 +829,29 @@ def read_menu_conf():
 
     return dict_ini
 
+
 def write_menu_conf(dict_ini):
-    '''___write menu configuration file___'''
+    """___write menu configuration file___"""
 
     with open(sw_menu_json, 'w') as f:
         f.write(json.dumps(dict_ini))
         f.close()
 
+
 def diff_menu_conf():
-    '''___checking differences between current and default menu config___'''
+    """___checking differences between current and default menu config___"""
 
     dict_ini = read_menu_conf()
-    diff_list = []
+
     for k, v in default_ini.items():
-        if not k in dict_ini.keys():
+        if k not in dict_ini.keys():
             dict_ini[k] = default_ini[k]
     else:
         write_menu_conf(dict_ini)
 
+
 def get_roman(number):
-    '''___get roman number from arabic___'''
+    """___get roman number from arabic___"""
 
     roman = ''
     number = int(number)
@@ -800,14 +862,15 @@ def get_roman(number):
 
     return roman
 
+
 def str_to_roman(string):
-    '''___string arabic numbers to roman numbers___'''
+    """___string arabic numbers to roman numbers___"""
 
     for e in string:
         if e.isdigit():
             try:
                 arabic = int(e)
-            except:
+            except (Exception,):
                 pass
             else:
                 roman = romans[int(e)]
@@ -815,8 +878,9 @@ def str_to_roman(string):
 
     return string
 
+
 def get_print_mem_info(mapped):
-    '''___print used memory info___'''
+    """___print used memory info___"""
 
     mem_info = Process().memory_full_info()
     mem_map = Process().memory_maps(grouped=True)
@@ -849,14 +913,16 @@ def get_print_mem_info(mapped):
         for x in mem_map:
             try:
                 print(x[0], x[1])
-            except:
+            except (Exception,):
                 pass
 
+
 def get_wine_dicts():
+    """___get Wine dictionary from JSON file and function list___"""
 
     winever_data = read_wine_ver_data()
     for wine, func in zip(wine_list, wine_func_list):
-        if winever_data is not  None:
+        if winever_data is not None:
             latest_wine_dict[wine] = Path(Path(winever_data[wine].split(' ')[0]).stem).stem
 
             for x in winever_data[wine].split(' '):
@@ -869,31 +935,37 @@ def get_wine_dicts():
 
 ################################___Checking_config_files___:
 
+
 check_cache_dir()
 
 if not sw_css_dark.exists():
     check_css_dark()
 else:
-    diff_css(sw_css_dark, default_dark_css)
+    if getenv('SW_DIFF_CSS_DARK') == '1':
+        environ['SW_DIFF_CSS_DARK'] = '0'
+        diff_css(sw_css_dark, default_dark_css, 'SW_CSS_DARK')
 
 if not sw_css_light.exists():
     check_css_light()
 else:
-    diff_css(sw_css_light, default_light_css)
+    if getenv('SW_DIFF_CSS_LIGHT') == '1':
+        environ['SW_DIFF_CSS_LIGHT'] = '0'
+        diff_css(sw_css_light, default_light_css, 'SW_CSS_LIGHT')
 
 if not sw_css_custom.exists():
     check_css_custom()
 else:
-    diff_css(sw_css_custom, default_custom_css_brown)
+    if getenv('SW_DIFF_CSS_CUSTOM') == '1':
+        environ['SW_DIFF_CSS_CUSTOM'] = '0'
+        diff_css(sw_css_custom, default_custom_css_brown, 'SW_CSS_CUSTOM')
 
 if not sw_bookmarks.exists():
     check_bookmarks()
 
-if (not sw_app_vicons.exists()
-    or not sw_app_hicons.exists()
-    or not sw_app_heroes_icons.exists()
-    or not Path(f'{sw_app_icons}/tmp').exists()):
-        create_app_icons()
+if (not sw_app_vicons.exists() or not sw_app_hicons.exists()
+        or not sw_app_heroes_icons.exists() or not Path(f'{sw_app_icons}/tmp').exists()
+        or not sw_app_default_icons.exists()):
+    create_app_icons()
 
 if not sw_menu_json.exists():
     create_menu_json()
@@ -927,8 +999,11 @@ environ['GTK_THEME'] = "Adwaita-dark"
 
 ################################____Locale___:
 
-def set_locale(sw_lang):
 
+def set_locale(sw_lang):
+    """___set changed locale___"""
+
+    _ = None
     for lang, label in zip(lang_list, lang_labels):
         if label == sw_lang:
             try:
@@ -940,12 +1015,13 @@ def set_locale(sw_lang):
                 except Exception as e:
                     raise ValueError(f'{TermColors.RED}{e}{TermColors.END}')
                 else:
-                    lang_en.install
+                    lang_en.install()
                     _ = lang_en.gettext
             else:
-                lang.install
+                lang.install()
                 _ = lang.gettext
-                return _
+    return _
+
 
 import locale
 import gettext
@@ -961,27 +1037,36 @@ lang_ru = gettext.translation(domain, localedir=sw_localedir, languages=['ru:en'
 lang_zh = gettext.translation(domain, localedir=sw_localedir, languages=['zh:en'])
 lang_list = [lang_ru, lang_en, lang_zh]
 lang_labels = ['ru_RU', 'en_US', 'zh_CN']
-
 _ = set_locale(sw_lang)
 
 ################################___Icon data___:
 
+
 class IconPath:
     icon_app = f'{sw_gui_icons}/sw_icon.png'
     icon_sw_svg = f'{sw_gui_icons}/sw.svg'
-    icon_playback = f'{sw_symbolic_icons}/media-playback-start-symbolic.svg'
-    icon_settings = f'{sw_symbolic_icons}/configure.svg'
+    icon_start = f'{sw_symbolic_icons}/media-playback-start.svg'
+    icon_start_sym = f'{sw_symbolic_icons}/media-playback-start-symbolic.svg'
+    icon_playing = f'{sw_symbolic_icons}/media-playback-playing.svg'
+    icon_settings = f'{sw_symbolic_icons}/gear.svg'
+    icon_settings_sym = f'{sw_symbolic_icons}/gear-symbolic.svg'
     icon_next = f'{sw_symbolic_icons}/go-next-symbolic.svg'
     icon_prev = f'{sw_symbolic_icons}/go-previous-symbolic.svg'
-    icon_up = f'{sw_symbolic_icons}/go-up-symbolic.svg'
+    icon_up = f'{sw_symbolic_icons}/go-up.svg'
+    icon_up_sym = f'{sw_symbolic_icons}/go-up-symbolic.svg'
     icon_save = f'{sw_symbolic_icons}/floppy-symbolic.svg'
     icon_search = f'{sw_symbolic_icons}/edit-find-symbolic.svg'
     icon_back = f'{sw_symbolic_icons}/go-previous-symbolic.svg'
     icon_wine = f'{sw_symbolic_icons}/windows.svg'
+    icon_wine_sym = f'{sw_symbolic_icons}/windows-symbolic.svg'
     icon_create = f'{sw_symbolic_icons}/document-new-symbolic.svg'
     icon_remove = f'{sw_symbolic_icons}/edit-delete-symbolic.svg'
     icon_install = f'{sw_symbolic_icons}/run-build-install.svg'
-    icon_clear = f'{sw_symbolic_icons}/edit-clear-all-symbolic.svg'
+    icon_clear = f'{sw_symbolic_icons}/edit-clear-list.svg'
+    icon_clear_sym = f'{sw_symbolic_icons}/edit-clear-all-symbolic.svg'
+    icon_stop = f'{sw_symbolic_icons}/media-playback-stop.svg'
+    icon_stop_sym = f'{sw_symbolic_icons}/media-playback-stop-symbolic.svg'
+    icon_stopped = f'{sw_symbolic_icons}/media-playback-stopped.svg'
     icon_scale = f'{sw_symbolic_icons}/resize-symbolic.svg'
     icon_view_more = f'{sw_symbolic_icons}/view-more-symbolic.svg'
     icon_colors = f'{sw_symbolic_icons}/theme.svg'
@@ -990,11 +1075,13 @@ class IconPath:
     icon_add = f'{sw_symbolic_icons}/appointment-new-symbolic.svg'
     icon_hide = f'{sw_symbolic_icons}/application-exit-symbolic.svg'
     icon_toolbox = f'{sw_symbolic_icons}/toolbox.svg'
-    icon_backup =f'{sw_symbolic_icons}/backup.svg'
+    icon_toolbox_sym = f'{sw_symbolic_icons}/toolbox-symbolic.svg'
+    icon_backup = f'{sw_symbolic_icons}/backup.svg'
     icon_backup_restore = f'{sw_symbolic_icons}/backup-restore-symbolic.svg'
     icon_tool = f'{sw_symbolic_icons}/tool-symbolic.svg'
     icon_update = f'{sw_symbolic_icons}/update.svg'
-    icon_shortcuts = f'{sw_symbolic_icons}/applications-games-symbolic.svg'
+    icon_shortcuts = f'{sw_symbolic_icons}/applications-games.svg'
+    icon_shortcuts_sym = f'{sw_symbolic_icons}/applications-games-symbolic.svg'
     icon_debug = f'{sw_symbolic_icons}/hammer-symbolic.svg'
     icon_info = f'{sw_symbolic_icons}/dialog-information-symbolic.svg'
     icon_global = f'{sw_symbolic_icons}/global.svg'
@@ -1018,7 +1105,9 @@ class IconPath:
     icon_video = f'{sw_symbolic_icons}/folder-video-symbolic.svg'
     icon_docs = f'{sw_symbolic_icons}/folder-documents-symbolic.svg'
     icon_music = f'{sw_symbolic_icons}/folder-music-symbolic.svg'
-    icon_folder = f'{sw_symbolic_icons}/folder-symbolic.svg'
+    icon_file_manager = f'{sw_symbolic_icons}/file-manager.svg'
+    icon_folder = f'{sw_symbolic_icons}/folder.svg'
+    icon_folder_sym = f'{sw_symbolic_icons}/folder-symbolic.svg'
     icon_games = f'{sw_symbolic_icons}/folder-games-symbolic.svg'
     icon_regedit = f'{sw_symbolic_icons}/regedit.svg'
     icon_drive = f'{sw_symbolic_icons}/drive-harddisk.svg'
@@ -1035,14 +1124,27 @@ class IconPath:
     icon_menu = f'{sw_symbolic_icons}/menu.svg'
     icon_taxes = f'{sw_symbolic_icons}/taxes-finances.svg'
     icon_gc = f'{sw_symbolic_icons}/Xbox_Controller.svg'
+    icon_clock = f'{sw_symbolic_icons}/clock-symbolic.svg'
+    icon_speed = f'{sw_symbolic_icons}/kronometer-symbolic.svg'
+    icon_shutdown = f'{sw_symbolic_icons}/gshutdown.svg'
+    icon_shop = f'{sw_symbolic_icons}/shop.svg'
+    icon_close = f'{sw_symbolic_icons}/window-close-symbolic.svg'
+    icon_min = f'{sw_symbolic_icons}/window-minimize-symbolic.svg'
+    icon_max = f'{sw_symbolic_icons}/window-maximize-symbolic.svg'
+    icon_partition = f'{sw_symbolic_icons}/partitions.svg'
+    icon_partition_sym = f'{sw_symbolic_icons}/partitions-symbolic.svg'
+    icon_monitor = f'{sw_symbolic_icons}/monitor.svg'
+    icon_monitor_sym = f'{sw_symbolic_icons}/monitor-symbolic.svg'
+    icon_window_next = f'{sw_symbolic_icons}/window-next.svg'
 
 ################################___Themes___:
 
+
 theme_dict = dict(
     [
-    ('dark', _('Dark')),
-    ('light', _('Light')),
-    ('custom', _('Custom')),
+        ('dark', _('Dark')),
+        ('light', _('Light')),
+        ('custom', _('Custom')),
     ]
 )
 
@@ -1052,114 +1154,109 @@ str_tray_open = _('Show/Hide StartWine')
 str_tray_hide = _('Show/Hide StartWine')
 str_tray_run = _('Run...')
 str_tray_shortcuts = _('Shortcuts')
-str_tray_stop = _('Stop wine processes')
+str_tray_stop = _('Stop Wine processes')
 str_tray_shutdown = _('Shutdown')
 
 ################################___Contexts___:
 
 ctx_dict = dict(
     [
-    ('run', _('Run')),
-    ('open', _('Open')),
-    ('open_with', _('Open with...')),
-    ('open_location', _('Open file location')),
-    ('app_settings', _('App settings')),
-    ('remove', _('Remove')),
-    ('app_to_menu', _('App to menu')),
-    ('app_to_desktop', _('App to desktop')),
-    ('app_to_steam', _('App to Steam Deck menu')),
-    ('change_wine', _('Change wine')),
-    ('winehq', _('Winehq')),
-    ('protondb', _('Protondb')),
-    ('griddb', _('Search for an image')),
-    ('staging', 'wine staging'),
-    ('steam_proton', 'wine steam proton'),
-    ('proton_ge', 'wine proton ge'),
-    ('lutris_ge', 'wine lutris ge'),
-    ('staging_tkg', 'wine staging tkg'),
-    ('create', _('Create file')),
-    ('create_dir', (_('Create directory'), '<Ctrl>N')),
-    ('link', (_('Create link'), '<Shift>L')),
-    ('rename', (_('Rename'), 'F2')),
-    ('cut', (_('Cut'), '<Ctrl>X')),
-    ('copy', (_('Copy'), '<Ctrl>C')),
-    ('paste', (_('Paste'), '<Ctrl>V')),
-    ('select_all', (_('Select all'), '<Ctrl>A')),
-    ('trash', (_('Move to trash'), 'Delete')),
-    ('remove', (_('Delete permanently'), '<Shift>Delete')),
-    ('properties', (_('Properties'), '')),
-    ('txt', _('Text')),
-    ('sh', _('Bourne shell')),
-    ('py', _('Python')),
-    ('desktop', _('Desktop')),
-    ('copy_path', _('Copy current path')),
-    ('add_bookmark', _('Add to bookmark')),
-    ('compress', _('Compress...')),
-    ('extract', _('Extract...')),
-    ('show_hidden_files', (_('Hidden files'), '<primary>H')),
-    ('sort', _('Sort...')),
-    ('sorting_by_type', (_('By type'), '')),
-    ('sorting_by_size', (_('By size'), '')),
-    ('sorting_by_date', (_('By date'), '')),
-    ('sorting_by_name', (_('By name'), '')),
-    ('sorting_reverse', (_('Reverse'), '')),
-    ('global_settings', (_('Interface settings'), '<Alt>I')),
-    ('show_hotkeys', (_('Hotkeys'), '<Ctrl>K')),
-    ('about', (_('About'), 'F4')),
-    ('help', (_('Help'), 'F1')),
-    ('shutdown', (_('Shutdown'), '<Ctrl>Q')),
+        ('run', _('Run')),
+        ('open', _('Open')),
+        ('open_with', _('Open with...')),
+        ('open_location', _('Open file location')),
+        ('app_settings', _('App settings')),
+        ('remove', _('Remove')),
+        ('app_to_menu', _('App to menu')),
+        ('app_to_desktop', _('App to desktop')),
+        ('app_to_steam', _('App to Steam Deck menu')),
+        ('change_wine', _('Change Wine')),
+        ('specify_executable', _('Specify executable file')),
+        ('specify_new_loacation', _('Specify the new location...')),
+        ('winehq', _('Winehq')),
+        ('protondb', _('Protondb')),
+        ('griddb', _('Search for an image')),
+        ('staging', 'wine staging'),
+        ('steam_proton', 'wine steam proton'),
+        ('proton_ge', 'wine proton ge'),
+        ('lutris_ge', 'wine lutris ge'),
+        ('staging_tkg', 'wine staging tkg'),
+        ('create', _('Create file')),
+        ('create_dir', (_('Create directory'), '<Ctrl>N')),
+        ('link', (_('Create link'), '<Shift>L')),
+        ('rename', (_('Rename'), 'F2')),
+        ('cut', (_('Cut'), '<Ctrl>X')),
+        ('copy', (_('Copy'), '<Ctrl>C')),
+        ('paste', (_('Paste'), '<Ctrl>V')),
+        ('select_all', (_('Select all'), '<Ctrl>A')),
+        ('trash', (_('Move to trash'), 'Delete')),
+        ('delete', (_('Delete permanently'), '<Shift>Delete')),
+        ('properties', (_('Properties'), '')),
+        ('txt', _('Text')),
+        ('sh', _('Bourne shell')),
+        ('py', _('Python')),
+        ('desktop', _('Desktop')),
+        ('copy_path', _('Copy current path')),
+        ('add_bookmark', _('Add to bookmark')),
+        ('compress', _('Compress...')),
+        ('extract', _('Extract...')),
+        ('show_hidden_files', (_('Hidden files'), '<primary>H')),
+        ('sort', _('Sort...')),
+        ('sorting_by_type', (_('By type'), '')),
+        ('sorting_by_size', (_('By size'), '')),
+        ('sorting_by_date', (_('By date'), '')),
+        ('sorting_by_name', (_('By name'), '')),
+        ('sorting_reverse', (_('Reverse'), '')),
+        ('global_settings', (_('Interface settings'), '<Alt>I')),
+        ('show_hotkeys', (_('Hotkeys'), '<Ctrl>K')),
+        ('about', (_('About'), 'F4')),
+        ('help', (_('Help'), 'F1')),
+        ('shutdown', (_('Shutdown'), '<Ctrl>Q')),
     ]
 )
 str_sample = _('sample')
 
 ################################___View_widgets___:
 
-view_widgets = [
-    'shortcuts',
-    'launch_settings',
-    'mangohud_settings',
-    'vkbasalt_settings',
+next_vw = [
     'global_settings',
     'install_wine',
     'install_launchers',
+    'shortcuts',
+]
+prev_vw = [
+    'install_launchers',
+    'shortcuts',
+    'global_settings',
+    'install_wine',
+]
+view_widgets = [
+    'shortcuts',
+    'global_settings',
+    'install_wine',
+    'install_launchers',
+    'startapp_page',
+    'launch_settings',
+    'mangohud_settings',
+    'vkbasalt_settings',
     'winetricks',
     'files',
     'web_view',
     'gc_settings',
 ]
-
-next_vw = [
-    'launch_settings',
-    'mangohud_settings',
-    'vkbasalt_settings',
-    'global_settings',
-    'install_wine',
-    'install_launchers',
-    'shortcuts',
-]
-
-prev_vw = [
-    'install_launchers',
-    'shortcuts',
-    'launch_settings',
-    'mangohud_settings',
-    'vkbasalt_settings',
-    'global_settings',
-    'install_wine',
-]
-
 view_labels = [
     _('Games and apps'),
-    _('Launch settings'),
-    _('MangoHud settings'),
-    _('vkBasalt settings'),
     _('Interface settings'),
     _('Wine builds'),
     _('Launchers and stores'),
+    _('Application start page'),
+    _('Launch settings'),
+    _('MangoHud settings'),
+    _('vkBasalt settings'),
     _('Winetricks'),
     _('Files'),
     _('Web browser'),
-    _('Controller settings')
+    _('Controller settings'),
 ]
 
 next_vw_dict = dict(zip(view_widgets, next_vw))
@@ -1170,8 +1267,8 @@ for w in view_widgets:
     vw_dict[w] = w
 
 vl_dict = dict()
-for l, w in zip(view_labels, view_widgets):
-    vl_dict[w] = l
+for n, w in zip(view_labels, view_widgets):
+    vl_dict[w] = n
 
 ################################_Start_mode___:
 
@@ -1180,7 +1277,7 @@ sw_logo_light = 'sw_large_light.svg'
 
 str_prefix = _('Prefix: ')
 str_current_prefix = _('Current prefix:\n')
-str_current_wine = _('Current wine:\n')
+str_current_wine = _('Current Wine:\n')
 str_oops = _('Oops! Nothing to run...')
 
 ################################___About___:
@@ -1219,116 +1316,103 @@ about_labels = [
 ]
 
 about_dict = dict()
-for l, w in zip(about_labels, about_widgets):
-    about_dict[w] = l
+for n, w in zip(about_labels, about_widgets):
+    about_dict[w] = n
 
 str_about = _(
-'Is a Windows application launcher '
-'for GNU/Linux operating systems. '
-'Includes many features, extensions, and fixes '
-'to improve performance, visuals, and usability.'
+    'Is a Windows application launcher '
+    + 'for GNU/Linux operating systems. '
+    + 'Includes many features, extensions, and fixes '
+    + 'to improve performance, visuals, and usability.'
 )
-str_news = _('''
-This release adds the following features, updates, and fixes:
+str_news = _('''This release adds the following features, updates, and fixes:
 Bug fixes and performance improvements.
-Improved startup performance
-Fixed video playback issue in games.
-Fixed an error when changing the Windows version.
-Interaction errors when searching for files have been fixed.
-Fixed generation of image and video thumbnails.
-Fixed launching in opengl mode.
-Fixed an issue with displaying files when changing icon sizes.
-The list of wine assemblies available for download has been changed.
-Fixed command line parsing.
-Removed compact menu size mode.
 Locales updated.
 Updated prefix configurations.
 Updated list of Wine versions.
+Updated list of dxvk and vkd3d versions.
 Libraries and drivers in the container have been updated.
 Updated list of hotkeys.
-Added function for updating the list of wine builds.
-Added Chinese locale.
-Added different color options for OpenGL animation.
-Added new animation Sin Cos 3d.
-Interface settings have been moved to the top panel menu.
-MangoHud indicator color settings have been moved to the MangoHud settings section.
-The overlay panel has been moved to the bottom panel of the window.
-Added file sorting to the file manager context menu.
-Added panoramic file viewing mode (split view).
-Added viewing of files in the form of a detailed list (table).
-Added support for viewing files from mobile devices.
-Added separate resizing of shortcuts and file icons.
-Added automatic hiding of the top and bottom panels.
-Launch from the system file manager has been changed.
-Zstd and zstd ultra compression have been added to the file manager.
-Added statistics for total time and average fps.
-'''
-)
+Updated the list of libraries in Winetricks.
+The graphical interface has been updated.
+All settings of the game or application have been moved to the shortcut launch page.
+The list of sidebar buttons has been changed.
+Added new background animation.
+Added the ability to rename the name of an installed application or game.
+Added the ability to change the path to the executable file of the game or application.
+Added new animations to the shader list.
+Added codecs for video playback.
+Added DirectX 8 support in dxvk mode.
+Improved image auto-search algorithm.
+Fixed interface freezes when Star tWine is turned off.
+Fixed the error of displaying the path when recursively searching in the file manager.
+Fixed an error when copying fonts to the prefix of an application or game.
+Outdated startup settings have been removed (GSTREAMER, GAMEMODE, DXVK_ASYNC).
+''')
 
 str_authors = _(
-'Rustam Normatov\n'
-'Nikita Maslov'
+    'Rustam Normatov\n'
+    'Nikita Maslov'
 )
 str_developers = _(
-'Rustam Normatov\n'
-'Nikita Maslov\n'
-'Maksim Tarasov'
+    'Rustam Normatov\n'
+    'Nikita Maslov\n'
+    'Maksim Tarasov'
 )
 str_members = (
-'StartWine Community\n'
-'Андрей\n'
-'3y6HuK\n'
-'Alexandrdrdr\n'
-'Fanchji (Виталий)\n'
-'Huskysoul\n'
-'kazbek\n'
-'Kot41ru\n'
-'Lex\n'
-'Lintech\n'
-'LinuxShef\n'
-'Sheridan\n'
-'Wik'
+    'StartWine Community\n'
+    'Андрей\n'
+    '3y6HuK\n'
+    'Alexandrdrdr\n'
+    'Fanchji (Виталий)\n'
+    'Huskysoul\n'
+    'kazbek\n'
+    'Kot41ru\n'
+    'Lex\n'
+    'Lintech\n'
+    'LinuxShef\n'
+    'Sheridan\n'
+    'Wik'
 )
 list_projects = [
-'Winehq project',
-'ValveSoftware/Proton',
-'Kron4ek/Wine-Builds',
-'GloriousEggroll/proton-ge-custom',
-'GloriousEggroll/wine-ge-custom',
-'Winetricks/winetricks',
-'flightlessmango/MangoHud',
-'DadSchoorse/vkBasalt',
-'FeralInteractive/gamemode',
-'Gtk Project',
-'HansKristian-Work/vkd3d-proton',
-'doitsujin/dxvk',
-'VHSgunzo/runimage',
+    'Winehq project',
+    'ValveSoftware/Proton',
+    'Kron4ek/Wine-Builds',
+    'GloriousEggroll/proton-ge-custom',
+    'GloriousEggroll/wine-ge-custom',
+    'Winetricks/winetricks',
+    'flightlessmango/MangoHud',
+    'DadSchoorse/vkBasalt',
+    'Gtk Project',
+    'HansKristian-Work/vkd3d-proton',
+    'doitsujin/dxvk',
+    'VHSgunzo/runimage',
 ]
 str_projects = str('\n'.join(sorted(list_projects)))
 
 str_design = _(
-'StartWine Design Team'
+    'StartWine Design Team'
 )
 str_gpl = _('GNU General Public License')
 
 str_license = _(
-'StartWine is free software. '
-'You can redistribute it and/or '
-'modify it under the terms of '
-'the GNU General Public License '
-'as published by the Free Software '
-'Foundation; '
-'either version 3 of the License, '
-'or (at your option) any later version. '
-
-'StartWine is distributed without '
-'any warranty. '
-'See the GNU Lesser General Public License '
-'for more details.'
+    'StartWine is free software. '
+    'You can redistribute it and/or '
+    'modify it under the terms of '
+    'the GNU General Public License '
+    'as published by the Free Software '
+    'Foundation; '
+    'either version 3 of the License, '
+    'or (at your option) any later version. '
+    
+    'StartWine is distributed without '
+    'any warranty. '
+    'See the GNU Lesser General Public License '
+    'for more details.'
 )
 str_contribute = _('Contribute to the project')
 str_donation = _(
-'You can contribute to the project by spreading information about it, offering \
+    'You can contribute to the project by spreading information about it, offering \
 for discussion any ideas related to improving the functionality and appearance \
 of the StartWine application. You can also help by contributing \
 to the development by submitting bug reports. And you can always donate any \
@@ -1340,7 +1424,7 @@ donation_source = {
     'BTC': 'bc1q3h8lfs3l3r8jmt8ev0pwl9nueqttlep6ktvd02',
 }
 
-website_source='https://startwine-project.ru'
+website_source = 'https://startwine-project.ru'
 github_source = 'https://github.com/RusNor'
 telegram_source = 'https://t.me/StartWine'
 discord_source = 'https://discord.com/invite/37FrGUpDEj'
@@ -1349,26 +1433,35 @@ license_source = 'https://www.gnu.org/licenses/gpl-3.0.html'
 str_btc = 'BTC: bc1q3h8lfs3l3r8jmt8ev0pwl9nueqttlep6ktvd02'
 winehq_source = 'https://www.winehq.org/search?q='
 protondb_source = 'https://www.protondb.com/search?q='
-griddb_source = 'https://www.steamgriddb.com/search/grids?term='
+griddb_source = 'https://www.steamgriddb.com/search/'
 griddb = 'https://www.steamgriddb.com'
 home_page = github_source
-home_html = f'file://{sw_scripts}/StartWine-Launcher_handbook_README-RU.md at main · RusNor_StartWine-Launcher · GitHub.html'
-#readme_page = f'file://{sw_scripts}/test_text.html'
 
 url_source = {
-#    'google': ['https://google.com', f'{sw_symbolic_icons}/google.png'],
-#    'yandex': ['https://ya.ru', f'{sw_symbolic_icons}/yandex.png'],
-#    'duckduckgo': ['https://duckduckgo.com', f'{sw_symbolic_icons}/duckduckgo.png'],
-#    'startwine': ['https://startwine-project.ru', f'{sw_gui_icons}/sw_icon.png'],
-#    'github': ['https://github.com/RusNor', f'{sw_symbolic_icons}/github.png'],
-#    'vkontakte': [' https://vk.com/club213719866', f'{sw_symbolic_icons}/vk.png'],
-#    'telegram': ['https://t.me/StartWine', f'{sw_symbolic_icons}/telegram.png'],
-#    'discord': ['https://discord.com/invite/37FrGUpDEj', f'{sw_symbolic_icons}/discord.png'],
-#    'license': ['https://www.gnu.org/licenses/gpl-3.0.html', f'{sw_symbolic_icons}/gnu.png'],
-#    'donation': ['https://my.qiwi.com/form/Nykyta-MhrLvGVgb3', f'{sw_symbolic_icons}/qiwi.png'],
-#    'winehq': ['https://www.winehq.org', f'{sw_symbolic_icons}/winehq.png'],
-#    'protondb': ['https://www.protondb.com', f'{sw_symbolic_icons}/protondb.png'],
-#    'griddb': ['https://www.steamgriddb.com', f'{sw_symbolic_icons}/griddb.png'],
+   # 'google': ['https://google.com', f'{sw_symbolic_icons}/google.png'],
+   # 'yandex': ['https://ya.ru', f'{sw_symbolic_icons}/yandex.png'],
+   # 'duckduckgo': ['https://duckduckgo.com', f'{sw_symbolic_icons}/duckduckgo.png'],
+   # 'startwine': ['https://startwine-project.ru', f'{sw_gui_icons}/sw_icon.png'],
+   # 'github': ['https://github.com/RusNor', f'{sw_symbolic_icons}/github.png'],
+   # 'vkontakte': [' https://vk.com/club213719866', f'{sw_symbolic_icons}/vk.png'],
+   # 'telegram': ['https://t.me/StartWine', f'{sw_symbolic_icons}/telegram.png'],
+   # 'discord': ['https://discord.com/invite/37FrGUpDEj', f'{sw_symbolic_icons}/discord.png'],
+   # 'license': ['https://www.gnu.org/licenses/gpl-3.0.html', f'{sw_symbolic_icons}/gnu.png'],
+   # 'donation': ['https://my.qiwi.com/form/Nykyta-MhrLvGVgb3', f'{sw_symbolic_icons}/qiwi.png'],
+   # 'winehq': ['https://www.winehq.org', f'{sw_symbolic_icons}/winehq.png'],
+   # 'protondb': ['https://www.protondb.com', f'{sw_symbolic_icons}/protondb.png'],
+   # 'griddb': ['https://www.steamgriddb.com', f'{sw_symbolic_icons}/griddb.png'],
+}
+
+about_menu_dict = {
+    'about_authors': str_authors,
+    'about_details': str_about,
+    'about_code': str_developers,
+    'about_members': ', '.join(str_members.splitlines()),
+    'about_projects': ', '.join(str_projects.splitlines()),
+    'about_design': str_design,
+    'about_license': str_license,
+    'about_donation': str_donation,
 }
 
 ################################___Tools___:
@@ -1385,49 +1478,78 @@ prefix_tools_icons = [
     IconPath.icon_backup_restore,
 ]
 wine_tools_icons = [
-    IconPath.icon_download,
     IconPath.icon_settings,
     IconPath.icon_terminal,
     IconPath.icon_regedit,
     IconPath.icon_folder,
     IconPath.icon_remove,
-    IconPath.icon_playback,
+    IconPath.icon_start,
     IconPath.icon_update,
 ]
+
+sidebar_widgets = [
+    'shortcuts',
+    'files',
+    'install_launchers',
+    'install_wine',
+    'global_settings',
+    'shutdown',
+]
+
+sidebar_icons = [
+    IconPath.icon_shortcuts,
+    IconPath.icon_folder,
+    IconPath.icon_shop,
+    IconPath.icon_wine,
+    IconPath.icon_settings,
+    IconPath.icon_shutdown,
+]
+
 btn_widgets = [
     'start',
     'shortcuts',
+    'files',
     'create_shortcut',
     'prefix_tools',
     'wine_tools',
-    'download_wine',
+    'install_wine',
     'install_launchers',
     'settings',
+    'global_settings',
     'debug',
     'stop',
     'about',
     'files_info',
     'bookmarks',
+    'shutdown',
 ]
+
 btn_labels = [
     _('Start'),
-    _('Shortcuts'),
+    _('Games and apps'),
+    _('Files'),
     _('Create shortcut'),
     _('Prefix tools'),
     _('Wine tools'),
-    _('Download wine'),
-    _('Install launchers'),
+    _('Wine builds'),
+    _('Launchers and stores'),
     _('Settings'),
+    _('Interface settings'),
     _('Debug'),
     _('Terminate all processes'),
     _('About'),
     _('Properties'),
     _('Bookmarks'),
+    _('Shutdown'),
 ]
 
+btn_widget_dict = dict()
+for w in btn_widgets:
+    btn_widget_dict[w] = w
+
 btn_dict = dict()
-for l, w in zip(btn_labels, btn_widgets):
-    btn_dict[w] = l
+for n, w in zip(btn_labels, btn_widgets):
+    btn_dict[w] = n
 
 prefix_labels = [
     _('Default prefix'),
@@ -1468,32 +1590,32 @@ for w, l in zip(prefix_tools_widgets, prefix_tools_labels):
     prefix_tools_dict[w] = l
 
 wine_tools_labels = [
-    _('Download wine'),
     _('Wine settings'),
     _('Wine console'),
     _('Regedit'),
     _('File explorer'),
     _('Uninstaller'),
     _('Winetricks'),
+    _('Clear shader cache'),
 ]
 wine_tools_widgets = [
-    'download_wine',
     'wine_settings',
     'wine_console',
     'regedit',
     'file_explorer',
     'uninstaller',
     'winetricks',
+    'clear_shader_cache',
 ]
 
 wine_tools_dict = dict()
-for l, w in zip(wine_tools_labels, wine_tools_widgets):
-    wine_tools_dict[w] = l
+for n, w in zip(wine_tools_labels, wine_tools_widgets):
+    wine_tools_dict[w] = n
 
 ################################___Files_info___:
 
 access_dict = {
-7: 'rwx', 6: 'rw-', 5: 'r-x', 4: 'r--', 3: '-wx', 2: '-w-', 1:'--x', 0:'---'
+    7: 'rwx', 6: 'rw-', 5: 'r-x', 4: 'r--', 3: '-wx', 2: '-w-', 1:'--x', 0:'---'
 }
 
 attrs = {
@@ -1573,7 +1695,7 @@ translates Windows API calls into POSIX calls on-the-fly, eliminating the \
 performance and memory penalties of other methods and allowing you to cleanly \
 integrate Windows applications into your desktop.')
 
-str_iw_subtitle = _('List of wines to download and install')
+str_iw_subtitle = _('List of Wines to download and install')
 wine_descriptions = {
     'wine_staging': _('Wine Staging contains bug fixes and features, which have \
 not been integrated into the development branch yet. The idea of Wine Staging \
@@ -1587,7 +1709,7 @@ in wine-tkg-config.txt inside the build directory.'),
 contributors. It contains many useful patches (primarily for a better gaming \
 experience), some of them are unique and not present in other builds.'),
     'wine_proton_ge': _("Proton with the most recent bleeding-edge Proton \
-Experimental WINE. Things it contains that Valve's Proton does not: Additional \
+Experimental Wine. Things it contains that Valve's Proton does not: Additional \
 media foundation patches for better video playback support, AMD FSR patches, \
 Nvidia CUDA support for PhysX and NVAPI, raw input mouse support and various \
 wine-staging patches applied as they become needed."),
@@ -1648,7 +1770,7 @@ winever_data, latest_wine_dict, wine_download_dict = get_wine_dicts()
 ################################___Install_launchers___:
 
 str_il_subtitle = _('List of launchers and stores available for installation')
-launchers_list = [str(x) for x in sw_launchers.iterdir()]
+
 launchers_descriptions = {
     'Anomaly_Zone': _('Anomaly Zone - MMORPG, open world game, successor to "stalker online". \
 You can remain alone or conquer the Zone in the company of other daredevils, \
@@ -1746,6 +1868,11 @@ interface is functional and highly customizable. You can run all your \
 games and search online for visuals to enhance the presentation of your collection.'),
 }
 
+try:
+    launchers_list = [str(x) for x in sw_launchers.iterdir()]
+except (Exception,):
+    launchers_list = [str(x) for x in launchers_descriptions.keys()]
+
 ################################___Settings___:
 
 str_move_settings = _('Move settings')
@@ -1831,8 +1958,8 @@ lp_title = [
 ]
 
 lp_title_dict = dict()
-for l, t in zip(lp_list, lp_title):
-    lp_title_dict[l] = t
+for n, t in zip(lp_list, lp_title):
+    lp_title_dict[n] = t
 
 lp_desc = [
     _('Set launch parameters'),
@@ -1880,7 +2007,7 @@ for v,i in zip(winver, ver_index):
     winver_dict[v] = i
 
 reg_patches = [''] + [
-    str(reg.name) for reg in Path(sw_app_patches).iterdir()
+    str(reg.name) for reg in sorted(Path(sw_app_patches).iterdir())
 ]
 dxvk_ver = [
     '1.9', '1.9.1', '1.9.2', '1.9.3', '1.9.4', '1.10', '1.10.1', '1.10.2',
@@ -1888,7 +2015,7 @@ dxvk_ver = [
 ]
 vkd3d_ver = [
     '2.0', '2.1', '2.2', '2.3', '2.3.1', '2.4', '2.5', '2.6', '2.7', '2.8',
-    '2.9', '2.10', '2.11', '2.11.1', '2.12', '2.13',
+    '2.9', '2.10', '2.11','2.11.1', '2.12', '2.13',
 ]
 combo_list = winarch + winver + reg_patches + dxvk_ver + vkd3d_ver
 fsr_mode = {_('Ultra'): 'ultra', _('Quality'): 'quality', _('Balanced'): 'balanced', _('Performance'): 'performance'}
@@ -1904,7 +2031,6 @@ switch_labels = [
     'OPENGL',
     'MANGOHUD',
     'MESA_OVERLAY_HUD',
-    'GAMEMODE',
     'VIRTUAL_DESKTOP',
     'FSYNC',
     'ESYNC',
@@ -1916,10 +2042,8 @@ switch_labels = [
     'WINE_SIMULATE_WRITECOPY',
     'STAGING_SHARED_MEMORY',
     'DXVK_HUD',
-    'DXVK_ASYNC',
     'ENABLE_VKBASALT',
     'FSR',
-    'GSTREAMER',
     'DRI_PRIME',
     'WINE_MONO',
     'BATTLEYE',
@@ -1940,22 +2064,19 @@ switch_descriptions = [
     _("Force use opengl, for applications that d'nt run in dxvk and vkd3d"),
     _('System monitoring in opengl or vulkan (dxvk, vkd3d)'),
     _('System monitoring in vulkan (dxvk, vkd3d)'),
-    _('Set of optimisations be temporarily applied a game process'),
     _('Enable windows desktop emulation'),
     _('Improving frame rates and responsiveness with scheduling policies'),
     _('Increase performance for some games, especially ones that rely heavily on the CPU'),
     _('For old games that crash on very long extension strings'),
     _('Disabling the nvapi library required by PhysX to enable GPU acceleration via CUDA'),
-    _('Disable debugging mode for wine to improve performance'),
+    _('Disable debugging mode for Wine to improve performance'),
     _('Allocate to a 32-bit application more than 2 GB of RAM'),
     _('To simulate the memory management system of Windows'),
     _('Simulated Write Copy - Emulates how Windows loads DLLs into memory more accurately'),
-    _('Сan optimize some wineserver calls by using shared memory'),
+    _('Сan optimize some Wineserver calls by using shared memory'),
     _('System monitoring in dxvk'),
-    _('Asynchronous compilation of shaders from the render process to prevent hangs while waiting'),
     _('vkBasalt is a Vulkan post processing layer to enhance the visual graphics in games'),
     _('AMD FidelityFX Super Resolution - advanced upscaling technologies for higher fps'),
-    _('An open source library containing plugins and codecs for handling media in applications'),
     _('Used to manage hybrid graphics found on recent desktops and laptops'),
     _('Open-source and cross-platform implementation of the .NET Framework'),
     _('BattlEye anti-cheat service required to run online games that use this service'),
@@ -2007,7 +2128,6 @@ check_mh_labels = [
     'resolution',
     'show_fps_limit',
     'vkbasalt',
-    'gamemode',
     'battery',
     'battery_icon',
     'gamepad_battery',
@@ -2049,7 +2169,6 @@ check_mh_description = [
     _('Current resolution'),
     _('Current fps limit'),
     _('Shows if vkBasalt is on'),
-    _('Shows if gamemode is on'),
     _('Current battery percent and energy consumption'),
     _('Battery icon instead of percent'),
     _('Battey of wireless gamepads (xone,xpadneo,ds4)'),
@@ -2069,30 +2188,57 @@ app_conf_vk_list = list()
 vkbasalt_dict = {
     '3DFX': _('Supposedly imitation of rendering on the legendary 3dfx video cards.'),
     'AdaptiveFog': _('Adaptive fog. Used most for creating a color background, or putting a subject in shadows.'),
-    'AdaptiveSharpen': _('Contrast Adaptive Sharpening. An image sharpening method that observes the contrast of the local environment.'),
+    'AdaptiveSharpen': _(
+        'Contrast Adaptive Sharpening. An image sharpening method that observes the contrast of the local environment.'
+    ),
     'AmbientLight': _('Ambient light. Bloom mixed with the EyeAdaption shader effect and lens dirt.'),
     'ASCII': _('For those who miss text games and Matrix fans.'),
     'Aspect Ratio': _('Сorrects aspect ratio in stretched images.'),
     'Bloom': _('A shader for simulating image blur depending on the brightness of the scene.'),
-    'Border': _('If you want to add borders in image but want the subject to hover over said border then try this shader.'),
+    'Border': _(
+        'If you want to add borders in image but want the subject to hover over said border then try this shader.'
+    ),
     'Cartoon': _('Creates an outline effect that makes the image look more cartoonish.'),
     'ChromaKey': _('Setting a blue or green screen away from the camera.'),
-    'Chromatic Aberration': _('It operates in HDR, simulating the physical effect of light passing through a prism inside a camera.'),
+    'Chromatic Aberration': _(
+        'It operates in HDR, simulating the physical effect of light passing through a prism inside a camera.'
+    ),
     'CinematicDOF': _('Based on the most realistic and most used Depth of Field shader.'),
     'Clarity': _('Shader for image enhancement, makes things look sharper. Can rid the picture of haze.'),
-    'ColorMatrix': _('Editing colors using the color matrix. Essentially changes the brightness of the color channels: red, green and blue.'),
+    'ColorMatrix': _(
+        'Editing colors using the color matrix. Essentially changes the brightness of the color channels: red, green '
+        'and blue.'
+    ),
     'Colourfulness': _('Saturates faded colors without touching the bright ones.'),
-    'CRT': _('To simulate a cathode ray tube monitor. The combination with the PerfectPerspective shader will shed a tear of nostalgia.'),
-    'Curves': _('Increases the contrast of the image, while not touching the bright and dark areas, so that the detail in the shadows and the sky is not lost.'),
+    'CRT': _(
+        'To simulate a cathode ray tube monitor. The combination with the PerfectPerspective shader will shed a tear '
+        'of nostalgia.'
+    ),
+    'Curves': _(
+        'Increases the contrast of the image, while not touching the bright and dark areas, so that the detail in the '
+        'shadows and the sky is not lost.'
+    ),
     'Daltonize': _('Removes some colors.'),
-    'Deband': _('Remove banding - gradients that dont blend smoothly into each other when there arent enough tones available to recreate a smooth gradation.'),
-    'Denoise': _('Remove dot noise. If possible, turn off the noise in the game itself, because the noise reduction shader reduces the frame rate.'),
+    'Deband': _(
+        'Remove banding - gradients that dont blend smoothly into each other when there arent enough tones available '
+        'to recreate a smooth gradation.'
+    ),
+    'Denoise': _(
+        'Remove dot noise. If possible, turn off the noise in the game itself, because the noise reduction shader '
+        'reduces the frame rate.'
+    ),
     'Depth3D': _('Split screen for owners of virtual reality glasses.'),
-    'DepthHaze': _('Simple depth-blur that makes far-away objects look slightly blurred, with fog based on depth and screen position.'),
+    'DepthHaze': _(
+        'Simple depth-blur that makes far-away objects look slightly blurred, with fog based on depth and screen '
+        'position.'
+    ),
     'DisplayDepth': _('This is a shader mostly useful for checking if the depth buffer is working as intended.'),
     'DOF': _('Loss of sharpness in distant objects with the effect of chromatic aberration.'),
     'DPX': _('Makes the image look like it was converted from film to Cineon DPX. Can be used to create a sunny look.'),
-    'Emphasize': _('Make a part of the scene pop out more while other parts are de-emphasized. By default, it desaturates the areas which are not in focus.'),
+    'Emphasize': _(
+        'Make a part of the scene pop out more while other parts are de-emphasized. By default, it desaturates the '
+        'areas which are not in focus.'
+    ),
     'EyeAdaption': _('This shader brightens or darkens the image depending on the average brightness of the screen.'),
     'FakeHDR': _('Should restore detail in too dark and bright areas of the frame. Darkens the image in practice.'),
     'FakeMotionBlur': _('Pseudo motion blur.'),
@@ -2103,39 +2249,72 @@ vkbasalt_dict = {
     'FineSharp': _('Sharpering for more cinema-like look.'),
     'FXAA': _('The most primitive and fastest of the anti-aliasing filters (pixel smoothing).'),
     'GaussianBlur': _('Just blurs the image.'),
-    'Glitch': _('To simulate a failing video card and cause nausea. People with epilepsy should not turn on this filter!'),
+    'Glitch': _(
+        'To simulate a failing video card and cause nausea. People with epilepsy should not turn on this filter!'
+    ),
     'HighPassSharpen': _('Sharpering for more cinema-like look.'),
-    'HQ4X': _('Smoothing nearby pixels with filling in the missing parts. Is useful for smoothing objects in pixel games.'),
+    'HQ4X': _(
+        'Smoothing nearby pixels with filling in the missing parts. Is useful for smoothing objects in pixel games.'
+    ),
     'HSLShift': _('Lightweight focus and sharpering effect.'),
     'Layer': _('Make own layer.png and overwrite on of the textures. It support alpha transparency.'),
-    'Levels': _('Shifts white and black points. will help in the absence of real black (everything is whitish, as if in a fog) or white is too gray.'),
+    'Levels': _(
+        'Shifts white and black points. will help in the absence of real black (everything is whitish, as if in a fog) '
+        'or white is too gray.'
+    ),
     'LevelsPlus': _('Shifts white and black points. will help in the absence of real black.'),
-    'LiftGammaGain': _('Gamma correction in color channels: red, green and blue. Can stylization of some games under a certain color shade.'),
-    'LightDOF': _('The most lightweight defocus shader in terms of function, which does not greatly reduce performance.'),
+    'LiftGammaGain': _(
+        'Gamma correction in color channels: red, green and blue. Can stylization of some games under a certain '
+        'color shade.'
+    ),
+    'LightDOF': _(
+        'The most lightweight defocus shader in terms of function, which does not greatly reduce performance.'
+    ),
     'LumaSharpen': _('Sharpering for more cinema-like look.'),
     'LUT': _('In the context of game shaders, loot allows you to give the picture a cinema-like look.'),
-    'MagicBloom': _('Shader based on scene luminosity. It uses a Gaussian blur applied on the fly. It blends the bloom with the rest using the Screen blending method.'),
+    'MagicBloom': _(
+        'Shader based on scene luminosity. It uses a Gaussian blur applied on the fly. It blends the bloom with the '
+        'rest using the Screen blending method.'
+    ),
     'Monochrome': _('The effect of simulating a black and white image.'),
     'MultiLUT': _('Hollywood preset LUT included.'),
     'MXAO': _('The effect of self-shadowing of objects, visually adding volume to them.'),
     'NightVision': _('For those who are nostalgic for a night vision device?'),
     'Nostalgia': _('Shader to create a 4-bit frame. Tries to mimic the look of very old computers or console systems.'),
-    'PerfectPerspective': _('The shader tilts the image and changes the point of view of the image. Can be useful for owners of virtual reality glasses.'),
+    'PerfectPerspective': _(
+        'The shader tilts the image and changes the point of view of the image. Can be useful for owners of virtual '
+        'reality glasses.'
+    ),
     'PPFX_Bloom': _('Filter that adds a glow around bright screen areas, adapting to the current scene brightness.'),
     'PPFX_Godrays': _('If you want to add godrays to a scene then this shader can help you with that.'),
-    'Prism': _('Yet Another Chromatic Aberration: It operates in HDR, is the only shader with a correct spectral gradient.'),
-    'ReflectiveBumpMapping': _('Adds reflections to objects in the frame. Can improve the picture in older games without reflection support, but is useless in modern ones.'),
+    'Prism': _(
+        'Yet Another Chromatic Aberration: It operates in HDR, is the only shader with a correct spectral gradient.'
+    ),
+    'ReflectiveBumpMapping': _(
+        'Adds reflections to objects in the frame. Can improve the picture in older games without reflection support, '
+        'but is useless in modern ones.'
+    ),
     'Sepia': _('Applying a shade of brown. Color inherent in old black and white photographs.'),
-    'SMAA': _('Advanced implementation of anti-aliasing. Highlight the objects in the frame and blur their boundaries without erasing the small details of the frame.'),
+    'SMAA': _(
+        'Advanced implementation of anti-aliasing. Highlight the objects in the frame and blur their boundaries '
+        'without erasing the small details of the frame.'
+    ),
     'StageDepth': _('Resize image, positioning it, rotating it and use different blending modes.'),
     'SurfaceBlur': _('Reduction in object detail without blurring contrasting contours.'),
     'Technicolor': _('Makes the image look like it was processed using a three-strip Technicolor process.'),
     'Technicolor2': _('Like Technicolor, but gives a different picture, more aggressively changing colors.'),
     'TiltShift': _('For simulating tilt-shift photography, but recommended to use CinematicDOF.'),
     'Tonemap': _('Tone map for brightness, color and gamma correction.'),
-    'UIDetect': _('Detects the presence of a UI on the screen and switches the visibility of effects depending on its presence.'),
-    'UIMask': _('Shader-mask that makes holes in the effects in the places of the menu items, provided that they do not move anywhere.'),
-    'Vibrance': _('Saturates faded colors without touching the bright ones. The default settings are almost invisible.'),
+    'UIDetect': _(
+        'Detects the presence of a UI on the screen and switches the visibility of effects depending on its presence.'
+    ),
+    'UIMask': _(
+        'Shader-mask that makes holes in the effects in the places of the menu items, provided that they do not '
+        'move anywhere.'
+    ),
+    'Vibrance': _(
+        'Saturates faded colors without touching the bright ones. The default settings are almost invisible.'
+    ),
     'Vignette': _('Adds vignetting, reducing the brightness of the frame at the edges.'),
 }
 
@@ -2233,7 +2412,7 @@ str_title_restore_menu = _('Restore menu')
 str_subtitle_restore_menu = _('Restore the menu after exiting a game or application')
 
 str_title_auto_stop = _('Auto Stop')
-str_subtitle_auto_stop = _('Auto terminate all wine processes after exiting a game or application')
+str_subtitle_auto_stop = _('Auto terminate all Wine processes after exiting a game or application')
 
 str_title_auto_hide_top = _('Auto-hide top header')
 str_subtitle_auto_hide_top = _('Auto-hide the top panel of the window and show it on mouseover')
@@ -2251,8 +2430,10 @@ str_title_def_dir = _('Default directory')
 str_subtitle_def_dir = _('The default directory in which files will be opened in the StartWine file manager')
 
 str_title_opengl = _('OpenGL background')
-str_subtitle_opengl = _('Live background (opengl animation based on selected shaders). '
-'Warning!!! This function can lead to slowdowns and additional load on the graphics card.')
+str_subtitle_opengl = _(
+    'Live background (opengl animation based on selected shaders). '
+    'Warning!!! This function can lead to slowdowns and additional load on the graphics card.'
+)
 
 str_title_shaders = _('Shaders')
 str_subtitle_shaders = _('Select shaders for the live background from the list')
@@ -2263,6 +2444,7 @@ str_subtitle_hotkeys = _('List of default hotkeys settings')
 str_wrong_path = _('Wrong path, path does not exist, specify the correct path to the directory')
 
 hotkey_list = [
+    ['Escape', '', ''],
     ['Ctrl', 'K', ''],
     ['F1', '', ''],
     ['F4', '', ''],
@@ -2271,7 +2453,6 @@ hotkey_list = [
     ['HOME', '', ''],
     ['Ctrl', 'Q', ''],
     ['Ctrl', 'W', ''],
-    ['Ctrl', 'R', ''],
     ['Ctrl', '+', ''],
     ['Ctrl', '-', ''],
     ['F5', '', ''],
@@ -2299,14 +2480,12 @@ hotkey_list = [
     ['Alt', 'B', ''],
     ['Alt', 'W', ''],
     ['Alt', 'L', ''],
-    ['Alt', 'X', ''],
-    ['Alt', 'M', ''],
-    ['Alt', 'V', ''],
     ['Alt', 'I', ''],
     ['Alt', 'Return', ''],
 ]
 
 hotkey_desc = [
+    _('go back or cancel search'),
     _('show hotkey settings window'),
     _('show help'),
     _('about StartWine'),
@@ -2315,7 +2494,6 @@ hotkey_desc = [
     _('enable / disable vkBasalt effects in the game'),
     _('shutdown StartWine'),
     _('close StartWine window'),
-    _('change the window size mode'),
     _('increase the size of the icons and shortcuts'),
     _('reduce the size of the icons and shortcuts'),
     _('update files or shortcuts list view'),
@@ -2341,11 +2519,8 @@ hotkey_desc = [
     _('open file manager'),
     _('show or hide list of mounted volumes'),
     _('show or hide bookmarks list'),
-    _('open winetricks menu'),
+    _('show wine builds page'),
     _('launchers view'),
-    _('open launch settings menu'),
-    _('open MangoHud settings menu'),
-    _('open vkBasalt settings menu'),
     _('open interface settings menu'),
     _('show file properties'),
 ]
@@ -2401,6 +2576,7 @@ comctl32ocx
 comdlg32ocx
 crypt32
 crypt32_winxp
+d2gl
 d3dcompiler_42
 d3dcompiler_43
 d3dcompiler_46
@@ -2471,12 +2647,14 @@ dotnet472
 dotnet48
 dotnet6
 dotnet7
+dotnet8
 dotnet_verifier
 dotnetcore2
 dotnetcore3
 dotnetcoredesktop3
 dotnetdesktop6
 dotnetdesktop7
+dotnetdesktop8
 dpvoice
 dsdmo
 dsound
@@ -2632,11 +2810,15 @@ ogg
 ole32
 oleaut32
 openal
+otvdm
+otvdm090
 pdh
 pdh_nt4
 peverify
 physx
 pngfilt
+powershell
+powershell_core
 prntvpt
 python26
 python27
@@ -2695,6 +2877,7 @@ wmv9vcm
 wsh57
 xact
 xact_x64
+xaudio29
 xinput
 xmllite
 xna31
@@ -2718,6 +2901,7 @@ MS comctl32.ocx and mscomctl.ocx, comctl32 wrappers for VB6 (Microsoft, 2012)
 Common Dialog ActiveX Control for VB6 (Microsoft, 2012)
 MS crypt32 (Microsoft, 2011)
 MS crypt32 (Microsoft, 2004)
+Diablo 2 LoD Glide to OpenGL Wrapper (Bayaraa, 2023)
 MS d3dcompiler_42.dll (Microsoft, 2010)
 MS d3dcompiler_43.dll (Microsoft, 2010)
 MS d3dcompiler_46.dll (Microsoft, 2010)
@@ -2788,12 +2972,14 @@ MS .NET 4.7.2 (Microsoft, 2018)
 MS .NET 4.8 (Microsoft, 2019)
 MS .NET Runtime 6.0 LTS (Microsoft, 2023)
 MS .NET Runtime 7.0 LTS (Microsoft, 2023)
+MS .NET Runtime 8.0 LTS (Microsoft, 2024)
 MS .NET Verifier (Microsoft, 2016)
 MS .NET Core Runtime 2.1 LTS (Microsoft, 2020)
 MS .NET Core Runtime 3.1 LTS (Microsoft, 2020)
 MS .NET Core Desktop Runtime 3.1 LTS (Microsoft, 2020)
 MS .NET Desktop Runtime 6.0 LTS (Microsoft, 2023)
 MS .NET Desktop Runtime 7.0 LTS (Microsoft, 2023)
+MS .NET Desktop Runtime 8.0 LTS (Microsoft, 2024)
 Microsoft dpvoice dpvvox dpvacm Audio dlls (Microsoft, 2002)
 MS dsdmo.dll (Microsoft, 2010)
 MS DirectSound from DirectX user redistributable (Microsoft, 2010)
@@ -2893,7 +3079,7 @@ Gallium Nine Standalone (v0.7) (Gallium Nine Team, 2020)
 Gallium Nine Standalone (v0.8) (Gallium Nine Team, 2021)
 Gallium Nine Standalone (v0.9) (Gallium Nine Team, 2023)
 MS GDI+ (Microsoft, 2011)
-MS GDI+ (Microsoft, 2009)
+MS GDI+ (Microsoft, 2009) 
 MS Games For Windows Live (xlive.dll) (Microsoft, 2008)
 GlideWrapper (Rolf Neuberger, 2005)
 The glut utility library for OpenGL (Mark J. Kilgard, 2001)
@@ -2940,7 +3126,7 @@ MS Masked Edit Control (Microsoft, 2009)
 MS mspatcha (Microsoft, 2004)
 MS Windows Script Control (Microsoft, 2004)
 Visual C++ 6 SP4 msvcirt library; part of vcrun6 (Microsoft, 2000)
-fixme (Microsoft, 2011)
+MS Visual C++ Runtime Library Version 4.0 (Microsoft, 2011)
 MS XML Core Services 3.0 (Microsoft, 2005)
 MS XML Core Services 4.0 (Microsoft, 2009)
 MS XML Core Services 6.0 sp2 (Microsoft, 2014)
@@ -2949,11 +3135,15 @@ OpenCodecs 0.85: FLAC, Speex, Theora, Vorbis, WebM (Xiph.Org Foundation, 2011)
 MS ole32 Module (ole32.dll) (Microsoft, 2004)
 MS oleaut32.dll (Microsoft, 2011)
 OpenAL Runtime (Creative, 2023)
+Otvdm - A modified version of winevdm as Win16 emulator (otya128, 2024)
+Otvdm - A modified version of winevdm as Win16 emulator (otya128, 2024)
 MS pdh.dll (Performance Data Helper) (Microsoft, 2011)
 MS pdh.dll (Performance Data Helper); WinNT 4.0 Version (Microsoft, 1997)
 MS peverify (from .NET 2.0 SDK) (Microsoft, 2006)
 PhysX (Nvidia, 2021)
 pngfilt.dll (from winxp) (Microsoft, 2004)
+PowerShell Wrapper For Wine (ProjectSynchro, 2024)
+PowerShell Core (Microsoft, 2024)
 prntvpt.dll (Microsoft, 2011)
 Python interpreter 2.6.2 (Python Software Foundaton, 2009)
 Python interpreter 2.7.16 (Python Software Foundaton, 2019)
@@ -3012,6 +3202,7 @@ MS Windows Media Video 9 Video Compression Manager (Microsoft, 2013)
 MS Windows Script Host 5.7 (Microsoft, 2007)
 MS XACT Engine (32-bit only) (Microsoft, 2010)
 MS XACT Engine (64-bit only) (Microsoft, 2010)
+MS XAudio Redistributable 2.9 (Microsoft, 2023)
 Microsoft XInput (Xbox controller support) (Microsoft, 2010)
 MS xmllite dll (Microsoft, 2011)
 MS XNA Framework Redistributable 3.1 (Microsoft, 2009)
@@ -3217,9 +3408,11 @@ archive_formats = [
 
 ################################___Messages___:
 
+
 class Msg:
     msg_dict = dict([
-        ('good_day_is', _('A good day is like a good wine...')),
+        ('about', _('About')),
+        ('good_day_is', _('A good day is like a good Wine...')),
         ('yes', _('Yes')),
         ('no', _('No')),
         ('ok', _('Ok')),
@@ -3233,9 +3426,11 @@ class Msg:
         ('install', _('Install')),
         ('installed', _('Installed')),
         ('cs', _('Create shortcut')),
-        ('cw', _('Change wine')),
+        ('cw', _('Change Wine')),
         ('shortcuts', _('Games and apps')),
+        ('files_tree', _('Files')),
         ('launchers', _('Launchers and stores')),
+        ('install_wine', _('Wine builds')),
         ('settings', _('Settings')),
         ('rename', _('Rename')),
         ('create', _('Create')),
@@ -3290,6 +3485,7 @@ To create a shortcut for this executable, rename it or delete the existing short
         ('app_conf_incorrect', _('Incorrect launch parameters')),
         ('app_conf_reset', _('Reset the application settings?')),
         ('lnk_error', _('The path to the executable file was not found, launch is impossible')),
+        ('new_path', _('Do you want to specify a new path to the executable file?')),
         ('copied_to_clipboard', _('Сopied to clipboard')),
         ('total', _('Total')),
         ('free', _('Free')),
@@ -3323,8 +3519,11 @@ To create a shortcut for this executable, rename it or delete the existing short
         ('hours', _('hours')),
         ('days', _('days')),
         ('unknown', _('Unknown')),
-        ('wine_not_found', _('Error, wine not found...')),
-        ('check_wine_updates', _('Check wine updates')),
+        ('wine_not_found', _('Error, Wine not found...')),
+        ('check_wine_updates', _('Check Wine updates')),
+        ('specify_executable', _('Specify executable file')),
+        ('specify_new_loacation', _('Specify the new location...')),
+        ('is_nothing_to_rename', _('It is impossible to rename the file, the image is missing')),
     ])
 
     ################################___Tooltips___:
@@ -3333,7 +3532,7 @@ To create a shortcut for this executable, rename it or delete the existing short
         ('go_home', _('Go to the home directory')),
         ('back_up', _('Move up directory')),
         ('view_more', _('Current directory menu')),
-        ('back_main', _('Back to sidebar main menu')),
+        ('back_main', _('Сome back')),
         ('resize_window', _('Change menu size')),
         ('change_theme', _('Change color scheme')),
         ('resize_icons', _('Change icons size')),
@@ -3351,26 +3550,32 @@ To create a shortcut for this executable, rename it or delete the existing short
         ('bookmarks', _('Show or hide bookmarks list')),
         ('apply', _('Apply')),
         ('registry', _('registry patch')),
-        ('download_wine', _('Download wine')),
+        ('download_wine', _('Download Wine')),
         ('install_launchers', _('Install launchers and game stores')),
         ('settings', _('Settings')),
+        ('prefix_tools', _('Prefix tools')),
+        ('wine_tools', _('Wine tools')),
+        ('tools', _('Tools')),
+        ('stats', _('Statistics and data')),
         ('debug', _('Debug')),
         ('stop', _('Terminate all processes')),
         ('about', _('About')),
         ('choose_app', _('Choose the application to transfer settings')),
         ('web', _('Show web entry')),
         ('view_menu', _('Menu')),
-        ('check_wine_updates', _('Check and update the wine list')),
+        ('check_wine_updates', _('Check and update the Wine list')),
+        ('scroll_up', _('Scroll up the page')),
     ])
 
 ################################___Progress_and_file_ops___:
+
 
 progress_dict = dict([
     ('search', _('Search...')),
     ('app_loaded', _('Loaded successfully')),
     ('app_loading', _('The app is loading...')),
     ('squashfs', _('Squashfs...')),
-    ('install_launchers', _('installation in progress please wait...'))
+    ('installation', _('installation in progress please wait...'))
 ])
 
 str_deletion = _('Deletion')
@@ -3458,14 +3663,22 @@ fragments_labels = [
     _('plexus particles'),
     _('windows 95'),
     _('sin cos 3d'),
+    _('static abstraction'),
+    _('galaxy/nebula and stars'),
+    _('nebula 112'),
+    _('magic ball'),
+    _('zippy zaps'),
+#    _('_')
 ]
 
-################################___APPS_ID___:
+################################___Apps_ID___:
 
 url_app_id = 'https://api.steampowered.com/ISteamApps/GetAppList/v2/'
 
 request_headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36",
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"
+    ),
     "Accept-Language": "fr-FR,fr;q=0.8,en-US;q=0.6,en;q=0.4",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Connection": "keep-alive",
@@ -3534,15 +3747,31 @@ exclude_single_words = [
     ('Extended', ''),
     ('Limited', ''),
     ('Steam', ''),
+    ('Ultimate', ''),
+    ('Special', ''),
     ('Legendary', ''),
     ('Anniversary', ''),
-    ('HD', ''),
+    ("Collector's", ''),
+    ('Voidfarer', ''),
+    ('HDRemaster', ''),
     ('Remastered', ''),
     ('Edition', ''),
     ('Launcher', ''),
     ('Linux', ''),
     ('&', 'and'),
     ('InsaneRamZes', ''),
+    ('Update', ''),
+    ('CODEX', ''),
+    ('SKIDROW', ''),
+    ('Revision', ''),
+    ('UnrealEngine', ''),
+    ('UnrealGame', ''),
+    ('RockstarGames', ''),
+    ('Unity', ''),
+    ('GOGRip', ''),
+    ('EGSRip', ''),
+    ('UplayRip', ''),
+    ('SteamRip', ''),
 ]
 
 exclude_double_words = [
@@ -3562,14 +3791,20 @@ exclude_double_words = [
     ('Special Edition', ''),
     ('Anniversary Edition', ''),
     ("Collector's Edition", ''),
-    ("Gold Classic", ''),
-    ('HD', ''),
-    ('Remastered', ''),
-    ('Anniversary', ''),
-    ('Edition', ''),
-    ('Launcher', ''),
+    ('Voidfarer Edition', ''),
+    ('Gold Classic', ''),
+    ('Next Gen', ''),
+    ('Game of the Year', ''),
+    ('Unreal Engine', ''),
+    ('Unreal Game', ''),
     ('Config App', ''),
     ('Single Player', ''),
+    ('Rockstar Games', ''),
+    ('GOG Rip', ''),
+    ('EGS Rip', ''),
+    ('Uplay Rip', ''),
+    ('Steam Rip', ''),
+    ('HD Remaster', ''),
 ]
 
 exclude_letters = [
@@ -3609,4 +3844,3 @@ romans = {
     0: 'X', 9: 'IX', 8: 'VIII', 7: 'VII', 6: 'VI',
     5: 'V', 4: 'IV', 3: 'III', 2: 'II', 1:'I'
 }
-

@@ -41,7 +41,7 @@ msgid "Shortcuts"
 msgstr "快捷方式"
 
 #: sw_data.py:959
-msgid "Stop wine processes"
+msgid "Stop Wine processes"
 msgstr "停止 Wine 进程"
 
 #: sw_data.py:960 sw_data.py:1020
@@ -85,8 +85,8 @@ msgid "App to Steam Deck menu"
 msgstr "应用程序到 Steam Deck 菜单"
 
 #: sw_data.py:988 sw_data.py:3156
-msgid "Change wine"
-msgstr "改变 wine"
+msgid "Change Wine"
+msgstr "改变 Wine"
 
 #: sw_data.py:989
 msgid "Winehq"
@@ -284,7 +284,7 @@ msgid "Current prefix:\n"
 msgstr "当前前缀：\n"
 
 #: sw_data.py:1088
-msgid "Current wine:\n"
+msgid "Current Wine:\n"
 msgstr "当前的 Wine\n"
 
 #: sw_data.py:1089
@@ -357,76 +357,53 @@ msgstr ""
 
 #: sw_data.py:1136
 msgid ""
-"\n"
 "This release adds the following features, updates, and fixes:\n"
 "Bug fixes and performance improvements.\n"
-"Improved startup performance\n"
-"Fixed video playback issue in games.\n"
-"Fixed an error when changing the Windows version.\n"
-"Interaction errors when searching for files have been fixed.\n"
-"Fixed generation of image and video thumbnails.\n"
-"Fixed launching in opengl mode.\n"
-"Fixed an issue with displaying files when changing icon sizes.\n"
-"The list of wine assemblies available for download has been changed.\n"
-"Fixed command line parsing.\n"
-"Removed compact menu size mode.\n"
 "Locales updated.\n"
 "Updated prefix configurations.\n"
 "Updated list of Wine versions.\n"
+"Updated list of dxvk and vkd3d versions.\n"
 "Libraries and drivers in the container have been updated.\n"
 "Updated list of hotkeys.\n"
-"Added function for updating the list of wine builds.\n"
-"Added Chinese locale.\n"
-"Added different color options for OpenGL animation.\n"
-"Added new animation Sin Cos 3d.\n"
-"Interface settings have been moved to the top panel menu.\n"
-"MangoHud indicator color settings have been moved to the MangoHud settings "
-"section.\n"
-"The overlay panel has been moved to the bottom panel of the window.\n"
-"Added file sorting to the file manager context menu.\n"
-"Added panoramic file viewing mode (split view).\n"
-"Added viewing of files in the form of a detailed list (table).\n"
-"Added support for viewing files from mobile devices.\n"
-"Added separate resizing of shortcuts and file icons.\n"
-"Added automatic hiding of the top and bottom panels.\n"
-"Launch from the system file manager has been changed.\n"
-"Zstd and zstd ultra compression have been added to the file manager.\n"
-"Added statistics for total time and average fps.\n"
+"Updated the list of libraries in Winetricks.\n"
+"The graphical interface has been updated.\n"
+"All settings of the game or application have been moved to the shortcut launch page.\n"
+"The list of sidebar buttons has been changed.\n"
+"Added new background animation.\n"
+"Added the ability to rename the name of an installed application or game.\n"
+"Added the ability to change the path to the executable file of the game or application.\n"
+"Added new animations to the shader list.\n"
+"Added codecs for video playback.\n"
+"Added DirectX 8 support in dxvk mode.\n"
+"Improved image auto-search algorithm.\n"
+"Fixed interface freezes when Star tWine is turned off.\n"
+"Fixed the error of displaying the path when recursively searching in the file manager.\n"
+"Fixed an error when copying fonts to the prefix of an application or game.\n"
+"Outdated startup settings have been removed (GSTREAMER, GAMEMODE, DXVK_ASYNC).\n"
 msgstr ""
-"\n"
-"此版本添加了以下功能、更新和修复：\n"
+"此版本添加了以下功能、更新和修复:\n"
 "错误修复和性能改进。\n"
-"改进了启动性能\n"
-"修复了游戏中的视频播放问题。\n"
-"修复了更改 Windows 版本时的错误。\n"
-"修复了搜索文件时的交互错误。\n"
-"修复了图像和视频缩略图的生成问题。\n"
-"修复了在 opengl 模式下启动的问题。\n"
-"修复了更改图标大小时显示文件的问题。\n"
-"可供下载的 Wine 程序集列表已更改。\n"
-"修复了命令行解析问题。\n"
-"删除了紧凑菜单大小模式。\n"
-"更新了语言环境。\n"
-"更新了前缀配置。\n"
-"更新了 Wine 版本列表。\n"
-"更新了容器中的库和驱动程序。\n"
-"更新了热键列表。\n"
-"添加了更新 Wine 构建列表的功能。\n"
-"添加了中文语言环境。\n"
-"为 OpenGL 动画添加了不同的颜色选项。\n"
-"添加了新动画“Sin Cos 3d”。\n"
-"界面设置已移至顶部面板菜单。\n"
-"MangoHud 指示器颜色设置已移至 MangoHud 设置部分。\n"
-"覆盖面板已移至窗口的底部面板。\n"
-"在文件管理器上下文菜单中添加了文件排序。\n"
-"添加了全景文件查看模式（拆分视图）。\n"
-"添加了以详细列表（表格）形式查看文件的功能。\n"
-"添加了从移动设备查看文件的支持。\n"
-"添加了快捷方式和文件图标的单独调整大小功能。\n"
-"添加了顶部和底部面板的自动隐藏功能。\n"
-"从系统文件管理器启动已更改。\n"
-"文件管理器中添加了 Zstd 和 zstd 超压缩。\n"
-"添加了总时间和平均 fps 的统计数据。\n"
+"区域设置更新。\n"
+"更新的前缀配置。\n"
+"葡萄酒版本的更新列表。\n"
+"更新的dxvk和vkd3d版本列表。\n"
+"容器中的库和驱动程序已更新。\n"
+"更新的热键列表。\n"
+"更新了Winetricks中的库列表。\n"
+"图形界面已更新。\n"
+"游戏或应用程序的所有设置都已移动到快捷方式启动页面。\n"
+"侧边栏按钮列表已更改。\n"
+"添加了新的背景动画。\n"
+"添加了重命名已安装应用程序或游戏名称的功能。\n"
+"添加了更改游戏或应用程序的可执行文件路径的功能。\n"
+"在着色器列表中添加了新的动画。\n"
+"添加了用于视频播放的编解码器。\n"
+"在dxvk模式下添加了DirectX8支持。\n"
+"改进的图像自动搜索算法。\n"
+"固定接口冻结时,星线关闭.\n"
+"修复了在文件管理器中递归搜索时显示路径的错误。\n"
+"修复了将字体复制到应用程序或游戏前缀时的错误。\n"
+"过时的启动设置已被删除（GSTREAMER，GAMEMODE，DXVK_ASYNC）。\n"
 
 #: sw_data.py:1163
 msgid ""
@@ -492,13 +469,22 @@ msgstr "前缀工具"
 msgid "Wine tools"
 msgstr "Wine 工具"
 
+msgid "Tools"
+msgstr "工具"
+
 #: sw_data.py:1306 sw_data.py:1359 sw_data.py:3236
-msgid "Download wine"
+msgid "Download Wine"
 msgstr "下载 Wine"
 
 #: sw_data.py:1308 sw_data.py:3238
 msgid "Settings"
 msgstr "设置"
+
+msgid "Statistics"
+msgstr "统计数据"
+
+msgid "Statistics and data"
+msgstr "统计数据"
 
 #: sw_data.py:1309 sw_data.py:3239
 msgid "Debug"
@@ -667,7 +653,7 @@ msgstr ""
 "POSIX 调用，消除了其他方法的性能和内存损失，并允许您将 Windows 应用程序干净地集成到桌面中。"
 
 #: sw_data.py:1473
-msgid "List of wines to download and install"
+msgid "List of Wines to download and install"
 msgstr "要下载和安装的葡萄酒列表"
 
 #: sw_data.py:1475
@@ -702,23 +688,23 @@ msgstr ""
 
 #: sw_data.py:1486
 msgid ""
-"Proton with the most recent bleeding-edge Proton Experimental WINE. Things "
+"Proton with the most recent bleeding-edge Proton Experimental Wine. Things "
 "it contains that Valve's Proton does not: Additional media foundation "
 "patches for better video playback support, AMD FSR patches, Nvidia CUDA "
 "support for PhysX and NVAPI, raw input mouse support and various wine-"
 "staging patches applied as they become needed."
 msgstr ""
-"Proton 与最新尖端的 Proton Experimental WINE。"
+"Proton 与最新尖端的 Proton Experimental Wine。"
 "它包含 Valve 的 Proton 不包含的内容：用于更好的视频播放支持的附加媒体基础补丁、"
 "AMD FSR 补丁、对 PhysX 和 NVAPI 的 Nvidia CUDA 支持、"
 "原始输入鼠标支持以及在需要时应用的各种 wine-staging 补丁。"
 
 #: sw_data.py:1491
 msgid ""
-"WINE based on/forked from the most recent bleeding-edge proton experimental "
+"Wine based on/forked from the most recent bleeding-edge proton experimental "
 "wine repo. This is meant to be used with non-steam games outside of Steam."
 msgstr ""
-"WINE 基于/从最新的前沿质子实验葡萄酒仓库中分叉出来。这适用于 Steam 之外的非 Steam 游戏。"
+"Wine 基于/从最新的前沿质子实验葡萄酒仓库中分叉出来。这适用于 Steam 之外的非 Steam 游戏。"
 
 #: sw_data.py:1573
 msgid "List of launchers and stores available for installation"
@@ -1177,8 +1163,8 @@ msgid ""
 msgstr "禁用 PhysX 所需的 nvapi 库以通过 CUDA 启用 GPU 加速"
 
 #: sw_data.py:1891
-msgid "Disable debugging mode for wine to improve performance"
-msgstr "禁用 wine 的调试模式以提高性能"
+msgid "Disable debugging mode for Wine to improve performance"
+msgstr "禁用 Wine 的调试模式以提高性能"
 
 #: sw_data.py:1892
 msgid "Allocate to a 32-bit application more than 2 GB of RAM"
@@ -1195,8 +1181,8 @@ msgid ""
 msgstr "模拟写入复制 - 模拟 Windows 如何更准确地将 DLL 加载到内存中"
 
 #: sw_data.py:1895
-msgid "Сan optimize some wineserver calls by using shared memory"
-msgstr "通过使用共享内存优化一些 wineserver 调用"
+msgid "Сan optimize some Wineserver calls by using shared memory"
+msgstr "通过使用共享内存优化一些 Wineserver 调用"
 
 #: sw_data.py:1896
 msgid "System monitoring in dxvk"
@@ -1933,8 +1919,8 @@ msgid "Auto Stop"
 msgstr "自动停止"
 
 #: sw_data.py:2172
-msgid "Auto terminate all wine processes after exiting a game or application"
-msgstr "退出游戏或应用程序后自动终止所有 wine 进程"
+msgid "Auto terminate all Wine processes after exiting a game or application"
+msgstr "退出游戏或应用程序后自动终止所有 Wine 进程"
 
 #: sw_data.py:2171
 msgid "Auto-hide top header"
@@ -2003,6 +1989,9 @@ msgstr "默认热键设置列表"
 msgid ""
 "Wrong path, path does not exist, specify the correct path to the directory"
 msgstr "路径错误，路径不存在，指定正确的目录路径"
+
+msgid "go back or cancel search"
+msgstr "返回或取消搜索"
 
 #: sw_data.py:2238
 msgid "show hotkey settings window"
@@ -2139,8 +2128,8 @@ msgid "show or hide bookmarks list"
 msgstr "显示或隐藏书签列表"
 
 #: sw_data.py:2270
-msgid "open winetricks menu"
-msgstr "打开 Winetricks 菜单"
+msgid "show wine builds page"
+msgstr "显示 Wine 构建页面"
 
 #: sw_data.py:2271
 msgid "launchers view"
@@ -2217,7 +2206,7 @@ msgid "Visual C++ libraries kit"
 msgstr "Visual C++ 库套件"
 
 #: sw_data.py:3142
-msgid "A good day is like a good wine..."
+msgid "A good day is like a good Wine..."
 msgstr "美好的一天就像一杯美酒。"
 
 #: sw_data.py:3143
@@ -2463,6 +2452,9 @@ msgstr "重置应用程序设置？"
 msgid "The path to the executable file was not found, launch is impossible"
 msgstr "找不到可执行文件的路径，无法启动"
 
+msgid "Do you want to specify a new path to the executable file?"
+msgstr "是否要指定可执行文件的新路径？"
+
 msgid "Сopied to clipboard"
 msgstr "复制到剪贴板"
 
@@ -2520,14 +2512,23 @@ msgstr "天"
 msgid "Unknown"
 msgstr "未知"
 
-msgid "Error, wine not found..."
+msgid "Error, Wine not found..."
 msgstr "错误，未找到 Wine..."
 
-msgid "Check wine updates"
+msgid "Check Wine updates"
 msgstr "检查 Wine 更新"
 
-msgid "Check and update the wine list"
+msgid "Specify executable file"
+msgstr "指定可执行文件"
+
+msgid "Specify the new location..."
+msgstr "指定新位置..."
+
+msgid "Check and update the Wine list"
 msgstr "检查并更新酒单"
+
+msgid "Scroll up the page"
+msgstr "向上滚动页面"
 
 #: sw_data.py:3215
 msgid "Go to the home directory"
@@ -2542,8 +2543,8 @@ msgid "Current directory menu"
 msgstr "当前目录菜单"
 
 #: sw_data.py:3218
-msgid "Back to sidebar main menu"
-msgstr "返回侧边栏主菜单"
+msgid "Come back"
+msgstr "回来"
 
 #: sw_data.py:3219
 msgid "Change menu size"
@@ -2952,6 +2953,21 @@ msgstr "丛颗粒"
 #: sw_data.py:3333
 msgid "windows 95"
 msgstr "视窗95"
+
+msgid "static abstraction"
+msgstr "静态抽象"
+
+msgid "galaxy/nebula and stars"
+msgstr "星系/星云和恒星"
+
+msgid "nebula 112"
+msgstr "星云112"
+
+msgid "magic ball"
+msgstr "魔法球"
+
+msgid "zippy zaps"
+msgstr "活泼的电击"
 
 #, sh-format
 msgid "Error initializing the Wine prefix"

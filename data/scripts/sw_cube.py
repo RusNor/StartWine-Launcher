@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 ######################
 
-import os
 from os import environ, getenv
 from subprocess import run, PIPE
 
@@ -36,7 +35,6 @@ else:
 import sys
 from sys import argv
 from pathlib import Path
-import time
 import json
 from array import array
 
@@ -46,9 +44,25 @@ gi.require_version('Gdk', '4.0')
 gi.require_version('GL', '1.0')
 from gi.repository import Gtk, Gdk, Gio, GLib, GdkPixbuf
 
+"""
+glViewport, glClearColor, glClear, glFlush, glCreateProgram,
+glAttachShader, glLinkProgram, glGenVertexArrays, glBindVertexArray,
+glGenBuffers, glBindBuffer, glBufferData, glVertexAttribPointer,
+glEnableVertexAttribArray, glGenTextures, glTexImage2D, glUseProgram,
+glEnable, glGetUniformLocation, glUniform3fv, glUniform1f, glUniform4f,
+glUniform1i, glDrawElements, glDisableVertexAttribArray, glDeleteBuffers,
+glDeleteVertexArrays, glDeleteTextures, glDeleteProgram,
+GL_COLOR_BUFFER_BIT, GL_VERTEX_SHADER, GL_FRAGMENT_SHADER,
+GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW,
+GL_FLOAT, GL_FALSE, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+GL_TEXTURE_WRAP_T, GL_REPEAT, GL_TEXTURE_MIN_FILTER,
+GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_RGBA, GL_UNSIGNED_BYTE,
+GL_DEPTH_BUFFER_BIT, GL_DEPTH_TEST, GL_BLEND, GL_SRC_ALPHA,
+GL_ONE_MINUS_SRC_ALPHA, GL_TRIANGLES, GL_UNSIGNED_INT
+"""
+
 from OpenGL.GL import *
-from OpenGL.GL import shaders
-from OpenGL.GL.shaders import compileProgram, compileShader
+from OpenGL.GL.shaders import compileShader
 
 link = f"{sys.argv[0]}"
 sw_scripts = Path(link).parent
@@ -171,56 +185,56 @@ void main()
     fragColor = texture(sTexture, fragCoord);
 }
 """
-vertices = [-0.5, -0.5,  0.5,  1.0, 0.0, 0.0,  0.0, 0.0,
-             0.5, -0.5,  0.5,  0.0, 1.0, 0.0,  1.0, 0.0,
-             0.5,  0.5,  0.5,  0.0, 0.0, 1.0,  1.0, 1.0,
-            -0.5,  0.5,  0.5,  1.0, 1.0, 1.0,  0.0, 1.0,
+vertex = [
+    -0.5, -0.5,  0.5,  1.0, 0.0, 0.0,  0.0, 0.0,
+    0.5, -0.5,  0.5,  0.0, 1.0, 0.0,  1.0, 0.0,
+    0.5,  0.5,  0.5,  0.0, 0.0, 1.0,  1.0, 1.0,
+    -0.5,  0.5,  0.5,  1.0, 1.0, 1.0,  0.0, 1.0,
 
-            -0.5, -0.5, -0.5,  1.0, 0.0, 0.0,  0.0, 0.0,
-             0.5, -0.5, -0.5,  0.0, 1.0, 0.0,  1.0, 0.0,
-             0.5,  0.5, -0.5,  0.0, 0.0, 1.0,  1.0, 1.0,
-            -0.5,  0.5, -0.5,  1.0, 1.0, 1.0,  0.0, 1.0,
+    -0.5, -0.5, -0.5,  1.0, 0.0, 0.0,  0.0, 0.0,
+    0.5, -0.5, -0.5,  0.0, 1.0, 0.0,  1.0, 0.0,
+    0.5,  0.5, -0.5,  0.0, 0.0, 1.0,  1.0, 1.0,
+    -0.5,  0.5, -0.5,  1.0, 1.0, 1.0,  0.0, 1.0,
 
-             0.5, -0.5, -0.5,  1.0, 0.0, 0.0,  0.0, 0.0,
-             0.5,  0.5, -0.5,  0.0, 1.0, 0.0,  1.0, 0.0,
-             0.5,  0.5,  0.5,  0.0, 0.0, 1.0,  1.0, 1.0,
-             0.5, -0.5,  0.5,  1.0, 1.0, 1.0,  0.0, 1.0,
+    0.5, -0.5, -0.5,  1.0, 0.0, 0.0,  0.0, 0.0,
+    0.5,  0.5, -0.5,  0.0, 1.0, 0.0,  1.0, 0.0,
+    0.5,  0.5,  0.5,  0.0, 0.0, 1.0,  1.0, 1.0,
+    0.5, -0.5,  0.5,  1.0, 1.0, 1.0,  0.0, 1.0,
 
-            -0.5,  0.5, -0.5,  1.0, 0.0, 0.0,  0.0, 0.0,
-            -0.5, -0.5, -0.5,  0.0, 1.0, 0.0,  1.0, 0.0,
-            -0.5, -0.5,  0.5,  0.0, 0.0, 1.0,  1.0, 1.0,
-            -0.5,  0.5,  0.5,  1.0, 1.0, 1.0,  0.0, 1.0,
+    -0.5,  0.5, -0.5,  1.0, 0.0, 0.0,  0.0, 0.0,
+    -0.5, -0.5, -0.5,  0.0, 1.0, 0.0,  1.0, 0.0,
+    -0.5, -0.5,  0.5,  0.0, 0.0, 1.0,  1.0, 1.0,
+    -0.5,  0.5,  0.5,  1.0, 1.0, 1.0,  0.0, 1.0,
 
-            -0.5, -0.5, -0.5,  1.0, 0.0, 0.0,  0.0, 0.0,
-             0.5, -0.5, -0.5,  0.0, 1.0, 0.0,  1.0, 0.0,
-             0.5, -0.5,  0.5,  0.0, 0.0, 1.0,  1.0, 1.0,
-            -0.5, -0.5,  0.5,  1.0, 1.0, 1.0,  0.0, 1.0,
+    -0.5, -0.5, -0.5,  1.0, 0.0, 0.0,  0.0, 0.0,
+    0.5, -0.5, -0.5,  0.0, 1.0, 0.0,  1.0, 0.0,
+    0.5, -0.5,  0.5,  0.0, 0.0, 1.0,  1.0, 1.0,
+    -0.5, -0.5,  0.5,  1.0, 1.0, 1.0,  0.0, 1.0,
 
-             0.5,  0.5, -0.5,  1.0, 0.0, 0.0,  0.0, 0.0,
-            -0.5,  0.5, -0.5,  0.0, 1.0, 0.0,  1.0, 0.0,
-            -0.5,  0.5,  0.5,  0.0, 0.0, 1.0,  1.0, 1.0,
-             0.5,  0.5,  0.5,  1.0, 1.0, 1.0,  0.0, 1.0]
+    0.5,  0.5, -0.5,  1.0, 0.0, 0.0,  0.0, 0.0,
+    -0.5,  0.5, -0.5,  0.0, 1.0, 0.0,  1.0, 0.0,
+    -0.5,  0.5,  0.5,  0.0, 0.0, 1.0,  1.0, 1.0,
+    0.5,  0.5,  0.5,  1.0, 1.0, 1.0,  0.0, 1.0
+]
 
-indices = [0,  1,  2,  2,  3,  0,
-           4,  5,  6,  6,  7,  4,
-           8,  9, 10, 10, 11,  8,
-          12, 13, 14, 14, 15, 12,
-          16, 17, 18, 18, 19, 16,
-          20, 21, 22, 22, 23, 20]
+index = [
+    0, 1, 2, 2, 3, 0,
+    4, 5,  6,  6, 7, 4,
+    8, 9, 10, 10, 11, 8,
+    12, 13, 14, 14, 15, 12,
+    16, 17, 18, 18, 19, 16,
+    20, 21, 22, 22, 23, 20
+]
 
-vertices = array('f', vertices)
-indices = array('I', indices)
-
-global first_frame, first_frame_time, dif_time, x_mouse, y_mouse
-first_frame_time = 0
-first_frame = 0
-dif_time = 0
-x_mouse = 0
-y_mouse = 0
+vertices = array('f', vertex)
+indices = array('I', index)
+global first_frame, first_frame_time, dif_time, time_delta, frame, x_mouse, y_mouse, gl_resolution
 
 #############################___SET_CSS_STYLE___:
 
+
 def init_css_style():
+    """___set color scheme if config exists___"""
 
     if sw_menu_json.exists():
         with open(sw_menu_json, 'r', encoding='utf-8') as f:
@@ -257,22 +271,40 @@ def init_css_style():
                     )
             f.close()
 
+
 class Cube(Gtk.Application):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args,
+    """___OpenGL cube for displaying various HUD tools___"""
+
+    def __init__(self):
+        super().__init__(
                         application_id="ru.project.Cube",
                         flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
-                        **kwargs
         )
+        global first_frame, first_frame_time, dif_time, time_delta, frame, x_mouse, y_mouse, gl_resolution
+        first_frame_time = 0
+        first_frame = 0
+        dif_time = 0
+        x_mouse = 0
+        y_mouse = 0
+        self.gl_window = None
+        self.wc_close = None
+        self.wc_minimize = None
+        self.wc_maximize = None
+        self.headerbar_end_box = None
+        self.gl_headerbar = None
+        self.gl_area = None
+        self.ctrl_key = None
+        self.ctrl_gl_motion = None
         self.connect('activate', self.on_activate)
 
-    def on_activate(self, app):
+    def on_activate(self, _app):
+        """___actvate application signal handler___"""
 
         self.gl_window = Gtk.Window(
-                            application=app,
-                            css_name='sw_window',
-                            resizable=False,
-                            decorated=False,
+                                    application=_app,
+                                    css_name='sw_window',
+                                    resizable=False,
+                                    decorated=False,
         )
         self.gl_window.remove_css_class('background')
         self.gl_window.add_css_class('sw_background')
@@ -297,7 +329,7 @@ class Cube(Gtk.Application):
         self.headerbar_end_box.append(self.wc_close)
 
         self.gl_headerbar = Gtk.HeaderBar(css_name='sw_header_top')
-        self.gl_headerbar.set_size_request(-1,46)
+        self.gl_headerbar.set_size_request(-1, 46)
         self.gl_headerbar.set_show_title_buttons(False)
         self.gl_headerbar.pack_end(self.headerbar_end_box)
 
@@ -326,6 +358,7 @@ class Cube(Gtk.Application):
         self.gl_window.present()
 
     def on_realize(self, gl_area):
+        """___realize OpenGL context___"""
 
         context = gl_area.get_context()
         api = gl_area.get_api()
@@ -342,36 +375,36 @@ class Cube(Gtk.Application):
         if gl_area.get_error():
             return True
 
-    def on_resize(self, gl_area, width, height):
+    def on_resize(self, _gl_area, width, height):
+        """___emmited when window size is changed___"""
 
         global gl_resolution
-        width = gl_area.get_width()
-        height = gl_area.get_height()
         gl_resolution = [width, height, 1.0]
 
-        glViewport(0,0, width, height)
+        glViewport(0, 0, width, height)
 
-    def on_render(self, gl_area, context):
+    def on_render(self, gl_area, _context):
         """___create render program___"""
 
         if gl_area.get_error() is not None:
             return False
 
         else:
-            glClearColor (0.024, 0.032, 0.04, 1.0);
-            glClear (GL_COLOR_BUFFER_BIT);
+            glClearColor(0.024, 0.032, 0.04, 1.0)
+            glClear(GL_COLOR_BUFFER_BIT)
 
             if fragment_src is not None:
-                self.on_draw(fragment_src)
+                self.on_draw()
                 glFlush()
 
                 return True
             else:
                 return False
 
-    def on_draw(self, fragment_src):
+    def on_draw(self):
+        """___render program___"""
 
-        global dif_time, timedelta, frame, x_mouse, y_mouse, gl_resolution
+        global dif_time, time_delta, frame, x_mouse, y_mouse, gl_resolution
 
         # create shaders
         v = compileShader(vertex_src, GL_VERTEX_SHADER)
@@ -384,12 +417,12 @@ class Cube(Gtk.Application):
         glLinkProgram(shader)
 
         # Vertex Arrays Object
-        VAO = glGenVertexArrays(1)
-        glBindVertexArray(VAO)
+        vao = glGenVertexArrays(1)
+        glBindVertexArray(vao)
 
         # Vertex Buffer Object
-        VBO = glGenBuffers(1)
-        glBindBuffer(GL_ARRAY_BUFFER, VBO)
+        vbo = glGenBuffers(1)
+        glBindBuffer(GL_ARRAY_BUFFER, vbo)
         glBufferData(
                     GL_ARRAY_BUFFER,
                     len(vertices.tobytes()),
@@ -397,8 +430,8 @@ class Cube(Gtk.Application):
                     GL_STATIC_DRAW
         )
         # Element Buffer Object
-        EBO = glGenBuffers(1)
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO)
+        ebo = glGenBuffers(1)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo)
         glBufferData(
                     GL_ELEMENT_ARRAY_BUFFER,
                     len(indices.tobytes()),
@@ -464,18 +497,19 @@ class Cube(Gtk.Application):
         # Use Shader Program
         glUseProgram(shader)
         glClearColor(0.0, 0.0, 0.0, 0.5)
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
+        glClear(GL_COLOR_BUFFER_BIT)
+        glClear(GL_DEPTH_BUFFER_BIT)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
         resolution_location = glGetUniformLocation(shader, "iResolution")
         time_location = glGetUniformLocation(shader, "iTime")
-        mouse_location = glGetUniformLocation(shader, "iMouse");
-        timedelta_location = glGetUniformLocation(shader, "iTimeDelta");
-        frame_location = glGetUniformLocation(shader, "iFrame");
-        sample_rate_location = glGetUniformLocation(shader, "iSampleRate");
-        date_location = glGetUniformLocation(shader, "iDate");
+        mouse_location = glGetUniformLocation(shader, "iMouse")
+        timedelta_location = glGetUniformLocation(shader, "iTimeDelta")
+        frame_location = glGetUniformLocation(shader, "iFrame")
+        sample_rate_location = glGetUniformLocation(shader, "iSampleRate")
+        date_location = glGetUniformLocation(shader, "iDate")
 
         if resolution_location != -1:
             glUniform3fv(resolution_location, 1, gl_resolution)
@@ -484,22 +518,22 @@ class Cube(Gtk.Application):
             glUniform1f(time_location, dif_time)
 
         if date_location != -1:
-            pass    #glUniform1i(date_location, 1, int(T))
+            pass    # glUniform1i(date_location, 1, int(T))
 
         if mouse_location != -1:
             try:
                 glUniform4f(mouse_location, float(x_mouse), float(y_mouse), 1.0, 1.0)
-            except:
+            except (Exception,):
                 pass
 
         if timedelta_location != -1:
-            glUniform1f(timedelta_location, time_delta);
+            glUniform1f(timedelta_location, time_delta)
 
         if frame_location != -1:
-            glUniform1i(frame_location, frame);
+            glUniform1i(frame_location, frame)
 
         if sample_rate_location != -1:
-            pass    #glUniform1i(sample_rate_location, samp);
+            pass    # glUniform1i(sample_rate_location, samp);
 
         # Draw elements
         glDrawElements(
@@ -526,18 +560,18 @@ class Cube(Gtk.Application):
         glDisableVertexAttribArray(0)
         glDisableVertexAttribArray(1)
         glDisableVertexAttribArray(2)
-        glDeleteBuffers(1, VBO)
-        glDeleteBuffers(1, EBO)
-        glDeleteVertexArrays(1, VAO)
+        glDeleteBuffers(1, vbo)
+        glDeleteBuffers(1, ebo)
+        glDeleteVertexArrays(1, vao)
         glDeleteTextures(1, texture)
         glDeleteProgram(shader)
 
-    def on_key_event(self, ctrl_key_press, keyval, keycode, state, gl_window):
-        '''___window_close_when_press_escape___'''
+    def on_key_event(self, _ctrl_key_press, keyval, _keycode, state, _gl_window):
+        """___window_close_when_press_escape___"""
 
         if ((state & Gdk.MODIFIER_MASK) == Gdk.ModifierType.SUPER_MASK
-            and keyval == Gdk.KEY_Escape):
-                self.gl_window.close()
+                and keyval == Gdk.KEY_Escape):
+            self.gl_window.close()
 
         if keyval == Gdk.KEY_Escape:
             self.gl_window.close()
@@ -549,11 +583,11 @@ class Cube(Gtk.Application):
             self.gl_window.close()
 
         if ((state & Gdk.MODIFIER_MASK) == Gdk.ModifierType.SHIFT_MASK
-            and keyval == Gdk.KEY_F11):
-                self.gl_window.queue_draw()
+                and keyval == Gdk.KEY_F11):
+            self.gl_window.queue_draw()
 
-    def on_ctrl_gl_motion(self, ctrl_gl_motion, x, y):
-        '''___cursor position signal handler___'''
+    def on_ctrl_gl_motion(self, _ctrl_gl_motion, x, y):
+        """___cursor position signal handler___"""
 
         global x_mouse, y_mouse
         x_mouse = x
@@ -562,8 +596,8 @@ class Cube(Gtk.Application):
         self.gl_area.queue_render()
         return True
 
-    def on_frame_clock(self, gl_area, frame_clock):
-        '''___update frames and redraw widget___'''
+    def on_frame_clock(self, _gl_area, frame_clock):
+        """___update frames and redraw widget___"""
 
         global first_frame, first_frame_time, dif_time, time_delta, frame
 
@@ -584,23 +618,24 @@ class Cube(Gtk.Application):
         self.gl_area.queue_render()
         return True
 
-    def on_parent_close(self, button):
-        '''___window_close___'''
+    def on_parent_close(self, _button):
+        """___window_close___"""
 
         self.gl_window.close()
 
-    def on_parent_minimize(self, button):
-        '''___window_minimize___'''
+    def on_parent_minimize(self, _button):
+        """___window_minimize___"""
 
         self.gl_window.minimize()
 
-    def on_parent_maximize(self, button):
-        '''___window_maximize___'''
+    def on_parent_maximize(self, _button):
+        """___window_maximize___"""
 
         if self.gl_window.is_maximized() is True:
             self.gl_window.unmaximize()
         else:
             self.gl_window.maximize()
+
 
 if __name__ == "__main__":
 
@@ -623,7 +658,8 @@ if __name__ == "__main__":
 
     if getenv('SW_USE_MESA_OVERLAY_HUD') == '1':
         environ['VK_LAYER_MESA_OVERLAY_CONFIG'] = MESA_OVERLAY_CONFIG
-        environ['VK_INSTANCE_LAYERS'] = f"$VK_INSTANCE_LAYERS:VK_LAYER_MESA_overlay"
+        environ['VK_INSTANCE_LAYERS'] = "$VK_INSTANCE_LAYERS:VK_LAYER_MESA_overlay"
+        environ['VK_LOADER_LAYERS_ENABLE'] = "$VK_LOADER_LAYERS_ENABLE:VK_LAYER_MESA_overlay"
 
     if getenv('SW_USE_GALLIUM_HUD') == '1':
         environ['GALLIUM_HUD_PERIOD'] = '0.1'
@@ -649,4 +685,3 @@ if __name__ == "__main__":
     init_css_style()
     app = Cube()
     app.run()
-

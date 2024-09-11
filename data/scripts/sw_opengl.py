@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 ####___Core modules___.
-from os import environ, getenv
+from os import getenv
 from sys import argv
 from pathlib import Path
-from datetime import datetime, date
+#from datetime import datetime, date
 from array import array
 import time as clock
 start_time = clock.time()
@@ -12,10 +12,9 @@ start_time = clock.time()
 ####___Third party modules___.
 import gi
 gi.require_version('Gtk', '4.0')
-gi.require_version('Gdk', '4.0')
-from gi.repository import Gtk, Gdk, Gio, GLib, GdkPixbuf
+from gi.repository import Gtk, GLib
+
 from OpenGL.GL import *
-from OpenGL.GL import shaders
 from OpenGL.GL.shaders import compileShader
 
 ####___Local data modules___.
@@ -102,7 +101,7 @@ void main()
 }
 '''
 
-vertices = [
+vertex = [
     -1.0, -1.0, 0.0, 1.0,
     -1.0,  1.0, 0.0, 1.0,
     1.0,  1.0, 0.0, 1.0,
@@ -126,9 +125,10 @@ img_indices = [
     16, 17, 18, 18, 19, 16,
     20, 21, 22, 22, 23, 20
 ]
-vertices = array('f', vertices)
+vertices = array('f', vertex)
 img_verts = array('f', img_vertices)
 img_inds = array('I', img_indices)
+
 
 class RenderArea(Gtk.GLArea):
 
@@ -154,14 +154,16 @@ class RenderArea(Gtk.GLArea):
         self.frame = 0
 
         if getenv('SW_OPENGL') == '1':
-            self.f_num = getenv('FRAGMENT_NUM')
-            self.fragment_src = (
-                            fragment_prefix
-                            + fragments_list[int(self.f_num)]
-                            + fragment_main
-            )
+            if getenv('FRAGMENT_NUM') is not None:
+                f_num = int(getenv('FRAGMENT_NUM'))
+                self.fragment_src = (
+                                    fragment_prefix
+                                    + fragments_list[f_num]
+                                    + fragment_main
+                )
+            else:
+                self.fragment_src = None
         else:
-            self.f_num = 0
             self.fragment_src = None
 
         self.connect('realize', self.on_realize)
@@ -178,16 +180,15 @@ class RenderArea(Gtk.GLArea):
             GLib.timeout_add(1000, self.get_source_next_boot)
 
     def get_cycle_source(self):
-        '''Cyclically load the shader fragment source from the fragment list.'''
+        """Cyclically load the shader fragment source from the fragment list."""
 
         if getenv('SW_OPENGL') == '1':
             timer = clock.time() - start_time
-
             if round(timer) < len(fragments_list) * 3:
                 self.fragment_src = (
-                                fragment_prefix
-                                + fragments_list[round((timer/3)-1)]
-                                + fragment_main
+                                    fragment_prefix
+                                    + fragments_list[round((timer/3)-1)]
+                                    + fragment_main
                 )
                 return True
             else:
@@ -198,25 +199,27 @@ class RenderArea(Gtk.GLArea):
         return True
 
     def get_source_next_boot(self):
-        '''Update the shader fragment source after implementing boot shader.'''
+        """Update the shader fragment source after implementing boot shader."""
 
         if getenv('SW_OPENGL') == '1':
-            timer = clock.time() - start_time
-            f_num = getenv('FRAGMENT_NUM')
-
-            if round(timer) >= 3:
-                self.fragment_src = (
-                                fragment_prefix
-                                + fragments_list[int(f_num)]
-                                + fragment_main
-                )
+            if getenv('FRAGMENT_NUM') is not None:
+                timer = clock.time() - start_time
+                f_num = int(getenv('FRAGMENT_NUM'))
+                if round(timer) >= 3:
+                    self.fragment_src = (
+                                        fragment_prefix
+                                        + fragments_list[f_num]
+                                        + fragment_main
+                    )
+            else:
+                self.fragment_src = None
         else:
             self.fragment_src = None
 
         return True
 
-    def on_realize(self, gl_area):
-        '''Opengl context implementation state.'''
+    def on_realize(self, _gl_area):
+        """Opengl context implementation state."""
 
         context = self.get_context()
         api = self.get_api()
@@ -225,7 +228,8 @@ class RenderArea(Gtk.GLArea):
         stensil_buffer = self.get_has_stencil_buffer()
         error = self.get_error()
 
-        print(tc.SELECTED + tc.RED2
+        print(
+            tc.SELECTED + tc.RED2
             + "\n--------------< OPENGL_CONTEXT >--------------\n"
             + tc.END, "\n",
             tc.VIOLET2 + "CONTEXT_REALIZED: ", tc.GREEN, str(type(context)), "\n",
@@ -235,10 +239,10 @@ class RenderArea(Gtk.GLArea):
             tc.VIOLET2 + "STENSIL_BUFFER:   ", tc.GREEN, stensil_buffer, "\n",
             tc.VIOLET2 + "CONTEXT_ERROR:    ", tc.GREEN, error, "\n",
             tc.END
-            )
+        )
 
-    def on_resize(self, gl_area, width, height):
-        '''Opengl area resizing signal handler.'''
+    def on_resize(self, _gl_area, _width, _height):
+        """Opengl area resizing signal handler."""
 
         width = self.get_width()
         height = self.get_height()
@@ -247,8 +251,8 @@ class RenderArea(Gtk.GLArea):
         if getenv('SW_OPENGL') == '1':
             glViewport(0,0, width, height)
 
-    def on_render(self, gl_area, context):
-        '''Rendering signal handler in opengl area.'''
+    def on_render(self, _gl_area, _context):
+        """Rendering signal handler in opengl area."""
 
         if self.get_error() is not None:
             return False
@@ -257,12 +261,12 @@ class RenderArea(Gtk.GLArea):
             return True
 
         elif getenv('SW_OPENGL') == '0':
-            glClearColor (0.02, 0.02, 0.02, 0.02)
+            glClearColor(0.02, 0.02, 0.02, 0.02)
             glClear(GL_COLOR_BUFFER_BIT)
             glFlush()
             return True
         else:
-            glClearColor (0.02, 0.02, 0.02, 0.02)
+            glClearColor(0.02, 0.02, 0.02, 0.02)
             glClear(GL_COLOR_BUFFER_BIT)
 
             if self.image is None:
@@ -275,7 +279,7 @@ class RenderArea(Gtk.GLArea):
         return True
 
     def on_image_draw(self):
-        '''Compiling a shader program and rendering in opengl area.'''
+        """Compiling a shader program and rendering in opengl area."""
 
         # Create shaders.
         v = compileShader(img_vertex_src, GL_VERTEX_SHADER)
@@ -288,19 +292,19 @@ class RenderArea(Gtk.GLArea):
         glLinkProgram(shader)
 
         # Vertex Arrays Object.
-        VAO = glGenVertexArrays(1)
-        glBindVertexArray(VAO)
+        vao = glGenVertexArrays(1)
+        glBindVertexArray(vao)
 
         # Vertex Buffer Object.
-        VBO = glGenBuffers(1)
-        glBindBuffer(GL_ARRAY_BUFFER, VBO)
+        vbo = glGenBuffers(1)
+        glBindBuffer(GL_ARRAY_BUFFER, vbo)
         glBufferData(
                     GL_ARRAY_BUFFER, len(img_verts.tobytes()),
                     img_verts.tobytes(), GL_STATIC_DRAW
         )
         # Element Buffer Object.
-        EBO = glGenBuffers(1)
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO)
+        ebo = glGenBuffers(1)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo)
         glBufferData(
                     GL_ELEMENT_ARRAY_BUFFER, len(img_inds.tobytes()),
                     img_inds.tobytes(), GL_STATIC_DRAW
@@ -337,7 +341,8 @@ class RenderArea(Gtk.GLArea):
         # Use Shader Program.
         glUseProgram(shader)
         glClearColor(0.02, 0.02, 0.02, 0.02)
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
+        glClear(GL_COLOR_BUFFER_BIT)
+        glClear(GL_DEPTH_BUFFER_BIT)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
@@ -366,14 +371,14 @@ class RenderArea(Gtk.GLArea):
         glBindVertexArray(0)
         glDisableVertexAttribArray(0)
         glDisableVertexAttribArray(1)
-        glDeleteBuffers(1, VBO)
-        glDeleteBuffers(1, EBO)
-        glDeleteVertexArrays(1, VAO)
+        glDeleteBuffers(1, vbo)
+        glDeleteBuffers(1, ebo)
+        glDeleteVertexArrays(1, vao)
         glDeleteTextures(1, texture)
         glDeleteProgram(shader)
 
     def on_draw(self):
-        '''Compiling a shader program and rendering in opengl area.'''
+        """Compiling a shader program and rendering in opengl area."""
 
         # Compile shaders.
         v = compileShader(vertex_src, GL_VERTEX_SHADER)
@@ -386,19 +391,19 @@ class RenderArea(Gtk.GLArea):
         glLinkProgram(shader)
 
         # Vertex Arrays Object.
-        VAO = glGenVertexArrays(1)
-        glBindVertexArray(VAO)
+        vao = glGenVertexArrays(1)
+        glBindVertexArray(vao)
 
         # Vertex Buffer Object.
-        VBO = glGenBuffers(1)
-        glBindBuffer(GL_ARRAY_BUFFER, VBO)
+        vbo = glGenBuffers(1)
+        glBindBuffer(GL_ARRAY_BUFFER, vbo)
         glBufferData(
                     GL_ARRAY_BUFFER,
                     len(vertices.tobytes()),
                     vertices.tobytes(),
                     GL_STATIC_DRAW
         )
-        glVertexAttribPointer (
+        glVertexAttribPointer(
                             0, 4, GL_FLOAT, GL_FALSE,
                             0,
                             ctypes.c_void_p(0)
@@ -409,18 +414,19 @@ class RenderArea(Gtk.GLArea):
         glUseProgram(shader)
 
         glClearColor(0.024, 0.032, 0.04, 1.0)
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
+        glClear(GL_COLOR_BUFFER_BIT)
+        glClear(GL_DEPTH_BUFFER_BIT)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
         resolution_location = glGetUniformLocation(shader, "iResolution")
         time_location = glGetUniformLocation(shader, "iTime")
-        mouse_location = glGetUniformLocation(shader, "iMouse");
-        timedelta_location = glGetUniformLocation(shader, "iTimeDelta");
-        frame_location = glGetUniformLocation(shader, "iFrame");
-        sample_rate_location = glGetUniformLocation(shader, "iSampleRate");
-        date_location = glGetUniformLocation(shader, "iDate");
+        mouse_location = glGetUniformLocation(shader, "iMouse")
+        timedelta_location = glGetUniformLocation(shader, "iTimeDelta")
+        frame_location = glGetUniformLocation(shader, "iFrame")
+        sample_rate_location = glGetUniformLocation(shader, "iSampleRate")
+        date_location = glGetUniformLocation(shader, "iDate")
 
         if resolution_location != -1:
             glUniform3fv(resolution_location, 1, self.gl_resolution)
@@ -429,22 +435,22 @@ class RenderArea(Gtk.GLArea):
             glUniform1f(time_location, self.dif_time)
 
         if date_location != -1:
-            pass    #glUniform1i(date_location, 1, int(T))
+            pass    # glUniform1i(date_location, 1, int(T))
 
         if mouse_location != -1:
             try:
                 glUniform4f(mouse_location, float(self.x_mouse), float(self.y_mouse), 1.0, 1.0)
-            except:
+            except (Exception,):
                 pass
 
         if timedelta_location != -1:
-            glUniform1f(timedelta_location, self.time_delta);
+            glUniform1f(timedelta_location, self.time_delta)
 
         if frame_location != -1:
-            glUniform1i(frame_location, self.frame);
+            glUniform1i(frame_location, self.frame)
 
         if sample_rate_location != -1:
-            pass    #glUniform1i(sample_rate_location, samp);
+            pass    # glUniform1i(sample_rate_location, samp);
 
         glDrawArrays(GL_TRIANGLES, 0, 6)
 
@@ -454,25 +460,25 @@ class RenderArea(Gtk.GLArea):
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         glUseProgram(0)
 
-       # Delete shaders.
+        # Delete shaders.
         glDetachShader(shader, v)
         glDetachShader(shader, f)
         glDeleteShader(v)
         glDeleteShader(f)
 
         # Delete program, buffers and vertex.
-        glDeleteBuffers(1, VBO)
-        glDeleteVertexArrays(1, VAO)
+        glDeleteBuffers(1, vbo)
+        glDeleteVertexArrays(1, vao)
         glDeleteProgram(shader)
 
-    def on_ctrl_gl_motion(self, ctrl_gl_motion, x, y):
-        '''Mouse position signal handler.'''
+    def on_ctrl_gl_motion(self, _ctrl_gl_motion, x, y):
+        """Mouse position signal handler."""
 
         self.x_mouse = x
         self.y_mouse = y
 
-    def on_frame_clock(self, gl_area, frame_clock):
-        '''Update frames and redraw widget.'''
+    def on_frame_clock(self, _gl_area, frame_clock):
+        """Update frames and redraw widget."""
 
         frame_time = frame_clock.get_frame_time()
         self.frame = frame_clock.get_frame_counter()
@@ -490,4 +496,3 @@ class RenderArea(Gtk.GLArea):
 
         self.queue_render()
         return True
-
