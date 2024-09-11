@@ -1,0 +1,443 @@
+#!/usr/bin/env bash
+################################################################################
+
+export SW_GIT_VER="406"
+export UTILS_GIT_VER="2.5"
+export RUNTIME_GIT_VER="0.6"
+export PFX_DEF_GIT_VER="0.1"
+
+[ ! -d "$HOME/.config" ] && \
+    mkdir -p "$HOME/.config"
+
+[ ! -d "$HOME/.local/bin" ] && \
+    mkdir -p "$HOME/.local/bin"
+
+if [ -f "$HOME/.config/swrc" ]; then
+    START_WINE_PATH="$(cat "$HOME/.config/swrc")"
+    export START_WINE_PATH
+else
+    export START_WINE_PATH="$HOME/.local/share/StartWine"
+fi
+
+[ -n "$(tty|grep -v 'not a'|grep -Eo 'tty|pts')" ] && \
+    export SW_SILENT_DL=1
+
+export SW_RUNTIME="${START_WINE_PATH}/data/runtime/sw_runtime"
+
+if [ -d "${START_WINE_PATH}" ]; then
+    export DIRECTORY_EXIST="true"
+else
+    export DIRECTORY_EXIST="false"
+fi
+
+[ ! -d "${START_WINE_PATH}/data/tmp" ] && \
+    mkdir -p "${START_WINE_PATH}/data/tmp"
+
+if [ -f "${START_WINE_PATH}/data/tools/utils/version" ]; then
+    UTILS_VER="$(cat "${START_WINE_PATH}/data/tools/utils/version" | tr -d "[:alpha:][:punct:]")"
+    export UTILS_VER
+fi
+
+if [ -f "${START_WINE_PATH}/data/runtime/version" ]; then
+    RUNTIME_VER="$(cat "${START_WINE_PATH}/data/runtime/version" | tr -d "[:alpha:][:punct:]")"
+    export RUNTIME_VER
+fi
+
+if [ -f "${START_WINE_PATH}/data/pfx_backup/version" ]; then
+    PFX_DEF_VER="$(cat "${START_WINE_PATH}/data/pfx_backup/version" | tr -d "[:alpha:][:punct:]")"
+    export PFX_DEF_VER
+fi
+
+if [ -f "${START_WINE_PATH}/data/scripts/version" ]; then
+    SCRIPT_VER="$(cat "${START_WINE_PATH}/data/scripts/version")"
+    export SCRIPT_VER
+fi
+
+UTILS_FORMAT_VER="$(echo "${UTILS_GIT_VER}" | tr -d "[:alpha:][:punct:]")"
+export UTILS_FORMAT_VER
+
+RUNTIME_FORMAT_VER="$(echo "${RUNTIME_GIT_VER}" | tr -d "[:alpha:][:punct:]")"
+export RUNTIME_FORMAT_VER
+
+PFX_DEF_FORMAT_VER="$(echo "${PFX_DEF_GIT_VER}" | tr -d "[:alpha:][:punct:]")"
+export PFX_DEF_FORMAT_VER
+
+try_download () {
+
+    export RED='\033[1;91m'
+    export BLUE='\033[1;94m'
+    export GREEN='\033[1;92m'
+    export RESETCOLOR='\033[1;00m'
+
+    if [ ! -n "$(tty|grep -v 'not a'|grep -Eo 'tty|pts')" ]; then
+        export NOT_TERM=1
+    else
+        export NOT_TERM=0
+    fi
+
+    is_exist () { command -v "$@" &>/dev/null ; }
+
+    err_no_downloader () {
+
+        error_msg "Downloader not found!"
+        exit 1
+
+    }
+
+    check_url_stat_code () {
+
+        if is_exist curl ; then
+            curl -sL -o /dev/null -I -w "%{http_code}" "$@" 2>/dev/null
+        elif is_exist wget ; then
+            wget --no-check-certificate --server-response \
+            --spider "$@"|& awk '/^  HTTP/{print$2}'|tail -1
+        else
+            return 1
+        fi
+
+    }
+
+    is_url () {
+
+        [ ! -n "$1" ] && \
+            return 1
+
+        if [ -n "$2" ]; then
+            [ "$(check_url_stat_code "$1")" == "$2" ]
+        else
+            [ "$(check_url_stat_code "$1")" == "200" ]
+        fi
+
+    }
+
+    yn_case () {
+
+        while true ; do
+            read -p "$(echo -e "${RED}$1 ${GREEN}(y/n) ${BLUE}> $RESETCOLOR")" yn
+            case $yn in
+                [Yy] ) return 0 ;;
+                [Nn] ) return 1 ;;
+            esac
+        done
+
+    }
+
+    error_msg () {
+
+        echo -e "${RED}[ ERROR ][$(date +"%Y.%m.%d %T")]: $@ $RESETCOLOR"
+        if [ "$NOT_TERM" == 1 ]; then
+            notify-send -a 'StartWine Error' "$@" 2>/dev/null &
+        fi
+
+    }
+
+    rm_fail_dl () {
+
+        [ -f "$FILEDIR/$FILENAME" ] && \
+            rm -rf "$FILEDIR/$FILENAME" \
+            "$FILEDIR/$FILENAME"*.aria2
+
+    }
+
+    dl_ret () {
+
+        if [ "$1" != 0 ]; then
+            rm_fail_dl
+            dl_repeat && try_download "$URL" "$FILEDIR/$FILENAME" || return 1
+        else
+            return 0
+        fi
+
+    }
+
+    dl_repeat () {
+
+        DL_REP_TITLE="Download interrupted!"
+        DL_REP_TEXT="Failed to download: $FILENAME from $(echo "$URL"|awk -F/ '{print$3"/"$4}') \nWould you like to repeat it?"
+
+        if [ "$NOT_TERM" != 1 ]; then
+            yn_case "$DL_REP_TEXT"||return 1
+        elif is_exist yad ; then
+            yad --image="dialog-error" --button="CANCEL:1" --center \
+            --button="REPEAT:0" --title="$DL_REP_TITLE" \
+            --text="$DL_REP_TEXT" --on-top --fixed
+        elif is_exist zenity ; then
+            zenity --question --title="$DL_REP_TITLE" --no-wrap \
+            --text="$DL_REP_TEXT"
+        else
+            return 1
+        fi
+
+    }
+
+    if [ -n "$1" ]; then
+        URL="$1"
+
+        if [ -n "$2" ]; then
+            if [ -d "$2" ]; then
+                FILEDIR="$2"
+                FILENAME="$(basename "$1")"
+            else
+                FILEDIR="$(dirname "$2")"
+                FILENAME="$(basename "$2")"
+            fi
+        else
+            FILEDIR="."
+            FILENAME="$(basename "$1")"
+        fi
+
+        if is_url "$URL" ; then
+            WGET_ARGS=(--no-check-certificate --content-disposition -t 3 -T 5 -w 0.5 "$URL" -O "$FILEDIR/$FILENAME")
+            [ ! -d "$FILEDIR" ] && \
+                mkdir -p "$FILEDIR"
+
+            if [ "$NOT_TERM" == 1 ] && (is_exist yad||is_exist zenity) ; then
+                set -o pipefail
+
+                dl_progress () {
+
+                    [[ "$URL" =~ '&key=' ]] && \
+                        local URL="$(echo "$URL"|sed "s|\&key=.*||g")"
+                    [[ "$URL" =~ '&' && ! "$URL" =~ '&amp;' ]] && \
+                        local URL="$(echo "$URL"|sed "s|\&|\&amp;|g")"
+                    if is_exist yad ; then
+                        yad --progress --percentage=0 --text="Download:\t$FILENAME\n$URL" \
+                        --auto-close --no-escape --selectable-labels --auto-kill \
+                        --center --on-top --fixed --no-buttons --undecorated --skip-taskbar
+                    elif is_exist zenity ; then
+                        zenity --progress --text="Connecting to $URL" --width=650 --height=40 \
+                        --auto-close --no-cancel --title="Download: $FILENAME"
+                    else
+                        return 1
+                    fi
+
+                }
+
+                dl_progress_pulsate () {
+
+                    local ret=1
+                    [[ "$URL" =~ '&key=' ]] && \
+                        local URL="$(echo "$URL"|sed "s|\&key=.*||g")"
+                    [[ "$URL" =~ '&' && ! "$URL" =~ '&amp;' ]] && \
+                        local URL="$(echo "$URL"|sed "s|\&|\&amp;|g")"
+
+                    if is_exist yad ; then
+                        local yad_args=(
+                            --progress --pulsate --text="Download:\t$FILENAME\n$URL"
+                            --width=650 --height=40 --undecorated --skip-taskbar
+                            --no-buttons --text-align center --auto-close --auto-kill
+                            --center --fixed --on-top --no-escape --selectable-labels
+                        )
+                        "$@" &
+                        local exec_pid="$!"
+
+                        if [[ -n "$exec_pid" && -d "/proc/$exec_pid" ]]; then
+                            (while [ -d "/proc/$exec_pid" ]
+                                do echo -e "#\n" ; sleep 0.1 2>/dev/null
+                            done)|yad "${yad_args[@]}" &>/dev/null &
+                            local yad_pid="$!"
+                            wait "$exec_pid" &>/dev/null
+                            ret="$?"
+                            kill "$yad_pid" &>/dev/null
+                        fi
+
+                    elif is_exist zenity ; then
+                        "$@"|zenity --progress --pulsate --text="$URL" --width=650 --height=40 \
+                        --auto-close --no-cancel --title="Download: $FILENAME"
+                        ret="$?"
+                    fi
+
+                    return "$ret"
+
+                }
+
+                if is_exist aria2c ; then
+                    aria2c --no-conf -R -x 13 -s 13 --allow-overwrite --summary-interval=1 -o \
+                    "$FILENAME" -d "$FILEDIR" "$URL"|grep --line-buffered 'ETA'|\
+                    sed -u 's|(.*)| &|g;s|(||g;s|)||g;s|\[||g;s|\]||g'|\
+                    awk '{print$3"\n#Downloading at "$3,$2,$5,$6;system("")}'|\
+                    dl_progress
+                elif is_exist curl ; then
+                    curl -R --progress-bar --insecure --fail -L "$URL" -o \
+                    "$FILEDIR/$FILENAME" |& tr '\r' '\n'|\
+                    sed -ur 's|[# ]+||g;s|.*=.*||g;s|.*|#Downloading at &\n&|g'|\
+                    dl_progress
+                elif is_exist wget2 ; then
+                    dl_progress_pulsate wget2 "${WGET_ARGS[@]}"
+                elif is_exist wget ; then
+                    wget "${WGET_ARGS[@]}"|& tr '\r' '\n'|\
+                    sed -u 's/.* \([0-9]\+%\)\ \+\([0-9,.]\+.\) \(.*\)/\1\n#Downloading at \1\ ETA: \3/; s/^20[0-9][0-9].*/#Done./'|\
+                    dl_progress
+                else
+                    err_no_downloader
+                fi
+
+                dl_ret "${PIPESTATUS[0]}"||return 1
+            else
+                if is_exist aria2c ; then
+                    aria2c --no-conf -R -x 13 -s 13 --allow-overwrite -d "$FILEDIR" -o "$FILENAME" "$URL"
+                elif is_exist curl ; then
+                    curl -R --progress-bar --insecure --fail -L "$URL" -o "$FILEDIR/$FILENAME"
+                elif is_exist wget2 ; then
+                    wget2 -q --force-progress "${WGET_ARGS[@]}"
+                elif is_exist wget ; then
+                    wget -q --show-progress "${WGET_ARGS[@]}"
+                else
+                    err_no_downloader
+                fi
+
+                dl_ret "$?"||return 1
+            fi
+        else
+            error_msg "$FILENAME not found in $(echo "$URL"|awk -F/ '{print$3"/"$4}')"
+            return 1
+        fi
+    else
+        error_msg "Specify download URL!"
+        return 1
+    fi
+
+}
+
+if [[ "$UTILS_VER" -lt "$UTILS_FORMAT_VER" ]]; then
+    [ -d "${START_WINE_PATH}/data/tools/utils" ] && \
+        rm -rf "${START_WINE_PATH}/data/tools/utils"
+fi
+
+if [[ "$PFX_DEF_VER" -lt "$PFX_DEF_FORMAT_VER" ]]; then
+    [ -f "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso" ] && \
+        rm -rf "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso"
+fi
+
+if [[ "$RUNTIME_VER" -lt "$RUNTIME_FORMAT_VER" ]]; then
+
+    export URL_RUNTIME_LIST=(
+       "https://huggingface.co/SudoNano/sw_repo/resolve/main/runtime/sw_runtime.iso?download=true"
+       "https://github.com/RusNor/sw_runtime/releases/download/sw_runtime/sw_runtime.iso"
+    )
+
+    [ ! -d "${START_WINE_PATH}/data/runtime" ] && \
+        mkdir -p "${START_WINE_PATH}/data/runtime"
+
+    [ -f "${SW_RUNTIME}" ] && \
+        rm -rf "${SW_RUNTIME}"
+
+    try_download "${URL_RUNTIME_LIST[0]}" "${SW_RUNTIME}" \
+    || try_download "${URL_RUNTIME_LIST[1]}" "${SW_RUNTIME}" &&
+    chmod +x "${SW_RUNTIME}"
+
+    if [ -f "${SW_RUNTIME}" ]; then
+        [ ! -f "$HOME/.local/bin/sw" ] && \
+            ln -sfr "${SW_RUNTIME}" "$HOME/.local/bin/sw"
+
+        [ ! -f "${START_WINE_PATH}/data/runtime/sw" ] && \
+            ln -sfr "${SW_RUNTIME}" "${START_WINE_PATH}/data/runtime/sw"
+
+        echo "${RUNTIME_GIT_VER}" > "${START_WINE_PATH}/data/runtime/version"
+    fi
+
+fi
+
+if [[ "$SCRIPT_VER" -lt "$SW_GIT_VER" ]]; then
+
+    if [ -x "$(command -v gsettings)" ]; then
+
+        [ ! -d "$HOME/.local/share/icons" ] && \
+            mkdir -p "$HOME/.local/share/icons"
+
+        THEME_NAME=$(gsettings get org.gnome.desktop.interface icon-theme | sed -r "s/'//g" | sed -r "s/-.*//g")
+        export THEME_NAME
+        COPY_THEMES="$(ls -d "/usr/share/icons/$THEME_NAME"*)"
+        for COPY_THEME in $COPY_THEMES ; do
+            [ ! -d "$HOME/.local/share/icons/$(basename $COPY_THEME)" ] && \
+                cp -rf "$COPY_THEME" "$HOME/.local/share/icons" && \
+                echo "$(basename $COPY_THEME) Copy completed successfully"
+        done
+    fi
+
+    [ -d "${START_WINE_PATH}/data/scripts" ] && \
+        rm -rf "${START_WINE_PATH}/data/scripts"
+
+    [ -d "${START_WINE_PATH}/data/img/gui_icons" ] && \
+        rm -rf "${START_WINE_PATH}/data/img/gui_icons"
+
+    [ -d "${START_WINE_PATH}/data/img/sw_themes/sounds" ] && \
+        rm -rf "${START_WINE_PATH}/data/img/sw_themes/sounds"
+
+    [ -d "${START_WINE_PATH}/data/img/sw_themes/css/assets" ] && \
+        rm -rf "${START_WINE_PATH}/data/img/sw_themes/css/assets"
+
+    [ -d "${START_WINE_PATH}/data/img/sw_themes/css/dark" ] && \
+        rm -rf "${START_WINE_PATH}/data/img/sw_themes/css/dark"
+
+    [ -d "${START_WINE_PATH}/data/img/sw_themes/css/light" ] && \
+        rm -rf "${START_WINE_PATH}/data/img/sw_themes/css/light"
+
+    [ -f "${START_WINE_PATH}/data/img/sw_themes/css/default.css" ] && \
+        rm -rf "${START_WINE_PATH}/data/img/sw_themes/css/default.css"
+
+    [ -d "${START_WINE_PATH}/data/img/launcher_icons" ] && \
+        rm -rf "${START_WINE_PATH}/data/img/launcher_icons"
+
+    [ -f "$HOME/.local/share/applications/StartWine.desktop" ] && \
+        rm -rf "$HOME/.local/share/applications/StartWine.desktop"
+
+    if [ -f "/usr/share/applications/StartWine.desktop" ]; then
+
+        [ ! -d "$HOME/.local/share/applications" ] && \
+            mkdir -p "$HOME/.local/share/applications"
+
+        {
+            echo "[Desktop Entry]"
+            echo "Name=StartWine"
+            echo "Exec=startwine %F"
+            echo "Comment[en_GB]=Launch Windows applications on Linux operating systems"
+            echo "Comment[ru]=Запуск приложений Windows в операционных системах Linux"
+            echo "Type=Application"
+            echo "MimeType=application/x-wine-extension-msp;application/x-msi;application/x-ms-dos-executable;"
+            echo "Categories=Game;"
+            echo "Icon=StartWine.png"
+        } > "${HOME}/.local/share/applications/StartWine.desktop"
+
+        chmod +x "${HOME}/.local/share/applications/StartWine.desktop"
+    fi
+
+    export START_WINE_EXTRACT="$(dirname "${START_WINE_PATH}")"
+
+    export URL_VER="https://github.com/RusNor/StartWine-Launcher/releases/download/StartWine_v$SW_GIT_VER/StartWine_v$SW_GIT_VER.tar.xz"
+
+    try_download "${URL_VER}" "${START_WINE_PATH}/data/tmp/StartWine_v$SW_GIT_VER.tar.xz" \
+    || rm -rf "${START_WINE_PATH}/data/tmp/StartWine_v$SW_GIT_VER.tar.xz"
+
+    echo "Download complete succsessfully."
+
+    if [ -f "${SW_RUNTIME}" ]; then
+
+        "${SW_RUNTIME}" tar -xvf "${START_WINE_PATH}/data/tmp/StartWine_v$SW_GIT_VER.tar.xz" -C "${START_WINE_EXTRACT}" \
+        || rm -rf "${START_WINE_PATH}/data/scripts"
+
+        [ -d "${START_WINE_PATH}/data/tmp/StartWine" ] && \
+            rm -rf "${START_WINE_PATH}/data/tmp/StartWine"
+
+        [ -f "${START_WINE_PATH}/data/tmp/StartWine_v$SW_GIT_VER.tar.xz" ] && \
+            rm -rf "${START_WINE_PATH}/data/tmp/StartWine_v$SW_GIT_VER.tar.xz"
+
+        if [ $DIRECTORY_EXIST == "true" ]; then
+            "${START_WINE_PATH}/data/runtime/sw" "$@" ; exit 0
+        else
+            "${START_WINE_PATH}/data/runtime/sw" --path "${START_WINE_PATH}" "$@" 2>/dev/null ; exit 0
+        fi
+    else
+        [ -d "${START_WINE_PATH}/data/tmp/StartWine" ] && \
+            rm -rf "${START_WINE_PATH}/data/tmp/StartWine"
+
+        [ -f "${START_WINE_PATH}/data/tmp/StartWine_v$SW_GIT_VER.tar.xz" ] && \
+            rm -rf "${START_WINE_PATH}/data/tmp/StartWine_v$SW_GIT_VER.tar.xz"
+
+        echo "ERROR: $SW_RUNTIME not exists!"
+    fi
+else
+    "${START_WINE_PATH}/data/runtime/sw" "$@" ; exit 0
+fi
+
+################################################################################
