@@ -23,7 +23,9 @@ Discord > [Click](https://discord.gg/jjY3auVdfm)
 
 Сделайте файл исполняемым и запустите двойным кликом
 
-```bash -c "$(curl -sL RusNor.github.io)"```
+```
+$ bash -c "$(curl -sL RusNor.github.io)"
+```
 
 ```bash -c "$(wget -qO - RusNor.github.io)"```
 
