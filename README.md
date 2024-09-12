@@ -26,9 +26,11 @@ Discord > [Click](https://discord.gg/jjY3auVdfm)
 Make the file executable and launch it with a double click
 
 bash -c "$(curl -sL RusNor.github.io)"
+
 bash -c "$(wget -qO - RusNor.github.io)"
 
 bash -c "$(curl -sL nix-on-nix.github.io)"
+
 bash -c "$(wget -qO - nix-on-nix.github.io)"
 
 ## GUI
