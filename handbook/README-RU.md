@@ -24,29 +24,29 @@ Discord > [Click](https://discord.gg/jjY3auVdfm)
 Сделайте файл исполняемым и запустите двойным кликом
 
 ```
-$ bash -c "$(curl -sL RusNor.github.io)"
+bash -c "$(curl -sL RusNor.github.io)"
 ```
 
 ```
-$ bash -c "$(wget -qO - RusNor.github.io)"
+bash -c "$(wget -qO - RusNor.github.io)"
 ```
 
 ```
-$ bash -c "$(curl -sL nix-on-nix.github.io)"
+bash -c "$(curl -sL nix-on-nix.github.io)"
 ```
 
 ```
-$ bash -c "$(wget -qO - nix-on-nix.github.io)"
+bash -c "$(wget -qO - nix-on-nix.github.io)"
 ```
 
 Зеркало: HuggingFace
 
 ```
-$ bash -c "$(curl -sL 'https://huggingface.co/SudoNano/sw_repo/resolve/main/sw_install?download=true')"
+bash -c "$(curl -sL 'https://huggingface.co/SudoNano/sw_repo/resolve/main/sw_install?download=true')"
 ```
 
 ```
-$ bash -c "$(wget -qO - 'https://huggingface.co/SudoNano/sw_repo/resolve/main/sw_install?download=true')"
+bash -c "$(wget -qO - 'https://huggingface.co/SudoNano/sw_repo/resolve/main/sw_install?download=true')"
 ```
 
 ## Интерфейс
