@@ -25,18 +25,19 @@ Discord > [Click](https://discord.gg/jjY3auVdfm)
 
 Make the file executable and launch it with a double click
 
+To install with one command:
 ```
 bash -c "$(curl -sL RusNor.github.io)"
 ```
-
+or
 ```
 bash -c "$(wget -qO - RusNor.github.io)"
 ```
-
+or
 ```
 bash -c "$(curl -sL nix-on-nix.github.io)"
 ```
-
+or
 ```
 bash -c "$(wget -qO - nix-on-nix.github.io)"
 ```
@@ -46,7 +47,7 @@ Mirror: HuggingFace
 ```
 bash -c "$(curl -sL 'https://huggingface.co/SudoNano/sw_repo/resolve/main/sw_install?download=true')"
 ```
-
+or
 ```
 bash -c "$(wget -qO - 'https://huggingface.co/SudoNano/sw_repo/resolve/main/sw_install?download=true')"
 ```
