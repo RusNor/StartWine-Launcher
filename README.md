@@ -25,7 +25,7 @@ Discord > [Click](https://discord.gg/jjY3auVdfm)
 
 Make the file executable and launch it with a double click
 
-To install with one command:
+###To install with one command:
 ```
 bash -c "$(curl -sL RusNor.github.io)"
 ```
