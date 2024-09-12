@@ -25,19 +25,19 @@ Discord > [Click](https://discord.gg/jjY3auVdfm)
 
 Make the file executable and launch it with a double click
 
-```bash -c "$(curl -sL RusNor.github.io)" \n
+```bash -c "$(curl -sL RusNor.github.io)"```
 
-bash -c "$(wget -qO - RusNor.github.io)" \n
+```bash -c "$(wget -qO - RusNor.github.io)"```
 
-bash -c "$(curl -sL nix-on-nix.github.io)" \n
+```bash -c "$(curl -sL nix-on-nix.github.io)"```
 
-bash -c "$(wget -qO - nix-on-nix.github.io)" \n
+```bash -c "$(wget -qO - nix-on-nix.github.io)"```
 
-Mirror: HuggingFace \n
+Mirror: HuggingFace
 
-bash -c "$(curl -sL 'https://huggingface.co/SudoNano/sw_repo/resolve/main/sw_install?download=true')" \n
+```bash -c "$(curl -sL 'https://huggingface.co/SudoNano/sw_repo/resolve/main/sw_install?download=true')"```
 
-bash -c "$(wget -qO - 'https://huggingface.co/SudoNano/sw_repo/resolve/main/sw_install?download=true')"```
+```bash -c "$(wget -qO - 'https://huggingface.co/SudoNano/sw_repo/resolve/main/sw_install?download=true')"```
 
 ## GUI
 
