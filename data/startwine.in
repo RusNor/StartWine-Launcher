@@ -3,7 +3,7 @@
 
 export SW_GIT_VER="@VERSION@"
 export UTILS_GIT_VER="2.5"
-export RUNTIME_GIT_VER="0.5"
+export RUNTIME_GIT_VER="0.6"
 export PFX_DEF_GIT_VER="0.1"
 
 [ ! -d "$HOME/.config" ] && \
@@ -13,10 +13,14 @@ export PFX_DEF_GIT_VER="0.1"
     mkdir -p "$HOME/.local/bin"
 
 if [ -f "$HOME/.config/swrc" ]; then
-    export START_WINE_PATH="$(cat "$HOME/.config/swrc")"
+    START_WINE_PATH="$(cat "$HOME/.config/swrc")"
+    export START_WINE_PATH
 else
     export START_WINE_PATH="$HOME/.local/share/StartWine"
 fi
+
+[ -n "$(tty|grep -v 'not a'|grep -Eo 'tty|pts')" ] && \
+    export SW_SILENT_DL=1
 
 export SW_RUNTIME="${START_WINE_PATH}/data/runtime/sw_runtime"
 
@@ -29,21 +33,34 @@ fi
 [ ! -d "${START_WINE_PATH}/data/tmp" ] && \
     mkdir -p "${START_WINE_PATH}/data/tmp"
 
-[ -f "${START_WINE_PATH}/data/tools/utils/version" ] && \
-    export UTILS_VER="$(cat "${START_WINE_PATH}/data/tools/utils/version" | tr -d "[:alpha:][:punct:]")"
+if [ -f "${START_WINE_PATH}/data/tools/utils/version" ]; then
+    UTILS_VER="$(cat "${START_WINE_PATH}/data/tools/utils/version" | tr -d "[:alpha:][:punct:]")"
+    export UTILS_VER
+fi
 
-[ -f "${START_WINE_PATH}/data/runtime/version" ] && \
-    export RUNTIME_VER="$(cat "${START_WINE_PATH}/data/runtime/version" | tr -d "[:alpha:][:punct:]")"
+if [ -f "${START_WINE_PATH}/data/runtime/version" ]; then
+    RUNTIME_VER="$(cat "${START_WINE_PATH}/data/runtime/version" | tr -d "[:alpha:][:punct:]")"
+    export RUNTIME_VER
+fi
 
-[ -f "${START_WINE_PATH}/data/pfx_backup/version" ] && \
-    export PFX_DEF_VER="$(cat "${START_WINE_PATH}/data/pfx_backup/version" | tr -d "[:alpha:][:punct:]")"
+if [ -f "${START_WINE_PATH}/data/pfx_backup/version" ]; then
+    PFX_DEF_VER="$(cat "${START_WINE_PATH}/data/pfx_backup/version" | tr -d "[:alpha:][:punct:]")"
+    export PFX_DEF_VER
+fi
 
-[ -f "${START_WINE_PATH}/data/scripts/version" ] && \
-    export SCRIPT_VER="$(cat "${START_WINE_PATH}/data/scripts/version")"
+if [ -f "${START_WINE_PATH}/data/scripts/version" ]; then
+    SCRIPT_VER="$(cat "${START_WINE_PATH}/data/scripts/version")"
+    export SCRIPT_VER
+fi
 
-export UTILS_FORMAT_VER="$(echo "${UTILS_GIT_VER}" | tr -d "[:alpha:][:punct:]")"
-export RUNTIME_FORMAT_VER="$(echo "${RUNTIME_GIT_VER}" | tr -d "[:alpha:][:punct:]")"
-export PFX_DEF_FORMAT_VER="$(echo "${PFX_DEF_GIT_VER}" | tr -d "[:alpha:][:punct:]")"
+UTILS_FORMAT_VER="$(echo "${UTILS_GIT_VER}" | tr -d "[:alpha:][:punct:]")"
+export UTILS_FORMAT_VER
+
+RUNTIME_FORMAT_VER="$(echo "${RUNTIME_GIT_VER}" | tr -d "[:alpha:][:punct:]")"
+export RUNTIME_FORMAT_VER
+
+PFX_DEF_FORMAT_VER="$(echo "${PFX_DEF_GIT_VER}" | tr -d "[:alpha:][:punct:]")"
+export PFX_DEF_FORMAT_VER
 
 try_download () {
 
@@ -52,8 +69,11 @@ try_download () {
     export GREEN='\033[1;92m'
     export RESETCOLOR='\033[1;00m'
 
-    [ ! -n "$(tty|grep -v 'not a'|grep -Eo 'tty|pts')" ] && \
-        export NOT_TERM=1 || export NOT_TERM=0
+    if [ ! -n "$(tty|grep -v 'not a'|grep -Eo 'tty|pts')" ]; then
+        export NOT_TERM=1
+    else
+        export NOT_TERM=0
+    fi
 
     is_exist () { command -v "$@" &>/dev/null ; }
 
@@ -325,7 +345,8 @@ if [[ "$SCRIPT_VER" -lt "$SW_GIT_VER" ]]; then
         [ ! -d "$HOME/.local/share/icons" ] && \
             mkdir -p "$HOME/.local/share/icons"
 
-        export THEME_NAME=$(gsettings get org.gnome.desktop.interface icon-theme | sed -r "s/'//g" | sed -r "s/-.*//g")
+        THEME_NAME=$(gsettings get org.gnome.desktop.interface icon-theme | sed -r "s/'//g" | sed -r "s/-.*//g")
+        export THEME_NAME
         COPY_THEMES="$(ls -d "/usr/share/icons/$THEME_NAME"*)"
         for COPY_THEME in $COPY_THEMES ; do
             [ ! -d "$HOME/.local/share/icons/$(basename $COPY_THEME)" ] && \
@@ -361,20 +382,40 @@ if [[ "$SCRIPT_VER" -lt "$SW_GIT_VER" ]]; then
     [ -f "$HOME/.local/share/applications/StartWine.desktop" ] && \
         rm -rf "$HOME/.local/share/applications/StartWine.desktop"
 
-    [ -f "$HOME/.local/share/applications/StartWine-Run.desktop" ] && \
-        rm -rf "$HOME/.local/share/applications/StartWine-Run.desktop"
+    if [ -f "/usr/share/applications/StartWine.desktop" ]; then
+
+        [ ! -d "$HOME/.local/share/applications" ] && \
+            mkdir -p "$HOME/.local/share/applications"
+
+        {
+            echo "[Desktop Entry]"
+            echo "Name=StartWine"
+            echo "Exec=startwine %F"
+            echo "Comment[en_GB]=Launch Windows applications on Linux operating systems"
+            echo "Comment[ru]=Запуск приложений Windows в операционных системах Linux"
+            echo "Type=Application"
+            echo "MimeType=application/x-wine-extension-msp;application/x-msi;application/x-ms-dos-executable;"
+            echo "Categories=Game;"
+            echo "Icon=startwine"
+        } > "${HOME}/.local/share/applications/StartWine.desktop"
+
+        chmod +x "${HOME}/.local/share/applications/StartWine.desktop"
+    fi
 
     export START_WINE_EXTRACT="$(dirname "${START_WINE_PATH}")"
 
     export URL_VER="https://github.com/RusNor/StartWine-Launcher/releases/download/StartWine_v$SW_GIT_VER/StartWine_v$SW_GIT_VER.tar.xz"
 
-#    try_download "${URL_VER}" "${START_WINE_PATH}/data/tmp/StartWine_v$SW_GIT_VER.tar.xz" &&
+#    try_download "${URL_VER}" "${START_WINE_PATH}/data/tmp/StartWine_v$SW_GIT_VER.tar.xz" \
+#    || rm -rf "${START_WINE_PATH}/data/tmp/StartWine_v$SW_GIT_VER.tar.xz"
+#
 #    echo "Download complete succsessfully."
-    cp -rf /usr/share/startwine/data "${START_WINE_EXTRACT}/StartWine" &&
+    cp -rf /usr/share/startwine/data "${START_WINE_EXTRACT}/StartWine"
 
     if [ -f "${SW_RUNTIME}" ]; then
 
-#        "${SW_RUNTIME}" tar -xvf "${START_WINE_PATH}/data/tmp/StartWine_v$SW_GIT_VER.tar.xz" -C "${START_WINE_EXTRACT}"
+#        "${SW_RUNTIME}" tar -xvf "${START_WINE_PATH}/data/tmp/StartWine_v$SW_GIT_VER.tar.xz" -C "${START_WINE_EXTRACT}" \
+#        || rm -rf "${START_WINE_PATH}/data/scripts"
 
         [ -d "${START_WINE_PATH}/data/tmp/StartWine" ] && \
             rm -rf "${START_WINE_PATH}/data/tmp/StartWine"
@@ -383,9 +424,9 @@ if [[ "$SCRIPT_VER" -lt "$SW_GIT_VER" ]]; then
             rm -rf "${START_WINE_PATH}/data/tmp/StartWine_v$SW_GIT_VER.tar.xz"
 
         if [ $DIRECTORY_EXIST == "true" ]; then
-            "${SW_RUNTIME}" "${START_WINE_PATH}/data/scripts/sw_start" "$@" ; exit 0
+            "${START_WINE_PATH}/data/runtime/sw" "$@" ; exit 0
         else
-            "${SW_RUNTIME}" "${START_WINE_PATH}/data/scripts/sw_start" --path "${START_WINE_PATH}" "$@" 2>/dev/null ; exit 0
+            "${START_WINE_PATH}/data/runtime/sw" --path "${START_WINE_PATH}" "$@" 2>/dev/null ; exit 0
         fi
     else
         [ -d "${START_WINE_PATH}/data/tmp/StartWine" ] && \
@@ -397,7 +438,7 @@ if [[ "$SCRIPT_VER" -lt "$SW_GIT_VER" ]]; then
         echo "ERROR: $SW_RUNTIME not exists!"
     fi
 else
-    "${SW_RUNTIME}" "${START_WINE_PATH}/data/scripts/sw_start" "$@" ; exit 0
+    "${START_WINE_PATH}/data/runtime/sw" "$@" ; exit 0
 fi
 
 ################################################################################
