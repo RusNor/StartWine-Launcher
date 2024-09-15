@@ -13,7 +13,7 @@
 7. [Лицензия](#лицензия)
 
 ## Установка
-Чтобы начать пользоваться программой, загрузите сам SrartWine со страницы GitHub в разделе sw_releases или со сервера discord
+Чтобы начать пользоваться программой, загрузите сам SrartWine со страницы GitHub в разделе sw_releases или с сервера discord
 
 GitHub > [Click](https://github.com/RusNor/StartWine-Launcher/releases)
 
@@ -22,6 +22,33 @@ AUR > [I use Arch :p](https://aur.archlinux.org/packages/startwine)
 Discord > [Click](https://discord.gg/jjY3auVdfm)
 
 Сделайте файл исполняемым и запустите двойным кликом
+
+## Для установки одной командой:
+```
+bash -c "$(curl -sL RusNor.github.io)"
+```
+или
+```
+bash -c "$(wget -qO - RusNor.github.io)"
+```
+или
+```
+bash -c "$(curl -sL nix-on-nix.github.io)"
+```
+или
+```
+bash -c "$(wget -qO - nix-on-nix.github.io)"
+```
+
+Зеркало: HuggingFace
+
+```
+bash -c "$(curl -sL 'https://huggingface.co/SudoNano/sw_repo/resolve/main/sw_install?download=true')"
+```
+или
+```
+bash -c "$(wget -qO - 'https://huggingface.co/SudoNano/sw_repo/resolve/main/sw_install?download=true')"
+```
 
 ## Интерфейс
 
@@ -116,7 +143,7 @@ StartWine был написан с нуля, но с использование�
 - Lintech
 - LinuxShef
 - Sheridan
-- Wilk
+- Wik
 
 > **Дизайн проекта**
 

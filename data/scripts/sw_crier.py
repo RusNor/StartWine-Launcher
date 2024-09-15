@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-
+import os
 import sys
 from sys import argv, exit
 from pathlib import Path
@@ -8,19 +8,19 @@ import shutil
 from warnings import filterwarnings
 import json
 import urllib.request
-from urllib.request import Request, urlopen, urlretrieve
+from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 from subprocess import run
 import itertools
+from collections import deque
+from time import sleep
 
 import gi
 gi.require_version('Gtk', '4.0')
 gi.require_version('Gdk', '4.0')
-from gi.repository import Gdk, Gio, GLib, Gtk, Gsk, Graphene, Pango, GdkPixbuf
-import cairo
-import io
-from PIL import Image
+from gi.repository import Gdk, Gio, GLib, Gtk, Gsk, Graphene, Pango
 from sw_data import Msg as msg
+from sw_data import TermColors as tc
 filterwarnings('ignore')
 
 #############################___PATH_DATA___:
@@ -38,52 +38,66 @@ icon_folder = f'{sw_path}/data/img/gui_icons/hicolor/symbolic/apps/folder-symbol
 
 ############################___SET_CSS_STYLE___:
 
-css_provider = Gtk.CssProvider()
+gtk_css_provider = Gtk.CssProvider()
 
 if sw_menu_json.exists():
 
-    menu_conf_read = open(sw_menu_json, 'r')
-    dict_ini = json.load(menu_conf_read)
+    with open(sw_menu_json, 'r', encoding='utf-8') as f:
+        dict_ini = json.load(f)
+        f.close()
 
     if dict_ini['color_scheme'] == 'dark':
 
-        css_provider.load_from_file(Gio.File.new_for_path(bytes(sw_css_dark)))
+        gtk_css_provider.load_from_file(Gio.File.new_for_path(bytes(sw_css_dark)))
         Gtk.StyleContext.add_provider_for_display(
             Gdk.Display.get_default(),
-            css_provider,
+            gtk_css_provider,
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
             )
     elif dict_ini['color_scheme'] == 'light':
-        css_provider.load_from_file(Gio.File.new_for_path(bytes(sw_css_light)))
+        gtk_css_provider.load_from_file(Gio.File.new_for_path(bytes(sw_css_light)))
         Gtk.StyleContext.add_provider_for_display(
             Gdk.Display.get_default(),
-            css_provider,
+            gtk_css_provider,
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
             )
     elif dict_ini['color_scheme'] == 'custom':
-        css_provider.load_from_file(Gio.File.new_for_path(bytes(sw_css_custom)))
+        gtk_css_provider.load_from_file(Gio.File.new_for_path(bytes(sw_css_custom)))
         Gtk.StyleContext.add_provider_for_display(
             Gdk.Display.get_default(),
-            css_provider,
+            gtk_css_provider,
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
             )
 
-    menu_conf_read.close()
 
 class SwPathManager(Gtk.Application):
+    """StartWine install path chooser."""
 
     def __init__(self, source_path):
         super().__init__(flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
         self.source_path = source_path
-        self.connect('activate', self.activate)
+        self.local_path = f'{Path.home()}/.local/share/StartWine'
+        self.window = None
+        self.label_btn_ok = None
+        self.btn_ok = None
+        self.headerbar = None
+        self.entry_main = None
+        self.label_main = None
+        self.image = None
+        self.paintable_icon = None
+        self.image_folder = None
+        self.btn_main = None
+        self.box_entry = None
+        self.grid_content = None
+        #self.connect('activate', self.activate)
 
-    def activate(self, app):
+    def do_activate(self):
 
         self.window = Gtk.Window(
-                        application=app,
-                        css_name='sw_window',
-                        default_height=320,
-                        default_width=640,
+                                application=self,
+                                css_name='sw_window',
+                                default_height=320,
+                                default_width=640,
         )
         self.window.remove_css_class('background')
         self.window.add_css_class('sw_background')
@@ -111,7 +125,7 @@ class SwPathManager(Gtk.Application):
                                     valign=Gtk.Align.CENTER,
                                     text=str(self.source_path),
         )
-        self.label_main =Gtk.Label(css_name='sw_label', label=msg.msg_dict['select_sw_path'])
+        self.label_main = Gtk.Label(css_name='sw_label', label=msg.msg_dict['select_sw_path'])
 
         self.image = Gtk.Picture(css_name='sw_picture')
         self.image.set_content_fit(Gtk.ContentFit.COVER)
@@ -152,7 +166,7 @@ class SwPathManager(Gtk.Application):
         self.window.present()
         self.entry_main.select_region(0,0)
 
-    def _select_path(self, button):
+    def _select_path(self, _button):
 
         title = msg.msg_dict['change_directory']
         dialog = SwDialogDirectory(title=title)
@@ -166,12 +180,12 @@ class SwPathManager(Gtk.Application):
 
         try:
             result = dialog.select_folder_finish(res)
-        except GLib.GError as e:
-            result = None
+        except GLib.GError:
+            pass
         else:
             self.entry_main.set_text(str(result.get_path()))
 
-    def _accept_response(self, button):
+    def _accept_response(self, _button):
 
         dest_path = Path(self.entry_main.get_text())
 
@@ -181,62 +195,68 @@ class SwPathManager(Gtk.Application):
             else:
                 self.label_main.add_css_class('warning')
                 self.label_main.set_label(msg.msg_dict['correct_path'])
+                print(f'path {dest_path} not exists')
+                return f'path {dest_path} not exists'
 
         if dest_path == Path(self.source_path):
-            print('set default path...')
-            self.window.close()
+            try_create_swrc(dest_path)
             print('run StartWine...')
-            if not Path(f'{Path.home()}/.config').exists():
-                Path(f'{Path.home()}/.config').mkdir(parents=True, exist_ok=True)
-                with open(f'{Path.home()}/.config/swrc', 'w') as f:
-                    f.write(f'{dest_path}')
-                    f.close()
-            else:
-                with open(f'{Path.home()}/.config/swrc', 'w') as f:
-                    f.write(f'{dest_path}')
-                    f.close()
+            self.window.close()
         else:
             if dest_path.exists():
                 print('path exists, skip...')
-                self.window.close()
+                if (str(dest_path) != str(self.local_path)
+                        and Path(self.local_path).exists()):
+                    shutil.rmtree(self.local_path)
+
+                try_create_swrc(dest_path)
                 print('run StartWine...')
-            else:
                 self.window.close()
+            else:
                 if str(dest_path).endswith('StartWine'):
                     print('move StartWine...')
+                    if not Path(dest_path).parent.exists():
+                        Path(dest_path).parent.mkdir(parents=True, exist_ok=True)
                     try:
                         shutil.move(self.source_path, dest_path)
-                    except Exception as e:
+                    except IOError as e:
                         print(e)
                     else:
-                        if not Path(f'{Path.home()}/.config').exists():
-                            Path(f'{Path.home()}/.config').mkdir(parents=True, exist_ok=True)
-                            with open(f'{Path.home()}/.config/swrc', 'w') as f:
-                                f.write(f'{dest_path}')
-                                f.close()
-                        else:
-                            with open(f'{Path.home()}/.config/swrc', 'w') as f:
-                                f.write(f'{dest_path}')
-                                f.close()
+                        try_create_swrc(dest_path)
+                self.window.close()
+
+        return None
+
+def try_create_swrc(dest_path):
+    """___write new program path to rc config___"""
+
+    if not Path(f'{Path.home()}/.config').exists():
+        Path(f'{Path.home()}/.config').mkdir(parents=True, exist_ok=True)
+
+    with open(f'{Path.home()}/.config/swrc', 'w', encoding='utf-8') as rc:
+        rc.write(f'{dest_path}')
+        rc.close()
+
 
 def run_menu():
+    """___run menu from config path___"""
 
     if Path(f'{Path.home()}/.config/swrc').exists():
-        with open(f'{Path.home()}/.config/swrc', 'r') as f:
-            dest_path = f.read().splitlines()[0]
-            f.close()
-        run(f'{dest_path}/data/scripts/sw_menu.py', start_new_session=True)
+        with open(f'{Path.home()}/.config/swrc', 'r', encoding='utf-8') as rc:
+            dest_path = rc.read().splitlines()[0]
+            rc.close()
+        run(f'{dest_path}/data/scripts/sw_menu.py', start_new_session=True, check=False)
     else:
         print(f'{Path.home()}/.config/swrc not found...')
 
 #############################___APPLICATION___:
 
+
 class SwCrier(Gtk.Application):
-    '''Application for providing a set of dialog windows.'''
+    """Application for providing a set of dialog windows."""
     def __init__(
                 self, app=None, title=None, text_message=None, message_type=None,
-                response=None, file=None, mime_types=None, *args, **kwargs
-        ):
+                response=None, file=None, mime_types=None, *args, **kwargs):
         super().__init__(
                         flags=Gio.ApplicationFlags.FLAGS_NONE,
                         *args, **kwargs
@@ -254,10 +274,10 @@ class SwCrier(Gtk.Application):
         self.response = response
         self.file = file
         self.mime_types = mime_types
-        self.connect('activate', self.activate)
+        #self.connect('activate', self.activate)
 
-    def activate(self, _app):
-        '''Activate application.'''
+    def do_activate(self):
+        """Activate application."""
 
         if self.message_type in ['INFO', 'ERROR', 'WARNING']:
             self.info()
@@ -275,7 +295,7 @@ class SwCrier(Gtk.Application):
             on_helper()
 
     def info(self):
-        '''Building the info dialog window.'''
+        """Building the info dialog window."""
 
         header = Gtk.HeaderBar(
                         css_name='sw_header_top',
@@ -306,7 +326,7 @@ class SwCrier(Gtk.Application):
                         orientation=Gtk.Orientation.VERTICAL,
                         spacing=8,
         )
-        self.dialog = Gtk.Window(
+        dialog = Gtk.Window(
                         css_name='sw_window',
                         application=self.app,
                         titlebar=header,
@@ -315,19 +335,19 @@ class SwCrier(Gtk.Application):
                         default_height=120,
                         default_width=540,
         )
-        self.dialog.remove_css_class('background')
-        self.dialog.add_css_class('sw_background')
+        dialog.remove_css_class('background')
+        dialog.add_css_class('sw_background')
         box_content.append(label)
         header.pack_end(btn_ok)
-        btn_ok.connect('clicked', self.cb_btn)
+        btn_ok.connect('clicked', self.cb_btn, dialog)
         btn_ok.grab_focus()
-        self.dialog.set_default_size(540, 120)
-        self.dialog.set_size_request(540, 120)
-        self.dialog.set_resizable(False)
-        self.dialog.present()
+        dialog.set_default_size(540, 120)
+        dialog.set_size_request(540, 120)
+        dialog.set_resizable(False)
+        dialog.present()
 
     def question(self):
-        '''Building the question dialog window.'''
+        """Building the question dialog window."""
 
         if self.response is None:
             self.response = [msg.msg_dict['yes'], msg.msg_dict['no']]
@@ -373,7 +393,7 @@ class SwCrier(Gtk.Application):
                         orientation=Gtk.Orientation.VERTICAL,
                         spacing=8,
         )
-        self.dialog = Gtk.Window(
+        dialog = Gtk.Window(
                         css_name='sw_window',
                         application=self.app,
                         titlebar=header,
@@ -382,25 +402,25 @@ class SwCrier(Gtk.Application):
                         default_height=120,
                         default_width=540,
         )
-        self.dialog.remove_css_class('background')
-        self.dialog.add_css_class('sw_background')
+        dialog.remove_css_class('background')
+        dialog.add_css_class('sw_background')
         box_content.append(label)
         header.pack_end(btn_yes)
         header.pack_start(btn_no)
-        btn_yes.connect('clicked', self.cb_btn)
+        btn_yes.connect('clicked', self.cb_btn, dialog)
         btn_yes.grab_focus()
         btn_no.connect('clicked', self.cb_btn_cancel)
-        self.dialog.set_default_size(540, 120)
-        self.dialog.set_size_request(540, 120)
-        self.dialog.set_resizable(False)
-        self.dialog.present()
+        dialog.set_default_size(540, 120)
+        dialog.set_size_request(540, 120)
+        dialog.set_resizable(False)
+        dialog.present()
 
     def text_editor(self):
-        '''Building the text editor view.'''
+        """Building the text editor view."""
 
         if Path(self.file).is_file():
             title = str(Path(self.file).stem)
-            text = Path(self.file).read_text()
+            text = Path(self.file).read_text(encoding='utf-8')
         else:
             title = str(self.file)
             text = str(self.file)
@@ -409,29 +429,29 @@ class SwCrier(Gtk.Application):
                             css_name='sw_header_top',
                             show_title_buttons=False
         )
-        self.dialog = Gtk.Window(
+        dialog = Gtk.Window(
                         css_name='sw_window',
-                        application=app,
+                        application=self.app,
                         titlebar=header,
                         title=title,
         )
-        self.dialog.remove_css_class('background')
-        self.dialog.add_css_class('sw_background')
-        self.dialog.set_default_size(960, 540)
+        dialog.remove_css_class('background')
+        dialog.add_css_class('sw_background')
+        dialog.set_default_size(960, 540)
 
         btn_save = Gtk.Button(
                         css_name='sw_button_accept',
                         label=msg.msg_dict['save'],
                         valign=Gtk.Align.CENTER,
         )
-        btn_save.set_size_request(120, 16),
+        btn_save.set_size_request(120, 16)
 
         btn_cancel = Gtk.Button(
                         css_name='sw_button_cancel',
                         label=msg.msg_dict['cancel'],
                         valign=Gtk.Align.CENTER,
         )
-        btn_cancel.set_size_request(120, 16),
+        btn_cancel.set_size_request(120, 16)
 
         textview = Gtk.TextView(
                         css_name='sw_textview',
@@ -442,126 +462,121 @@ class SwCrier(Gtk.Application):
         )
         textview.remove_css_class('view')
         textview.add_css_class('text')
-        self.buffer = Gtk.TextBuffer()
-        textview.set_buffer(self.buffer)
-        self.buffer.set_text(text)
+        buffer = Gtk.TextBuffer()
+        textview.set_buffer(buffer)
+        buffer.set_text(text)
 
         scrolled = Gtk.ScrolledWindow(
                                     css_name='sw_scrolledwindow',
                                     propagate_natural_height=True,
                                     propagate_natural_width=True,
         )
-        btn_save.connect('clicked', self.cb_btn_save)
+        btn_save.connect('clicked', self.cb_btn_save, dialog, buffer)
         btn_cancel.connect('clicked', self.cb_btn_cancel)
         header.pack_end(btn_save)
         header.pack_start(btn_cancel)
         scrolled.set_child(textview)
-        self.dialog.set_child(scrolled)
-        self.dialog.present()
+        dialog.set_child(scrolled)
+        dialog.present()
 
     def file_selector(self, window=None, data=None, *args, **kwargs):
-        '''Calling the file selection dialog window.'''
+        """Calling the file selection dialog window."""
 
         if window is None:
             window = Gtk.Window(application=self, css_name='sw_window')
 
-        path = self.file
-        title = self.title
-        mime_types = self.mime_types
-
         dialog = SwDialogDirectory(
-                                path=path, title=title, mime_types=mime_types,
-                                *args, **kwargs
+                    path=self.file, title=self.title, mime_types=self.mime_types,
+                    *args, **kwargs
         )
-        if Path(path).is_file() or data is not None:
+        if Path(self.file).is_file() or data is not None:
             dialog.open(
                         parent=window,
                         cancellable=Gio.Cancellable(),
                         callback=self.cb_select_file,
                         user_data=data,
-        )
-        elif Path(path).is_dir():
+            )
+        elif Path(self.file).is_dir():
             dialog.select_folder(
                         parent=window,
                         cancellable=Gio.Cancellable(),
                         callback=self.cb_select_folder,
                         user_data=data,
-        )
+            )
 
     def cb_select_file(self, dialog, res, data):
-        '''Callback from the folder selection dialog.'''
+        """Callback from the folder selection dialog."""
 
         try:
             result = dialog.open_finish(res)
-        except GLib.GError as e:
-            path = '1'
-            result = None
+        except GLib.GError:
+            _path = '1'
         else:
-            path = result.get_path()
+            _path = result.get_path()
             if data is not None:
-                Path(path).write_text(data)
+                Path(_path).write_text(data, encoding='utf-8')
 
         self.quit()
-        print(path)
-        return path
+        print(_path)
+        return _path
 
-    def cb_select_folder(self, dialog, res, data):
-        '''Callback from the folder selection dialog.'''
+    def cb_select_folder(self, dialog, res, _data):
+        """Callback from the folder selection dialog."""
 
         try:
             result = dialog.select_folder_finish(res)
-        except GLib.GError as e:
-            path = '1'
+        except GLib.GError:
+            _path = '1'
         else:
-            path = result.get_path()
+            _path = result.get_path()
 
-        if path is None:
-            path = '1'
+        if _path is None:
+            _path = '1'
 
         self.quit()
-        print(path)
-        return path
+        print(_path)
+        return _path
 
-    def cb_btn(self, btn):
-        '''Callback from the accept button.'''
+    def cb_btn(self, _btn, dialog):
+        """Callback from the accept button."""
 
-        self.dialog.close()
+        dialog.close()
         self.quit()
         p = '0'
         print(p)
-        return p
+        #return p
 
-    def cb_btn_save(self, btn):
-        '''Callback from the save button.'''
+    def cb_btn_save(self, _btn, dialog, buffer):
+        """Callback from the save button."""
 
-        startIter, endIter = self.buffer.get_bounds()
-        buffer_text = self.buffer.get_text(startIter, endIter, False)
+        startiter, enditer = buffer.get_bounds()
+        buffer_text = buffer.get_text(startiter, enditer, False)
 
         if Path(self.file).is_file():
-            Path(self.file).write_text(buffer_text)
+            Path(self.file).write_text(buffer_text, encoding='utf-8')
         else:
-            self.file_selector(window=self.dialog, data=buffer_text)
+            self.file_selector(window=dialog, data=buffer_text)
 
         self.quit()
         p = '0'
         print(p)
         return p
 
-    def cb_btn_cancel(self, btn):
-        '''Callback from the cancel button.'''
+    def cb_btn_cancel(self, _btn):
+        """Callback from the cancel button."""
 
         self.quit()
         p = '1'
         print(p)
         return p
 
-class SwDialogEntry(Gtk.Widget):
-    def __init__(
-        self, app=None, title=None, text_message=None, response=None, func=None,
-        num=None, string_list=None, *args, **kwargs
-        ):
-        super().__init__(*args, **kwargs)
 
+class SwDialogEntry(Gtk.Widget):
+    """___Custom dialog widget with entry row___"""
+    def __init__(
+            self, app=None, title=None, text_message=None, response=None, func=None,
+            num=None, string_list=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.app = app
         self.title = title
         self.text_message = text_message
@@ -570,13 +585,15 @@ class SwDialogEntry(Gtk.Widget):
         self.num = num
         self.string_list = string_list
         self.window = self.app.get_windows()[0]
+        self.box = None
         self.dialog_entry()
 
     def get_child(self):
+        """___get dialog child box___"""
         return self.box
 
     def dialog_entry(self):
-        '''___dialog window with entry row___'''
+        """___dialog window with entry row___"""
 
         headerbar = Gtk.HeaderBar(
                             css_name='sw_header_top',
@@ -656,19 +673,20 @@ class SwDialogEntry(Gtk.Widget):
         dialog.present()
         return dialog
 
-class SwDialogQuestion(Gtk.Widget):
-    def __init__(
-        self, app=None, title=None, text_message=None, response=None, func=None,
-        *args, **kwargs
-        ):
-        super().__init__(*args, **kwargs)
 
-        self.app = app
+class SwDialogQuestion(Gtk.Widget):
+    """___custom dialog question widget for text message___"""
+    def __init__(
+            self, _app=None, title=None, text_message=None, _response=None, func=None,
+            *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.app = _app
         self.title = title
         self.text_message = text_message
-        self.response = response
+        self.response = _response
         self.func = func
         self.window = self.app.get_windows()[0]
+        self.dialog = None
         self.width = 540
         self.height = 120
 
@@ -681,7 +699,7 @@ class SwDialogQuestion(Gtk.Widget):
         self.dialog_question()
 
     def dialog_question(self):
-        '''___dialog question window for text message___'''
+        """___dialog question window for text message___"""
 
         title_label = Gtk.Label(
                         css_name='sw_label_title',
@@ -703,20 +721,12 @@ class SwDialogQuestion(Gtk.Widget):
                         natural_wrap_mode=True,
                         label=self.text_message[1],
         )
-        image = Gtk.Picture(
-                        css_name='sw_picture',
-                        content_fit=Gtk.ContentFit.CONTAIN,
-        )
         box_image = Gtk.Box(
                         css_name='sw_box',
                         orientation=Gtk.Orientation.VERTICAL,
                         spacing=8,
                         halign=Gtk.Align.CENTER,
         )
-        #image.set_filename(str(f'{sw_gui_icons}/{sw_logo_dark}'))
-        #box_image.append(image)
-        #box_image.set_size_request(240,32)
-
         box_message = Gtk.Box(
                         css_name='sw_message_box',
                         orientation=Gtk.Orientation.VERTICAL,
@@ -758,7 +768,7 @@ class SwDialogQuestion(Gtk.Widget):
         )
         box.append(box_btn)
 
-        dialog = Gtk.Window(
+        self.dialog = Gtk.Window(
                             css_name='sw_window',
                             application=self.app,
                             titlebar=headerbar,
@@ -767,8 +777,8 @@ class SwDialogQuestion(Gtk.Widget):
                             transient_for=self.window,
                             child=box,
         )
-        dialog.remove_css_class('background')
-        dialog.add_css_class('sw_background')
+        self.dialog.remove_css_class('background')
+        self.dialog.add_css_class('sw_background')
 
         if self.response is None:
             self.response = [msg.msg_dict['yes'], msg.msg_dict['no']]
@@ -786,73 +796,76 @@ class SwDialogQuestion(Gtk.Widget):
             )
             btn_no.set_size_request(96, 16)
             btn_yes.connect(
-                'clicked', cb_btn_response, self.window, dialog, self.func[0]
+                'clicked', cb_btn_response, self.window, self.dialog, self.func[0]
             )
             btn_no.connect(
-                'clicked', cb_btn_response, self.window, dialog, self.func[1]
+                'clicked', cb_btn_response, self.window, self.dialog, self.func[1]
             )
             headerbar.pack_start(btn_no)
             headerbar.pack_end(btn_yes)
             btn_yes.grab_focus()
         else:
             count = -1
-            for r, f in zip(self.response, self.func):
+            for res, func in zip(self.response, self.func):
                 count += 1
-                if r == msg.msg_dict['cancel']:
-                    btn = Gtk.Button(css_name='sw_button_cancel', label=r)
+                if res == msg.msg_dict['cancel']:
+                    btn = Gtk.Button(css_name='sw_button_cancel', label=res)
                 else:
-                    btn = Gtk.Button(css_name='sw_button', label=r)
+                    btn = Gtk.Button(css_name='sw_button', label=res)
 
                 btn.set_name(str(count))
-                btn.connect('clicked', cb_btn_response, self.window, dialog, f)
+                btn.connect('clicked', cb_btn_response, self.window, self.dialog, func)
                 box_btn.append(btn)
 
-        dialog.set_size_request(self.width, self.height)
-        dialog.set_resizable(False)
-        dialog.present()
+        self.dialog.set_size_request(self.width, self.height)
+        self.dialog.set_resizable(False)
+        self.dialog.present()
+
 
 def cb_btn_response(self, parent_window, dialog, func):
+    """___response calback when accept button clicked___"""
 
     if not parent_window.get_visible():
         if (self.get_label() != msg.msg_dict['run']
-            and self.get_label() != msg.msg_dict['cancel']):
-                parent_window.set_hide_on_close(False)
-                parent_window.set_visible(True)
-                parent_window.unminimize()
+                and self.get_label() != msg.msg_dict['cancel']):
+
+            parent_window.set_hide_on_close(False)
+            parent_window.set_visible(True)
+            parent_window.unminimize()
 
     if func is not None:
         if isinstance(func, dict):
-            dialog.close()
-            f = list(func)[0]
-            args = func[f]
-            return f(*args)
+            fn = list(func)[0]
+            args = func[fn]
 
         elif isinstance(func, tuple):
-            dialog.close()
-            f = func[0]
+            fn = func[0]
             args = func[1]
-            return f(*args)
 
         elif isinstance(func, list):
-            dialog.close()
-            f = func[0]
+            fn = func[0]
             args = func
-            args.remove(f)
-            return f(*args)
+            args.remove(fn)
         else:
-            dialog.close()
+            args = None
+
+        dialog.close()
+
+        if args is None:
             return func()
-    else:
-        return dialog.close()
+
+        return fn(*args)
+
+    return dialog.close()
+
 
 class SwDialogDirectory(Gtk.FileDialog):
+    """___file chooser dialog window___"""
     def __init__(self, path=None, title=None, mime_types=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
         self.path = path
         self.title = title
         self.mime_types = mime_types
-
         self.mime_list = [
             'inode/directory',
             'inode/symlink',
@@ -879,7 +892,7 @@ class SwDialogDirectory(Gtk.FileDialog):
         self.dialog_directory()
 
     def dialog_directory(self):
-        '''___dialog window for choose directory___'''
+        """___dialog window for choose directory___"""
 
         if self.path is None:
             self.path = f'{Path.home()}'
@@ -911,148 +924,189 @@ class SwDialogDirectory(Gtk.FileDialog):
 
         return self
 
-class SwWidget(Gtk.Box):
 
-    def __init__(self, background_color='#000000', shadow_color='#000000',
-                border_color = '#000000', *args, **kwargs):
+class SwGrid(Gtk.Grid):
+    """___custom widget with different effects"""
+    def __init__(
+                self,
+                width=0,
+                height=0,
+                child=None,
+                file=None,
+                texture=None,
+                effects=None,
+                blur=0.0,
+                corner=0.0,
+                border_width=0.0,
+                border_color='#00000000',
+                shadow_color='#00000000',
+                background_color='#00000000',
+                *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self.filename = None
-        self.effects = []
-        self.blur = 50.0
-        self.border = 10.0
-        self.corner = 0.0
-        self.bg = Gdk.RGBA()
-        self.bg.parse(background_color)
-        self.bd = Gdk.RGBA()
-        self.bd.parse(border_color)
-        self.sd = Gdk.RGBA()
-        self.sd.parse(shadow_color)
-        self.direct = list(range(10, 255))
-        self.reverse = list(range(10, 255))
-        self.reverse.reverse()
-        self.iter_color = itertools.cycle(self.direct + self.reverse)
+        if effects is None:
+            effects = []
+        self.width = width
+        self.height = height
+        self.child = child
+        self.file = file
+        self.effects = effects
+        self.blur = blur
+        self.border_width = border_width
+        self.corner = corner
+        self.background = Gdk.RGBA()
+        self.background.parse(background_color)
+        self.border = Gdk.RGBA()
+        self.border.parse(border_color)
+        self.shadow = Gdk.RGBA()
+        self.shadow.parse(shadow_color)
         self.tick = None
-        self.transform = Gsk.Transform()
-        self.texture = None
+        self.texture = texture
         self.flip_texture = None
-        self.cairo_surface = None
-        self.width = None
-        self.height = None
-        self.child = None
-        self.check_tick_callback()
+        self.content_fit = None
+        self.shadow_color = None
+        self.border_color = None
+        self.background_color = None
+        self.snapshot = None
+        self.add_tick_callback(self._tick_callback)
 
     def do_snapshot(self, snapshot):
+        """..."""
 
         self.snapshot = snapshot
-
         x = self.width
         y = self.height
 
-        rect_c = Graphene.Rect().init(0, 0, x, y)
-        rrect_c = Gsk.RoundedRect()
-        rrect_c.init_from_rect(rect_c, self.corner)
+        rect = Graphene.Rect().init(0, 0, x, y)
+        rrect = Gsk.RoundedRect()
+        rrect.init_from_rect(rect, self.corner)
 
-        #self.snapshot.pop()
-        #self.snapshot.push_rounded_clip(rrect_c)
-        
+        if 'rounded' in self.effects:
+            self.snapshot.pop()
+            self.snapshot.push_rounded_clip(rrect)
 
         if 'blur' in self.effects:
-            self.snapshot.push_blur(30)
+            self.snapshot.push_blur(self.blur)
 
         if 'reverse' in self.effects:
             point = Graphene.Point()
-            #y = (self.width/96) * 124
             point.x = x
             point.y = y
             self.snapshot.translate(point)
-            #self.snapshot.scale(1.0, 1.0)
             self.snapshot.rotate(180.0)
 
-        if self.filename is not None and self.texture is not None:
-            trilinear_c = Gsk.ScalingFilter.TRILINEAR
-            self.snapshot.append_scaled_texture(self.texture, trilinear_c, rect_c)
+        if self.file is not None and self.texture is not None:
+            trilinear = Gsk.ScalingFilter.TRILINEAR
+            self.snapshot.append_scaled_texture(self.texture, trilinear, rect)
 
-#        snapshot.append_inset_shadow(
-#                            rrect_c, self.sd, 0, 0, 1.0 + self.border, self.blur
-#        )
-        builder = Gsk.PathBuilder.new()
-        builder.add_rounded_rect(rrect_c)
-        path = builder.to_path()
-        snapshot.append_fill(path, Gsk.FillRule.WINDING, self.bg)
+        if 'shadow' in self.effects:
+            snapshot.append_inset_shadow(
+                        rrect, self.shadow, 0, 0, self.border_width, self.blur
+            )
 
+        if 'gradient' in self.effects:
+            start_point = Graphene.Point()
+            end_point = Graphene.Point()
+            start_point.x = 0
+            start_point.y = 0
+            end_point.x = x/2
+            end_point.y = y/2
+            stop_a = Gsk.ColorStop()
+            stop_b = Gsk.ColorStop()
+            stop_a.offset = 0.8
+            stop_b.offset = 0.8
+            stop_a.color = self.background
+            stop_b.color = self.shadow
+            stops = [stop_a, stop_b]
+            snapshot.append_linear_gradient(rect, start_point, end_point, stops)
 
-        self.snapshot.pop()
-        self.snapshot_child(self.child, self.snapshot)
+        if 'gradient' not in self.effects:
+            builder = Gsk.PathBuilder.new()
+            builder.add_rounded_rect(rrect)
+            builder_path = builder.to_path()
+            snapshot.append_fill(builder_path, Gsk.FillRule.WINDING, self.background)
+
+        if 'blur' in self.effects:
+            self.snapshot.pop()
+
+        self.child = self.get_first_child()
+        while self.child is not None:
+            if self.child is not None:
+                self.snapshot_child(self.child, self.snapshot)
+                self.child = self.child.get_next_sibling()
 
     def do_size_allocate(self, width, height, baseline):
-        ''''''
+        """..."""
         self.width = width
         self.height = height
 
-    def set_filename(self, filename: str):
-
-        self.filename = filename
-        if self.filename is not None:
-            self.texture = Gdk.Texture.new_from_filename(self.filename)
-#            image = Image.open(self.filename)
-#            image = image.transpose(Image.FLIP_LEFT_RIGHT)
-#            byte_arr = io.BytesIO()
-#            image.save(byte_arr, format='PNG')
-#            byte_arr = byte_arr.getvalue()
-#            self.texture = Gdk.Texture.new_from_bytes(GLib.Bytes.new(byte_arr))
+    def set_file(self, file: str):
+        """..."""
+        self.file = file
+        if self.file is not None:
+            try:
+                self.texture = Gdk.Texture.new_from_filename(self.file)
+            except GLib.Error as e:
+                print(e.message)
 
         self.queue_draw()
 
+    def set_texture(self, texture: Gdk.Texture):
+        """..."""
+        self.texture = texture
+
     def set_effects(self, effects: list):
+        """..."""
         self.effects = effects
 
     def set_content_fit(self, content_fit):
+        """..."""
         self.content_fit = content_fit
 
-    def _inset_shadow(self, snapshot, x, y):
-        '''Shadow and border layouts'''
+    def set_background(self, background_color: str):
+        """..."""
+        self.background_color = background_color
+        self.background.parse(background_color)
 
-        rectt = Graphene.Rect().init(0, 0, x, y)
-        rrect = Gsk.RoundedRect()
-        rrect.init_from_rect(rectt, self.corner)
-        snapshot.append_inset_shadow(
-                            rrect, self.sd, 0, 0, 1.0 + self.border, self.blur
-        )
-        builder = Gsk.PathBuilder.new()
-        builder.add_rounded_rect(rrect)
-        path = builder.to_path()
-        snapshot.append_fill(path, Gsk.FillRule.WINDING, self.bg)
+    def get_background(self):
+        """..."""
+        return self.background.to_string()
 
-    def _tick_callback(self, snapshot, frame_clock):
-        ''''''
+    def set_shadow_color(self, shadow_color: str):
+        """..."""
+        self.shadow_color = shadow_color
+        self.shadow.parse(shadow_color)
+
+    def get_shadow_color(self):
+        """..."""
+        return self.shadow.to_string()
+
+    def set_border_color(self, border_color: str):
+        """..."""
+        self.border_color = border_color
+        self.border.parse(border_color)
+
+    def get_border_color(self):
+        """..."""
+        return self.border.to_string()
+
+    def _tick_callback(self, _snapshot, _frame_clock):
+        """..."""
         self.width = self.get_width()
         self.height = self.get_height()
         self.child = self.get_first_child()
-        #next_color = next(self.iter_color)
-        #self.blur = float(next_color)
         self.queue_draw()
+
         return True
 
-    def check_tick_callback(self):
-
-        if self.tick is not None:
-            self.remove_tick_callback(self.tick)
-
-        self.tick = self.add_tick_callback(self._tick_callback)
-
-    def shadow_pulse(self):
-        self.check_tick_callback()
-        self.queue_draw()
-        return True
 
 class SwProgressBar(Gtk.Widget):
+    """___custom progress bar widget with some effects___"""
     def __init__(
                 self,
                 color='#aaaaaa',
                 background_color='#000000',
                 shadow_color='#2080ff',
-                border_color = '#2080ff',
+                border_color='#2080ff',
                 progress_foreground='#ff8020',
                 progress_background='#2080ff',
                 width=240,
@@ -1065,15 +1119,15 @@ class SwProgressBar(Gtk.Widget):
                 show_text=False,
                 fraction=None,
                 pulse_step=250,
-                style = 'circle',
+                style='circle',
                 css_provider=None,
-                orientation = 'horizontal',
-                *args, **kwargs
-        ):
+                orientation='horizontal',
+                *args, **kwargs):
         super().__init__(
             *args, **kwargs,
             width_request=240, height_request=24)
 
+        self.snapshot = None
         self.width = width
         self.height = height
         self.font_family = font_family
@@ -1082,6 +1136,10 @@ class SwProgressBar(Gtk.Widget):
         self.corner = corner
         self.blur = 0.0
 
+        self.ch = 0
+        self.path_list = []
+        self.rect_list = []
+
         self.counter = None
         self.tick = None
         self.max_count = 0
@@ -1089,6 +1147,7 @@ class SwProgressBar(Gtk.Widget):
         self.show_text = show_text
         self.fraction = fraction
         self.pulse_step = pulse_step
+        self.timeout = None
 
         self.direct = list(range(10, 255))
         self.reverse = list(range(10, 255))
@@ -1126,22 +1185,23 @@ class SwProgressBar(Gtk.Widget):
             self.set_define_colors()
 
     def get_define_colors(self):
-        '''Get current define colors from css provider'''
+        """Get current define colors from css provider"""
 
         css_list = self.css_provider.to_string().splitlines()
-        define_colors = dict()
+        define_colors = {}
         for x in css_list:
             if '@define-color sw_' in x:
-                if len([x.split(' ')[2].strip(';') ]) > 0:
-                    define_colors[x.split(' ')[1]] = [x.split(' ')[2].strip(';') ][0]
+                if len([x.split(' ')[2].strip(';')]) > 0:
+                    define_colors[x.split(' ')[1]] = [x.split(' ')[2].strip(';')][0]
 
         return define_colors
 
     def set_define_colors(self):
+        """Set define color for custom widget from css theme."""
 
         dcolors = self.get_define_colors()
 
-        if dcolors != {}:
+        if len(dcolors) != 0:
             self.set_foreground(dcolors['sw_invert_bg_color'])
             self.set_background(dcolors['sw_bg_color'])
             self.set_progress_color(
@@ -1152,6 +1212,7 @@ class SwProgressBar(Gtk.Widget):
             self.set_shadow_color(dcolors['sw_accent_bg_color'])
 
     def check_tick_callback(self):
+        """Check tick callback added or not."""
 
         if self.tick is not None:
             self.remove_tick_callback(self.tick)
@@ -1160,13 +1221,13 @@ class SwProgressBar(Gtk.Widget):
             self.tick = self.add_tick_callback(self._tick_callback)
 
     def do_snapshot(self, snapshot):
-        '''Do snapshot of widget'''
+        """Do snapshot of widget"""
 
         self.snapshot = snapshot
         self._bar(snapshot)
 
-    def _text_layout(self, snapshot):
-        '''Pango layout'''
+    def _text_layout(self, _snapshot):
+        """Create Pango layout context"""
 
         font = Pango.FontDescription.new()
         font.set_family(self.font_family)
@@ -1179,7 +1240,8 @@ class SwProgressBar(Gtk.Widget):
 
         return layout, metrics
 
-    def _set_pango_layout(self, snapshot, layout, metrics, x, y):
+    def _set_pango_layout(self, snapshot, layout, metrics, x, _y):
+        """Set Pango layout"""
 
         point = Graphene.Point()
         chr_w = metrics.get_approximate_char_width() / 1000
@@ -1188,7 +1250,7 @@ class SwProgressBar(Gtk.Widget):
         if self.text is not None:
             len_dgt = len([e for e in self.text if e.isdigit()])
             len_chr = len([e for e in self.text if e.isalpha()])
-            point.x = x/2 - (len_chr * chr_w + len_dgt * dgt_w ) / 2
+            point.x = x/2 - (len_chr * chr_w + len_dgt * dgt_w) / 2
             point.y = 0
             layout.set_text(self.text)
             snapshot.save()
@@ -1200,7 +1262,7 @@ class SwProgressBar(Gtk.Widget):
             text = f'{round(self.fraction * 100, 1)} %'
             len_dgt = len([e for e in text if e.isdigit()])
             len_chr = len([e for e in text if e.isalpha()])
-            point.x = x/2 - (len_chr * chr_w + len_dgt * dgt_w ) / 2
+            point.x = x/2 - (len_chr * chr_w + len_dgt * dgt_w) / 2
             point.y = 0
             layout.set_text(text)
             snapshot.save()
@@ -1209,7 +1271,7 @@ class SwProgressBar(Gtk.Widget):
             snapshot.restore()
 
     def _set_shadow(self, snapshot, x, y):
-        '''Shadow and border layouts'''
+        """Shadow and border layouts"""
 
         rectt = Graphene.Rect().init(0, self.ch, x, y)
         rrect = Gsk.RoundedRect()
@@ -1219,8 +1281,8 @@ class SwProgressBar(Gtk.Widget):
         )
         builder = Gsk.PathBuilder.new()
         builder.add_rounded_rect(rrect)
-        path = builder.to_path()
-        snapshot.append_fill(path, Gsk.FillRule.WINDING, self.bg)
+        builder_path = builder.to_path()
+        snapshot.append_fill(builder_path, Gsk.FillRule.WINDING, self.bg)
 
         snapshot.append_border(
                         rrect,
@@ -1229,17 +1291,14 @@ class SwProgressBar(Gtk.Widget):
         )
 
     def _bar(self, snapshot):
-        '''Do snapshot of progressbar widget'''
+        """Do snapshot of progressbar widget"""
 
         x = self.width
         y = self.height
-        b = self.border
         mc = self.max_count + 2
         self.ch = 0
-        rh = y/2 + self.ch
-        rw = x/20
-        self.path_list = list()
-        self.rect_list = list()
+        self.path_list = []
+        self.rect_list = []
 
         if self.get_show_text():
             layout, metrics = self._text_layout(snapshot)
@@ -1269,11 +1328,11 @@ class SwProgressBar(Gtk.Widget):
                 if self.orientation == 'horizontal':
                     _rect.init(
                         i * x/mc + 5*x/(4*mc), self.ch + y/3, x/(2*mc), y/3
-                )
+                    )
                 elif self.orientation == 'vertical':
                     _rect.init(
-                        x/3, y*(5*mc -9)/(5*mc) + self.ch - (i * y/mc), x/3, y/(2*mc)
-                )
+                        x/3, y*(5*mc - 9)/(5*mc) + self.ch - (i * y/mc), x/3, y/(2*mc)
+                    )
                 _round.init_from_rect(_rect, self.corner)
                 builder.add_rounded_rect(_round)
 
@@ -1282,17 +1341,17 @@ class SwProgressBar(Gtk.Widget):
                 if self.orientation == 'horizontal':
                     _rect.init(
                         i * x/mc + 5*x/(4*mc), self.ch + 47*y/96, x/(2*mc), y/48
-                )
+                    )
                 elif self.orientation == 'vertical':
                     _rect.init(
-                        x/2 - x/48, y*(5*mc -9)/(5*mc) + self.ch - (i * y/mc), x/24, y/48
-                )
+                        x/2 - x/48, y*(5*mc - 9)/(5*mc) + self.ch - (i * y/mc), x/24, y/48
+                    )
                 _round.init_from_rect(_rect, self.corner)
                 builder.add_rounded_rect(_round)
 
-            path = builder.to_path()
-            snapshot.append_fill(path, Gsk.FillRule.WINDING, self.p_bg)
-            self.path_list.append(path)
+            builder_path = builder.to_path()
+            snapshot.append_fill(builder_path, Gsk.FillRule.WINDING, self.p_bg)
+            self.path_list.append(builder_path)
 
         if self.counter is not None:
             count = self.counter
@@ -1306,8 +1365,8 @@ class SwProgressBar(Gtk.Widget):
                 self.snapshot.append_fill(
                     self.path_list[i], Gsk.FillRule.WINDING, self.p_fg)
 
-    def do_size_allocate(self, width, height, baseline):
-        ''''''
+    def do_size_allocate(self, width, height, _baseline):
+        """..."""
 
         self.width = width
         self.height = height
@@ -1333,151 +1392,151 @@ class SwProgressBar(Gtk.Widget):
             self.max_count = int(self.height / 20) - 2
 
     def set_fraction(self, fraction: int):
-        ''''''
+        """..."""
         self.check_tick_callback()
         self.fraction = fraction
         self.queue_draw()
 
     def get_fraction(self):
-        ''''''
+        """..."""
         return self.fraction
 
     def set_text(self, text: str):
-        ''''''
+        """..."""
         self.text = text
 
     def get_text(self):
-        ''''''
+        """..."""
         return self.text
 
     def set_show_text(self, show: bool):
-        ''''''
+        """..."""
         self.show_text = show
 
     def get_show_text(self):
-        ''''''
+        """..."""
         return self.show_text
 
     def set_pulse_step(self, step: int):
-        ''''''
+        """..."""
         self.pulse_step = step
 
     def get_pulse_step(self):
-        ''''''
+        """..."""
         return self.pulse_step
 
     def set_font_size(self, size: int):
-        ''''''
+        """..."""
         self.font_size = size
 
     def get_font_size(self):
-        ''''''
+        """..."""
         return self.font_size
 
     def set_foreground(self, color: str):
-        ''''''
+        """..."""
         self.color = color
         self.fg.parse(color)
 
     def get_foreground(self):
-        ''''''
-        return  self.fg.to_string()
+        """..."""
+        return self.fg.to_string()
 
     def set_background(self, background_color: str):
-        ''''''
+        """..."""
         self.background_color = background_color
         self.bg.parse(background_color)
 
     def get_background(self):
-        ''''''
+        """..."""
         return self.bg.to_string()
 
     def set_shadow_color(self, shadow_color: str):
-        ''''''
+        """..."""
         self.shadow_color = shadow_color
         self.sd.parse(shadow_color)
 
     def get_shadow_color(self):
-        ''''''
+        """..."""
         return self.sd.to_string()
 
     def set_border_color(self, border_color: str):
-        ''''''
+        """..."""
         self.border_color = border_color
         self.bd.parse(border_color)
 
     def get_border_color(self):
-        ''''''
-        return  self.bd.to_string()
+        """..."""
+        return self.bd.to_string()
 
     def set_progress_color(self, color: str, background_color: str):
-        ''''''
+        """..."""
         self.progress_foreground = color
         self.progress_background = background_color
         self.p_fg.parse(color)
         self.p_bg.parse(background_color)
 
     def get_progress_color(self):
-        ''''''
-        return  self.p_fg.to_string(), self.p_bg.to_string()
+        """..."""
+        return self.p_fg.to_string(), self.p_bg.to_string()
 
     def set_size(self, width: int, height: int):
-        ''''''
+        """..."""
         self.width = width
         self.height = height
         self.set_size_request(self.width, self.height)
 
     def get_size(self):
-        ''''''
+        """..."""
         return [self.get_width(), self.get_height()]
 
     def set_border(self, width: int):
-        ''''''
+        """..."""
         self.border = width
 
     def get_border(self):
-        ''''''
+        """..."""
         return self.border
 
     def set_corner(self, corner: int):
-        ''''''
+        """..."""
         self.corner = corner
 
     def get_corner(self):
-        ''''''
+        """..."""
         return self.corner
 
     def set_style(self, style: str):
-        ''''''
+        """..."""
         if style not in self.style_list:
             print(f'Value error: The style must be one of {self.style_list}')
         else:
             self.style = style
 
     def get_style(self):
-        ''''''
+        """..."""
         return self.style
 
     def set_orientation(self, orientation: str):
-
+        """..."""
         if orientation in ['horizontal', 'vertical']:
             self.orientation = orientation
         else:
-            print(f'Value error: The orientation must be on of {orientation_list}')
+            print('Value error: The orientation must be horizontal or vertical')
 
     def pulse(self):
-        ''''''
+        """..."""
         self.check_tick_callback()
         return self._update()
 
     def stop(self):
-        ''''''
+        """..."""
         GLib.Source.remove(self.timeout)
         self.counter = None
         self.queue_draw()
 
     def _update(self):
-        ''''''
+        """..."""
         self.fraction = 0.0
         if self.counter is None:
             self.counter = 0
@@ -1489,8 +1548,8 @@ class SwProgressBar(Gtk.Widget):
         self.queue_draw()
         return True
 
-    def _tick_callback(self, snapshot, frame_clock):
-        ''''''
+    def _tick_callback(self, _snapshot, _frame_clock):
+        """..."""
         next_color = next(self.iter_color)
         self.blur = float(next_color / 5)
         self.queue_draw()
@@ -1498,35 +1557,89 @@ class SwProgressBar(Gtk.Widget):
 
 ################################___DOWNLOAD___:
 
-def download(url, filename):
+
+def download(_url, _filename):
+    """___download content from url___"""
 
     request_headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36',
+        'User-Agent': (
+            'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, '
+            'like Gecko) Chrome/30.0.1599.101 Safari/537.36'
+        ),
         'Accept-Language': 'fr-FR,fr;q=0.8,en-US;q=0.6,en;q=0.4',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Connection': 'keep-alive',
         'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
     }
     try:
-        response = urlopen(Request(url, headers=request_headers))
-    except HTTPError as e:
-        print(e)
+        _response = urlopen(Request(_url, headers=request_headers))
+    except HTTPError as e_1:
+        print(e_1)
         try:
-            urllib.request.urlretrieve(url, filename)
-        except HTTPError as e:
-            print(e)
+            urllib.request.urlretrieve(_url, _filename)
+        except HTTPError as e_2:
+            print(e_2)
             exit(1)
         else:
             exit(0)
     else:
-        with response as res, open(filename, 'wb') as out:
+        with _response as res, open(_filename, 'wb') as out:
             shutil.copyfileobj(res, out)
             res.close()
             exit(0)
 
-class SwDownloadBar(Gtk.Application):
+def get_total_size(_url, _filename):
 
-    def __init__(self, url, filename):
+    totalsize = None
+    try:
+        totalsize = int(urlopen(_url).info().get(name='Content-Length'))
+    except (Exception,):
+        totalsize = None
+
+    if totalsize is None:
+        with urlopen(_url) as u:
+            totalsize = u.length
+
+    sys.stdout.write(f'Total size: {totalsize}\t{Path(_filename).name}\n')
+    return totalsize
+
+def download_progress(data, queue):
+
+    bar_len = 50
+    while True:
+        for x in data:
+            filename = x[0]
+            totalsize = x[2]
+            if Path(filename).exists():
+                current = os.stat(filename).st_size
+                if totalsize is None:
+                    percent = 1.0
+                    progress = '~' * bar_len
+                    string = f'\r{tc.GREEN}[ {progress} ] {tc.YELLOW}[unknown]% {tc.VIOLET}{Path(filename).name}{tc.END}'
+                else:
+                    pac = "\u15E7"
+                    percent = current / totalsize
+                    block = int(round(bar_len * percent))
+                    progress = '\u2501' * block + f'{pac}' + ('\u2022' * (bar_len - block))
+                    string = f'\r{tc.GREEN}[ {progress} ] {tc.YELLOW}{round(percent*100)}% {tc.VIOLET}{Path(filename).name}{tc.END}'
+
+                queue.append([string, percent])
+        else:
+            for i in range(len(queue)):
+                sys.stdout.write('\x1b[1A\x1b[2K')
+            else:
+                for i in range(len(queue)):
+                    sys.stdout.write(queue[i][0] + '\n')
+
+            if sum([q[1] for q in queue]) == len(data):
+                print('Done')
+                return False
+
+
+class SwDownloadBar(Gtk.Application):
+    """___Custom application window with progress bar___"""
+
+    def __init__(self, _url, _filename):
         super().__init__(
                         #application_id='ru.project.Crier',
                         flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
@@ -1534,19 +1647,21 @@ class SwDownloadBar(Gtk.Application):
         GLib.set_prgname(program_name)
         self.percent = 0
         self.exit = None
-        self.url = url
+        self.url = _url
+        self.totalsize = None
 
-        try:
-            self.totalsize = urlopen(url).length
-        except Exception as e:
-            self.totalsize = None
+        with urlopen(_url) as u:
+            self.totalsize = u.length
 
-        self.filename = filename
-        self.program_name = f'StartWine'
-        self.connect('activate', self.activate)
+        self.filename = _filename
+        self.program_name = 'StartWine'
+        self.window = None
+        self.progressbar = None
+        # self.connect('activate', self.activate)
         GLib.timeout_add(1000, self.update)
 
-    def activate(self, root):
+    def do_activate(self):
+        """___activate application___"""
 
         self.window = Gtk.Window(
                             css_name='sw_window',
@@ -1558,97 +1673,145 @@ class SwDownloadBar(Gtk.Application):
         self.window.remove_css_class('background')
         self.window.add_css_class('sw_background')
         self.window.set_title(f'{self.program_name}')
-        self.header = Gtk.HeaderBar(
+        header = Gtk.HeaderBar(
                             css_name='sw_header_top',
                             show_title_buttons=False,
         )
         self.progressbar = SwProgressBar(
-                                    css_name='sw_progressbar',
-                                    hexpand=True,
-                                    vexpand=True,
-                                    margin_bottom=32,
-                                    css_provider=css_provider,
+                                        css_name='sw_progressbar',
+                                        hexpand=True,
+                                        vexpand=True,
+                                        margin_bottom=32,
+                                        css_provider=gtk_css_provider,
         )
         self.progressbar.set_show_text(True)
         self.progressbar.set_size_request(420, 24)
-        self.label = Gtk.Label(css_name='sw_label')
-        self.name = str(list(filename.replace('/','\n').split())[-1])
-        self.label.set_label(self.name)
-        self.grid = Gtk.Grid(css_name='sw_message_box')
-        self.grid.set_margin_start(32)
-        self.grid.set_margin_end(32)
-        self.grid.set_margin_bottom(8)
-        self.grid.set_margin_top(8)
-        self.grid.set_row_spacing(16)
-        self.grid.attach(self.label, 0, 0, 1, 1)
-        self.grid.attach(self.progressbar, 0, 1, 1, 1)
-        self.window.set_titlebar(self.header)
-        self.window.set_child(self.grid)
+        label = Gtk.Label(css_name='sw_label')
+        name = str(list(self.filename.replace('/','\n').split())[-1])
+        label.set_label(name)
+        grid = Gtk.Grid(css_name='sw_message_box')
+        grid.set_margin_start(32)
+        grid.set_margin_end(32)
+        grid.set_margin_bottom(8)
+        grid.set_margin_top(8)
+        grid.set_row_spacing(16)
+        grid.attach(label, 0, 0, 1, 1)
+        grid.attach(self.progressbar, 0, 1, 1, 1)
+        self.window.set_titlebar(header)
+        self.window.set_child(grid)
         self.add_window(self.window)
         self.window.grab_focus()
         self.window.present()
 
     def update(self):
+        """___update self progress bar___"""
 
         if self.totalsize is None:
-            print(f'Impossible to determine total size. URL not found...')
+            print('Impossible to determine total size. URL not found...')
             self.window.close()
             self.exit = self.quit()
             exit(1)
 
         if Path(self.filename).exists():
-            current = Stat(self.filename).st_size
+            current = os.stat(self.filename).st_size
             self.percent = current / self.totalsize
 
             if self.exit is None:
                 self.progressbar.set_fraction(self.percent)
 
             if self.percent >= 1:
-                print(f'Download_completed_successfully.')
+                print('Download_completed_successfully.')
                 self.window.close()
                 self.exit = self.quit()
 
         return True
 
+
 ##############################___EXTRACTION___:
 
-class SwExtractBar(Gtk.Application):
 
-    def __init__(self, filename, path):
+def extract_tar(_filename, _path):
+    """___extract tar archive___"""
+
+    if Path(_filename).exists():
+        taro = tarfile.open(_filename)
+
+        for member_info in taro.getmembers():
+            taro.extract(member_info, path=_path)
+            print('Extracting: ' + member_info.name)
+
+        taro.close()
+        print('Extraction_completed_successfully.')
+        exit(0)
+    else:
+        print(f'{_filename} not exists...')
+        exit(1)
+
+
+def extract_zip(_filename, _path):
+    """___extract zip archive___"""
+
+    if Path(_filename).exists():
+        zipo = zipfile.ZipFile(_filename)
+
+        for member_info in zipo.namelist():
+            print('Extracting: ' + member_info)
+            zipo.extract(member_info, path=_path)
+
+        zipo.close()
+        print('Extraction_completed_successfully.')
+        exit(0)
+    else:
+        print(f'{_filename} not exists...')
+        exit(1)
+
+
+class SwExtractBar(Gtk.Application):
+    """___Custom application window with progress bar___"""
+
+    def __init__(self, _filename, _path):
         super().__init__(
                         #application_id='ru.project.Crier',
                         flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
         )
         GLib.set_prgname(program_name)
         self.exit = None
-        self.filename = filename
-        self.path = path
-        self.program_name = f'StartWine'
-        self.connect('activate', self.activate)
+        self.filename = _filename
+        self.path = _path
+        self.program_name = 'StartWine'
+        self.window = None
+        self.header = None
+        self.progressbar = None
+        self.label = None
+        self.name = None
+        self.grid = None
+
+        # self.connect('activate', self.activate)
         GLib.timeout_add(100, self.update)
 
-    def activate(self, root):
+    def do_activate(self):
+        """___activate application___"""
 
         self.window = Gtk.Window(
-                            css_name='sw_window',
-                            application=self,
-                            default_height=120,
-                            default_width=540,
-                            resizable=False,
-                            )
+                                css_name='sw_window',
+                                application=self,
+                                default_height=120,
+                                default_width=540,
+                                resizable=False,
+        )
         self.window.remove_css_class('background')
         self.window.add_css_class('sw_background')
         self.window.set_title(f'{self.program_name}')
         self.header = Gtk.HeaderBar(
-                            css_name='sw_header_top',
-                            show_title_buttons=False,
-                            )
+                                    css_name='sw_header_top',
+                                    show_title_buttons=False,
+        )
         self.progressbar = SwProgressBar(
-                                    css_name='sw_progressbar',
-                                    hexpand=True,
-                                    vexpand=True,
-                                    margin_bottom=32,
-                                    css_provider=css_provider,
+                                        css_name='sw_progressbar',
+                                        hexpand=True,
+                                        vexpand=True,
+                                        margin_bottom=32,
+                                        css_provider=gtk_css_provider,
         )
         self.progressbar.set_show_text(True)
         self.progressbar.set_text(Path(self.filename).name)
@@ -1670,78 +1833,86 @@ class SwExtractBar(Gtk.Application):
         self.window.present()
 
     def update(self):
+        """___update self progress bar___"""
 
-        if self.exit is None:
-            self.progressbar.pulse()
-            return True
-        else:
+        if self.exit is not None:
             self.window.close()
             self.quit()
             return False
 
-    def extract_tar(self, filename, path):
+        self.progressbar.pulse()
+        return True
 
-        if Path(filename).exists():
-            taro = tarfile.open(filename)
+
+    def extract_tar(self, _filename, _path):
+        """___extract tar archive___"""
+
+        if Path(_filename).exists():
+            taro = tarfile.open(_filename)
 
             for member_info in taro.getmembers():
-                taro.extract(member_info, path=path)
+                taro.extract(member_info, path=_path)
                 print('Extracting: ' + member_info.name)
-            else:
-                taro.close()
-                print(f'Extraction_completed_successfully.')
-                self.exit = 0
+
+            taro.close()
+            print('Extraction_completed_successfully.')
+            self.exit = 0
         else:
-            print(f'{filename} not exists...')
+            print(f'{_filename} not exists...')
             self.exit = 1
             exit(1)
 
-    def extract_zip(self, filename, path):
+    def extract_zip(self, _filename, _path):
+        """___extract zip archive___"""
 
-        if Path(filename).exists():
-            zipo = zipfile.ZipFile(filename)
+        if Path(_filename).exists():
+            zipo = zipfile.ZipFile(_filename)
 
             for member_info in zipo.namelist():
                 print('Extracting: ' + member_info)
-                zipo.extract(member_info, path=path)
-            else:
-                zipo.close()
-                print(f'Extraction_completed_successfully.')
-                self.exit = 0
+                zipo.extract(member_info, path=_path)
+
+            zipo.close()
+            print('Extraction_completed_successfully.')
+            self.exit = 0
         else:
-            print(f'{filename} not exists...')
+            print(f'{_filename} not exists...')
             self.exit = 1
             exit(1)
 
-class SwExtractIcon():
 
-    def __init__(self, filename=None, data=None):
-        '''Loads an executable from the given filename or data (raw bytes).'''
+class SwExtractIcon:
+    """Loads an executable from the given filename or data (raw bytes)."""
 
-        self._pefile = pefile.PE(name=filename, data=data, fast_load=True)
-        self._pefile.parse_data_directories(pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_RESOURCE'])
+    def __init__(self, _filename=None, data=None):
+
+        self._pefile = pefile.PE(name=_filename, data=data, fast_load=True)
+        self._pefile.parse_data_directories(
+                        pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_RESOURCE'])
 
         if not hasattr(self._pefile, 'DIRECTORY_ENTRY_RESOURCE'):
-            raise RuntimeError('File has no icon')
+            print(f'{tc.RED}SW_EXTRACT_ICON: File has no icon{tc.END}')
+            exit(1)
 
         res = {r.id: r for r in reversed(self._pefile.DIRECTORY_ENTRY_RESOURCE.entries)}
 
         self.rt_group_icon = res.get(pefile.RESOURCE_TYPE['RT_GROUP_ICON'])
         if not self.rt_group_icon:
-            raise RuntimeError('File has no group icon resources')
+            print(f'{tc.RED}SW_EXTRACT_ICON: File has no group icon resources{tc.END}')
+            exit(1)
 
         self.rt_icon = res.get(pefile.RESOURCE_TYPE['RT_ICON'])
 
     def list_group_icons(self):
-        '''Returns all group icon entries as a list of (name, offset) tuples.'''
+        """Returns all group icon entries as a list of (name, offset) tuples."""
 
         return [(e.struct.Name, e.struct.OffsetToData)
                 for e in self.rt_group_icon.directory.entries]
 
-    def _get_group_icon_entries(self, num=0):
-        '''Returns the group icon entries for the specified group icon in the executable.'''
+    def _get_group_icon_entries(self, _num=0):
+        """Returns the group icon entries for the specified group icon in the executable."""
 
-        group_icon = self.rt_group_icon.directory.entries[num]
+        group_icon = self.rt_group_icon.directory.entries[_num]
         if group_icon.struct.DataIsDirectory:
             group_icon = group_icon.directory.entries[0]
 
@@ -1753,19 +1924,22 @@ class SwExtractIcon():
         grp_icon_dir = self._pefile.__unpack_data__(ICON_DIR_FORMAT, data, file_offset)
 
         if grp_icon_dir.Reserved:
-            raise  RuntimeError('Invalid group icon definition (got Reserved=%s instead of 0)' % hex(grp_icon_dir.Reserved))
+            raise RuntimeError(
+                'Invalid group icon definition (got Reserved=%s instead of 0)' % hex(grp_icon_dir.Reserved))
 
         grp_icons = []
         icon_offset = grp_icon_dir.sizeof()
         for idx in range(grp_icon_dir.Count):
-            grp_icon = self._pefile.__unpack_data__(ICON_DIR_ENTRY_FORMAT, data[icon_offset:], file_offset+icon_offset)
+            grp_icon = self._pefile.__unpack_data__(
+                ICON_DIR_ENTRY_FORMAT, data[icon_offset:], file_offset+icon_offset
+            )
             icon_offset += grp_icon.sizeof()
             grp_icons.append(grp_icon)
 
         return grp_icons
 
     def _get_icon_data(self, icon_ids):
-        '''Return a list of raw icon images corresponding to the icon IDs given.'''
+        """Return a list of raw icon images corresponding to the icon IDs given."""
 
         icons = []
         entry_list = {e.id: e for e in self.rt_icon.directory.entries}
@@ -1779,10 +1953,10 @@ class SwExtractIcon():
 
         return icons
 
-    def _write_ico(self, fd, num=0):
-        '''Writes ICO data to a file descriptor.'''
+    def _write_ico(self, fd, _num=0):
+        """Writes ICO data to a file descriptor."""
 
-        group_icons = self._get_group_icon_entries(num=num)
+        group_icons = self._get_group_icon_entries(_num=_num)
         icon_images = self._get_icon_data([g.ID for g in group_icons])
         icons = list(zip(group_icons, icon_images))
         assert len(group_icons) == len(icon_images)
@@ -1801,46 +1975,72 @@ class SwExtractIcon():
             group_icon, icon_data = i
             fd.write(icon_data)
 
-    def extract_icon(self, fname, num=0):
-        '''Writes ICO data of the requested group icon ID to fname.'''
+    def extract_icon(self, fname, _num=0):
+        """Writes ICO data of the requested group icon ID to fname."""
 
-        with open(fname, 'wb') as f:
-            self._write_ico(f, num=num)
+        with open(fname, 'wb') as fb:
+            self._write_ico(fb, _num=_num)
 
-    def get_icon(self, num=0):
-        '''Returns ICO data as a BytesIO() instance, containing the requested group icon ID.'''
+    def get_icon(self, _num=0):
+        """Returns ICO data as a BytesIO() instance, containing the requested group icon ID."""
 
-        f = io.BytesIO()
-        self._write_ico(f, num=num)
-        return f
+        bio = io.BytesIO()
+        self._write_ico(bio, _num=_num)
+        return bio
 
-class SwHudSize():
-    '''Get font size for mangohud config.'''
+    def save_to_png(self, fname):
+        """Save ICO to PNG format."""
 
+        if Path(fname).exists():
+            parent_ico_path = Path(fname).parent
+            ico_name = Path(fname).stem
+
+            try:
+                img = Image.open(Path(fname), mode='r')
+            except (Exception,) as e:
+                img = None
+                shutil.copy2(fname, f'{parent_ico_path}/{ico_name}.png', follow_symlinks=False)
+                print(e)
+                print('Can not open ICO file...try copy...')
+            else:
+                img.save(f'{parent_ico_path}/{ico_name}.png', format='PNG', sizes=[(256, 256)])
+                print('Save ICO file to PNG format')
+        else:
+            print('ICO file not exists...')
+
+
+class SwHudSize:
+    """Get font size for mangohud config."""
     def __init__(self):
-        self._get_hud_size()
+        self.hud_size = None
+        self.get_hud_size()
 
-    def _get_hud_size(self):
-        '''Get font size for mangohud config.'''
-        try:
+    def get_hud_size(self):
+        """Get font size for mangohud config."""
+
+        if os.getenv('MANGOHUD_FONT_SIZE_RATION') is not None:
             mh_ratio = int(os.getenv('MANGOHUD_FONT_SIZE_RATION'))
-        except:
+        else:
             mh_ratio = 55
 
         display = Gdk.Display().get_default()
 
         try:
             monitor = display.get_monitors()[0]
-        except:
+        except (Exception,):
             height = 720
         else:
             height = monitor.get_geometry().height
 
-        print(int(height / mh_ratio))
+        self.hud_size = int(height / mh_ratio)
+        print(self.hud_size)
 
 ################___HELP_INFO___:
 
+
 def on_helper():
+    """___Commandline help info___"""
+
     print('''
     ----------------------------------------------------------------------------
     StartWine Crier:
@@ -1863,10 +2063,10 @@ def on_helper():
     -zip  'input_file, output_file'                         Zip archive extraction progress bar window
     -ico  'input_file, output_file'                         Ico extraction from DLL or EXE file
     -hud                                                    Print MangoHud font size
-'''
-    )
+''')
 
 ##########################___SYSTEM_ARGUMENTS___:
+
 
 if __name__ == '__main__':
 
@@ -1877,7 +2077,6 @@ if __name__ == '__main__':
                 on_helper()
 
             elif str(argv[1]) == str('-hud'):
-                import psutil
                 import os
                 SwHudSize()
             else:
@@ -1885,27 +2084,27 @@ if __name__ == '__main__':
 
         elif len(argv) == 3:
 
-            if argv[1] == f'-i':
+            if argv[1] == '-i':
                 app = SwCrier(text_message=argv[2], message_type='INFO')
                 app.run()
 
-            elif argv[1] == f'-e':
+            elif argv[1] == '-e':
                 app = SwCrier(text_message=argv[2], message_type='ERROR')
                 app.run()
 
-            elif argv[1] == f'-w':
+            elif argv[1] == '-w':
                 app = SwCrier(text_message=argv[2], message_type='WARNING')
                 app.run()
 
-            elif argv[1] == f'-q':
+            elif argv[1] == '-q':
                 app = SwCrier(text_message=argv[2], message_type='QUESTION', response=None)
                 app.run()
 
-            elif argv[1] == f'-t':
+            elif argv[1] == '-t':
                 app = SwCrier(file=argv[2], message_type='TEXT')
                 app.run()
 
-            elif argv[1] == f'-f':
+            elif argv[1] == '-f':
                 app = SwCrier(file=argv[2], message_type='FILE')
                 app.run()
 
@@ -1918,44 +2117,58 @@ if __name__ == '__main__':
 
         elif len(argv) == 4:
 
-            if str(argv[1]) == str('-d'):
+            if str(argv[1]) == str('-d') or str(argv[1]) == str('--silent-download'):
                 import os
-                from os import stat as Stat
                 import multiprocessing as mp
+                from threading import Thread
 
                 url = str(argv[2])
                 filename = str(argv[3])
-                process = mp.Process(target=download, args=[url, filename])
+                process = mp.Process(target=download, args=(url, filename))
                 process.start()
-                app = SwDownloadBar(url, filename)
-                app.run()
+                if str(argv[1]) == str('--silent-download'):
+                    totalsize = get_total_size(url, filename)
+                    data = [[filename, url, totalsize]]
+                    queue = deque([], len(data))
+                    Thread(target=download_progress, args=(data, queue)).start()
+                else:
+                    app = SwDownloadBar(url, filename)
+                    app.run()
 
-            elif str(argv[1]) == str('-tar'):
+            elif str(argv[1]) == str('-tar') or str(argv[1]) == str('--silent-tar'):
                 import tarfile
                 from threading import Thread
 
                 filename = str(argv[2])
                 path = str(argv[3])
-                app = SwExtractBar(filename, path)
-                Thread(target=app.extract_tar, args=[filename, path]).start()
-                app.run()
+                if str(argv[1]) == str('--silent-tar'):
+                    Thread(target=extract_tar, args=[filename, path]).start()
+                else:
+                    app = SwExtractBar(filename, path)
+                    Thread(target=app.extract_tar, args=[filename, path]).start()
+                    app.run()
 
-            elif str(argv[1]) == str('-zip'):
+            elif str(argv[1]) == str('-zip') or str(argv[1]) == str('--silent-zip'):
                 import zipfile
                 from threading import Thread
 
                 filename = str(argv[2])
                 path = str(argv[3])
-                app = SwExtractBar(filename, path)
-                Thread(target=app.extract_zip, args=[filename, path]).start()
-                app.run()
+                if str(argv[1]) == str('--silent-zip'):
+                    Thread(target=extract_zip, args=[filename, path]).start()
+                else:
+                    app = SwExtractBar(filename, path)
+                    Thread(target=app.extract_zip, args=[filename, path]).start()
+                    app.run()
 
             elif str(argv[1]) == str('-ico'):
                 import io
                 import struct
                 import pefile
+                from PIL import Image
 
-                ICON_DIR_ENTRY_FORMAT = ('GRPICONDIRENTRY',
+                ICON_DIR_ENTRY_FORMAT = (
+                    'GRPICONDIRENTRY',
                     ('B,Width', 'B,Height','B,ColorCount','B,Reserved',
                      'H,Planes','H,BitCount','I,BytesInRes','H,ID')
                 )
@@ -1965,8 +2178,8 @@ if __name__ == '__main__':
                 output_file = str(argv[3])
                 num = 0
                 app = SwExtractIcon(input_file)
-                app.extract_icon(output_file, num=num)
-
+                app.extract_icon(output_file, _num=num)
+                app.save_to_png(output_file)
             else:
                 on_helper()
 
@@ -1984,4 +2197,3 @@ if __name__ == '__main__':
 
     else:
         on_helper()
-

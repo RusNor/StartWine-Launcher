@@ -43,8 +43,8 @@ msgid "Shortcuts"
 msgstr "Ярлыки"
 
 #: sw_data.py:993
-msgid "Stop wine processes"
-msgstr "Остановить процессы wine"
+msgid "Stop Wine processes"
+msgstr "Остановить процессы Wine"
 
 #: sw_data.py:994 sw_data.py:1048
 msgid "Shutdown"
@@ -87,8 +87,8 @@ msgid "App to Steam Deck menu"
 msgstr "Ярлык в меню Steam Deck"
 
 #: sw_data.py:1009 sw_data.py:3188
-msgid "Change wine"
-msgstr "Поменять wine"
+msgid "Change Wine"
+msgstr "Поменять Wine"
 
 #: sw_data.py:1010
 msgid "Winehq"
@@ -244,7 +244,7 @@ msgstr "Настройки vkBasalt"
 
 #: sw_data.py:1095
 msgid "Wine builds"
-msgstr "Cбороки Wine"
+msgstr "Cборки Wine"
 
 #: sw_data.py:1096 sw_data.py:3190
 msgid "Launchers and stores"
@@ -275,8 +275,8 @@ msgid "Current prefix:\n"
 msgstr "Текущий префикс:\n"
 
 #: sw_data.py:1121
-msgid "Current wine:\n"
-msgstr "Текущий wine:\n"
+msgid "Current Wine:\n"
+msgstr "Текущий Wine:\n"
 
 #: sw_data.py:1122
 msgid "Oops! Nothing to run..."
@@ -350,76 +350,53 @@ msgstr ""
 
 #: sw_data.py:1169
 msgid ""
-"\n"
 "This release adds the following features, updates, and fixes:\n"
 "Bug fixes and performance improvements.\n"
-"Improved startup performance\n"
-"Fixed video playback issue in games.\n"
-"Fixed an error when changing the Windows version.\n"
-"Interaction errors when searching for files have been fixed.\n"
-"Fixed generation of image and video thumbnails.\n"
-"Fixed launching in opengl mode.\n"
-"Fixed an issue with displaying files when changing icon sizes.\n"
-"The list of wine assemblies available for download has been changed.\n"
-"Fixed command line parsing.\n"
-"Removed compact menu size mode.\n"
 "Locales updated.\n"
 "Updated prefix configurations.\n"
 "Updated list of Wine versions.\n"
+"Updated list of dxvk and vkd3d versions.\n"
 "Libraries and drivers in the container have been updated.\n"
 "Updated list of hotkeys.\n"
-"Added function for updating the list of wine builds.\n"
-"Added Chinese locale.\n"
-"Added different color options for OpenGL animation.\n"
-"Added new animation Sin Cos 3d.\n"
-"Interface settings have been moved to the top panel menu.\n"
-"MangoHud indicator color settings have been moved to the MangoHud settings "
-"section.\n"
-"The overlay panel has been moved to the bottom panel of the window.\n"
-"Added file sorting to the file manager context menu.\n"
-"Added panoramic file viewing mode (split view).\n"
-"Added viewing of files in the form of a detailed list (table).\n"
-"Added support for viewing files from mobile devices.\n"
-"Added separate resizing of shortcuts and file icons.\n"
-"Added automatic hiding of the top and bottom panels.\n"
-"Launch from the system file manager has been changed.\n"
-"Zstd and zstd ultra compression have been added to the file manager.\n"
-"Added statistics for total time and average fps.\n"
+"Updated the list of libraries in Winetricks.\n"
+"The graphical interface has been updated.\n"
+"All settings of the game or application have been moved to the shortcut launch page.\n"
+"The list of sidebar buttons has been changed.\n"
+"Added new background animation.\n"
+"Added the ability to rename the name of an installed application or game.\n"
+"Added the ability to change the path to the executable file of the game or application.\n"
+"Added new animations to the shader list.\n"
+"Added codecs for video playback.\n"
+"Added DirectX 8 support in dxvk mode.\n"
+"Improved image auto-search algorithm.\n"
+"Fixed interface freezes when Star tWine is turned off.\n"
+"Fixed the error of displaying the path when recursively searching in the file manager.\n"
+"Fixed an error when copying fonts to the prefix of an application or game.\n"
+"Outdated startup settings have been removed (GSTREAMER, GAMEMODE, DXVK_ASYNC).\n"
 msgstr ""
-"\n"
 "В этом выпуске добавлены следующие функции, обновления и исправления:\n"
 "Исправлены ошибки и улучшена производительность.\n"
-"Улучшена производительность запуска,\n"
-"Исправлена ошибка воспроизведения видео в играх.\n"
-"Исправлена ошибка при смене версии Windows.\n"
-"Исправлены ошибки взаимодействия при поиске файлов.\n"
-"Исправлена ​​генерация миниатюр изображений и видео.\n"
-"Исправлен запуск в режиме opengl.\n"
-"Исправлена ошибка отображения файлов при изменении размера иконок.\n"
-"Изменен список доступных для скачивания сборок wine.\n"
-"Исправлен разбор командной строки.\n"
-"Удален режим компактного размера меню.\n"
 "Обновлены локали.\n"
 "Обновлены конфигурации префиксов.\n"
 "Обновлен список версий Wine.\n"
-"Обновлены библиотеки и драйвера в контейнере.\n"
+"Обновлен список версий dxvk и vkd3d.\n"
+"Обновлены библиотеки и драйверы в контейнере.\n"
 "Обновлен список горячих клавиш.\n"
-"Добавлена функция обновления списка сборок wine.\n"
-"Добавлена ​​китайская локаль.\n"
-"Добавлены различные варианты цвета для анимации OpenGL.\n"
-"Добавлена ​​новая анимация «Sin Cos 3d».\n"
-"Настройки интерфейса перенесены в меню верхней панели.\n"
-"Настройки цвета индикаторов MangoHud перенесены в раздел настроек MangoHud.\n"
-"Панель наложения перемещена на нижнюю панель окна.\n"
-"В контекстное меню файлового менеджера добавлена ​​сортировка файлов.\n"
-"Добавлен режим панорамного просмотра файлов (разделенный вид).\n"
-"Добавлен просмотр файлов в виде подробного списка (таблицы).\n"
-"Добавлена ​​поддержка просмотра файлов с мобильных устройств.\n"
-"Добавлено отдельное изменение размера ярлыков и значков файлов.\n"
-"Добавлено автоматическое скрытие верхней и нижней панелей.\n"
-"Изменен запуск из системного файлового менеджера.\n"
-"В файловый менеджер добавлено сжатие Zstd и zstd ultra.\n"
-"Добавлена ​​статистика общего времени и среднего fps.\n"
+"Обновлен список библиотек в Winetricks.\n"
+"Обновлен графический интерфейс.\n"
+"Все настройки игры или приложения перенесены на страницу запуска ярлыка.\n"
+"Изменен список кнопок боковой панели.\n"
+"Добавлена новая фоновая анимация.\n"
+"Добавлена возможность переименовывать название установленного приложения или игры.\n"
+"Добавлена возможность изменять путь к исполняемому файлу игры или приложения.\n"
+"Добавлены новые анимации в список шейдеров.\n"
+"Добавлены кодеки для воспроизведения видео.\n"
+"Добавлена поддержка DirectX 8 в режиме dxvk.\n"
+"Улучшен алгоритм автоматического поиска изображений.\n"
+"Исправлено зависание интерфейса при выключении Star tWine.\n"
+"Исправлена ошибка отображения пути при рекурсивном поиске в файловом менеджере.\n"
+"Исправлена ошибка при копировании шрифтов в префикс приложения или игры.\n"
+"Были удалены устаревшие настройки запуска (GSTREAMER, GAMEMODE, DXVK_ASYNC).\n"
 
 #: sw_data.py:1207
 msgid ""
@@ -455,11 +432,11 @@ msgid ""
 "any later version. StartWine is distributed without any warranty. See the "
 "GNU Lesser General Public License for more details."
 msgstr ""
-"Start Wine - это бесплатное программное обеспечение. Вы можете "
+"StartWine - это бесплатное программное обеспечение. Вы можете "
 "распространять его и/или модифицировать в соответствии с условиями GNU "
 "General Public License, опубликованными компанией Free Software Foundation; "
 "либо версия 3 лицензии, либо (по вашему выбору) - любая более поздняя "
-"версия. Start Wine распространяется без каких-либо гарантий. Смотрите GNU "
+"версия. StartWine распространяется без каких-либо гарантий. Смотрите GNU "
 "Lesser General Public License для получения более подробной информации."
 
 #: sw_data.py:1267
@@ -498,11 +475,14 @@ msgstr "Инструменты префикса"
 
 #: sw_data.py:1355
 msgid "Wine tools"
-msgstr "Инструменты wine"
+msgstr "Инструменты Wine"
+
+msgid "Tools"
+msgstr "Инструменты"
 
 #: sw_data.py:1356 sw_data.py:1409 sw_data.py:3305
-msgid "Download wine"
-msgstr "Скачать wine"
+msgid "Download Wine"
+msgstr "Скачать Wine"
 
 #: sw_data.py:1357
 msgid "Install launchers"
@@ -511,6 +491,12 @@ msgstr "Установить лаунчеры и магазины игр"
 #: sw_data.py:1358 sw_data.py:3191 sw_data.py:3307
 msgid "Settings"
 msgstr "Настройки"
+
+msgid "Statistics"
+msgstr "Статистика"
+
+msgid "Statistics and data"
+msgstr "Статистика и данные"
 
 #: sw_data.py:1359 sw_data.py:3308
 msgid "Debug"
@@ -562,11 +548,11 @@ msgstr "Полное восстановление"
 
 #: sw_data.py:1410
 msgid "Wine settings"
-msgstr "Настройки wine"
+msgstr "Настройки Wine"
 
 #: sw_data.py:1411
 msgid "Wine console"
-msgstr "Консоль wine"
+msgstr "Консоль Wine"
 
 #: sw_data.py:1412
 msgid "Regedit"
@@ -631,7 +617,7 @@ msgstr ""
 "позволяя вам аккуратно интегрировать приложения Windows в ваш рабочий стол."
 
 #: sw_data.py:1514
-msgid "List of wines to download and install"
+msgid "List of Wines to download and install"
 msgstr "Список Wine для загрузки и установки"
 
 #: sw_data.py:1516
@@ -670,7 +656,7 @@ msgstr ""
 
 #: sw_data.py:1527
 msgid ""
-"Proton with the most recent bleeding-edge Proton Experimental WINE. Things "
+"Proton with the most recent bleeding-edge Proton Experimental Wine. Things "
 "it contains that Valve's Proton does not: Additional media foundation "
 "patches for better video playback support, AMD FSR patches, Nvidia CUDA "
 "support for PhysX and NVAPI, raw input mouse support and various wine-"
@@ -1196,8 +1182,8 @@ msgstr ""
 "графического процессора через CUDA"
 
 #: sw_data.py:1903
-msgid "Disable debugging mode for wine to improve performance"
-msgstr "Отключить режим отладки wine для улучшения производительности"
+msgid "Disable debugging mode for Wine to improve performance"
+msgstr "Отключить режим отладки Wine для улучшения производительности"
 
 #: sw_data.py:1904
 msgid "Allocate to a 32-bit application more than 2 GB of RAM"
@@ -1216,9 +1202,9 @@ msgstr ""
 "загружает библиотеки DLL в память."
 
 #: sw_data.py:1907
-msgid "Сan optimize some wineserver calls by using shared memory"
+msgid "Сan optimize some Wineserver calls by using shared memory"
 msgstr ""
-"Может оптимизировать некоторые вызовы wineserver за счет использования общей "
+"Может оптимизировать некоторые вызовы Wineserver за счет использования общей "
 "памяти"
 
 #: sw_data.py:1908
@@ -1971,7 +1957,7 @@ msgstr "Цвет медиаплеера"
 
 #: sw_data.py:2132
 msgid "Wine color"
-msgstr "Цвет версии wine"
+msgstr "Цвет версии Wine"
 
 #: sw_data.py:2133
 msgid "GPU load color"
@@ -2062,9 +2048,9 @@ msgid "Auto Stop"
 msgstr "Автоматическая остановка"
 
 #: sw_data.py:2190
-msgid "Auto terminate all wine processes after exiting a game or application"
+msgid "Auto terminate all Wine processes after exiting a game or application"
 msgstr ""
-"Автоматическое завершение всех активных процессов wine после выхода из игры "
+"Автоматическое завершение всех активных процессов Wine после выхода из игры "
 "или приложения"
 
 #: sw_data.py:2192
@@ -2145,6 +2131,9 @@ msgid ""
 "Wrong path, path does not exist, specify the correct path to the directory"
 msgstr ""
 "Неправильный путь, путь не существует, укажите правильный путь к каталогу"
+
+msgid "go back or cancel search"
+msgstr "вернуться назад или отмена поиска"
 
 #: sw_data.py:2264
 msgid "show hotkey settings window"
@@ -2283,8 +2272,8 @@ msgid "show or hide bookmarks list"
 msgstr "показать или скрыть список закладок"
 
 #: sw_data.py:2298
-msgid "open winetricks menu"
-msgstr "открыть меню winetricks"
+msgid "show wine builds page"
+msgstr "показать страницу сборок Wine"
 
 #: sw_data.py:2299
 msgid "launchers view"
@@ -2355,8 +2344,8 @@ msgid "Visual C++ libraries kit"
 msgstr "Набор библиотек C++"
 
 #: sw_data.py:3174
-msgid "A good day is like a good wine..."
-msgstr ""
+msgid "A good day is like a good Wine..."
+msgstr "Хороший день как хорошее вино..."
 
 #: sw_data.py:3175
 msgid "Yes"
@@ -2604,6 +2593,9 @@ msgstr "Сбросить настройки приложения?"
 msgid "The path to the executable file was not found, launch is impossible"
 msgstr "Путь до исполняемого файла не найден, запуск невозможен"
 
+msgid "Do you want to specify a new path to the executable file?"
+msgstr "Вы хотите указать новый путь к исполняемому файлу?"
+
 #: sw_data.py:3245
 msgid "Сopied to clipboard"
 msgstr "Скопировано в буфер обмена"
@@ -2732,12 +2724,21 @@ msgid "Unknown"
 msgstr "Неизвестно"
 
 #: sw_data.py:3277
-msgid "Error, wine not found..."
-msgstr "Ошибка, wine не найден..."
+msgid "Error, Wine not found..."
+msgstr "Ошибка, Wine не найден..."
 
 #: sw_data.py:3278
-msgid "Check wine updates"
-msgstr "Проверить обновления wine"
+msgid "Check Wine updates"
+msgstr "Проверить обновления Wine"
+
+msgid "Specify executable file"
+msgstr "Указать исполняемый файл"
+
+msgid "Specify the new location..."
+msgstr "Указать новое расположение..."
+
+msgid "It is impossible to rename the file, the image is missing"
+msgstr "Переименовать файл невозможно, изображение отсутствует"
 
 #: sw_data.py:3284
 msgid "Go to the home directory"
@@ -2752,8 +2753,8 @@ msgid "Current directory menu"
 msgstr "Меню текущего каталога"
 
 #: sw_data.py:3287
-msgid "Back to sidebar main menu"
-msgstr "Вернуться к главному меню боковой панели"
+msgid "Сome back"
+msgstr "Вернуться назад"
 
 #: sw_data.py:3288
 msgid "Change menu size"
@@ -2828,8 +2829,11 @@ msgid "Menu"
 msgstr "Меню"
 
 #: sw_data.py:3314
-msgid "Check and update the wine list"
-msgstr "Проверить и обновить список wine"
+msgid "Check and update the Wine list"
+msgstr "Проверить и обновить список Wine"
+
+msgid "Scroll up the page"
+msgstr "Прокрутить страницу вверх"
 
 #: sw_data.py:3320
 msgid "Search..."
@@ -3170,6 +3174,21 @@ msgstr ""
 #: sw_data.py:3411
 msgid "sin cos 3d"
 msgstr ""
+
+msgid "static abstraction"
+msgstr "статическая абстракция"
+
+msgid "galaxy/nebula and stars"
+msgstr "галактика/туманность и звезды"
+
+msgid "nebula 112"
+msgstr "туманность 112"
+
+msgid "magic ball"
+msgstr "магический шар"
+
+msgid "zippy zaps"
+msgstr "быстрые молнии"
 
 #, sh-format
 msgid "Error initializing the Wine prefix"

@@ -25,6 +25,33 @@ Discord > [Click](https://discord.gg/jjY3auVdfm)
 
 Make the file executable and launch it with a double click
 
+## To install with one command:
+```
+bash -c "$(curl -sL RusNor.github.io)"
+```
+or
+```
+bash -c "$(wget -qO - RusNor.github.io)"
+```
+or
+```
+bash -c "$(curl -sL nix-on-nix.github.io)"
+```
+or
+```
+bash -c "$(wget -qO - nix-on-nix.github.io)"
+```
+
+Mirror: HuggingFace
+
+```
+bash -c "$(curl -sL 'https://huggingface.co/SudoNano/sw_repo/resolve/main/sw_install?download=true')"
+```
+or
+```
+bash -c "$(wget -qO - 'https://huggingface.co/SudoNano/sw_repo/resolve/main/sw_install?download=true')"
+```
+
 ## GUI
 
 Video demonstration of StartWine interface
@@ -94,12 +121,12 @@ StartWine was written from scratch, but using already ready-made components with
 
 > **Developers**
 
-- [Rustan Normatov](https://github.com/RusNor)
+- [Rustam Normatov](https://github.com/RusNor)
 - [Nikita Maslov](https://github.com/nix-on-nix)
 
 > **Created and helped write code**
 
-- [Rustan Normatov](https://github.com/RusNor)
+- [Rustam Normatov](https://github.com/RusNor)
 - [Nikita Maslov](https://github.com/nix-on-nix)
 - [Maxim Tarasov](https://github.com/VHSgunzo)
 
@@ -118,7 +145,7 @@ StartWine was written from scratch, but using already ready-made components with
 - Lintech
 - LinuxShef
 - Sheridan
-- Wilk
+- Wik
 
 > **Project design**
 
