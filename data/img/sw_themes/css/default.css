@@ -84,7 +84,7 @@ sw_picture.rotate {
 /*___CLASSES___*/
 
 .shadow {
-    box-shadow: inset 0 0 12em 6em #000;
+    box-shadow: inset 0 0 6em 4em #000000ee;
 }
 
 .stub {
@@ -100,8 +100,20 @@ sw_picture.rotate {
     background-color: alpha(@sw_accent_fg_color, 10.0);
 }
 
+.accent_label {
+    color: @sw_accent_fg_color;
+}
+
+.accent_background {
+    background-color: @sw_accent_bg_color;
+}
+
 .corner {
     border-radius: 16px;
+}
+
+.corner_0 {
+    border-radius: 0px;
 }
 
 .darkened {
@@ -112,6 +124,10 @@ sw_picture.rotate {
 .background_color {
     color: @sw_invert_bg_color;
     background-color: alpha(@sw_bg_color, 10.0);
+}
+
+.padding_0 {
+    padding: 0px;
 }
 
 .padding_4 {
@@ -184,6 +200,10 @@ sw_picture.rotate {
 
 .right_padding_32 {
     padding-right: 32px;
+}
+
+.font_bold {
+    font-weight: bold;
 }
 
 .font_size_9 {
@@ -436,9 +456,8 @@ sw_window.sw_background.csd {
 sw_window.sw_background {
     border: 1px solid @sw_bg_color;
     border-radius: 16px;
-    background-color: transparent;
+    background-color: @sw_bg_color;
     background-image: image(@sw_bg_color);
-/*    background-image: image(linear-gradient(180deg, alpha(@sw_accent_fg_color, 10.0) 10%, alpha(@sw_accent_bg_color, 10.0)));*/
     box-shadow: none;
 }
 
@@ -468,14 +487,15 @@ sw_wc_minimize,
 sw_wc_maximize {
     min-width: 18px;
     min-height: 18px;
-    padding: 0;
+    padding: 0px;
     margin-right: 4px;
     color: white;
     border-radius: 9999px;
+    border-width: 0px;
     background-size: cover;
     background-position: center;
-    background-color: @sw_accent_fg_color;
-    background-image: image(@sw_accent_fg_color);
+    background-color: rgba(255, 255, 255, 0.05);
+    background-image: image(rgba(255, 255, 255, 0.05));
 }
 
 sw_wc_close.wc_color,
@@ -483,6 +503,21 @@ sw_wc_minimize.wc_color,
 sw_wc_maximize.wc_color {
     background-color: @sw_accent_fg_color;
     background-image: image(@sw_accent_fg_color);
+}
+
+sw_wc_close.wc_mac {
+    background-color: #ff3030;
+    background-image: image(#ff3030);
+}
+
+sw_wc_minimize.wc_mac{
+    background-color: #ffaa00;
+    background-image: image(#ffaa00);
+}
+
+sw_wc_maximize.wc_mac {
+    background-color: #30ff30;
+    background-image: image(#30ff30);
 }
 
 sw_wc_close.wc_image image {
@@ -498,18 +533,18 @@ sw_wc_maximize.wc_image image {
 }
 
 sw_wc_close:hover {
-    background-color: #ff0000;
-    background-image: image(#ff0000);
+    background-color: #ff303040;
+    background-image: image(#ff000040);
 }
 
 sw_wc_minimize:hover{
-    background-color: #ff9900;
-    background-image: image(#ff9900);
+    background-color: #ffaa0040;
+    background-image: image(#ffaa0040);
 }
 
 sw_wc_maximize:hover {
-    background-color: #00ff00;
-    background-image: image(#00ff00);
+    background-color: #30ff3040;
+    background-image: image(#30ff3040);
 }
 
 sw_wc_close:active,
@@ -673,10 +708,20 @@ sw_button_header {
 sw_button_header:hover {
     color: @sw_invert_accent_bg_color;
     background-image: image(alpha(@sw_accent_fg_color, 0.2));
+    outline-color: @sw_accent_fg_color;
+    outline-width: 2px;
+    outline-offset: -2px;
+
 }
 
 sw_button_header:focus {
     border-color: @sw_accent_fg_color;
+    animation: infinite alternate ease-in-out 0.75s;
+    background-repeat: no-repeat;
+    background-position: 50.00% 50.00%;
+    outline-color: @sw_accent_fg_color;
+    outline-width: 2px;
+    outline-offset: -1px;
 }
 
 sw_button_header:active {
@@ -697,7 +742,7 @@ sw_button {
     transition-duration: 200ms;
     outline: 1px solid transparent;
     outline-offset: 0px;
-    box-shadow: 1px 1px 2px #00000099;
+    box-shadow: 1px 1px 1px #00000099;
 }
 
 sw_button sw_label_desc {
@@ -709,7 +754,6 @@ sw_button:hover {
     transform: translate(1px, 2px) scale(1.01);
     transition: all 200ms cubic-bezier(0.25, 0.5, 0.75, 1.0);
     transition-duration: 200ms;
-    box-shadow: 2px 2px 4px #00000099;
 }
 
 sw_button:focus {
@@ -719,7 +763,6 @@ sw_button:focus {
     outline-color: @sw_accent_fg_color;
     outline-width: 2px;
     outline-offset: -1px;
-    box-shadow: 2px 2px 4px #00000099;
 }
 
 sw_button:active {
@@ -729,7 +772,6 @@ sw_button:active {
     transition: all 200ms cubic-bezier(0.25, 0.5, 0.75, 1.0);
     transition-duration: 200ms;
     background-image: image(alpha(@sw_accent_fg_color, 0.1));
-    box-shadow: 2px 2px 4px #00000099;
 }
 
 sw_button.toggle:checked {
@@ -1814,7 +1856,7 @@ sw_flowboxchild {
     color: @sw_invert_accent_bg_color;
     background-color: @sw_accent_bg_color;
     background-image: image(@sw_accent_bg_color);
-    box-shadow: 0 0 0 1px @sw_accent_bg_color, 1px 1px 2px #00000099;
+    box-shadow: 0 0 0 1px @sw_accent_bg_color, 1px 1px 1px #00000099;
 }
 
 sw_flowboxchild sw_label_desc {
@@ -1836,19 +1878,19 @@ sw_flowboxchild:selected {
     outline-offset: -1px;
 }
 
-sw_box.bind sw_label_view{
-    color: red;
+.bind sw_label_view{
+    color: @sw_accent_fg_color;
     animation: infinite alternate ease-in-out 0.75s;
     background-repeat: no-repeat;
     background-position: 50.00% 50.00%;
-    outline-color: #ff6060;
+    outline-color: @sw_accent_fg_color;
     outline-width: 2px;
     outline-offset: -1px;
     transform: scale(1.03);
     animation-timing-function: cubic-bezier(0.25, 0.5, 0.75, 0.95);
     transition: all 225ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
     transition-duration: 225ms;
-    filter: drop-shadow(alpha(#ff6060, 0.5) 0rem 0rem 40px);
+    filter: drop-shadow(alpha(@sw_accent_fg_color, 0.5) 0rem 0rem 40px);
 }
 
 sw_frame {
@@ -2104,6 +2146,27 @@ sw_entry>text>placeholder {
     font-variant: normal;
 }
 
+sw_box_row {
+    min-height: 32px;
+    padding: 8px;
+    margin: 4px;
+    border: 1px solid transparent;
+    border-spacing: 4px;
+    border-radius: 16px;
+    background-clip: padding-box;
+    color: @sw_invert_accent_bg_color;
+    background-color: @sw_accent_bg_color;
+    background-image: image(@sw_accent_bg_color);
+    box-shadow: inset 0 -1px rgba(163, 163, 163, 0.3);
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    outline: 0 solid transparent;
+    outline-offset: 4px;
+    border: none;
+}
+
 sw_action_row {
     min-height: 32px;
     padding: 8px;
@@ -2121,7 +2184,7 @@ sw_action_row {
     transition-duration: 225ms;
     animation-timing-function: ease-in-out;
     outline: 0 solid transparent;
-    outline-offset: 0px;
+    outline-offset: 4px;
     border: none;
 }
 
@@ -2135,6 +2198,9 @@ sw_action_row sw_label_desc {
 
 sw_action_row:hover {
     background-color: alpha(@sw_accent_bg_color, 0.75);
+    outline-color: @sw_accent_fg_color;
+    outline-width: 2px;
+    outline-offset: -2px;
 }
 
 sw_action_row:focus {
@@ -2649,7 +2715,7 @@ sw_stackswitcher>button {
     padding: 10px;
     margin: 4px;
     border: 1px solid alpha(gray, 0.25);
-    border-radius: 16px;
+    border-radius: 16px 16px 0 0;
     background-clip: padding-box;
     color: @sw_invert_accent_bg_color;
     background-color: @sw_accent_bg_color;
@@ -2659,25 +2725,21 @@ sw_stackswitcher>button {
     transition-duration: 200ms;
     outline: 1px solid transparent;
     outline-offset: 0px;
-    box-shadow: 1px 1px 2px #00000099;
 }
 
 sw_stackswitcher>button:hover {
-    border: 1px solid alpha(gray, 0.5);
     transform: translate(1px, 2px) scale(1.01);
-    transition: all 200ms cubic-bezier(0.25, 0.5, 0.75, 1.0);
-    transition-duration: 200ms;
-    box-shadow: 2px 2px 4px #00000099;
-}
-
-sw_stackswitcher>button:focus {
-    transform: scale(1.01);
     transition: all 200ms cubic-bezier(0.25, 0.5, 0.75, 1.0);
     transition-duration: 200ms;
     outline-color: @sw_accent_fg_color;
     outline-width: 2px;
     outline-offset: -1px;
-    box-shadow: 2px 2px 4px #00000099;
+}
+
+sw_stackswitcher>button:focus {
+/*    outline-color: @sw_accent_fg_color;*/
+    outline-width: 2px;
+    outline-offset: -1px;
 }
 
 sw_stackswitcher>button:active {
@@ -2687,7 +2749,6 @@ sw_stackswitcher>button:active {
     transition: all 200ms cubic-bezier(0.25, 0.5, 0.75, 1.0);
     transition-duration: 200ms;
     background-image: image(alpha(@sw_accent_fg_color, 0.1));
-    box-shadow: 2px 2px 4px #00000099;
 }
 
 sw_stackswitcher>button.toggle>label {
@@ -2725,4 +2786,96 @@ expander-widget :not(window):drop(active) {
     background-image: none;
 }
 
+sw_media_controls {
+    color: @sw_accent_fg_color;
+    background-color: @sw_header_bg_color;
+    background-image: image(@sw_header_bg_color);
+}
+
+sw_media_controls scale {
+    color: @sw_invert_bg_color;
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+/*    min-height: 6px;*/
+/*    min-width: 6px;*/
+/*    padding: 3px;*/
+}
+
+sw_media_controls scale>trough>fill,
+scale>trough {
+    border-radius: 9999px;
+    background-color: @sw_accent_bg_color;
+}
+
+sw_media_controls scale > trough {
+    transition: outline-width 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94), outline-offset 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    background-color: @sw_accent_bg_color;
+    border-radius: 9999px;
+    border-color: transparent;
+    outline-color: @sw_accent_fg_color;
+}
+
+sw_media_controls scale > trough > slider {
+    box-shadow: none;
+    outline: 1px solid transparent;
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition-property: background, border, box-shadow;
+    background-image: image(@sw_accent_fg_color);
+    border: 0px solid @sw_accent_bg_color;
+    border-radius: 9999px;
+    margin: -8px;
+    min-width: 18px;
+    min-height: 18px;
+}
+
+sw_media_controls scale > trough > highlight {
+    border-radius: 9999px;
+    background-color: @sw_accent_bg_color;
+    border-color: transparent;
+    background-image: image(@sw_accent_fg_color);
+}
+
+sw_media_controls button {
+    color: @sw_invert_accent_bg_color;
+    font-size: 12pt;
+    margin: 4px;
+    border-radius: 16px;
+    background-color: transparent;
+    background-image: none;
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition-property: outline, outline-width, outline-offset, outline-color;
+    transition-duration: 225ms;
+    animation-timing-function: ease-in-out;
+    outline: 0 solid transparent;
+}
+
+sw_media_controls button:hover {
+    color: @sw_invert_accent_bg_color;
+    background-image: image(alpha(@sw_accent_fg_color, 0.2));
+}
+
+sw_media_controls button:focus {
+    border-color: transparent;
+}
+
+sw_media_controls button:active {
+    background-image: image(alpha(@sw_accent_fg_color, 0.2));
+}
+
+sw_media_controls popover > contents {
+    border-radius: 16px;
+    background-image: image(@sw_pop_bg_color);
+}
+
+sw_media_controls popover > arrow {
+    background-image: image(@sw_pop_bg_color);
+}
+
+sw_media_controls popover > contents box > button {
+    font-weight: 500;
+    font-size: 12pt;
+    color: @sw_invert_pop_bg_color;
+    border-radius: 16px;
+}
 

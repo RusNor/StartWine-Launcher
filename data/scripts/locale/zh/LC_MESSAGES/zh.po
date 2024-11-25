@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-02-26 06:24+0300\n"
+"POT-Creation-Date: 2024-11-19 23:33+0300\n"
 "PO-Revision-Date: 2024-03-21 18:01+0300\n"
 "Last-Translator:  <meganet@localhost.localdomain>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -16,417 +16,194 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: sw_data.py:947
+#: sw_data.py:1570
 msgid "Dark"
 msgstr "黑暗的"
 
-#: sw_data.py:948
+#: sw_data.py:1571
 msgid "Light"
 msgstr "光"
 
-#: sw_data.py:949
+#: sw_data.py:1572
 msgid "Custom"
 msgstr "风俗"
 
-#: sw_data.py:955 sw_data.py:956
+#: sw_data.py:1578 sw_data.py:1579
 msgid "Show/Hide StartWine"
 msgstr "展示 隐藏 StartWine"
 
-#: sw_data.py:957
+#: sw_data.py:1580
 msgid "Run..."
 msgstr "跑步..."
 
-#: sw_data.py:958 sw_data.py:1049 sw_data.py:1302 sw_data.py:1456
+#: sw_data.py:1581 sw_data.py:2046
 msgid "Shortcuts"
 msgstr "快捷方式"
 
-#: sw_data.py:959
+#: sw_data.py:1582
 msgid "Stop Wine processes"
 msgstr "停止 Wine 进程"
 
-#: sw_data.py:960 sw_data.py:1020
+#: sw_data.py:1583 sw_data.py:1907 sw_data.py:4249
 msgid "Shutdown"
 msgstr "关闭"
 
-#: sw_data.py:979 sw_data.py:3152
-msgid "Run"
-msgstr "跑步"
-
-#: sw_data.py:980 sw_data.py:3150
-msgid "Open"
-msgstr "打开"
-
-#: sw_data.py:981
-msgid "Open with..."
-msgstr "打开用..."
-
-#: sw_data.py:982
-msgid "Open file location"
-msgstr "打开文件所在位置"
-
-#: sw_data.py:983
-msgid "App settings"
-msgstr "应用程序设置"
-
-#: sw_data.py:984 sw_data.py:3198 sw_data.py:3224
-msgid "Remove"
-msgstr "消除"
-
-#: sw_data.py:985
-msgid "App to menu"
-msgstr "应用程序到菜单"
-
-#: sw_data.py:986
-msgid "App to desktop"
-msgstr "应用程序到桌面"
-
-#: sw_data.py:987
-msgid "App to Steam Deck menu"
-msgstr "应用程序到 Steam Deck 菜单"
-
-#: sw_data.py:988 sw_data.py:3156
-msgid "Change Wine"
-msgstr "改变 Wine"
-
-#: sw_data.py:989
-msgid "Winehq"
-msgstr ""
-
-#: sw_data.py:990
-msgid "Protondb"
-msgstr ""
-
-#: sw_data.py:991
-msgid "Search for an image"
-msgstr "搜索图像"
-
-#: sw_data.py:997
-msgid "Create file"
-msgstr "创建文件"
-
-#: sw_data.py:998
-msgid "Create directory"
-msgstr "创建目录"
-
-#: sw_data.py:999
-msgid "Create link"
-msgstr "创建链接"
-
-#: sw_data.py:1000 sw_data.py:3157
-msgid "Rename"
-msgstr "改名"
-
-#: sw_data.py:1001
-msgid "Cut"
-msgstr "切"
-
-#: sw_data.py:1002
-msgid "Copy"
-msgstr "复制"
-
-#: sw_data.py:1003
-msgid "Paste"
-msgstr "粘贴"
-
-#: sw_data.py:1004
-msgid "Select all"
-msgstr "全选"
-
-#: sw_data.py:1005
-msgid "Move to trash"
-msgstr "移到废纸篓"
-
-#: sw_data.py:1006
-msgid "Delete permanently"
-msgstr "永久删除"
-
-#: sw_data.py:1007 sw_data.py:1312
-msgid "Properties"
-msgstr "特性"
-
-#: sw_data.py:1008
-msgid "Text"
-msgstr "文本"
-
-#: sw_data.py:1009
-msgid "Bourne shell"
-msgstr "伯恩外壳"
-
-#: sw_data.py:1010
-msgid "Python"
-msgstr "Python"
-
-#: sw_data.py:1011
-msgid "Desktop"
-msgstr "桌面"
-
-#: sw_data.py:1012
-msgid "Copy current path"
-msgstr "复制当前路径"
-
-#: sw_data.py:1013
-msgid "Add to bookmark"
-msgstr "添加到书签"
-
-#: sw_data.py:1014
-msgid "Compress..."
-msgstr "压缩..."
-
-#: sw_data.py:1015
-msgid "Extract..."
-msgstr "提炼..."
-
-#: sw_data.py:1016
-msgid "Sort..."
-msgstr "种类..."
-
-#: sw_data.py:1016
-msgid "Hidden files"
-msgstr "隐藏文件"
-
-#: sw_data.py:1016
-msgid "By type"
-msgstr "按类型"
-
-#: sw_data.py:1016
-msgid "By size"
-msgstr "按尺寸"
-
-#: sw_data.py:1016
-msgid "By date"
-msgstr "按日期"
-
-#: sw_data.py:1016
-msgid "By name"
-msgstr "按名字"
-
-#: sw_data.py:1016
-msgid "Reverse"
-msgstr "撤销"
-
-#: sw_data.py:1017 sw_data.py:2190
-msgid "Hotkeys"
-msgstr "热键"
-
-#: sw_data.py:1018 sw_data.py:1311 sw_data.py:3241
-msgid "About"
-msgstr "关于"
-
-#: sw_data.py:1019
-msgid "Help"
-msgstr "帮助"
-
-#: sw_data.py:1023
-msgid "sample"
-msgstr "样本"
-
-#: sw_data.py:1050 sw_data.py:1306
+#: sw_data.py:1614 sw_data.py:1893 sw_data.py:4047
 msgid "Games and apps"
 msgstr "游戏和应用程序"
 
-#: sw_data.py:1050 sw_data.py:1307
-msgid "Launchers and stores"
-msgstr "启动器和商店"
-
-#: sw_data.py:1051
-msgid "Wine builds"
-msgstr "Wine 构建"
-
-#: sw_data.py:1052 sw_data.py:1689
-msgid "Launch settings"
-msgstr "启动设置"
-
-#: sw_data.py:1053 sw_data.py:1690
-msgid "MangoHud settings"
-msgstr "设置 MangoHud"
-
-#: sw_data.py:1054 sw_data.py:1691
-msgid "vkBasalt settings"
-msgstr "设置 vkBasalt"
-
-#: sw_data.py:1055 sw_data.py:1692
-msgid "Colors settings"
-msgstr "颜色设置"
-
-#: sw_data.py:1056 sw_data.py:1693
+#: sw_data.py:1615 sw_data.py:1901 sw_data.py:4245
 msgid "Interface settings"
 msgstr "界面设置"
 
-#: sw_data.py:1057
-msgid "Files"
-msgstr "文件"
+#: sw_data.py:1616 sw_data.py:1898 sw_data.py:4050
+msgid "Wine builds"
+msgstr "Wine 构建"
 
-#: sw_data.py:1058 sw_data.py:1365
+#: sw_data.py:1617 sw_data.py:1899 sw_data.py:4049
+msgid "Apps and stores"
+msgstr "启动器和商店"
+
+#: sw_data.py:1618
+msgid "Application start page"
+msgstr "应用前缀"
+
+#: sw_data.py:1619 sw_data.py:2254 sw_data.py:4111
+msgid "Launch settings"
+msgstr "启动设置"
+
+#: sw_data.py:1620 sw_data.py:2255
+msgid "MangoHud settings"
+msgstr "设置 MangoHud"
+
+#: sw_data.py:1621 sw_data.py:2256
+msgid "vkBasalt settings"
+msgstr "设置 vkBasalt"
+
+#: sw_data.py:1622 sw_data.py:1963
 msgid "Winetricks"
 msgstr "Winetricks"
 
-#: sw_data.py:1059
-msgid "Terminal"
-msgstr "终端"
+#: sw_data.py:1623 sw_data.py:1894 sw_data.py:4048
+msgid "Files"
+msgstr "文件"
 
-#: sw_data.py:1060
-msgid "Text view"
-msgstr "文本视图"
-
-#: sw_data.py:1061
+#: sw_data.py:1624
 msgid "Web browser"
 msgstr "网页浏览器"
 
+#: sw_data.py:1625 sw_data.py:4183
 msgid "Controller settings"
 msgstr "控制器设置"
 
-#: sw_data.py:1086
+#: sw_data.py:1641
 msgid "Prefix: "
 msgstr "字首： "
 
-#: sw_data.py:1087
+#: sw_data.py:1642
 msgid "Current prefix:\n"
 msgstr "当前前缀：\n"
 
-#: sw_data.py:1088
+#: sw_data.py:1643
 msgid "Current Wine:\n"
 msgstr "当前的 Wine\n"
 
-#: sw_data.py:1089
+#: sw_data.py:1644
 msgid "Oops! Nothing to run..."
 msgstr "哎呀！没什么可跑的..."
 
-#: sw_data.py:1110
+#: sw_data.py:1665
 msgid "New"
 msgstr "新的"
 
-#: sw_data.py:1111
+#: sw_data.py:1666
 msgid "Details"
 msgstr "细节"
 
-#: sw_data.py:1112
+#: sw_data.py:1667
 msgid "Authors"
 msgstr "作者"
 
-#: sw_data.py:1113
+#: sw_data.py:1668
 msgid "License"
 msgstr "执照"
 
-#: sw_data.py:1114
+#: sw_data.py:1669
 msgid "Donations and help"
 msgstr "捐款和帮助"
 
-#: sw_data.py:1115
+#: sw_data.py:1670
 msgid "Check for updates"
 msgstr "检查更新"
 
-#: sw_data.py:1116
+#: sw_data.py:1671
 msgid "Code"
 msgstr "代码"
 
-#: sw_data.py:1117
+#: sw_data.py:1672
 msgid "Projects"
 msgstr "项目"
 
-#: sw_data.py:1118
+#: sw_data.py:1673
 msgid "Members"
 msgstr "会员"
 
-#: sw_data.py:1119
+#: sw_data.py:1674
 msgid "Design"
 msgstr "设计"
 
-#: sw_data.py:1120
+#: sw_data.py:1675
 msgid "Website"
 msgstr "网站"
 
-#: sw_data.py:1121
+#: sw_data.py:1676
 msgid "Github"
 msgstr "吉图布"
 
-#: sw_data.py:1122
+#: sw_data.py:1677
 msgid "Discord"
 msgstr "不和谐"
 
-#: sw_data.py:1123
+#: sw_data.py:1678
 msgid "Telegram"
 msgstr "电报"
 
-#: sw_data.py:1131
+#: sw_data.py:1686
 msgid ""
 "Is a Windows application launcher for GNU/Linux operating systems. Includes "
 "many features, extensions, and fixes to improve performance, visuals, and "
 "usability."
 msgstr ""
-"是 GNU/Linux 操作系统的 Windows 应用程序启动器。包括许多功能、扩展和修复，以提高性能、视觉效果和可用性。"
+"是 GNU/Linux 操作系统的 Windows 应用程序启动器。包括许多功能、扩展和修复，以"
+"提高性能、视觉效果和可用性。"
 
-#: sw_data.py:1136
-msgid ""
-"This release adds the following features, updates, and fixes:\n"
-"Bug fixes and performance improvements.\n"
-"Locales updated.\n"
-"Updated prefix configurations.\n"
-"Updated list of Wine versions.\n"
-"Updated list of dxvk and vkd3d versions.\n"
-"Libraries and drivers in the container have been updated.\n"
-"Updated list of hotkeys.\n"
-"Updated the list of libraries in Winetricks.\n"
-"The graphical interface has been updated.\n"
-"All settings of the game or application have been moved to the shortcut launch page.\n"
-"The list of sidebar buttons has been changed.\n"
-"Added new background animation.\n"
-"Added the ability to rename the name of an installed application or game.\n"
-"Added the ability to change the path to the executable file of the game or application.\n"
-"Added new animations to the shader list.\n"
-"Added codecs for video playback.\n"
-"Added DirectX 8 support in dxvk mode.\n"
-"Improved image auto-search algorithm.\n"
-"Fixed interface freezes when Star tWine is turned off.\n"
-"Fixed the error of displaying the path when recursively searching in the file manager.\n"
-"Fixed an error when copying fonts to the prefix of an application or game.\n"
-"Outdated startup settings have been removed (GSTREAMER, GAMEMODE, DXVK_ASYNC).\n"
-msgstr ""
-"此版本添加了以下功能、更新和修复:\n"
-"错误修复和性能改进。\n"
-"区域设置更新。\n"
-"更新的前缀配置。\n"
-"葡萄酒版本的更新列表。\n"
-"更新的dxvk和vkd3d版本列表。\n"
-"容器中的库和驱动程序已更新。\n"
-"更新的热键列表。\n"
-"更新了Winetricks中的库列表。\n"
-"图形界面已更新。\n"
-"游戏或应用程序的所有设置都已移动到快捷方式启动页面。\n"
-"侧边栏按钮列表已更改。\n"
-"添加了新的背景动画。\n"
-"添加了重命名已安装应用程序或游戏名称的功能。\n"
-"添加了更改游戏或应用程序的可执行文件路径的功能。\n"
-"在着色器列表中添加了新的动画。\n"
-"添加了用于视频播放的编解码器。\n"
-"在dxvk模式下添加了DirectX8支持。\n"
-"改进的图像自动搜索算法。\n"
-"固定接口冻结时,星线关闭.\n"
-"修复了在文件管理器中递归搜索时显示路径的错误。\n"
-"修复了将字体复制到应用程序或游戏前缀时的错误。\n"
-"过时的启动设置已被删除（GSTREAMER，GAMEMODE，DXVK_ASYNC）。\n"
+#: sw_data.py:1692
+msgid "The full list of changes and fixes for the current release is available "
+"at the link below."
+msgstr "当前版本的更改和修复的完整列表可在下面的链接中找到。"
 
-#: sw_data.py:1163
+#: sw_data.py:1717
 msgid ""
 "Rustam Normatov\n"
 "Nikita Maslov"
 msgstr ""
 
-#: sw_data.py:1167
+#: sw_data.py:1721
 msgid ""
 "Rustam Normatov\n"
 "Nikita Maslov\n"
 "Maksim Tarasov"
 msgstr ""
 
-#: sw_data.py:1204
+#: sw_data.py:1757
 msgid "StartWine Design Team"
 msgstr "StartWine设计团队"
 
-#: sw_data.py:1206
+#: sw_data.py:1759
 msgid "GNU General Public License"
 msgstr "GNU 通用公共许可证"
 
-#: sw_data.py:1209
+#: sw_data.py:1762
 msgid ""
 "StartWine is free software. You can redistribute it and/or modify it under "
 "the terms of the GNU General Public License as published by the Free "
@@ -434,15 +211,15 @@ msgid ""
 "any later version. StartWine is distributed without any warranty. See the "
 "GNU Lesser General Public License for more details."
 msgstr ""
-"StartWine 是免费软件。您可以根据自由软件基金会发布的 GNU 通用公共许可证的条款重新分发和/或修改它；"
-"许可证的版本 3，或（由您选择）任何更高版本。 StartWine 的分发没有任何保证。"
-"有关更多详细信息，请参阅 GNU 较宽通用公共许可证。"
+"StartWine 是免费软件。您可以根据自由软件基金会发布的 GNU 通用公共许可证的条款"
+"重新分发和/或修改它；许可证的版本 3，或（由您选择）任何更高版本。 StartWine "
+"的分发没有任何保证。有关更多详细信息，请参阅 GNU 较宽通用公共许可证。"
 
-#: sw_data.py:1223
+#: sw_data.py:1776
 msgid "Contribute to the project"
 msgstr "为项目做出贡献"
 
-#: sw_data.py:1225
+#: sw_data.py:1778
 msgid ""
 "You can contribute to the project by spreading information about it, "
 "offering for discussion any ideas related to improving the functionality and "
@@ -450,194 +227,163 @@ msgid ""
 "to the development by submitting bug reports. And you can always donate any "
 "amount to the development of the project using the link below."
 msgstr ""
-"您可以通过传播有关该项目的信息、提供与改进 StartWine 应用程序的功能和外观相关的任何想法供讨论来为该项目做出贡献。"
-"您还可以通过提交错误报告来为开发做出贡献。您可以随时使用下面的链接为项目的开发捐赠任意金额。"
+"您可以通过传播有关该项目的信息、提供与改进 StartWine 应用程序的功能和外观相关"
+"的任何想法供讨论来为该项目做出贡献。您还可以通过提交错误报告来为开发做出贡"
+"献。您可以随时使用下面的链接为项目的开发捐赠任意金额。"
 
-#: sw_data.py:1301
+#: sw_data.py:1786
+msgid "Card"
+msgstr "卡片"
+
+#: sw_data.py:1892
 msgid "Start"
 msgstr "开始"
 
-#: sw_data.py:1303 sw_data.py:3155
+#: sw_data.py:1895 sw_data.py:4045
 msgid "Create shortcut"
 msgstr "创建快捷方式"
 
-#: sw_data.py:1304
+#: sw_data.py:1896 sw_data.py:4180
 msgid "Prefix tools"
 msgstr "前缀工具"
 
-#: sw_data.py:1305
+#: sw_data.py:1897 sw_data.py:4181
 msgid "Wine tools"
 msgstr "Wine 工具"
 
-msgid "Tools"
-msgstr "工具"
-
-#: sw_data.py:1306 sw_data.py:1359 sw_data.py:3236
-msgid "Download Wine"
-msgstr "下载 Wine"
-
-#: sw_data.py:1308 sw_data.py:3238
+#: sw_data.py:1900 sw_data.py:4051 sw_data.py:4179
 msgid "Settings"
 msgstr "设置"
 
-msgid "Statistics"
-msgstr "统计数据"
-
-msgid "Statistics and data"
-msgstr "统计数据"
-
-#: sw_data.py:1309 sw_data.py:3239
+#: sw_data.py:1902 sw_data.py:4186
 msgid "Debug"
 msgstr "调试"
 
-#: sw_data.py:1310 sw_data.py:3240
+#: sw_data.py:1903 sw_data.py:4187
 msgid "Terminate all processes"
 msgstr "终止所有进程"
 
-#: sw_data.py:1313
+#: sw_data.py:1904 sw_data.py:4031 sw_data.py:4188 sw_data.py:4247
+msgid "About"
+msgstr "关于"
+
+#: sw_data.py:1905 sw_data.py:4229
+msgid "Properties"
+msgstr "特性"
+
+#: sw_data.py:1906
 msgid "Bookmarks"
 msgstr "书签"
 
-#: sw_data.py:1321
+#: sw_data.py:1908
+msgid "Playlist"
+msgstr "播放列表"
+
+#: sw_data.py:1920
 msgid "Default prefix"
 msgstr "默认前缀"
 
-#: sw_data.py:1322
+#: sw_data.py:1921
 msgid "Application prefix"
 msgstr "应用前缀"
 
-#: sw_data.py:1336
+#: sw_data.py:1935
 msgid "Remove current prefix"
 msgstr "删除当前前缀"
 
-#: sw_data.py:1337
+#: sw_data.py:1936
 msgid "Clear current prefix"
 msgstr "清除当前前缀"
 
-#: sw_data.py:1338
+#: sw_data.py:1937
 msgid "Reinstall current prefix"
 msgstr "重新安装当前前缀"
 
-#: sw_data.py:1339
+#: sw_data.py:1938
 msgid "Prefix backup"
 msgstr "前缀备份"
 
-#: sw_data.py:1340
+#: sw_data.py:1939
 msgid "Prefix recovery"
 msgstr "前缀恢复"
 
-#: sw_data.py:1341
-msgid "Backup all prefixes"
-msgstr "备份所有前缀"
+#: sw_data.py:1940
+msgid "Backup of saves"
+msgstr "保存的备份"
 
-#: sw_data.py:1342
-msgid "Recovery all prefixes"
-msgstr "恢复所有前缀"
+#: sw_data.py:1941
+msgid "Restoring saves"
+msgstr "恢复保存"
 
-#: sw_data.py:1360
+#: sw_data.py:1958
 msgid "Wine settings"
 msgstr "Wine 设置"
 
-#: sw_data.py:1361
+#: sw_data.py:1959
 msgid "Wine console"
 msgstr "Wine 安慰"
 
-#: sw_data.py:1362
+#: sw_data.py:1960
 msgid "Regedit"
 msgstr "注册表编辑器"
 
-#: sw_data.py:1363
+#: sw_data.py:1961
 msgid "File explorer"
 msgstr "文件管理器"
 
-#: sw_data.py:1364
+#: sw_data.py:1962
 msgid "Uninstaller"
 msgstr "卸载程序"
 
-#: sw_data.py:1383
-msgid "Path"
-msgstr "小路"
+#: sw_data.py:1964 sw_data.py:2258
+msgid "Clear shader cache"
+msgstr "清除着色器缓存"
 
-#: sw_data.py:1384
-msgid "Modified date"
-msgstr "修改日期"
-
-#: sw_data.py:1385
-msgid "Creation date"
-msgstr "创建日期"
-
-msgid "Modified/Created"
-msgstr "修改/创建"
-
-#: sw_data.py:1386
-msgid "Owner/Group"
-msgstr "业主/团体"
-
-#: sw_data.py:1387
-msgid "Access"
-msgstr "使用权"
-
-#: sw_data.py:1388
-msgid "Permission"
-msgstr "允许"
-
-#: sw_data.py:1389
-msgid "Executable"
-msgstr "可执行文件"
-
-#: sw_data.py:1390
-msgid "Can-readable"
-msgstr "可读"
-
-#: sw_data.py:1391
-msgid "Can-writable"
-msgstr "可写"
-
-#: sw_data.py:1392
-msgid "Non-readable"
-msgstr "不可读"
-
-#: sw_data.py:1393
-msgid "Non-writable"
-msgstr "不可写"
-
-#: sw_data.py:1394
-msgid "Symbolic link to"
-msgstr "符号链接到"
-
-#: sw_data.py:1442
+#: sw_data.py:2032
 msgid "Adding a new bookmark completed successfully"
 msgstr "添加新书签成功完成"
 
-#: sw_data.py:1443
+#: sw_data.py:2033
 msgid "Remove bookmark completed successfully"
 msgstr "删除书签成功完成"
 
-#: sw_data.py:1444
+#: sw_data.py:2034
 msgid "Bookmark is already exists!"
 msgstr "书签已存在！"
 
-#: sw_data.py:1455
+#: sw_data.py:2045
 msgid "Games"
 msgstr "游戏"
 
-#: sw_data.py:1457
+#: sw_data.py:2047
 msgid "Prefixes"
 msgstr "前缀"
 
-#: sw_data.py:1458
+#: sw_data.py:2048
 msgid "Backups"
 msgstr "备份"
 
-#: sw_data.py:1459
+#: sw_data.py:2049
 msgid "Prefix configurations"
 msgstr "前缀配置"
 
-#: sw_data.py:1460
+#: sw_data.py:2050
 msgid "Logs"
 msgstr "日志"
 
-#: sw_data.py:1465
+#: sw_data.py:2056
+msgid "Adding a new media file to playlist completed successfully"
+msgstr "将新媒体文件添加到播放列表已成功完成"
+
+#: sw_data.py:2057
+msgid "Remove media file from playlist completed successfully"
+msgstr "从播放列表中删除媒体文件已成功完成"
+
+#: sw_data.py:2058
+msgid "Media file is already added to playlist!"
+msgstr "媒体文件已添加到播放列表！"
+
+#: sw_data.py:2062
 msgid ""
 "Wine (originally an acronym for \"Wine Is Not an Emulator\") is a "
 "compatibility layer capable of running Windows applications on several POSIX-"
@@ -647,16 +393,17 @@ msgid ""
 "performance and memory penalties of other methods and allowing you to "
 "cleanly integrate Windows applications into your desktop."
 msgstr ""
-"Wine（最初是“Wine Is Not an Emulator”的缩写）是一个兼容层，"
-"能够在多种 POSIX 兼容操作系统（例如 Linux、macOS 和 BSD）上运行 Windows 应用程序。 "
-"Wine 不是像虚拟机或模拟器那样模拟内部 Windows 逻辑，而是将 Windows API 调用即时转换为 "
-"POSIX 调用，消除了其他方法的性能和内存损失，并允许您将 Windows 应用程序干净地集成到桌面中。"
+"Wine（最初是“Wine Is Not an Emulator”的缩写）是一个兼容层，能够在多种 POSIX "
+"兼容操作系统（例如 Linux、macOS 和 BSD）上运行 Windows 应用程序。 Wine 不是像"
+"虚拟机或模拟器那样模拟内部 Windows 逻辑，而是将 Windows API 调用即时转换为 "
+"POSIX 调用，消除了其他方法的性能和内存损失，并允许您将 Windows 应用程序干净地"
+"集成到桌面中。"
 
-#: sw_data.py:1473
+#: sw_data.py:2070
 msgid "List of Wines to download and install"
 msgstr "要下载和安装的葡萄酒列表"
 
-#: sw_data.py:1475
+#: sw_data.py:2072
 msgid ""
 "Wine Staging contains bug fixes and features, which have not been integrated "
 "into the development branch yet. The idea of Wine Staging is to provide "
@@ -664,29 +411,29 @@ msgid ""
 "possibility to discuss and improve their patches before they are integrated "
 "into the main branch."
 msgstr ""
-"Wine Staging 包含错误修复和功能，尚未集成到开发分支中。 "
-"Wine Staging 的想法是更快地向最终用户提供实验性功能，"
-"并让开发人员有可能在补丁集成到主分支之前讨论和改进补丁。"
+"Wine Staging 包含错误修复和功能，尚未集成到开发分支中。 Wine Staging 的想法是"
+"更快地向最终用户提供实验性功能，并让开发人员有可能在补丁集成到主分支之前讨论"
+"和改进补丁。"
 
-#: sw_data.py:1480
+#: sw_data.py:2077
 msgid ""
 "Staging-TkG is a Wine build with the Staging patchset applied and with many "
 "additional useful patches. A complete list of patches is in wine-tkg-config."
 "txt inside the build directory."
 msgstr ""
-"Staging-TkG 是应用了 Staging 补丁集和许多其他有用补丁的 Wine 构建。"
-"完整的补丁列表位于构建目录中的 wine-tkg-config.txt 中。"
+"Staging-TkG 是应用了 Staging 补丁集和许多其他有用补丁的 Wine 构建。完整的补丁"
+"列表位于构建目录中的 wine-tkg-config.txt 中。"
 
-#: sw_data.py:1483
+#: sw_data.py:2080
 msgid ""
 "Is a Wine build modified by Valve and other contributors. It contains many "
 "useful patches (primarily for a better gaming experience), some of them are "
 "unique and not present in other builds."
 msgstr ""
-"是由 Valve 和其他贡献者修改的 Wine 版本。"
-"它包含许多有用的补丁（主要是为了更好的游戏体验），其中一些是独特的并且在其他版本中不存在。"
+"是由 Valve 和其他贡献者修改的 Wine 版本。它包含许多有用的补丁（主要是为了更好"
+"的游戏体验），其中一些是独特的并且在其他版本中不存在。"
 
-#: sw_data.py:1486
+#: sw_data.py:2083
 msgid ""
 "Proton with the most recent bleeding-edge Proton Experimental Wine. Things "
 "it contains that Valve's Proton does not: Additional media foundation "
@@ -694,23 +441,16 @@ msgid ""
 "support for PhysX and NVAPI, raw input mouse support and various wine-"
 "staging patches applied as they become needed."
 msgstr ""
-"Proton 与最新尖端的 Proton Experimental Wine。"
-"它包含 Valve 的 Proton 不包含的内容：用于更好的视频播放支持的附加媒体基础补丁、"
-"AMD FSR 补丁、对 PhysX 和 NVAPI 的 Nvidia CUDA 支持、"
-"原始输入鼠标支持以及在需要时应用的各种 wine-staging 补丁。"
+"Proton 与最新尖端的 Proton Experimental Wine。它包含 Valve 的 Proton 不包含的"
+"内容：用于更好的视频播放支持的附加媒体基础补丁、AMD FSR 补丁、对 PhysX 和 "
+"NVAPI 的 Nvidia CUDA 支持、原始输入鼠标支持以及在需要时应用的各种 wine-"
+"staging 补丁。"
 
-#: sw_data.py:1491
-msgid ""
-"Wine based on/forked from the most recent bleeding-edge proton experimental "
-"wine repo. This is meant to be used with non-steam games outside of Steam."
-msgstr ""
-"Wine 基于/从最新的前沿质子实验葡萄酒仓库中分叉出来。这适用于 Steam 之外的非 Steam 游戏。"
+#: sw_data.py:2144
+msgid "List of applications and stores available for installation"
+msgstr "可安装的应用程序和商店列表"
 
-#: sw_data.py:1573
-msgid "List of launchers and stores available for installation"
-msgstr "可安装的启动器和商店列表"
-
-#: sw_data.py:1580
+#: sw_data.py:2147
 msgid ""
 "Anomaly Zone - MMORPG, open world game, successor to \"stalker online\". You "
 "can remain alone or conquer the Zone in the company of other daredevils, "
@@ -718,2256 +458,2723 @@ msgid ""
 "battles, use crafting, modifications, follow a large, interesting, global "
 "plot."
 msgstr ""
-"Anomaly Zone - MMORPG，开放世界游戏，《潜行者 Online》的后继者。您可以独自一人，"
-"也可以与其他勇敢者一起征服区域，与朋友一起在线玩游戏。"
-"在部落中玩耍，参加 PvP 和 PvE 战斗，使用制作、修改，遵循大型、有趣的全球情节。"
+"Anomaly Zone - MMORPG，开放世界游戏，《潜行者 Online》的后继者。您可以独自一"
+"人，也可以与其他勇敢者一起征服区域，与朋友一起在线玩游戏。在部落中玩耍，参加 "
+"PvP 和 PvE 战斗，使用制作、修改，遵循大型、有趣的全球情节。"
 
-#: sw_data.py:1584
+#: sw_data.py:2151
 msgid ""
 "Battle.net is an online gaming service, including digital distribution and "
 "social platform functions, developed by Blizzard Entertainment."
-msgstr ""
-"Battle.net是由暴雪娱乐开发的在线游戏服务，包括数字发行和社交平台功能。"
+msgstr "Battle.net是由暴雪娱乐开发的在线游戏服务，包括数字发行和社交平台功能。"
 
-#: sw_data.py:1589
+#: sw_data.py:2153
 msgid ""
 "Caliber is a third-person and first-person multiplayer online game about "
 "modern special forces. The project belongs to the genre of tactical team "
 "action, offering battles in PvP, PvE and PvPvE modes. \"Caliber\" is "
 "distributed according to the free-to-play business model."
 msgstr ""
-"Calibre 是一款关于现代特种部队的第三人称和第一人称多人在线游戏。"
-"该项目属于战术团队动作类型，提供 PvP、PvE 和 PvPvE 模式的战斗。 "
-"《Calibre》按照免费商业模式发行。"
+"Calibre 是一款关于现代特种部队的第三人称和第一人称多人在线游戏。该项目属于战"
+"术团队动作类型，提供 PvP、PvE 和 PvPvE 模式的战斗。 《Calibre》按照免费商业模"
+"式发行。"
 
-#: sw_data.py:1593
+#: sw_data.py:2157
 msgid ""
 "Crossout is a computer multiplayer online game in the genre of post-"
 "apocalyptic action with a third-person view. The core of the game is session "
 "PvP battles in armored vehicles assembled by the players themselves."
 msgstr ""
-"《Crossout》是一款采用第三人称视角的后世界末日动作类型的电脑多人在线游戏。"
-"游戏的核心是玩家自己组装的装甲车中的回合 PvP 战斗。"
+"《Crossout》是一款采用第三人称视角的后世界末日动作类型的电脑多人在线游戏。游"
+"戏的核心是玩家自己组装的装甲车中的回合 PvP 战斗。"
 
-#: sw_data.py:1596
+#: sw_data.py:2160
 msgid ""
 "EA app is Electronic Arts latest and most advanced PC platform where you can "
 "play your favorite games without any hassle. The app features an improved "
 "and optimized user interface, making it easy to find and play games in "
 "seconds."
 msgstr ""
-"EA 应用程序是艺电最新、最先进的 PC 平台，您可以在其中轻松玩自己喜欢的游戏。"
-"该应用程序具有改进和优化的用户界面，让您可以在几秒钟内轻松找到并玩游戏。"
+"EA 应用程序是艺电最新、最先进的 PC 平台，您可以在其中轻松玩自己喜欢的游戏。该"
+"应用程序具有改进和优化的用户界面，让您可以在几秒钟内轻松找到并玩游戏。"
 
-#: sw_data.py:1599
+#: sw_data.py:2163
 msgid ""
 "Epic Games Store is an online digital distribution service for computer "
 "games developed and managed by the American company Epic Games."
 msgstr ""
 "Epic Games Store 是由美国公司 Epic Games 开发和管理的在线数字游戏发行服务。"
 
-#: sw_data.py:1601
+#: sw_data.py:2165
 msgid ""
 "EVE Online is a space massively multiplayer online game developed by the "
 "Icelandic company CCP Games. PvE and PvP battles, research, resource "
 "extraction, production and a realistic economy."
 msgstr ""
-"EVE Online是一款由冰岛公司CCP Games开发的太空大型多人在线游戏。 "
-"PvE 和 PvP 战斗、研究、资源开采、生产和现实经济。"
+"EVE Online是一款由冰岛公司CCP Games开发的太空大型多人在线游戏。 PvE 和 PvP 战"
+"斗、研究、资源开采、生产和现实经济。"
 
-#: sw_data.py:1604
+#: sw_data.py:2168
 msgid ""
 "GOG GALAXY 2.0 is a program that will help you combine multiple game "
 "libraries and communicate with friends regardless of the gaming platform, "
 "including consoles! If you play with friends on different platforms and have "
 "to use multiple launchers, GOG GALAXY 2.0 is for you!"
 msgstr ""
-"GOG GALAXY 2.0 是一个程序，它将帮助您组合多个游戏库并与朋友交流，无论游戏平台如何，包括游戏机！"
-"如果您与不同平台上的朋友一起玩并且必须使用多个启动器，GOG GALAXY 2.0 非常适合您！"
+"GOG GALAXY 2.0 是一个程序，它将帮助您组合多个游戏库并与朋友交流，无论游戏平台"
+"如何，包括游戏机！如果您与不同平台上的朋友一起玩并且必须使用多个启动器，GOG "
+"GALAXY 2.0 非常适合您！"
 
-#: sw_data.py:1608
+#: sw_data.py:2172
 msgid ""
 "Client online games (MMORPG) and browser games (BBMMORPG), as well as games "
 "for mobile phones and tablets. RPG, Fantasy, Simulation, Adventure, "
 "Strategy, there is even a real life simulator (a la Sims)."
 msgstr ""
-"客户端网络游戏（MMORPG）和浏览器游戏（BBMMORPG），以及手机和平板电脑游戏。"
-"角色扮演游戏、奇幻、模拟、冒险、策略，甚至还有现实生活模拟器（模拟人生）。"
+"客户端网络游戏（MMORPG）和浏览器游戏（BBMMORPG），以及手机和平板电脑游戏。角"
+"色扮演游戏、奇幻、模拟、冒险、策略，甚至还有现实生活模拟器（模拟人生）。"
 
-#: sw_data.py:1611
+#: sw_data.py:2175
 msgid ""
 "VK Play is a platform for game lovers, developers and content creators. VK "
 "Play combines all the services necessary for the gaming community and offers "
 "entertainment for everyone: a catalog of games, cloud gaming, streaming and "
 "e-sports and much more."
 msgstr ""
-"VK Play 是一个面向游戏爱好者、开发者和内容创作者的平台。 "
-"VK Play 结合了游戏社区所需的所有服务，为每个人提供娱乐：游戏目录、云游戏、流媒体和电子竞技等等。"
+"VK Play 是一个面向游戏爱好者、开发者和内容创作者的平台。 VK Play 结合了游戏社"
+"区所需的所有服务，为每个人提供娱乐：游戏目录、云游戏、流媒体和电子竞技等等。"
 
-#: sw_data.py:1617
+#: sw_data.py:2179
 msgid ""
 "Genshin Impact is an action-adventure computer game with an open world and "
 "RPG elements, developed by the Chinese company miHoYo Limited. The game is "
 "distributed through digital distribution using a free-to-play model, but has "
 "an in-game store that uses real currency."
 msgstr ""
-"《原神》是一款具有开放世界和RPG元素的动作冒险电脑游戏，由中国公司miHoYo Limited开发。"
-"该游戏采用免费模式通过数字发行进行发行，但有一个使用真实货币的游戏内商店。"
+"《原神》是一款具有开放世界和RPG元素的动作冒险电脑游戏，由中国公司miHoYo "
+"Limited开发。该游戏采用免费模式通过数字发行进行发行，但有一个使用真实货币的游"
+"戏内商店。"
 
-#: sw_data.py:1625
+#: sw_data.py:2183
 msgid ""
 "Lesta Game Center is part of the platform distribution (game launcher app) "
 "that brings together all your Lesta games, as well as read news about "
 "upcoming features and functions, watch videos and get amazing discounts!"
 msgstr ""
-"Lesta Game Center 是平台发行版（游​​戏启动器应用程序）的一部分，它汇集了您所有的 Lesta 游戏，"
-"以及阅读有关即将推出的特性和功能的新闻、观看视频并获得惊人的折扣！"
+"Lesta Game Center 是平台发行版（游​​戏启动器应用程序）的一部分，它汇集了您所有"
+"的 Lesta 游戏，以及阅读有关即将推出的特性和功能的新闻、观看视频并获得惊人的折"
+"扣！"
 
-#: sw_data.py:1628
+#: sw_data.py:2186
 msgid ""
 "Game Coast is a client for Lineage 2 - classic free-to-play MMORPG with a "
 "third-person perspective."
-msgstr ""
-"Game Coast 是《天堂 2》的客户端 - 具有第三人称视角的经典免费 MMORPG。"
+msgstr "Game Coast 是《天堂 2》的客户端 - 具有第三人称视角的经典免费 MMORPG。"
 
-#: sw_data.py:1630
+#: sw_data.py:2188
 msgid ""
 "Lost Light is a highly realistic hardcore shooter, focused on surviving and "
 "gathering loot with other players, as well as defending yourself from the "
 "unknown."
 msgstr ""
-"《Lost Light》是一款高度真实的硬核射击游戏，专注于生存和与其他玩家一起收集战利品，"
-"以及保护自己免受未知的侵害。"
+"《Lost Light》是一款高度真实的硬核射击游戏，专注于生存和与其他玩家一起收集战"
+"利品，以及保护自己免受未知的侵害。"
 
-#: sw_data.py:1632
+#: sw_data.py:2190
 msgid ""
 "Yuzu is a free and open source emulator of the Nintendo Switch console. "
 "Developed since January 2018 by the team responsible for Citra, a Nintendo "
 "3DS emulator. Written in C++. The list of games compatible with the emulator "
 "is on the official website."
 msgstr ""
-"Yuzu 是 Nintendo Switch 控制台的免费开源模拟器。由负责任天堂 3DS 模拟器 Citra 的团队自 "
-"2018 年 1 月起开发。用 C++ 编写。模拟器兼容的游戏列表在官方网站上。"
+"Yuzu 是 Nintendo Switch 控制台的免费开源模拟器。由负责任天堂 3DS 模拟器 "
+"Citra 的团队自 2018 年 1 月起开发。用 C++ 编写。模拟器兼容的游戏列表在官方网"
+"站上。"
 
-#: sw_data.py:1636
+#: sw_data.py:2194
 msgid ""
 "Osu! is a free and open source music game developed and published by Dean "
 "Herbert. The gameplay is based on various popular games including Osu! "
 "Tatakae!"
 msgstr ""
-"奥苏！是一款由 Dean Herbert 开发和发行的免费开源音乐游戏。游戏玩法基于各种流行游戏，"
-"包括 Osu!多贵！"
+"奥苏！是一款由 Dean Herbert 开发和发行的免费开源音乐游戏。游戏玩法基于各种流"
+"行游戏，包括 Osu!多贵！"
 
-#: sw_data.py:1638
+#: sw_data.py:2196
 msgid ""
 "Path of Exile is an online action role-playing game developed and published "
 "by Grinding Gear Games. The game is based on: a powerful barter economy, "
 "rich customization options for heroes, exciting PvP battles and races for "
 "ratings. The game is completely free."
 msgstr ""
-"《流亡之路》是一款由Grinding Gear Games开发并发行的在线动作角色扮演游戏。"
-"该游戏的基础是：强大的易货经济、丰富的英雄定制选项、激动人心的 PvP 战斗和评级竞赛。"
-"该游戏是完全免费的。"
+"《流亡之路》是一款由Grinding Gear Games开发并发行的在线动作角色扮演游戏。该游"
+"戏的基础是：强大的易货经济、丰富的英雄定制选项、激动人心的 PvP 战斗和评级竞"
+"赛。该游戏是完全免费的。"
 
-#: sw_data.py:1642
+#: sw_data.py:2200
 msgid ""
 "Plarium Play is a Light and Secure Desktop Game Launcher for PC. Play Free "
 "Games with Blazing HD Graphics and a Worldwide Gaming Community."
 msgstr ""
-"Plarium Play 是一款轻便、安全的 PC 桌面游戏启动器。玩带有高清显卡和全球游戏社区的免费游戏。"
+"Plarium Play 是一款轻便、安全的 PC 桌面游戏启动器。玩带有高清显卡和全球游戏社"
+"区的免费游戏。"
 
-#: sw_data.py:1644
+#: sw_data.py:2202
 msgid ""
 "Popcorn Time is a cross-platform free BitTorrent client that includes a "
 "media player. Watch popular series and series for people unfamiliar with "
 "movie file sharing technologies and accustomed to video streaming services."
 msgstr ""
-"Popcorn Time 是一款跨平台免费 BitTorrent 客户端，其中包含媒体播放器。"
-"观看热门连续剧以及适合不熟悉电影文件共享技术和习惯视频流服务的人的连续剧。"
+"Popcorn Time 是一款跨平台免费 BitTorrent 客户端，其中包含媒体播放器。观看热门"
+"连续剧以及适合不熟悉电影文件共享技术和习惯视频流服务的人的连续剧。"
 
-#: sw_data.py:1647
+#: sw_data.py:2205
 msgid ""
 "The project www.RPG-club.net is a voluntary non-profit association of fans "
 "of RPG games. Our site does not aim to distribute any RPG games, but is a "
 "means of communication for all interested legal owners of licensed versions "
 "of games."
 msgstr ""
-"www.RPG-club.net 项目是 RPG 游戏爱好者自愿组成的非营利性协会。"
-"我们的网站并非旨在分发任何 RPG 游戏，而是为所有感兴趣的游戏许可版本的合法所有者提供一种沟通方式。"
+"www.RPG-club.net 项目是 RPG 游戏爱好者自愿组成的非营利性协会。我们的网站并非"
+"旨在分发任何 RPG 游戏，而是为所有感兴趣的游戏许可版本的合法所有者提供一种沟通"
+"方式。"
 
-#: sw_data.py:1650
+#: sw_data.py:2208
 msgid ""
 "Riot Games - client for League of Legends, abbreviated as LoL, is a "
 "multiplayer computer game in the MOBA genre developed and published by the "
 "American company Riot Games."
 msgstr ""
-"Riot Games - 英雄联盟客户端，简称LoL，是一款由美国公司Riot Games开发和发行的MOBA类型多人电脑游戏。"
+"Riot Games - 英雄联盟客户端，简称LoL，是一款由美国公司Riot Games开发和发行的"
+"MOBA类型多人电脑游戏。"
 
-#: sw_data.py:1654
+#: sw_data.py:2211
 msgid ""
 "Rockstar Games Launcher is an application that allows you to quickly and "
 "easily manage your collection of Rockstar PC games, both digital and "
 "physical versions, including those purchased from various digital stores. "
 "You can also use this app to purchase new games from Rockstar."
 msgstr ""
-"Rockstar Games Launcher 是一款应用程序，可让您快速轻松地管理您收藏的 Rockstar PC "
-"游戏（包括数字版和实体版），包括从各个数字商店购买的游戏。"
-"您还可以使用此应用程序从 Rockstar 购买新游戏。"
+"Rockstar Games Launcher 是一款应用程序，可让您快速轻松地管理您收藏的 "
+"Rockstar PC 游戏（包括数字版和实体版），包括从各个数字商店购买的游戏。您还可"
+"以使用此应用程序从 Rockstar 购买新游戏。"
 
-#: sw_data.py:1658
+#: sw_data.py:2215
 msgid ""
 "EXBO launcher for StalCraft - bright and promising adaptation of a familiar "
 "setting in the format of a massive online first-person shooter. Successfully "
 "combining the complete freedom of PvP and interesting PvE elements."
 msgstr ""
-"StalCraft 的 EXBO 启动器 - 以大型在线第一人称射击游戏的形式对熟悉的环境进行了明亮而有前途的改编。"
-"成功地将完全自由的 PvP 和有趣的 PvE 元素结合起来。"
+"StalCraft 的 EXBO 启动器 - 以大型在线第一人称射击游戏的形式对熟悉的环境进行了"
+"明亮而有前途的改编。成功地将完全自由的 PvP 和有趣的 PvE 元素结合起来。"
 
-#: sw_data.py:1661
+#: sw_data.py:2218
 msgid ""
 "Stalker Online is an MMORPG with shooter elements, which is based on the "
 "spirit of stalking - exploration of mysterious, forgotten and abandoned "
 "areas of the planet by humanity."
 msgstr ""
-"Stalker Online 是一款带有射击元素的 MMORPG，它基于追踪精神 - 探索地球上神秘、被遗忘和遗弃的地区。"
+"Stalker Online 是一款带有射击元素的 MMORPG，它基于追踪精神 - 探索地球上神秘、"
+"被遗忘和遗弃的地区。"
 
-#: sw_data.py:1666
+#: sw_data.py:2221
 msgid ""
 "Steam is an online digital distribution service for computer games and "
 "programs developed and maintained by Valve. Steam serves as a technical "
 "copyright protection tool, a multiplayer gaming and streaming platform, and "
 "a social network for gamers."
 msgstr ""
-"Steam 是由 Valve 开发和维护的计算机游戏和程序的在线数字发行服务。 "
-"Steam 充当技术版权保护工具、多人游戏和流媒体平台以及游戏玩家的社交网络。"
+"Steam 是由 Valve 开发和维护的计算机游戏和程序的在线数字发行服务。 Steam 充当"
+"技术版权保护工具、多人游戏和流媒体平台以及游戏玩家的社交网络。"
 
-#: sw_data.py:1670
+#: sw_data.py:2225
 msgid ""
 "Ubisoft Connect is a digital game distribution, DRM, online gaming and "
 "communication service created by Ubisoft. Supports the achievement/trophy "
 "system used in other similar services."
 msgstr ""
-"Ubisoft Connect 是由 Ubisoft 创建的数字游戏发行、DRM、在线游戏和通信服务。"
-"支持其他类似服务中使用的成就/奖杯系统。"
+"Ubisoft Connect 是由 Ubisoft 创建的数字游戏发行、DRM、在线游戏和通信服务。支"
+"持其他类似服务中使用的成就/奖杯系统。"
 
-#: sw_data.py:1673
+#: sw_data.py:2228
 msgid ""
 "Wargaming.net Game Center is part of a digital distribution platform (game "
 "launcher app) that allows you to keep all your Wargaming games in one place, "
 "get the latest news on upcoming features, watch videos and easily find great "
 "deals!"
 msgstr ""
-"Wargaming.net Game Center 是数字发行平台（游戏启动器应用程序）的一部分，可让您将所有 "
-"Wargaming 游戏保存在一个地方、获取有关即将推出的功能的最新消息、观看视频并轻松找到超值优惠！"
+"Wargaming.net Game Center 是数字发行平台（游戏启动器应用程序）的一部分，可让"
+"您将所有 Wargaming 游戏保存在一个地方、获取有关即将推出的功能的最新消息、观看"
+"视频并轻松找到超值优惠！"
 
-#: sw_data.py:1676
+#: sw_data.py:2231
 msgid ""
 "Client for World of Sea Battle - A large-scale online game with an open "
 "world in the setting of the Age of Sail! Become a pirate or merchant, team "
 "up with other players."
 msgstr ""
-"《海战世界》客户端——以航海时代为背景的开放世界大型网络游戏！成为海盗或商人，与其他玩家组队。"
+"《海战世界》客户端——以航海时代为背景的开放世界大型网络游戏！成为海盗或商人，"
+"与其他玩家组队。"
 
-#: sw_data.py:1679
+#: sw_data.py:2234
 msgid ""
 "Zona is a BitTorrent client for watching streaming video content. In "
 "addition to on-demand movies and television series, Zona offers streaming "
 "music, live television channels, news, live sports, and games."
 msgstr ""
-"Zona 是一个用于观看流媒体视频内容的 BitTorrent 客户端。除了点播电影和电视剧外，Zona "
-"还提供流媒体音乐、直播电视频道、新闻、直播体育赛事和游戏。"
+"Zona 是一个用于观看流媒体视频内容的 BitTorrent 客户端。除了点播电影和电视剧"
+"外，Zona 还提供流媒体音乐、直播电视频道、新闻、直播体育赛事和游戏。"
 
+#: sw_data.py:2237
 msgid ""
-"RetroBat is a software designed for emulation and to be the "
-"easiest way to enjoy your game collection. The EmulationStation interface is "
-"functional and highly customizable. You can run all your games and "
-"search online for visuals to enhance the presentation of your collection."
+"RetroBat is a software designed for emulation and to be the easiest way to "
+"enjoy your game collection. The EmulationStation interface is functional and "
+"highly customizable. You can run all your games and search online for "
+"visuals to enhance the presentation of your collection."
 msgstr ""
-"RetroBat 是一款专为仿真而设计的软件，旨在成为享受游戏收藏的最简单方式。 EmulationStation "
-"界面功能齐全且高度可定制。您可以运行所有游戏并在线搜索视觉效果，以增强您的收藏的展示效果。"
+"RetroBat 是一款专为仿真而设计的软件，旨在成为享受游戏收藏的最简单方式。 "
+"EmulationStation 界面功能齐全且高度可定制。您可以运行所有游戏并在线搜索视觉效"
+"果，以增强您的收藏的展示效果。"
 
-#: sw_data.py:1686
+#: sw_data.py:2250
 msgid "Move settings"
 msgstr "移动设置"
 
-#: sw_data.py:1694
-msgid "Reset app settings"
-msgstr "重置应用程序设置"
-
-#: sw_data.py:1695
+#: sw_data.py:2251
 msgid "Reset interface settings"
 msgstr "重置界面设置"
 
-#: sw_data.py:1696
-msgid "Clear shader cache"
-msgstr "清除着色器缓存"
+#: sw_data.py:2257
+msgid "Reset app settings"
+msgstr "重置应用程序设置"
 
-#: sw_data.py:1723
+#: sw_data.py:2280
 msgid "Optimization, patches, tools, utilities and libraries"
 msgstr "优化、补丁、工具、实用程序和库"
 
-#: sw_data.py:1726 sw_data.py:1762
+#: sw_data.py:2283
 msgid "LAUNCH_PARAMETERS"
 msgstr ""
 
-#: sw_data.py:1727 sw_data.py:1763
+#: sw_data.py:2284
 msgid "WINEDLLOVERRIDES"
 msgstr ""
 
-#: sw_data.py:1730 sw_data.py:1764
+#: sw_data.py:2287
 msgid "WINEARCH"
 msgstr ""
 
-#: sw_data.py:1731 sw_data.py:1765
+#: sw_data.py:2288
 msgid "WINDOWS_VER"
 msgstr ""
 
-#: sw_data.py:1732 sw_data.py:1766
+#: sw_data.py:2289
 msgid "REGEDIT_PATCH"
 msgstr ""
 
-#: sw_data.py:1733 sw_data.py:1767
+#: sw_data.py:2290
 msgid "DXVK_VER"
 msgstr ""
 
-#: sw_data.py:1734 sw_data.py:1768
+#: sw_data.py:2291
 msgid "VKD3D_VER"
 msgstr ""
 
-#: sw_data.py:1735 sw_data.py:1769
+#: sw_data.py:2292
 msgid "FSR_MODE"
 msgstr ""
 
-#: sw_data.py:1736 sw_data.py:1770
+#: sw_data.py:2293
 msgid "LANG_MODE"
 msgstr ""
 
-#: sw_data.py:1738 sw_data.py:1771
+#: sw_data.py:2295
 msgid "FPS_LIMIT"
 msgstr ""
 
-#: sw_data.py:1741 sw_data.py:1772
+#: sw_data.py:2298
 msgid "CPU_TOPOLOGY"
 msgstr ""
 
-#: sw_data.py:1780
+#: sw_data.py:2337
 msgid "Set launch parameters"
 msgstr "设置启动参数"
 
-#: sw_data.py:1781
+#: sw_data.py:2338
 msgid "Override dll in the current prefix"
 msgstr "覆盖当前前缀中的dll"
 
-#: sw_data.py:1782
+#: sw_data.py:2339
 msgid "Set the architecture bit depth for the prefix"
 msgstr "设置前缀的架构位深度"
 
-#: sw_data.py:1783
+#: sw_data.py:2340
 msgid "Set windows version"
 msgstr "设置windows版本"
 
-#: sw_data.py:1784
+#: sw_data.py:2341
 msgid "Add registry patch"
 msgstr "添加注册表补丁"
 
-#: sw_data.py:1785
+#: sw_data.py:2342
 msgid "Set dxvk version"
 msgstr "设置dxvk版本"
 
-#: sw_data.py:1786
+#: sw_data.py:2343
 msgid "Set vkd3d version"
 msgstr "设置vkd3d版本"
 
-#: sw_data.py:1787
+#: sw_data.py:2344
 msgid "Set AMD FSR scaling mode"
 msgstr "设置 AMD FSR 缩放模式"
 
-#: sw_data.py:1788
+#: sw_data.py:2345
 msgid "Set the language for the game or application"
 msgstr "设置游戏或应用程序的语言"
 
-#: sw_data.py:1789
+#: sw_data.py:2346
 msgid "Limit frame rate, value \"0\" - no limit"
 msgstr "限制帧速率，值“0”-无限制"
 
-#: sw_data.py:1790
+#: sw_data.py:2347
 msgid "Limit cpu core, value \"0\" - no limit"
 msgstr "限制cpu核心，值“0”-无限制"
 
-#: sw_data.py:1836
+#: sw_data.py:2387
 msgid "Ultra"
 msgstr "极端主义者"
 
-#: sw_data.py:1836
+#: sw_data.py:2387
 msgid "Quality"
 msgstr "质量"
 
-#: sw_data.py:1836
+#: sw_data.py:2387
 msgid "Balanced"
 msgstr "均衡"
 
-#: sw_data.py:1836
+#: sw_data.py:2387
 msgid "Performance"
 msgstr "表现"
 
-#: sw_data.py:1879
+#: sw_data.py:2428
 msgid "Using dxvk version from wine-proton-ge"
 msgstr "使用 wine-proton-ge 的 dxvk 版本"
 
-#: sw_data.py:1880
+#: sw_data.py:2429
 msgid "Using vkd3d version from wine-proton-ge"
 msgstr "使用 wine-proton-ge 的 vkd3d 版本"
 
-#: sw_data.py:1881
+#: sw_data.py:2430
 msgid "Sytem monitoring for OpenGL mode"
 msgstr "OpenGL模式的系统监控"
 
-#: sw_data.py:1882
+#: sw_data.py:2431
 msgid "Force use opengl, for applications that d'nt run in dxvk and vkd3d"
 msgstr "对于不能在 dxvk 和 vkd3d 中运行的应用程序，强制使用 OpenGL"
 
-#: sw_data.py:1883
+#: sw_data.py:2432
 msgid "System monitoring in opengl or vulkan (dxvk, vkd3d)"
 msgstr "OpenGL 或 vulkan 中的系统监控（dxvk、vkd3d）"
 
-#: sw_data.py:1884
+#: sw_data.py:2433
 msgid "System monitoring in vulkan (dxvk, vkd3d)"
 msgstr "vulkan 中的系统监控（dxvk、vkd3d）"
 
-#: sw_data.py:1885
-msgid "Set of optimisations be temporarily applied a game process"
-msgstr "暂时应用于游戏过程的一组优化"
-
-#: sw_data.py:1886
+#: sw_data.py:2434
 msgid "Enable windows desktop emulation"
 msgstr "启用 Windows 桌面模拟"
 
-#: sw_data.py:1887
+#: sw_data.py:2435
+msgid ""
+"Enable game controller redirection to other input devices such as mouse and "
+"keyboard"
+msgstr "启用游戏控制器重定向到其他输入设备，如鼠标和键盘"
+
+#: sw_data.py:2436
 msgid "Improving frame rates and responsiveness with scheduling policies"
 msgstr "通过调度策略提高帧速率和响应能力"
 
-#: sw_data.py:1888
+#: sw_data.py:2437
 msgid ""
 "Increase performance for some games, especially ones that rely heavily on "
 "the CPU"
 msgstr "提高某些游戏的性能，尤其是严重依赖 CPU 的游戏"
 
-#: sw_data.py:1889
+#: sw_data.py:2438
 msgid "For old games that crash on very long extension strings"
 msgstr "对于在很长的扩展字符串上崩溃的旧游戏"
 
-#: sw_data.py:1890
+#: sw_data.py:2439
 msgid ""
 "Disabling the nvapi library required by PhysX to enable GPU acceleration via "
 "CUDA"
 msgstr "禁用 PhysX 所需的 nvapi 库以通过 CUDA 启用 GPU 加速"
 
-#: sw_data.py:1891
+#: sw_data.py:2440
 msgid "Disable debugging mode for Wine to improve performance"
 msgstr "禁用 Wine 的调试模式以提高性能"
 
-#: sw_data.py:1892
+#: sw_data.py:2441
 msgid "Allocate to a 32-bit application more than 2 GB of RAM"
 msgstr "为 32 位应用程序分配超过 2 GB 的 RAM"
 
-#: sw_data.py:1893
+#: sw_data.py:2442
 msgid "To simulate the memory management system of Windows"
 msgstr "模拟Windows的内存管理系统"
 
-#: sw_data.py:1894
+#: sw_data.py:2443
 msgid ""
 "Simulated Write Copy - Emulates how Windows loads DLLs into memory more "
 "accurately"
 msgstr "模拟写入复制 - 模拟 Windows 如何更准确地将 DLL 加载到内存中"
 
-#: sw_data.py:1895
+#: sw_data.py:2444
 msgid "Сan optimize some Wineserver calls by using shared memory"
 msgstr "通过使用共享内存优化一些 Wineserver 调用"
 
-#: sw_data.py:1896
+#: sw_data.py:2445
 msgid "System monitoring in dxvk"
 msgstr "dxvk中的系统监控"
 
-#: sw_data.py:1897
-msgid ""
-"Asynchronous compilation of shaders from the render process to prevent hangs "
-"while waiting"
-msgstr "从渲染过程异步编译着色器以防止等待时挂起"
-
-#: sw_data.py:1898
+#: sw_data.py:2446
 msgid ""
 "vkBasalt is a Vulkan post processing layer to enhance the visual graphics in "
 "games"
 msgstr "vkBasalt 是一个 Vulkan 后处理层，用于增强游戏中的视觉图形"
 
-#: sw_data.py:1899
+#: sw_data.py:2447
 msgid ""
 "AMD FidelityFX Super Resolution - advanced upscaling technologies for higher "
 "fps"
 msgstr "AMD FidelityFX 超分辨率 - 先进的升级技术可实现更高的 fps"
 
-#: sw_data.py:1900
-msgid ""
-"An open source library containing plugins and codecs for handling media in "
-"applications"
-msgstr "一个开源库，包含用于在应用程序中处理媒体的插件和编解码器"
-
-#: sw_data.py:1901
+#: sw_data.py:2448
 msgid "Used to manage hybrid graphics found on recent desktops and laptops"
 msgstr "用于管理最新台式机和笔记本电脑上的混合图形"
 
-#: sw_data.py:1902
+#: sw_data.py:2449
 msgid "Open-source and cross-platform implementation of the .NET Framework"
 msgstr ".NET Framework 的开源和跨平台实现"
 
-#: sw_data.py:1903
+#: sw_data.py:2450
 msgid ""
 "BattlEye anti-cheat service required to run online games that use this "
 "service"
 msgstr "运行使用该服务的在线游戏需要 BattlEye 反作弊服务"
 
-#: sw_data.py:1904
+#: sw_data.py:2451
 msgid "EasyAntCheat service required to run online games that use this service"
 msgstr "运行使用此服务的在线游戏需要 EasyAntCheat 服务"
 
-#: sw_data.py:1905
+#: sw_data.py:2452
 msgid "Preload d3d libraries"
 msgstr "预加载 d3d 库"
 
-#: sw_data.py:1906
+#: sw_data.py:2453
 msgid "Forcibly disabling vsync solves performance issues in some apps"
 msgstr "强制禁用垂直同步可以解决某些应用程序中的性能问题"
 
-#: sw_data.py:1907
+#: sw_data.py:2454
 msgid ""
 "Hides the definition of nvidia video cards. Required to run some applications"
 msgstr "隐藏 nvidia 显卡的定义。需要运行某些应用程序中的某些应用程序问题"
 
-#: sw_data.py:1908
+#: sw_data.py:2455
 msgid "To run games using directx 8 and below, in dxvk mode"
 msgstr "在 dxvk 模式下使用 directx 8 及更低版本运行游戏"
 
-#: sw_data.py:1909
+#: sw_data.py:2456
 msgid ""
 "Nvidia DLSS - advanced upscaling technologies for higher fps for higher "
 "frame rate per second"
 msgstr "Nvidia DLSS - 先进的升级技术，可实现更高的 fps"
 
-#: sw_data.py:1910
+#: sw_data.py:2457
 msgid "Disable prefix update on startup"
 msgstr "启动时禁用前缀更新"
 
-#: sw_data.py:1911
+#: sw_data.py:2458
 msgid "Enable or disable shader cache"
 msgstr "启用或禁用着色器缓存"
 
-#: sw_data.py:1962
+#: sw_data.py:2508
 msgid "Current CPU temperature"
 msgstr "当前CPU温度"
 
-#: sw_data.py:1963
+#: sw_data.py:2509
 msgid "CPU draw in watts"
 msgstr "CPU 消耗瓦数"
 
-#: sw_data.py:1964
+#: sw_data.py:2510
 msgid "Load and frequency per core"
 msgstr "每个核心的负载和频率"
 
-#: sw_data.py:1965
+#: sw_data.py:2511
 msgid "Shows the CPUs current MHz"
 msgstr "显示 CPU 当前 MHz"
 
-#: sw_data.py:1966
+#: sw_data.py:2512
 msgid "Shows the Steam Deck fan rpm"
 msgstr "显示 Steam Deck 风扇转速"
 
-#: sw_data.py:1967
+#: sw_data.py:2513
 msgid "GPU name from pci.ids"
 msgstr "来自 pci.ids 的 GPU 名称"
 
-#: sw_data.py:1968
+#: sw_data.py:2514
 msgid "Current GPU temperature"
 msgstr "当前GPU温度"
 
-#: sw_data.py:1969
+#: sw_data.py:2515
 msgid "GPU draw in watts"
 msgstr "GPU 消耗瓦数"
 
-#: sw_data.py:1970
+#: sw_data.py:2516
 msgid "GPU core frequency"
 msgstr "GPU核心频率"
 
-#: sw_data.py:1971
+#: sw_data.py:2517
 msgid "GPU memory frequency"
 msgstr "GPU显存频率"
 
-#: sw_data.py:1972
+#: sw_data.py:2518
 msgid "System RAM usage"
 msgstr "系统内存使用情况"
 
-#: sw_data.py:1973
+#: sw_data.py:2519
 msgid "System VRAM usage"
 msgstr "系统显存使用情况"
 
-#: sw_data.py:1974
+#: sw_data.py:2520
 msgid "Swap space usage next to system RAM usage"
 msgstr "系统 RAM 使用量旁边的交换空间使用量"
 
-#: sw_data.py:1975
+#: sw_data.py:2521
 msgid "Process resident memory usage"
 msgstr "进程驻留内存使用情况"
 
-#: sw_data.py:1976
+#: sw_data.py:2522
 msgid "Process shared memory usage"
 msgstr "进程共享内存使用情况"
 
-#: sw_data.py:1977
+#: sw_data.py:2523
 msgid "Process virtual memory usage"
 msgstr "进程虚拟内存使用情况"
 
-#: sw_data.py:1978
+#: sw_data.py:2524
 msgid "Show non-cached IO read, in MiB/s"
 msgstr "显示非缓存 IO 读取，以 MiB/s 为单位"
 
-#: sw_data.py:1979
+#: sw_data.py:2525
 msgid "Show non-cached IO write, in MiB/s"
 msgstr "显示非缓存 IO 写入，以 MiB/s 为单位"
 
-#: sw_data.py:1980
+#: sw_data.py:2526
 msgid "Enables most of the toggleable parameters"
 msgstr "启用大多数可切换参数"
 
-#: sw_data.py:1981
+#: sw_data.py:2527
 msgid "Use primary font size for smaller text like units"
 msgstr "对于较小的文本（例如单位）使用主要字体大小"
 
-#: sw_data.py:1982
+#: sw_data.py:2528
 msgid "Show media player metadata"
 msgstr "显示媒体播放器元数据"
 
-#: sw_data.py:1983
+#: sw_data.py:2529
 msgid "Shows current MangoHud version"
 msgstr "显示当前的 MangoHud 版本"
 
-#: sw_data.py:1984
+#: sw_data.py:2530
 msgid "Show if the application is 32 or 64 bit"
 msgstr "显示应用程序是 32 位还是 64 位"
 
-#: sw_data.py:1985
+#: sw_data.py:2531
 msgid "Change fps graph to histogram"
 msgstr "将 fps 图表更改为直方图"
 
-#: sw_data.py:1986
+#: sw_data.py:2532
 msgid "Displays used vulkan driver"
 msgstr "显示使用的 vulkan 驱动程序"
 
-#: sw_data.py:1987
+#: sw_data.py:2533
 msgid "OpenGL or vulkan-based render engine's version"
 msgstr "基于 OpenGL 或 vulkan 的渲染引擎版本"
 
-#: sw_data.py:1988
+#: sw_data.py:2534
 msgid "Shows current Wine or Proton version in use"
 msgstr "显示当前使用的 Wine 或 Proton 版本"
 
-#: sw_data.py:1989
+#: sw_data.py:2535
 msgid "Frametime next to fps text"
 msgstr "fps 文本旁边的帧时间"
 
-#: sw_data.py:1990
+#: sw_data.py:2536
 msgid "Frame count"
 msgstr "帧数"
 
-#: sw_data.py:1991
+#: sw_data.py:2537
 msgid "Current resolution"
 msgstr "当前分辨率"
 
-#: sw_data.py:1992
+#: sw_data.py:2538
 msgid "Current fps limit"
 msgstr "当前 FPS 限制"
 
-#: sw_data.py:1993
+#: sw_data.py:2539
 msgid "Shows if vkBasalt is on"
 msgstr "显示 vkBasalt 是否已打开"
 
-#: sw_data.py:1994
-msgid "Shows if gamemode is on"
-msgstr "显示游戏模式是否开启"
-
-#: sw_data.py:1995
+#: sw_data.py:2540
 msgid "Current battery percent and energy consumption"
 msgstr "当前电池百分比和能耗"
 
-#: sw_data.py:1996
+#: sw_data.py:2541
 msgid "Battery icon instead of percent"
 msgstr "电池图标而不是百分比"
 
-#: sw_data.py:1997
+#: sw_data.py:2542
 msgid "Battey of wireless gamepads (xone,xpadneo,ds4)"
 msgstr "无线游戏手柄电池（xone、xpadneo、ds4）"
 
-#: sw_data.py:1998
+#: sw_data.py:2543
 msgid "Gamepad battery percent with icon. *enabled by default"
 msgstr "带有图标的游戏手柄电池百分比。 *默认启用"
 
-#: sw_data.py:1999
+#: sw_data.py:2544
 msgid "Show FPS only"
 msgstr "仅显示 FPS"
 
-#: sw_data.py:2000
+#: sw_data.py:2545
 msgid "Displays local time"
 msgstr "显示当地时间"
 
-#: sw_data.py:2003
+#: sw_data.py:2548
 msgid "System monitoring indicators"
 msgstr "系统监控指标"
 
-#: sw_data.py:2012
+#: sw_data.py:2557
 msgid "Supposedly imitation of rendering on the legendary 3dfx video cards."
 msgstr "据称是模仿传奇 3dfx 显卡上的渲染。"
 
-#: sw_data.py:2013
+#: sw_data.py:2558
 msgid ""
 "Adaptive fog. Used most for creating a color background, or putting a "
 "subject in shadows."
 msgstr "自适应雾。最常用于创建彩色背景或将主体置于阴影中。"
 
-#: sw_data.py:2014
+#: sw_data.py:2560
 msgid ""
 "Contrast Adaptive Sharpening. An image sharpening method that observes the "
 "contrast of the local environment."
 msgstr "对比度自适应锐化。一种观察局部环境对比度的图像锐化方法。"
 
-#: sw_data.py:2015
+#: sw_data.py:2562
 msgid ""
 "Ambient light. Bloom mixed with the EyeAdaption shader effect and lens dirt."
 msgstr "环境光。 Bloom 与 EyeAdaption 着色器效果和镜头污垢混合在一起。"
 
-#: sw_data.py:2016
+#: sw_data.py:2563
 msgid "For those who miss text games and Matrix fans."
 msgstr "适合那些怀念文字游戏和《黑客帝国》粉丝的人。"
 
-#: sw_data.py:2017
+#: sw_data.py:2564
 msgid "Сorrects aspect ratio in stretched images."
 msgstr "校正拉伸图像中的纵横比。"
 
-#: sw_data.py:2018
+#: sw_data.py:2565
 msgid ""
 "A shader for simulating image blur depending on the brightness of the scene."
 msgstr "用于根据场景亮度模拟图像模糊的着色器。"
 
-#: sw_data.py:2019
+#: sw_data.py:2567
 msgid ""
 "If you want to add borders in image but want the subject to hover over said "
 "border then try this shader."
 msgstr "如果您想在图像中添加边框但希望主题悬停在所述边框上，请尝试此着色器。"
 
-#: sw_data.py:2020
+#: sw_data.py:2569
 msgid "Creates an outline effect that makes the image look more cartoonish."
 msgstr "创建轮廓效果，使图像看起来更加卡通。"
 
-#: sw_data.py:2021
+#: sw_data.py:2570
 msgid "Setting a blue or green screen away from the camera."
 msgstr "将蓝屏或绿屏设置在远离相机的位置。"
 
-#: sw_data.py:2022
+#: sw_data.py:2572
 msgid ""
 "It operates in HDR, simulating the physical effect of light passing through "
 "a prism inside a camera."
 msgstr "它以 HDR 模式运行，模拟光线穿过相机内棱镜的物理效果。"
 
-#: sw_data.py:2023
+#: sw_data.py:2574
 msgid "Based on the most realistic and most used Depth of Field shader."
 msgstr "基于最真实和最常用的景深着色器。"
 
-#: sw_data.py:2024
+#: sw_data.py:2575
 msgid ""
 "Shader for image enhancement, makes things look sharper. Can rid the picture "
 "of haze."
 msgstr "用于图像增强的着色器，使事物看起来更清晰。可以去除图片的雾霾。"
 
-#: sw_data.py:2025
+#: sw_data.py:2577
 msgid ""
 "Editing colors using the color matrix. Essentially changes the brightness of "
 "the color channels: red, green and blue."
 msgstr "使用颜色矩阵编辑颜色。本质上改变了颜色通道的亮度：红色、绿色和蓝色。"
 
-#: sw_data.py:2026
+#: sw_data.py:2580
 msgid "Saturates faded colors without touching the bright ones."
 msgstr "使褪色的颜色饱和而不接触明亮的颜色。"
 
-#: sw_data.py:2027
+#: sw_data.py:2582
 msgid ""
 "To simulate a cathode ray tube monitor. The combination with the "
 "PerfectPerspective shader will shed a tear of nostalgia."
 msgstr "模拟阴极射线管监视器。与完美透视着色器的结合将流下​​怀旧的泪水。"
 
-#: sw_data.py:2028
+#: sw_data.py:2586
 msgid ""
 "Increases the contrast of the image, while not touching the bright and dark "
 "areas, so that the detail in the shadows and the sky is not lost."
-msgstr "增加图像的对比度，同时不触及亮区和暗区，从而使阴影和天空中的细节不会丢失。"
+msgstr ""
+"增加图像的对比度，同时不触及亮区和暗区，从而使阴影和天空中的细节不会丢失。"
 
-#: sw_data.py:2029
+#: sw_data.py:2589
 msgid "Removes some colors."
 msgstr "去除一些颜色。"
 
-#: sw_data.py:2030
+#: sw_data.py:2591
 msgid ""
 "Remove banding - gradients that dont blend smoothly into each other when "
 "there arent enough tones available to recreate a smooth gradation."
 msgstr "删除条带 - 当没有足够的色调来创建平滑渐变时，渐变不会平滑地相互融合。"
 
-#: sw_data.py:2031
+#: sw_data.py:2595
 msgid ""
 "Remove dot noise. If possible, turn off the noise in the game itself, "
 "because the noise reduction shader reduces the frame rate."
-msgstr "消除点噪声。如果可能的话，关闭游戏本身的噪音，因为降噪着色器会降低帧速率。"
+msgstr ""
+"消除点噪声。如果可能的话，关闭游戏本身的噪音，因为降噪着色器会降低帧速率。"
 
-#: sw_data.py:2032
+#: sw_data.py:2598
 msgid "Split screen for owners of virtual reality glasses."
 msgstr "虚拟现实眼镜所有者的分屏。"
 
-#: sw_data.py:2033
+#: sw_data.py:2600
 msgid ""
 "Simple depth-blur that makes far-away objects look slightly blurred, with "
 "fog based on depth and screen position."
 msgstr "简单的深度模糊，使远处的物体看起来稍微模糊，雾气基于深度和屏幕位置。"
 
-#: sw_data.py:2034
+#: sw_data.py:2603
 msgid ""
 "This is a shader mostly useful for checking if the depth buffer is working "
 "as intended."
 msgstr "这是一个着色器，主要用于检查深度缓冲区是否按预期工作。"
 
-#: sw_data.py:2035
+#: sw_data.py:2604
 msgid ""
 "Loss of sharpness in distant objects with the effect of chromatic aberration."
 msgstr "由于色差的影响，远处物体的清晰度下降。"
 
-#: sw_data.py:2036
+#: sw_data.py:2605
 msgid ""
 "Makes the image look like it was converted from film to Cineon DPX. Can be "
 "used to create a sunny look."
 msgstr "使图像看起来像是从胶片转换为 Cineon DPX。可用来打造阳光明媚的外观。"
 
-#: sw_data.py:2037
+#: sw_data.py:2607
 msgid ""
 "Make a part of the scene pop out more while other parts are de-emphasized. "
 "By default, it desaturates the areas which are not in focus."
-msgstr "使场景的一部分更加突出，同时弱化其他部分。默认情况下，它会降低未对焦区域的饱和度。"
+msgstr ""
+"使场景的一部分更加突出，同时弱化其他部分。默认情况下，它会降低未对焦区域的饱"
+"和度。"
 
-#: sw_data.py:2038
+#: sw_data.py:2610
 msgid ""
 "This shader brightens or darkens the image depending on the average "
 "brightness of the screen."
 msgstr "该着色器根据屏幕的平均亮度使图像变亮或变暗。"
 
-#: sw_data.py:2039
+#: sw_data.py:2611
 msgid ""
 "Should restore detail in too dark and bright areas of the frame. Darkens the "
 "image in practice."
 msgstr "应恢复画面过暗和过亮区域的细节。在实践中使图像变暗。"
 
-#: sw_data.py:2040
+#: sw_data.py:2612
 msgid "Pseudo motion blur."
 msgstr "伪运动模糊。"
 
-#: sw_data.py:2041 sw_data.py:2042
+#: sw_data.py:2613 sw_data.py:2614
 msgid "Film grain without copying texture."
 msgstr "没有复制纹理的胶片颗粒。"
 
-#: sw_data.py:2043 sw_data.py:2045 sw_data.py:2049 sw_data.py:2057
+#: sw_data.py:2615 sw_data.py:2617 sw_data.py:2623 sw_data.py:2641
 msgid "Sharpering for more cinema-like look."
 msgstr "锐化以获得更像电影的外观。"
 
-#: sw_data.py:2044
+#: sw_data.py:2616
 msgid "Applies some common color adjustments to mimic a more cinema-like look."
 msgstr "应用一些常见的颜色调整来模仿更像电影的外观。"
 
-#: sw_data.py:2046
+#: sw_data.py:2618
 msgid ""
 "The most primitive and fastest of the anti-aliasing filters (pixel "
 "smoothing)."
 msgstr "最原始、最快的抗锯齿滤波器（像素平滑）。"
 
-#: sw_data.py:2047
+#: sw_data.py:2619
 msgid "Just blurs the image."
 msgstr "只是模糊了图像。"
 
-#: sw_data.py:2048
+#: sw_data.py:2621
 msgid ""
 "To simulate a failing video card and cause nausea. People with epilepsy "
 "should not turn on this filter!"
 msgstr "模拟出现故障的视频卡并导致恶心。患有癫痫症的人不应该打开此过滤器！"
 
-#: sw_data.py:2050
+#: sw_data.py:2625
 msgid ""
 "Smoothing nearby pixels with filling in the missing parts. Is useful for "
 "smoothing objects in pixel games."
-msgstr ""
+msgstr "通过填充缺失的部分来平滑附近的像素。对于平滑像素游戏中的对象很有用。"
 
-#: sw_data.py:2051
+#: sw_data.py:2627
 msgid "Lightweight focus and sharpering effect."
 msgstr "轻量焦点和锐化效果。"
 
-#: sw_data.py:2052
+#: sw_data.py:2628
 msgid ""
 "Make own layer.png and overwrite on of the textures. It support alpha "
 "transparency."
 msgstr "制作自己的layer.png并覆盖纹理。它支持 alpha 透明度。"
 
-#: sw_data.py:2053
+#: sw_data.py:2630
 msgid ""
 "Shifts white and black points. will help in the absence of real black "
 "(everything is whitish, as if in a fog) or white is too gray."
-msgstr "移动白点和黑点。在没有真正的黑色（一切都是白色的，就像在雾中一样）或白色太灰的情况下会有所帮助。"
+msgstr ""
+"移动白点和黑点。在没有真正的黑色（一切都是白色的，就像在雾中一样）或白色太灰"
+"的情况下会有所帮助。"
 
-#: sw_data.py:2054
+#: sw_data.py:2633
 msgid "Shifts white and black points. will help in the absence of real black."
 msgstr "移动白点和黑点。在没有真正的黑色的情况下会有帮助。"
 
-#: sw_data.py:2055
+#: sw_data.py:2635
 msgid ""
 "Gamma correction in color channels: red, green and blue. Can stylization of "
 "some games under a certain color shade."
-msgstr "颜色通道中的伽玛校正：红色、绿色和蓝色。可以在某种色调下对某些游戏进行风格化。"
+msgstr ""
+"颜色通道中的伽玛校正：红色、绿色和蓝色。可以在某种色调下对某些游戏进行风格"
+"化。"
 
-#: sw_data.py:2056
+#: sw_data.py:2639
 msgid ""
 "The most lightweight defocus shader in terms of function, which does not "
 "greatly reduce performance."
 msgstr "功能上最轻量级的散焦着色器，不会大幅降低性能。"
 
-#: sw_data.py:2058
+#: sw_data.py:2642
 msgid ""
 "In the context of game shaders, loot allows you to give the picture a cinema-"
 "like look."
 msgstr "在游戏着色器的背景下，战利品可以让你给图片带来电影般的外观。"
 
-#: sw_data.py:2059
+#: sw_data.py:2644
 msgid ""
 "Shader based on scene luminosity. It uses a Gaussian blur applied on the "
 "fly. It blends the bloom with the rest using the Screen blending method."
-msgstr "基于场景亮度的着色器。它使用动态应用的高斯模糊。它使用屏幕混合方法将光晕与其余部分混合。"
+msgstr ""
+"基于场景亮度的着色器。它使用动态应用的高斯模糊。它使用屏幕混合方法将光晕与其"
+"余部分混合。"
 
-#: sw_data.py:2060
+#: sw_data.py:2647
 msgid "The effect of simulating a black and white image."
 msgstr "模拟黑白图像的效果。"
 
-#: sw_data.py:2061
+#: sw_data.py:2648
 msgid "Hollywood preset LUT included."
 msgstr "包括好莱坞预设 LUT。"
 
-#: sw_data.py:2062
+#: sw_data.py:2649
 msgid ""
 "The effect of self-shadowing of objects, visually adding volume to them."
 msgstr "物体的自阴影效果，在视觉上增加它们的体积。"
 
-#: sw_data.py:2063
+#: sw_data.py:2650
 msgid "For those who are nostalgic for a night vision device?"
 msgstr "对于那些怀念夜视设备的人来说？"
 
-#: sw_data.py:2064
+#: sw_data.py:2651
 msgid ""
 "Shader to create a 4-bit frame. Tries to mimic the look of very old "
 "computers or console systems."
 msgstr "着色器创建 4 位帧。尝试模仿非常旧的计算机或控制台系统的外观。"
 
-#: sw_data.py:2065
+#: sw_data.py:2653
 msgid ""
 "The shader tilts the image and changes the point of view of the image. Can "
 "be useful for owners of virtual reality glasses."
-msgstr "着色器倾斜图像并改变图像的视角。对于虚拟现实眼镜的拥有者来说可能很有用。"
+msgstr ""
+"着色器倾斜图像并改变图像的视角。对于虚拟现实眼镜的拥有者来说可能很有用。"
 
-#: sw_data.py:2066
+#: sw_data.py:2656
 msgid ""
 "Filter that adds a glow around bright screen areas, adapting to the current "
 "scene brightness."
 msgstr "在明亮的屏幕区域周围添加发光效果的滤镜，以适应当前的场景亮度。"
 
-#: sw_data.py:2067
+#: sw_data.py:2657
 msgid ""
 "If you want to add godrays to a scene then this shader can help you with "
 "that."
 msgstr "如果您想将上帝光线添加到场景中，那么此着色器可以帮助您。"
 
-#: sw_data.py:2068
+#: sw_data.py:2659
 msgid ""
 "Yet Another Chromatic Aberration: It operates in HDR, is the only shader "
 "with a correct spectral gradient."
 msgstr "另一种色差：它在 HDR 下运行，是唯一具有正确光谱梯度的着色器。"
 
-#: sw_data.py:2069
+#: sw_data.py:2662
 msgid ""
 "Adds reflections to objects in the frame. Can improve the picture in older "
 "games without reflection support, but is useless in modern ones."
-msgstr "为框架中的对象添加反射。可以在没有反射支持的旧游戏中改善画面，但在现代游戏中毫无用处。"
+msgstr ""
+"为框架中的对象添加反射。可以在没有反射支持的旧游戏中改善画面，但在现代游戏中"
+"毫无用处。"
 
-#: sw_data.py:2070
+#: sw_data.py:2665
 msgid ""
 "Applying a shade of brown. Color inherent in old black and white photographs."
 msgstr "应用棕色阴影。老黑白照片固有的颜色。"
 
-#: sw_data.py:2071
+#: sw_data.py:2667
 msgid ""
 "Advanced implementation of anti-aliasing. Highlight the objects in the frame "
 "and blur their boundaries without erasing the small details of the frame."
-msgstr "抗锯齿的高级实现。突出显示画面中的对象并模糊其边界，而不擦除画面的小细节。"
+msgstr ""
+"抗锯齿的高级实现。突出显示画面中的对象并模糊其边界，而不擦除画面的小细节。"
 
-#: sw_data.py:2072
+#: sw_data.py:2670
 msgid ""
 "Resize image, positioning it, rotating it and use different blending modes."
 msgstr "调整图像大小、定位、旋转并使用不同的混合模式。"
 
-#: sw_data.py:2073
+#: sw_data.py:2671
 msgid "Reduction in object detail without blurring contrasting contours."
 msgstr "减少物体细节而不模糊对比轮廓。"
 
-#: sw_data.py:2074
+#: sw_data.py:2672
 msgid ""
 "Makes the image look like it was processed using a three-strip Technicolor "
 "process."
 msgstr "使图像看起来像是使用三带特艺彩色处理处理过的。"
 
-#: sw_data.py:2075
+#: sw_data.py:2673
 msgid ""
 "Like Technicolor, but gives a different picture, more aggressively changing "
 "colors."
 msgstr "与特艺彩色 (Technicolor) 类似，但提供了不同的画面，更积极地改变颜色。"
 
-#: sw_data.py:2076
+#: sw_data.py:2674
 msgid ""
 "For simulating tilt-shift photography, but recommended to use CinematicDOF."
 msgstr "用于模拟移轴摄影，但建议使用 CinematicDOF。"
 
-#: sw_data.py:2077
+#: sw_data.py:2675
 msgid "Tone map for brightness, color and gamma correction."
 msgstr "用于亮度、颜色和伽玛校正的色调图。"
 
-#: sw_data.py:2078
+#: sw_data.py:2677
 msgid ""
 "Detects the presence of a UI on the screen and switches the visibility of "
 "effects depending on its presence."
 msgstr "检测屏幕上是否存在 UI，并根据其存在切换效果的可见性。"
 
-#: sw_data.py:2079
+#: sw_data.py:2680
 msgid ""
 "Shader-mask that makes holes in the effects in the places of the menu items, "
 "provided that they do not move anywhere."
 msgstr "着色器蒙版，在菜单项位置的效果中打孔，前提是它们不移动到任何地方。"
 
-#: sw_data.py:2080
+#: sw_data.py:2684
 msgid ""
 "Saturates faded colors without touching the bright ones. The default "
 "settings are almost invisible."
 msgstr "使褪色的颜色饱和而不接触明亮的颜色。默认设置几乎是不可见的。"
 
-#: sw_data.py:2081
+#: sw_data.py:2686
 msgid "Adds vignetting, reducing the brightness of the frame at the edges."
 msgstr "添加渐晕，降低边缘帧的亮度。"
 
-#: sw_data.py:2084
+#: sw_data.py:2689
 msgid "Vulkan layer postprocessing visual effects"
 msgstr "Vulkan层后处理视觉效果"
 
-#: sw_data.py:2085
+#: sw_data.py:2690
 msgid "Effect intensity"
 msgstr "效果强度"
 
-#: sw_data.py:2089
+#: sw_data.py:2694
 msgid "MangoHud colors"
 msgstr "MangoHud 颜色"
 
-#: sw_data.py:2090
+#: sw_data.py:2695
 msgid "MangoHud indicator color scheme settings"
 msgstr "MangoHud 指示器配色方案设置"
 
-#: sw_data.py:2110
+#: sw_data.py:2715
 msgid "GPU indicator"
 msgstr "GPU指示灯"
 
-#: sw_data.py:2111
+#: sw_data.py:2716
 msgid "CPU indicator"
 msgstr "CPU指示灯"
 
-#: sw_data.py:2112
+#: sw_data.py:2717
 msgid "VRAM indicator"
 msgstr "显存指示器"
 
-#: sw_data.py:2113
+#: sw_data.py:2718
 msgid "RAM indicator"
 msgstr "内存指示灯"
 
-#: sw_data.py:2114
+#: sw_data.py:2719
 msgid "IO indicator"
 msgstr "IO指示灯"
 
-#: sw_data.py:2115
+#: sw_data.py:2720
 msgid "Render engines version"
 msgstr "渲染引擎版本"
 
-#: sw_data.py:2116
+#: sw_data.py:2721
 msgid "Frametime indicator"
 msgstr "帧时间指示器"
 
-#: sw_data.py:2117
+#: sw_data.py:2722
 msgid "Overlay background"
 msgstr "叠加背景"
 
-#: sw_data.py:2118
+#: sw_data.py:2723
 msgid "Text color"
 msgstr "文字颜色"
 
-#: sw_data.py:2119
+#: sw_data.py:2724
 msgid "Media player color"
 msgstr "媒体播放器颜色"
 
-#: sw_data.py:2120
+#: sw_data.py:2725
 msgid "Wine color"
 msgstr "Wine 颜色"
 
-#: sw_data.py:2121
+#: sw_data.py:2726
 msgid "GPU load color"
 msgstr "GPU负载颜色"
 
-#: sw_data.py:2122
+#: sw_data.py:2727
 msgid "CPU load color"
 msgstr "CPU负载颜色"
 
-#: sw_data.py:2123
+#: sw_data.py:2728
 msgid "Battery indicator"
 msgstr "电池电量指示灯"
 
-#: sw_data.py:2128
+#: sw_data.py:2733
+msgid "Controller redirection settings"
+msgstr "控制器重定向设置"
+
+#: sw_data.py:2734
+msgid ""
+"Map for binding controller buttons to keys of other input devices such as a "
+"keyboard or mouse."
+msgstr "用于将控制器按钮绑定到其他输入设备（例如键盘或鼠标）的按键的映射。"
+
+#: sw_data.py:2735
+msgid "Not set"
+msgstr "未设置"
+
+#: sw_data.py:2736
+msgid "Press any key for binding"
+msgstr "按任意键进行绑定"
+
+#: sw_data.py:2739
+msgid "enter or accept"
+msgstr "输入或接受"
+
+#: sw_data.py:2740 sw_data.py:3043
+msgid "go back or cancel"
+msgstr "返回或取消"
+
+#: sw_data.py:2743
+msgid "control"
+msgstr ""
+
+#: sw_data.py:2744
+msgid "alt"
+msgstr ""
+
+#: sw_data.py:2745
+msgid "tabulation"
+msgstr "制表"
+
+#: sw_data.py:2746
+msgid "middle mouse button"
+msgstr "鼠标中键"
+
+#: sw_data.py:2747
+msgid "right shift"
+msgstr "右移"
+
+#: sw_data.py:2748 sw_data.py:3072
+msgid "show or hide sidebar menu"
+msgstr "显示或隐藏侧边栏菜单"
+
+#: sw_data.py:2749
+msgid "show context menu"
+msgstr "显示上下文菜单"
+
+#: sw_data.py:2750
+msgid "scroll page right or left"
+msgstr "向右或向左滚动页面"
+
+#: sw_data.py:2751
+msgid "scroll page up or down"
+msgstr "向上或向下滚动页面"
+
+#: sw_data.py:2752
+msgid "mouse movement on the x-axis"
+msgstr "鼠标在 x 轴上的移动"
+
+#: sw_data.py:2753
+msgid "mouse movement on the y-axis"
+msgstr "鼠标在 y 轴上移动"
+
+#: sw_data.py:2754
+msgid "right mouse button"
+msgstr "鼠标右键"
+
+#: sw_data.py:2755
+msgid "left mouse button"
+msgstr "鼠标左键"
+
+#: sw_data.py:2756
+msgid "left, right"
+msgstr "左、右"
+
+#: sw_data.py:2757
+msgid "up, down"
+msgstr "上、下"
+
+#: sw_data.py:2758 sw_data.py:3050
+msgid "shutdown StartWine"
+msgstr "关闭 StartWine"
+
+#: sw_data.py:2759
+msgid "show or hide StartWine window"
+msgstr "显示或隐藏 StartWine 窗口"
+
+#: sw_data.py:2760 sw_data.py:3075
+msgid "show or hide list of mounted volumes"
+msgstr "显示或隐藏已安装卷的列表"
+
+#: sw_data.py:2761 sw_data.py:3053
+msgid "reduce the size of the icons and shortcuts"
+msgstr "减小图标和快捷方式的大小"
+
+#: sw_data.py:2762 sw_data.py:3052
+msgid "increase the size of the icons and shortcuts"
+msgstr "增加图标和快捷方式的大小"
+
+#: sw_data.py:2763 sw_data.py:3069
+msgid "go to the directory up in the file manager"
+msgstr "转到文件管理器中的上一级目录"
+
+#: sw_data.py:2764
+msgid "open main context menu"
+msgstr "打开主上下文菜单"
+
+#: sw_data.py:2765
+msgid "show or hide media playlist"
+msgstr "显示或隐藏媒体播放列表"
+
+#: sw_data.py:2766 sw_data.py:3076
+msgid "show or hide bookmarks list"
+msgstr "显示或隐藏书签列表"
+
+#: sw_data.py:2767 sw_data.py:3070
+msgid "go to the next menu page"
+msgstr "转到下一个菜单页"
+
+#: sw_data.py:2768 sw_data.py:3071
+msgid "go to the previous menu page"
+msgstr "转到上一个菜单页"
+
+#: sw_data.py:2769 sw_data.py:3080
+msgid "show file properties"
+msgstr "显示文件属性"
+
+#: sw_data.py:2908
 msgid "Confirm changes"
 msgstr "确认更改"
 
-#: sw_data.py:2129
+#: sw_data.py:2909
 msgid "MangoHud preview"
 msgstr "MangoHud 预览"
 
-#: sw_data.py:2131
+#: sw_data.py:2911
 msgid "Custom theme"
 msgstr "自定义主题"
 
-#: sw_data.py:2132
+#: sw_data.py:2912
 msgid "Custom interface color scheme settings"
 msgstr "自定义界面配色方案设置"
 
-#: sw_data.py:2147
-msgid "Primary text"
-msgstr "主要文本"
+#: sw_data.py:2914
+msgid "Window control buttons"
+msgstr "窗口控制按钮"
 
-#: sw_data.py:2148
+#: sw_data.py:2915
+msgid "Select a style for the window control buttons"
+msgstr "选择窗口控制按钮的样式"
+
+#: sw_data.py:2917
+msgid "Built-in icon theme"
+msgstr "内置图标主题"
+
+#: sw_data.py:2918
+msgid "Choose a color for the built-in icon theme"
+msgstr "为内置图标主题选择颜色"
+
+#: sw_data.py:2940
 msgid "Primary background"
 msgstr "主要背景"
 
-#: sw_data.py:2149
+#: sw_data.py:2941
 msgid "Accent color"
 msgstr "强调色"
 
-#: sw_data.py:2150
+#: sw_data.py:2942
 msgid "Accent background"
 msgstr "口音背景"
 
-#: sw_data.py:2151
+#: sw_data.py:2943
 msgid "Headerbars"
 msgstr "标题栏"
 
-#: sw_data.py:2152
+#: sw_data.py:2944
 msgid "Popover context menu"
 msgstr "弹出上下文菜单"
 
-#: sw_data.py:2157
+#: sw_data.py:2949
 msgid "Additional general parameters and interface settings"
 msgstr "附加常规参数和界面设置"
 
-#: sw_data.py:2159
+#: sw_data.py:2951
 msgid "Startup options"
 msgstr "启动选项"
 
-#: sw_data.py:2160
+#: sw_data.py:2952
 msgid "Some settings will take effect the next time you start"
 msgstr "有些设置会在下次启动时生效"
 
-#: sw_data.py:2162
+#: sw_data.py:2954
 msgid "Language"
 msgstr "语言"
 
-#: sw_data.py:2163
+#: sw_data.py:2955
 msgid "Change the interface language"
 msgstr "更改界面语言"
 
-#: sw_data.py:2165
+#: sw_data.py:2957
 msgid "Autostart"
 msgstr "自动启动"
 
-#: sw_data.py:2166
+#: sw_data.py:2958
 msgid "Run StartWine in the tray at system startup"
 msgstr "系统启动时运行托盘中的StartWine"
 
-#: sw_data.py:2168
+#: sw_data.py:2960
 msgid "Restore menu"
 msgstr "恢复菜单"
 
-#: sw_data.py:2169
+#: sw_data.py:2961
 msgid "Restore the menu after exiting a game or application"
 msgstr "退出游戏或应用程序后恢复菜单"
 
-#: sw_data.py:2171
+#: sw_data.py:2963
 msgid "Auto Stop"
 msgstr "自动停止"
 
-#: sw_data.py:2172
+#: sw_data.py:2964
 msgid "Auto terminate all Wine processes after exiting a game or application"
 msgstr "退出游戏或应用程序后自动终止所有 Wine 进程"
 
-#: sw_data.py:2171
+#: sw_data.py:2966
 msgid "Auto-hide top header"
 msgstr "自动隐藏顶部标题"
 
-#: sw_data.py:2171
+#: sw_data.py:2967
 msgid "Auto-hide the top panel of the window and show it on mouseover"
 msgstr "自动隐藏窗口的顶部面板并在鼠标悬停时显示它"
 
-#: sw_data.py:2171
+#: sw_data.py:2969
 msgid "Auto-hide bottom header"
 msgstr "自动隐藏底部标题"
 
+#: sw_data.py:2970
 msgid "Auto-hide the bottom panel of the window and show it on mouseover"
 msgstr "自动隐藏窗口的底部面板并在鼠标悬停时显示它"
 
-#: sw_data.py:2174
+#: sw_data.py:2972
 msgid "Icons"
 msgstr "图标"
 
-#: sw_data.py:2175
+#: sw_data.py:2973
 msgid "Use system icon theme"
 msgstr "使用系统图标主题"
 
-#: sw_data.py:2177
+#: sw_data.py:2975
 msgid "Compact mode"
 msgstr "紧凑模式"
 
-#: sw_data.py:2178
+#: sw_data.py:2976
 msgid "Always run the menu in compact size mode"
 msgstr "始终以紧凑尺寸模式运行菜单"
 
-#: sw_data.py:2180
+#: sw_data.py:2978
 msgid "Default directory"
 msgstr "默认目录"
 
-#: sw_data.py:2181
+#: sw_data.py:2979
 msgid ""
 "The default directory in which files will be opened in the StartWine file "
 "manager"
 msgstr "StartWine 文件管理器中打开文件的默认目录"
 
-#: sw_data.py:2183
-msgid "OpenGL background"
-msgstr "OpenGL背景"
+#: sw_data.py:2981
+msgid "Rendering"
+msgstr "渲染"
 
-#: sw_data.py:2184
+#: sw_data.py:2982
+msgid "Graphical interface rendering options"
+msgstr "图形界面渲染选项"
+
+#: sw_data.py:2984
+msgid "Vulkan"
+msgstr ""
+
+#: sw_data.py:2985
+msgid "Use Vulkan to render the graphical interface"
+msgstr "使用Vulkan渲染图形界面"
+
+#: sw_data.py:2987
+msgid "Live background"
+msgstr "现场背景"
+
+#: sw_data.py:2989
 msgid ""
-"Live background (opengl animation based on selected shaders). Warning!!! "
-"This function can lead to slowdowns and additional load on the graphics card."
-msgstr "实时背景（基于选定着色器的 opengl 动画）。警告！！！此功能可能会导致速度减慢并增加显卡的负载。"
+"Animation based on selected shaders. Warning!!! This function can lead to "
+"slowdowns and additional load on the graphics card."
+msgstr "基于选定着色器的动画。警告！！！此功能可能会导致速度减慢并增加显卡的负载。"
 
-#: sw_data.py:2187
+#: sw_data.py:2993
 msgid "Shaders"
 msgstr "着色器"
 
-#: sw_data.py:2188
+#: sw_data.py:2994
 msgid "Select shaders for the live background from the list"
 msgstr "从列表中选择实时背景的着色器"
 
-#: sw_data.py:2191
+#: sw_data.py:2996 sw_data.py:4246
+msgid "Hotkeys"
+msgstr "热键"
+
+#: sw_data.py:2997
 msgid "List of default hotkeys settings"
 msgstr "默认热键设置列表"
 
-#: sw_data.py:2193
+#: sw_data.py:2999
 msgid ""
 "Wrong path, path does not exist, specify the correct path to the directory"
 msgstr "路径错误，路径不存在，指定正确的目录路径"
 
-msgid "go back or cancel search"
-msgstr "返回或取消搜索"
-
-#: sw_data.py:2238
+#: sw_data.py:3044
 msgid "show hotkey settings window"
 msgstr "显示热键设置窗口"
 
-#: sw_data.py:2239
+#: sw_data.py:3045
 msgid "show help"
 msgstr "显示帮助"
 
-#: sw_data.py:2240
+#: sw_data.py:3046
 msgid "about StartWine"
 msgstr "关于StartWine"
 
-#: sw_data.py:2241
+#: sw_data.py:3047
 msgid "enable / disable MangoHud overlay in the game"
 msgstr "在游戏中启用/禁用 MangoHud 叠加"
 
-#: sw_data.py:2242
+#: sw_data.py:3048
 msgid "toggle MangoHud overlay postion in the game"
 msgstr "在游戏中切换 MangoHud 叠加位置"
 
-#: sw_data.py:2243
+#: sw_data.py:3049
 msgid "enable / disable vkBasalt effects in the game"
 msgstr "在游戏中启用/禁用 vkBasalt 效果"
 
-#: sw_data.py:2244
-msgid "shutdown StartWine"
-msgstr "关闭 StartWine"
-
-#: sw_data.py:2245
+#: sw_data.py:3051
 msgid "close StartWine window"
 msgstr "关闭 StartWine 窗口"
 
-#: sw_data.py:2246
-msgid "change the window size mode"
-msgstr "更改窗口大小模式"
-
-#: sw_data.py:2247
-msgid "increase the size of the icons and shortcuts"
-msgstr "增加图标和快捷方式的大小"
-
-#: sw_data.py:2248
-msgid "reduce the size of the icons and shortcuts"
-msgstr "减小图标和快捷方式的大小"
-
-#: sw_data.py:2249
+#: sw_data.py:3054
 msgid "update files or shortcuts list view"
 msgstr "更新文件或快捷方式列表视图"
 
+#: sw_data.py:3055
 msgid "split view for viewing files"
 msgstr "用于查看文件的分割视图"
 
+#: sw_data.py:3056
 msgid "show files in a grid or table view"
 msgstr "在网格或表格视图中显示文件"
 
-#: sw_data.py:2250
+#: sw_data.py:3057
 msgid "to display or not to display hidden files"
 msgstr "显示或不显示隐藏文件"
 
-#: sw_data.py:2251
+#: sw_data.py:3058
 msgid "show current directory path string"
 msgstr "显示当前目录路径字符串"
 
-#: sw_data.py:2252
+#: sw_data.py:3059
 msgid "select all files in file manager"
 msgstr "选择文件管理器中的所有文件"
 
-#: sw_data.py:2253
+#: sw_data.py:3060
 msgid "create new directory"
 msgstr "创建新目录"
 
-#: sw_data.py:2254
+#: sw_data.py:3061
 msgid "create symbolic links for selected files"
 msgstr "为选定的文件创建符号链接"
 
-#: sw_data.py:2255
+#: sw_data.py:3062
 msgid "copy to clipboard"
 msgstr "复制到剪贴板"
 
-#: sw_data.py:2256
+#: sw_data.py:3063
 msgid "paste from clipboard"
 msgstr "从剪贴板粘贴"
 
-#: sw_data.py:2257
+#: sw_data.py:3064
 msgid "cut selected files"
 msgstr "剪切选定的文件"
 
-#: sw_data.py:2258
+#: sw_data.py:3065
 msgid "terminate all processes"
 msgstr "终止所有进程"
 
-#: sw_data.py:2259
+#: sw_data.py:3066
 msgid "move to trash selected files"
 msgstr "移动到垃圾箱选定的文件"
 
-#: sw_data.py:2260
+#: sw_data.py:3067
 msgid "permanently delete selected files"
 msgstr "永久删除选定的文件"
 
-#: sw_data.py:2261
+#: sw_data.py:3068
 msgid "rename file or directory in file manager"
 msgstr "在文件管理器中重命名文件或目录"
 
-#: sw_data.py:2262
-msgid "go to the directory up in the file manager"
-msgstr "转到文件管理器中的上一级目录"
+#: sw_data.py:3073
+msgid "show the page of installed games and applications"
+msgstr "显示已安装游戏和应用程序的页面"
 
-#: sw_data.py:2263
-msgid "go to the next menu page"
-msgstr "转到下一个菜单页"
-
-#: sw_data.py:2264
-msgid "go to the previous menu page"
-msgstr "转到上一个菜单页"
-
-#: sw_data.py:2265
-msgid "show or hide sidebar menu"
-msgstr "显示或隐藏侧边栏菜单"
-
-#: sw_data.py:2266
-msgid "shortcuts view"
-msgstr "快捷方式视图"
-
-#: sw_data.py:2267
+#: sw_data.py:3074
 msgid "open file manager"
 msgstr "打开文件管理器"
 
-#: sw_data.py:2268
-msgid "show or hide list of mounted volumes"
-msgstr "显示或隐藏已安装卷的列表"
+#: sw_data.py:3077
+msgid "show the wine builds page"
+msgstr "显示 wine 构建页面"
 
-#: sw_data.py:2269
-msgid "show or hide bookmarks list"
-msgstr "显示或隐藏书签列表"
+#: sw_data.py:3078
+msgid "show the application page to launch"
+msgstr "显示要启动的应用程序页面"
 
-#: sw_data.py:2270
-msgid "show wine builds page"
-msgstr "显示 Wine 构建页面"
-
-#: sw_data.py:2271
-msgid "launchers view"
-msgstr "启动器视图"
-
-#: sw_data.py:2272
-msgid "open launch settings menu"
-msgstr "打开启动设置菜单"
-
-#: sw_data.py:2273
-msgid "open MangoHud settings menu"
-msgstr "打开 MangoHud 设置菜单"
-
-#: sw_data.py:2274
-msgid "open vkBasalt settings menu"
-msgstr "打开 vkBasalt 设置菜单"
-
+#: sw_data.py:3079
 msgid "open interface settings menu"
 msgstr "打开界面设置菜单"
 
-msgid "show file properties"
-msgstr "显示文件属性"
-
-#: sw_data.py:2275
-msgid "open colors settings menu"
-msgstr "打开颜色设置菜单"
-
-#: sw_data.py:2276
-msgid "open base settings menu"
-msgstr "打开基本设置菜单"
-
-#: sw_data.py:2283
+#: sw_data.py:3087
 msgid "Description"
 msgstr "描述"
 
-#: sw_data.py:2284
+#: sw_data.py:3088
 msgid "Confirm install"
 msgstr "确认安装"
 
-#: sw_data.py:2285
-msgid "Library"
+#: sw_data.py:3089
+msgid "Libraries"
 msgstr "图书馆"
 
-#: sw_data.py:2286
+#: sw_data.py:3090
 msgid "Fonts"
 msgstr "字体"
 
-#: sw_data.py:2287
+#: sw_data.py:3091
 msgid "Library list"
 msgstr "图书馆列表"
 
-#: sw_data.py:2288
+#: sw_data.py:3092
 msgid "Fonts list"
 msgstr "字体列表"
 
-#: sw_data.py:2289
+#: sw_data.py:3093
 msgid "Installing native windows library to the current prefix"
 msgstr "将本机 Windows 库安装到当前前缀"
 
-#: sw_data.py:2293
+#: sw_data.py:3097
 msgid "Recommended libraries kit"
 msgstr "推荐的库套件"
 
-#: sw_data.py:2294
+#: sw_data.py:3098
 msgid "MS .NET libraries kit"
 msgstr "MS .NET 库套件"
 
-#: sw_data.py:2295
+#: sw_data.py:3099
 msgid "D3D libraries kit"
 msgstr "D3D 库套件"
 
-#: sw_data.py:2296
+#: sw_data.py:3100
 msgid "Visual C++ libraries kit"
 msgstr "Visual C++ 库套件"
 
-#: sw_data.py:3142
+#: sw_data.py:4032
 msgid "A good day is like a good Wine..."
 msgstr "美好的一天就像一杯美酒。"
 
-#: sw_data.py:3143
+#: sw_data.py:4033
 msgid "Yes"
 msgstr "是的"
 
-#: sw_data.py:3144
+#: sw_data.py:4034
 msgid "No"
 msgstr "不"
 
-#: sw_data.py:3145
+#: sw_data.py:4035
 msgid "Ok"
 msgstr "好的"
 
-#: sw_data.py:3146
+#: sw_data.py:4036
 msgid "Add"
 msgstr "添加"
 
-#: sw_data.py:3147
+#: sw_data.py:4037
 msgid "Cancel"
 msgstr "取消"
 
-#: sw_data.py:3148
+#: sw_data.py:4038
 msgid "Accept"
 msgstr "接受"
 
-#: sw_data.py:3149
+#: sw_data.py:4039
 msgid "Select"
 msgstr "选择"
 
-#: sw_data.py:3151 sw_data.py:3227
+#: sw_data.py:4040 sw_data.py:4200
+msgid "Open"
+msgstr "打开"
+
+#: sw_data.py:4041 sw_data.py:4167
 msgid "Save"
 msgstr "节省"
 
-#: sw_data.py:3153 sw_data.py:3199
+#: sw_data.py:4042 sw_data.py:4199
+msgid "Run"
+msgstr "跑步"
+
+#: sw_data.py:4043 sw_data.py:4094
 msgid "Install"
 msgstr "安装"
 
-#: sw_data.py:3154
+#: sw_data.py:4044
 msgid "Installed"
 msgstr "已安装"
 
-#: sw_data.py:3158
+#: sw_data.py:4046 sw_data.py:4208
+msgid "Change Wine"
+msgstr "改变 Wine"
+
+#: sw_data.py:4052 sw_data.py:4222
+msgid "Rename"
+msgstr "改名"
+
+#: sw_data.py:4053
 msgid "Create"
 msgstr "创造"
 
-#: sw_data.py:3159
+#: sw_data.py:4054
 msgid "Create new directory"
 msgstr "创建新目录"
 
-#: sw_data.py:3160
+#: sw_data.py:4055
 msgid "New directory"
 msgstr "新目录"
 
-#: sw_data.py:3161
+#: sw_data.py:4056
 msgid "Add shortcut to desktop"
 msgstr "添加桌面快捷方式"
 
-#: sw_data.py:3162
+#: sw_data.py:4057
 msgid "[ Original name ] + "
 msgstr "[ 原名 ] + "
 
-#: sw_data.py:3163
+#: sw_data.py:4058
 msgid "File's"
 msgstr "文件的"
 
-#: sw_data.py:3164
+#: sw_data.py:4059
 msgid "Rename directory"
 msgstr "重命名目录"
 
-#: sw_data.py:3165
+#: sw_data.py:4060
 msgid "Rename file"
 msgstr "重新命名文件"
 
-#: sw_data.py:3166
+#: sw_data.py:4061
 msgid "Replace file"
 msgstr "替换文件"
 
-#: sw_data.py:3167
+#: sw_data.py:4062
 msgid "Copying completed successfully"
 msgstr "复制成功完成"
 
-#: sw_data.py:3168
+#: sw_data.py:4063
 msgid "Move completed successfully"
 msgstr "移动成功完成"
 
-#: sw_data.py:3169
+#: sw_data.py:4064
 msgid "Move to trash completed successfully"
 msgstr "移至垃圾箱已成功完成"
 
-#: sw_data.py:3170
+#: sw_data.py:4065
 msgid "Deletion completed successfully"
 msgstr "删除成功完成"
 
-#: sw_data.py:3171
+#: sw_data.py:4066
 msgid "Rename completed successfully"
 msgstr "重命名成功完成"
 
-#: sw_data.py:3172
+#: sw_data.py:4067
 msgid "Download completed successfully"
 msgstr "下载成功完成"
 
-#: sw_data.py:3173
+#: sw_data.py:4068
 msgid "Compression completed successfully"
 msgstr "压缩成功完成"
 
-#: sw_data.py:3174
+#: sw_data.py:4069
 msgid "Choose an action"
 msgstr "选择一个动作"
 
-#: sw_data.py:3175 sw_data.py:3242
+#: sw_data.py:4070 sw_data.py:4189
 msgid "Choose the application to transfer settings"
 msgstr "选择要传输设置的应用程序"
 
-#: sw_data.py:3176
+#: sw_data.py:4071
 msgid "Do you really want to reset settings?"
 msgstr "您真的要重置设置吗？"
 
-#: sw_data.py:3177
+#: sw_data.py:4072
 msgid "Do you really want to clear shader cache?"
 msgstr "您确实要清除着色器缓存吗？"
 
-#: sw_data.py:3178
-msgid "Do you really want to remove\n"
-msgstr "您确实要删除\n"
+#: sw_data.py:4073
+msgid "Do you really want to permanently delete"
+msgstr "您真的要永久删除吗"
 
-#: sw_data.py:3179
+#: sw_data.py:4074
 msgid "Oops! Wrong path..."
 msgstr "哎呀！错误的道路。"
 
-#: sw_data.py:3180
+#: sw_data.py:4075
 msgid ""
 "Another file with the same name already exists. Replacing will overwrite "
 "content"
 msgstr "另一个同名文件已存在。替换会覆盖内容"
 
-#: sw_data.py:3181
+#: sw_data.py:4076
 msgid "You have not selected any libraries to install"
 msgstr "您还没有选择任何要安装的库"
 
-#: sw_data.py:3182
+#: sw_data.py:4077
 msgid "Path not exist, try to create new shortcut"
 msgstr "路径不存在，尝试创建新的快捷方式"
 
-#: sw_data.py:3183
+#: sw_data.py:4078
 msgid ""
 "You already have an executable and a prefix with the same name. To create a "
 "shortcut for this executable, rename it or delete the existing shortcut and "
 "prefix"
 msgstr ""
-"您已经有一个可执行文件和一个同名的前缀。"
-"要为此可执行文件创建快捷方式，请将其重命名或删除现有的快捷方式和前缀"
+"您已经有一个可执行文件和一个同名的前缀。要为此可执行文件创建快捷方式，请将其"
+"重命名或删除现有的快捷方式和前缀"
 
-#: sw_data.py:3185
+#: sw_data.py:4080
 msgid "Termination of active processes..."
 msgstr "终止活动进程..."
 
-#: sw_data.py:3186
+#: sw_data.py:4081
 msgid "You can't copy a directory to itself"
 msgstr "您无法将目录复制到其自身"
 
-#: sw_data.py:3187
+#: sw_data.py:4082
 msgid "is not installed, download it now?"
 msgstr "还没有安装，现在下载吗？"
 
-#: sw_data.py:3188
+#: sw_data.py:4083
 msgid "is not installed"
 msgstr "未安装"
 
-#: sw_data.py:3189
+#: sw_data.py:4084
 msgid "It is impossible to create a file in the current directory"
 msgstr "无法在当前目录下创建文件"
 
-#: sw_data.py:3190
+#: sw_data.py:4085
 msgid "Path does not exist!!! Please select correct path"
 msgstr "路径不存在！！！请选择正确的路径"
 
-#: sw_data.py:3191
+#: sw_data.py:4086
 msgid "Select the location of the StartWine directory"
 msgstr "选择StartWine目录的位置"
 
-#: sw_data.py:3192
+#: sw_data.py:4087
 msgid "Select directory"
 msgstr "选择目录"
 
-#: sw_data.py:3193
+#: sw_data.py:4088
 msgid "Create a compressed archive"
 msgstr "创建压缩档案"
 
-#: sw_data.py:3194
+#: sw_data.py:4089
 msgid "Compression..."
 msgstr "压缩..."
 
-#: sw_data.py:3195
+#: sw_data.py:4090
 msgid "Extraction..."
 msgstr "萃取..."
 
-#: sw_data.py:3196
+#: sw_data.py:4091
 msgid "New archive"
 msgstr "新档案"
 
-#: sw_data.py:3197
+#: sw_data.py:4092
 msgid "Launch error"
 msgstr "启动错误"
 
-#: sw_data.py:3200
-msgid "Launchers and game stores"
+#: sw_data.py:4093 sw_data.py:4164 sw_data.py:4204
+msgid "Remove"
+msgstr "消除"
+
+#: sw_data.py:4095
+msgid "Applications and game stores"
 msgstr "启动器和游戏商店"
 
-#: sw_data.py:3201
+#: sw_data.py:4096
 msgid "Volume name"
 msgstr "卷名"
 
-#: sw_data.py:3202
+#: sw_data.py:4097
 msgid "Device ID"
 msgstr "设备ID"
 
-#: sw_data.py:3203
+#: sw_data.py:4098
 msgid "Device UUID"
 msgstr "设备UUID"
 
-#: sw_data.py:3204
+#: sw_data.py:4099
 msgid "Drive name"
 msgstr "驱动器名称"
 
-#: sw_data.py:3205
+#: sw_data.py:4100
 msgid "Device size"
 msgstr "设备尺寸"
 
-#: sw_data.py:3206
+#: sw_data.py:4101
 msgid "Mount options"
 msgstr "安装选项"
 
-#: sw_data.py:3207
+#: sw_data.py:4102
 msgid "Incorrect launch parameters"
 msgstr "启动参数不正确"
 
-#: sw_data.py:3208
+#: sw_data.py:4103
 msgid "Reset the application settings?"
 msgstr "重置应用程序设置？"
 
-#: sw_data.py:3209
+#: sw_data.py:4104
 msgid "The path to the executable file was not found, launch is impossible"
 msgstr "找不到可执行文件的路径，无法启动"
 
+#: sw_data.py:4105
 msgid "Do you want to specify a new path to the executable file?"
 msgstr "是否要指定可执行文件的新路径？"
 
+#: sw_data.py:4106
 msgid "Сopied to clipboard"
 msgstr "复制到剪贴板"
 
+#: sw_data.py:4107
 msgid "Total"
 msgstr "全部的"
 
+#: sw_data.py:4108
 msgid "Free"
 msgstr "自由的"
 
+#: sw_data.py:4109
 msgid "Used"
 msgstr "用过的"
 
+#: sw_data.py:4110
 msgid "Action not supported"
 msgstr "不支持的操作"
 
+#: sw_data.py:4112
 msgid "The file you are trying to access does not exist"
 msgstr "您尝试访问的文件不存在"
 
+#: sw_data.py:4113
 msgid "Name"
 msgstr "姓名"
 
+#: sw_data.py:4114
 msgid "Size"
 msgstr "尺寸"
 
+#: sw_data.py:4115
 msgid "Type"
 msgstr "类型"
 
+#: sw_data.py:4116
+msgid "Modified date"
+msgstr "修改日期"
+
+#: sw_data.py:4117
+msgid "Creation date"
+msgstr "创建日期"
+
+#: sw_data.py:4118
+msgid "Modified/Created"
+msgstr "修改/创建"
+
+#: sw_data.py:4119
+msgid "Can-readable"
+msgstr "可读"
+
+#: sw_data.py:4120
+msgid "Can-writable"
+msgstr "可写"
+
+#: sw_data.py:4121
+msgid "Non-readable"
+msgstr "不可读"
+
+#: sw_data.py:4122
+msgid "Non-writable"
+msgstr "不可写"
+
+#: sw_data.py:4123
+msgid "Executable"
+msgstr "可执行文件"
+
+#: sw_data.py:4124
+msgid "Symbolic link to"
+msgstr "符号链接到"
+
+#: sw_data.py:4125
 msgid "Directory size"
 msgstr "目录大小"
 
+#: sw_data.py:4126
 msgid "Application"
 msgstr "应用"
 
+#: sw_data.py:4127
+msgid "Path"
+msgstr "小路"
+
+#: sw_data.py:4128
 msgid "Startup mode"
 msgstr "启动方式"
 
+#: sw_data.py:4129
+msgid "Access"
+msgstr "使用权"
+
+#: sw_data.py:4130
+msgid "Owner/Group"
+msgstr "业主/团体"
+
+#: sw_data.py:4131
+msgid "Permission"
+msgstr "允许"
+
+#: sw_data.py:4132
 msgid "Total time"
 msgstr "总时间"
 
+#: sw_data.py:4133
 msgid "Average fps"
 msgstr "每秒平均帧数"
 
+#: sw_data.py:4134
 msgid "seconds"
 msgstr "秒"
 
+#: sw_data.py:4135
 msgid "minutes"
 msgstr "分钟"
 
+#: sw_data.py:4136
 msgid "hours"
 msgstr "小时"
 
+#: sw_data.py:4137
 msgid "days"
 msgstr "天"
 
+#: sw_data.py:4138
 msgid "Unknown"
 msgstr "未知"
 
+#: sw_data.py:4139
 msgid "Error, Wine not found..."
 msgstr "错误，未找到 Wine..."
 
+#: sw_data.py:4140
 msgid "Check Wine updates"
 msgstr "检查 Wine 更新"
 
+#: sw_data.py:4141 sw_data.py:4209
 msgid "Specify executable file"
 msgstr "指定可执行文件"
 
+#: sw_data.py:4142 sw_data.py:4210
 msgid "Specify the new location..."
 msgstr "指定新位置..."
 
-msgid "Check and update the Wine list"
-msgstr "检查并更新酒单"
+#: sw_data.py:4143
+msgid "It is impossible to rename the file, the image is missing"
+msgstr "无法重命名文件，图像丢失"
 
-msgid "Scroll up the page"
-msgstr "向上滚动页面"
+#: sw_data.py:4144
+msgid "Album"
+msgstr "专辑"
 
-#: sw_data.py:3215
+#: sw_data.py:4145
+msgid "Title"
+msgstr "标题"
+
+#: sw_data.py:4146
+msgid "Artist"
+msgstr "艺术家"
+
+#: sw_data.py:4147
+msgid "Year"
+msgstr "年"
+
+#: sw_data.py:4148
+msgid "Do you really want to remove the prefix?"
+msgstr "您真的要删除前缀吗？"
+
+#: sw_data.py:4149
+msgid "Download failed..."
+msgstr "下载失败..."
+
+#: sw_data.py:4155
 msgid "Go to the home directory"
 msgstr "进入主目录"
 
-#: sw_data.py:3216
+#: sw_data.py:4156
 msgid "Move up directory"
 msgstr "上移目录"
 
-#: sw_data.py:3217
+#: sw_data.py:4157
 msgid "Current directory menu"
 msgstr "当前目录菜单"
 
-#: sw_data.py:3218
-msgid "Come back"
-msgstr "回来"
+#: sw_data.py:4158
+msgid "Сome back"
+msgstr "回来吧"
 
-#: sw_data.py:3219
+#: sw_data.py:4159
 msgid "Change menu size"
 msgstr "更改菜单大小"
 
-#: sw_data.py:3220
+#: sw_data.py:4160
 msgid "Change color scheme"
 msgstr "更改配色方案"
 
-#: sw_data.py:3221
+#: sw_data.py:4161
 msgid "Change icons size"
 msgstr "更改图标大小"
 
-#: sw_data.py:3222
+#: sw_data.py:4162
 msgid "Show or hide sidebar"
 msgstr "显示或隐藏侧边栏"
 
-#: sw_data.py:3223
+#: sw_data.py:4163
 msgid "Vertical or horizontal icons"
 msgstr "垂直或水平图标"
 
-#: sw_data.py:3225
+#: sw_data.py:4165
 msgid "Show search entry"
 msgstr "显示搜索条目"
 
-#: sw_data.py:3226
+#: sw_data.py:4166
 msgid "Show path entry"
 msgstr "显示路径条目"
 
-#: sw_data.py:3228
+#: sw_data.py:4168
 msgid "Choose color"
 msgstr "选择颜色"
 
-#: sw_data.py:3229
+#: sw_data.py:4169
 msgid "Edit color value"
 msgstr "编辑颜色值"
 
-#: sw_data.py:3230
+#: sw_data.py:4170
 msgid "Current rgb value"
 msgstr "当前RGB值"
 
-#: sw_data.py:3231
+#: sw_data.py:4171
 msgid "Choose directory"
 msgstr "选择目录"
 
-#: sw_data.py:3232
+#: sw_data.py:4172
 msgid "Show or hide volume list"
 msgstr "显示或隐藏音量列表"
 
-#: sw_data.py:3233
+#: sw_data.py:4173
 msgid "Show or hide bookmarks list"
 msgstr "显示或隐藏书签列表"
 
-#: sw_data.py:3234
+#: sw_data.py:4174
+msgid "Show or hide media playlist"
+msgstr "显示或隐藏媒体播放列表"
+
+#: sw_data.py:4175
 msgid "Apply"
 msgstr "申请"
 
-#: sw_data.py:3235
+#: sw_data.py:4176
 msgid "registry patch"
 msgstr "注册表补丁"
 
-#: sw_data.py:3237
-msgid "Install launchers and game stores"
-msgstr "安装启动器和游戏商店"
+#: sw_data.py:4177
+msgid "Download Wine"
+msgstr "下载 Wine"
 
-#: sw_data.py:3243
+#: sw_data.py:4178
+msgid "Install apps and game stores"
+msgstr "安装应用程序和游戏商店"
+
+#: sw_data.py:4182
+msgid "Tools"
+msgstr "工具"
+
+#: sw_data.py:4184
+msgid "Keyboard settings"
+msgstr "键盘设置"
+
+#: sw_data.py:4185
+msgid "Statistics and data"
+msgstr "统计数据"
+
+#: sw_data.py:4190
 msgid "Show web entry"
 msgstr "显示网页条目"
 
-#: sw_data.py:3244
+#: sw_data.py:4191
 msgid "Menu"
 msgstr "菜单"
 
-#: sw_data.py:3250
+#: sw_data.py:4192
+msgid "Check and update the Wine list"
+msgstr "检查并更新酒单"
+
+#: sw_data.py:4193
+msgid "Scroll up the page"
+msgstr "向上滚动页面"
+
+#: sw_data.py:4201
+msgid "Open with..."
+msgstr "打开用..."
+
+#: sw_data.py:4202
+msgid "Open file location"
+msgstr "打开文件所在位置"
+
+#: sw_data.py:4203
+msgid "App settings"
+msgstr "应用程序设置"
+
+#: sw_data.py:4205
+msgid "App to menu"
+msgstr "应用程序到菜单"
+
+#: sw_data.py:4206
+msgid "App to desktop"
+msgstr "应用程序到桌面"
+
+#: sw_data.py:4207
+msgid "App to Steam Deck menu"
+msgstr "应用程序到 Steam Deck 菜单"
+
+#: sw_data.py:4211
+msgid "Winehq"
+msgstr ""
+
+#: sw_data.py:4212
+msgid "Protondb"
+msgstr ""
+
+#: sw_data.py:4213
+msgid "Search for an image"
+msgstr "搜索图像"
+
+#: sw_data.py:4219
+msgid "Create file"
+msgstr "创建文件"
+
+#: sw_data.py:4220
+msgid "Create directory"
+msgstr "创建目录"
+
+#: sw_data.py:4221
+msgid "Create link"
+msgstr "创建链接"
+
+#: sw_data.py:4223
+msgid "Cut"
+msgstr "切"
+
+#: sw_data.py:4224
+msgid "Copy"
+msgstr "复制"
+
+#: sw_data.py:4225
+msgid "Paste"
+msgstr "粘贴"
+
+#: sw_data.py:4226
+msgid "Select all"
+msgstr "全选"
+
+#: sw_data.py:4227
+msgid "Move to trash"
+msgstr "移到废纸篓"
+
+#: sw_data.py:4228
+msgid "Delete permanently"
+msgstr "永久删除"
+
+#: sw_data.py:4230
+msgid "Text"
+msgstr "文本"
+
+#: sw_data.py:4231
+msgid "Bourne shell"
+msgstr "伯恩外壳"
+
+#: sw_data.py:4232
+msgid "Python"
+msgstr "Python"
+
+#: sw_data.py:4233
+msgid "Desktop"
+msgstr "桌面"
+
+#: sw_data.py:4234
+msgid "Copy current path"
+msgstr "复制当前路径"
+
+#: sw_data.py:4235
+msgid "Add to bookmark"
+msgstr "添加到书签"
+
+#: sw_data.py:4236
+msgid "Compress..."
+msgstr "压缩..."
+
+#: sw_data.py:4237
+msgid "Extract..."
+msgstr "提炼..."
+
+#: sw_data.py:4238
+msgid "Hidden files"
+msgstr "隐藏文件"
+
+#: sw_data.py:4239
+msgid "Sort..."
+msgstr "种类..."
+
+#: sw_data.py:4240
+msgid "By type"
+msgstr "按类型"
+
+#: sw_data.py:4241
+msgid "By size"
+msgstr "按尺寸"
+
+#: sw_data.py:4242
+msgid "By date"
+msgstr "按日期"
+
+#: sw_data.py:4243
+msgid "By name"
+msgstr "按名字"
+
+#: sw_data.py:4244
+msgid "Reverse"
+msgstr "撤销"
+
+#: sw_data.py:4248
+msgid "Help"
+msgstr "帮助"
+
+#: sw_data.py:4250
+msgid "Add to playlist..."
+msgstr "添加到播放列表..."
+
+#: sw_data.py:4251
+msgid "sample"
+msgstr "样本"
+
+#: sw_data.py:4258
 msgid "Search..."
 msgstr "搜索..."
 
-#: sw_data.py:3251
+#: sw_data.py:4259
 msgid "Loaded successfully"
 msgstr "加载成功"
 
-#: sw_data.py:3252
+#: sw_data.py:4260
 msgid "The app is loading..."
 msgstr "该应用程序正在加载..."
 
-#: sw_data.py:3253
+#: sw_data.py:4261
 msgid "Squashfs..."
 msgstr "南瓜..."
 
-#: sw_data.py:3254
+#: sw_data.py:4262
 msgid "installation in progress please wait..."
 msgstr "正在安装，请稍候..."
 
-#: sw_data.py:3257
+#: sw_data.py:4265
 msgid "Deletion"
 msgstr "删除"
 
-#: sw_data.py:3258
+#: sw_data.py:4266
 msgid "Сopying"
 msgstr "复制"
 
-#: sw_data.py:3259
+#: sw_data.py:4267
 msgid "Removal"
 msgstr "移动"
 
-#: sw_data.py:3260
+#: sw_data.py:4268
 msgid "copy"
 msgstr "复制"
 
-#: sw_data.py:3266
+#: sw_data.py:4274
 msgid "blue plasma waves"
 msgstr "蓝色等离子波"
 
-#: sw_data.py:3267
+#: sw_data.py:4275
 msgid "red plasma waves"
 msgstr "红色等离子体波"
 
-#: sw_data.py:3268
+#: sw_data.py:4276
 msgid "teal plasma waves"
 msgstr "青色等离子波"
 
-#: sw_data.py:3269
+#: sw_data.py:4277
 msgid "mint plasma waves"
 msgstr "薄荷等离子波"
 
-#: sw_data.py:3270
+#: sw_data.py:4278
 msgid "golden plasma waves"
 msgstr "金色等离子波"
 
-#: sw_data.py:3271
+#: sw_data.py:4279
 msgid "purple plasma waves"
 msgstr "紫色等离子波"
 
-#: sw_data.py:3272
+#: sw_data.py:4280
 msgid "brown plasma waves"
 msgstr "棕色等离子波"
 
-#: sw_data.py:3273
+#: sw_data.py:4281
 msgid "gray plasma waves"
 msgstr "灰色等离子波"
 
-#: sw_data.py:3274
+#: sw_data.py:4282
 msgid "teal damask rose"
 msgstr "青色大马士革玫瑰色"
 
-#: sw_data.py:3275
+#: sw_data.py:4283
 msgid "red damask rose"
 msgstr "红锦缎玫瑰"
 
-#: sw_data.py:3276
+#: sw_data.py:4284
 msgid "blue damask rose"
 msgstr "蓝色锦缎玫瑰"
 
-#: sw_data.py:3277
+#: sw_data.py:4285
 msgid "purple damask rose"
 msgstr "紫色大马士革玫瑰"
 
-#: sw_data.py:3278
+#: sw_data.py:4286
 msgid "golden damask rose"
 msgstr "金色锦缎玫瑰"
 
-#: sw_data.py:3279
+#: sw_data.py:4287
 msgid "mint damask rose"
 msgstr "薄荷大马士革玫瑰"
 
-#: sw_data.py:3280
+#: sw_data.py:4288
 msgid "brown damask rose"
 msgstr "棕色大马士革玫瑰"
 
-#: sw_data.py:3281
+#: sw_data.py:4289
 msgid "gray damask rose"
 msgstr "灰色大马士革玫瑰"
 
-#: sw_data.py:3282
-msgid "macos monterey"
-msgstr "蒙特利马科斯"
-
-#: sw_data.py:3283
-msgid "neon road"
-msgstr "霓虹灯路"
-
-#: sw_data.py:3284
-msgid "alien planet"
-msgstr "外星球"
-
-#: sw_data.py:3285
-msgid "wallpaper"
-msgstr "墙纸"
-
-#: sw_data.py:3286
-msgid "ice and fire"
-msgstr "冰与火"
-
-#: sw_data.py:3287
-msgid "voronoi gradient"
-msgstr "沃罗诺伊梯度"
-
-#: sw_data.py:3288
-msgid "pixelated rgb"
-msgstr "像素化RGB"
-
-#: sw_data.py:3289
-msgid "ps3 home background"
-msgstr "ps3首页背景"
-
-#: sw_data.py:3290
-msgid "infinite hexes background"
-msgstr "无限六角形背景"
-
-#: sw_data.py:3291
-msgid "floating playstation shapes"
-msgstr "浮动游戏机形状"
-
-#: sw_data.py:3292
-msgid "abstract movement background"
-msgstr "抽象运动背景"
-
-#: sw_data.py:3293
-msgid "dark chocolate"
-msgstr "黑巧克力"
-
-#: sw_data.py:3294
-msgid "red waves"
-msgstr "红波"
-
-#: sw_data.py:3295
-msgid "vista-esque wallpaper thing"
-msgstr "Vista 风格的壁纸东西"
-
-#: sw_data.py:3296
-msgid "misty grid"
-msgstr "迷雾网格"
-
-#: sw_data.py:3297
-msgid "factory windows"
-msgstr "工厂窗户"
-
-#: sw_data.py:3298
-msgid "star nest"
-msgstr "星巢"
-
-#: sw_data.py:3299
-msgid "neon triangle"
-msgstr "霓虹灯三角形"
-
-#: sw_data.py:3300
-msgid "firestorm"
-msgstr "风暴"
-
-#: sw_data.py:3301
-msgid "underwater bubbles"
-msgstr "水下气泡"
-
-#: sw_data.py:3302
-msgid "universe within"
-msgstr "内在的宇宙"
-
-#: sw_data.py:3303
+#: sw_data.py:4290
 msgid "blue parabolic waves"
 msgstr "蓝色抛物线波"
 
-#: sw_data.py:3303
+#: sw_data.py:4291
 msgid "red parabolic waves"
 msgstr "红色抛物线波"
 
-#: sw_data.py:3303
+#: sw_data.py:4292
 msgid "teal parabolic waves"
 msgstr "青色抛物线波"
 
-#: sw_data.py:3303
+#: sw_data.py:4293
 msgid "mint parabolic waves"
 msgstr "薄荷抛物线波"
 
-#: sw_data.py:3303
+#: sw_data.py:4294
 msgid "golden parabolic waves"
 msgstr "金色抛物线波"
 
-#: sw_data.py:3303
+#: sw_data.py:4295
 msgid "purple parabolic waves"
 msgstr "紫色抛物线波"
 
-#: sw_data.py:3303
+#: sw_data.py:4296
 msgid "brown parabolic waves"
 msgstr "棕色抛物线波"
 
-#: sw_data.py:3303
+#: sw_data.py:4297
 msgid "gray parabolic waves"
 msgstr "灰色抛物线波"
 
-#: sw_data.py:3304
+#: sw_data.py:4298
+msgid "macos monterey"
+msgstr "蒙特利马科斯"
+
+#: sw_data.py:4299
+msgid "neon road"
+msgstr "霓虹灯路"
+
+#: sw_data.py:4300
+msgid "alien planet"
+msgstr "外星球"
+
+#: sw_data.py:4301
+msgid "wallpaper"
+msgstr "墙纸"
+
+#: sw_data.py:4302
+msgid "ice and fire"
+msgstr "冰与火"
+
+#: sw_data.py:4303
+msgid "voronoi gradient"
+msgstr "沃罗诺伊梯度"
+
+#: sw_data.py:4304
+msgid "pixelated rgb"
+msgstr "像素化RGB"
+
+#: sw_data.py:4305
+msgid "blue ps3 home background"
+msgstr "蓝色 ps3 主页背景"
+
+#: sw_data.py:4306
+msgid "red ps3 home background"
+msgstr "红色ps3首页背景"
+
+#: sw_data.py:4307
+msgid "teal ps3 home background"
+msgstr "ps3首页背景"
+
+#: sw_data.py:4308
+msgid "mint ps3 home background"
+msgstr "薄荷 ps3 主页背景"
+
+#: sw_data.py:4309
+msgid "golden ps3 home background"
+msgstr "金色 ps3 主页背景"
+
+#: sw_data.py:4310
+msgid "purple ps3 home background"
+msgstr "紫色 ps3 主页背景"
+
+#: sw_data.py:4311
+msgid "brown ps3 home background"
+msgstr "棕色 ps3 主页背景"
+
+#: sw_data.py:4312
+msgid "gray ps3 home background"
+msgstr "灰色 ps3 主页背景"
+
+#: sw_data.py:4313
+msgid "infinite hexes background"
+msgstr "无限六角形背景"
+
+#: sw_data.py:4314
+msgid "floating playstation shapes"
+msgstr "浮动游戏机形状"
+
+#: sw_data.py:4315
+msgid "abstract movement background"
+msgstr "抽象运动背景"
+
+#: sw_data.py:4316
+msgid "dark chocolate"
+msgstr "黑巧克力"
+
+#: sw_data.py:4317
+msgid "red waves"
+msgstr "红波"
+
+#: sw_data.py:4318
+msgid "vista-esque wallpaper thing"
+msgstr "Vista 风格的壁纸东西"
+
+#: sw_data.py:4319
+msgid "misty grid"
+msgstr "迷雾网格"
+
+#: sw_data.py:4320
+msgid "factory windows"
+msgstr "工厂窗户"
+
+#: sw_data.py:4321
+msgid "star nest"
+msgstr "星巢"
+
+#: sw_data.py:4322
+msgid "neon triangle"
+msgstr "霓虹灯三角形"
+
+#: sw_data.py:4323
+msgid "firestorm"
+msgstr "风暴"
+
+#: sw_data.py:4324
+msgid "underwater bubbles"
+msgstr "水下气泡"
+
+#: sw_data.py:4325
+msgid "universe within"
+msgstr "内在的宇宙"
+
+#: sw_data.py:4326
 msgid "fractal galaxy"
 msgstr "分形星系"
 
-#: sw_data.py:3305
+#: sw_data.py:4327
 msgid "glowing stars"
 msgstr "发光的星星"
 
-#: sw_data.py:3306
+#: sw_data.py:4328
 msgid "colored bagel"
 msgstr "彩色百吉饼"
 
-#: sw_data.py:3307
+#: sw_data.py:4329
 msgid "protonophore"
 msgstr "质子载体"
 
-#: sw_data.py:3308
+#: sw_data.py:4330
 msgid "simplicity"
 msgstr "简单"
 
-#: sw_data.py:3309
+#: sw_data.py:4331
 msgid "melting colors"
 msgstr "融化的颜色"
 
-#: sw_data.py:3310
+#: sw_data.py:4332
 msgid "generators redux"
 msgstr "生成器还原"
 
-#: sw_data.py:3311
+#: sw_data.py:4333
 msgid "water turbulence"
 msgstr "水湍流"
 
-#: sw_data.py:3312
+#: sw_data.py:4334
 msgid "perspex web lattice"
 msgstr "有机玻璃网格"
 
-#: sw_data.py:3313
+#: sw_data.py:4335
 msgid "monochrome waves"
 msgstr "单色波"
 
-#: sw_data.py:3314
+#: sw_data.py:4336
 msgid "galaxies of the universe"
 msgstr "宇宙的星系"
 
-#: sw_data.py:3315
+#: sw_data.py:4337
 msgid "auroras"
 msgstr "极光"
 
-#: sw_data.py:3316
+#: sw_data.py:4338
 msgid "super mario bros"
 msgstr "超级马里奥兄弟"
 
-#: sw_data.py:3317
+#: sw_data.py:4339
 msgid "fractal flythrough"
 msgstr "分形飞越"
 
-#: sw_data.py:3318
+#: sw_data.py:4340
 msgid "blue circles"
 msgstr "蓝色圆圈"
 
-#: sw_data.py:3319
+#: sw_data.py:4341
 msgid "smiley"
 msgstr "笑脸"
 
-#: sw_data.py:3320
+#: sw_data.py:4342
 msgid "water high light"
 msgstr "水高光"
 
-#: sw_data.py:3321
+#: sw_data.py:4343
 msgid "triangle gradients"
 msgstr "三角形渐变"
 
-#: sw_data.py:3322
+#: sw_data.py:4344
 msgid "shadow dance"
 msgstr "皮影舞"
 
-#: sw_data.py:3323
+#: sw_data.py:4345
 msgid "neon sunset"
 msgstr "霓虹日落"
 
-#: sw_data.py:3324
+#: sw_data.py:4346
 msgid "synthwave sunset logo"
 msgstr "合成波日落标志"
 
-#: sw_data.py:3325
+#: sw_data.py:4347
 msgid "portal"
 msgstr "门户网站"
 
-#: sw_data.py:3326
+#: sw_data.py:4348
 msgid "jellow lights"
 msgstr "黄灯"
 
-#: sw_data.py:3327
+#: sw_data.py:4349
 msgid "evil membrane"
 msgstr "邪膜"
 
-#: sw_data.py:3328
+#: sw_data.py:4350
 msgid "abstract pattern"
 msgstr "抽象图案"
 
-#: sw_data.py:3329
+#: sw_data.py:4351
 msgid "sun rays"
 msgstr "太阳光线"
 
-#: sw_data.py:3330
+#: sw_data.py:4352
 msgid "spiral riders"
 msgstr "螺旋骑手"
 
-#: sw_data.py:3331
+#: sw_data.py:4353
 msgid "inside the matrix"
 msgstr "矩阵内部"
 
-#: sw_data.py:3332
+#: sw_data.py:4354
 msgid "plexus particles"
 msgstr "丛颗粒"
 
-#: sw_data.py:3333
+#: sw_data.py:4355
 msgid "windows 95"
 msgstr "视窗95"
 
+#: sw_data.py:4356
+msgid "sin cos 3d"
+msgstr "正余弦 3d"
+
+#: sw_data.py:4357
 msgid "static abstraction"
 msgstr "静态抽象"
 
+#: sw_data.py:4358
 msgid "galaxy/nebula and stars"
 msgstr "星系/星云和恒星"
 
+#: sw_data.py:4359
 msgid "nebula 112"
 msgstr "星云112"
 
+#: sw_data.py:4360
 msgid "magic ball"
 msgstr "魔法球"
 
+#: sw_data.py:4361
 msgid "zippy zaps"
 msgstr "活泼的电击"
+
+#: sw_runlib:1526 sw_runlib:1536
+#, sh-format
+msgid "There is no application prefix, create one first"
+msgstr "没有应用程序前缀，请先创建一个"
+
+#: sw_runlib:1574
+#, sh-format
+msgid "Create a backup copy of your saves?"
+msgstr "创建您保存的备份副本？"
+
+#: sw_runlib:1580 sw_runlib:1584
+#, sh-format
+msgid "The backup completed successfully"
+msgstr "备份成功完成"
+
+#: sw_runlib:1592
+#, sh-format
+msgid "Restore a backup copy of your saves?"
+msgstr "恢复你保存的备份副本？"
+
+#: sw_runlib:1597
+#, sh-format
+msgid "The backup was successfully restored"
+msgstr "备份已成功恢复"
+
+#: sw_runlib:1599
+#, sh-format
+msgid "You do not have a backup copy of your saves"
+msgstr "您没有保存的备份副本"
 
 #, sh-format
 msgid "Error initializing the Wine prefix"
@@ -3006,10 +3213,6 @@ msgid ""
 "You have a backup of the default prefix with recommended libraries. Use "
 "it to create a new prefix?"
 msgstr "您有默认前缀和推荐库的备份。用它来创建新的前缀？"
-
-#, sh-format
-msgid "Do you really want to remove the prefix?"
-msgstr "您真的要删除前缀吗？"
 
 #, sh-format
 msgid "Do you really want to reinstall the prefix?"

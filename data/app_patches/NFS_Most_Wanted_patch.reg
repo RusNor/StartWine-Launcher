@@ -1,0 +1,13 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\Software\Wow6432Node\EA Games]
+
+[HKEY_LOCAL_MACHINE\Software\Wow6432Node\EA Games\Need for Speed Most Wanted]
+"Language"="Russian"
+"Locale"="ru"
+"Region"="Europe"
+
+[HKEY_LOCAL_MACHINE\Software\Wow6432Node\EA Games\Need for Speed Most Wanted\1.0]
+"DisplayName"="Need for Speed™ Most Wanted"
+"Language"=dword:00000010
+"LanguageName"="Russian"

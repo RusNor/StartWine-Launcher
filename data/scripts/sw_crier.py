@@ -2,6 +2,7 @@
 
 import os
 import sys
+import time
 from sys import argv, exit
 from pathlib import Path
 import shutil
@@ -14,6 +15,13 @@ from subprocess import run
 import itertools
 from collections import deque
 from time import sleep
+import io
+import struct
+import pefile
+from PIL import Image
+
+if os.getenv('GSK_RENDERER') == 'vulkan':
+    os.environ['ENABLE_VKBASALT'] = '0'
 
 import gi
 gi.require_version('Gtk', '4.0')
@@ -26,7 +34,7 @@ filterwarnings('ignore')
 #############################___PATH_DATA___:
 
 program_name = 'StartWine'
-sw_scripts = Path(argv[0]).absolute().parent
+sw_scripts = Path(__file__).absolute().parent
 sw_path = Path(sw_scripts).parent.parent
 sw_default_path = Path(f'{Path.home()}/.local/share/StartWine')
 sw_menu_json = Path(f'{sw_scripts}/sw_menu.json')
@@ -35,6 +43,13 @@ sw_css_light = Path(f'{sw_path}/data/img/sw_themes/css/light/gtk.css')
 sw_css_custom = Path(f'{sw_path}/data/img/sw_themes/css/custom/gtk.css')
 sw_logo = Path(f'{sw_path}/data/img/gui_icons/sw_large_light.svg')
 icon_folder = f'{sw_path}/data/img/gui_icons/hicolor/symbolic/apps/folder-symbolic.svg'
+
+ICON_DIR_ENTRY_FORMAT = (
+    'GRPICONDIRENTRY',
+    ('B,Width', 'B,Height','B,ColorCount','B,Reserved',
+     'H,Planes','H,BitCount','I,BytesInRes','H,ID')
+)
+ICON_DIR_FORMAT = ('GRPICONDIR', ('H,Reserved', 'H,Type','H,Count'))
 
 ############################___SET_CSS_STYLE___:
 
@@ -68,6 +83,122 @@ if sw_menu_json.exists():
             gtk_css_provider,
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
             )
+
+
+class SourceSelectionWindow(Gtk.Application):
+    """___Dialog window for selecting source to capture___"""
+    def __init__(self, app=None, mon_dict=None, xid_dict=None, callback=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        GLib.set_prgname(program_name)
+        self.mon_dict = mon_dict
+        self.xid_dict = xid_dict
+        self.callback = callback
+
+    def do_activate(self):
+        """______"""
+
+        win_store = Gio.ListStore()
+        win_factory = Gtk.SignalListItemFactory()
+        win_factory.connect('setup',self.factory_setup)
+        win_factory.connect('bind', self.factory_bind)
+        win_model = Gtk.MultiSelection.new(win_store)
+        win_view = Gtk.ListView(css_name='sw_listview', single_click_activate=True)
+        win_view.set_model(win_model)
+        win_view.set_factory(win_factory)
+        win_view.connect('activate', self.view_activate)
+
+        mon_store = Gio.ListStore()
+        mon_factory = Gtk.SignalListItemFactory()
+        mon_factory.connect('setup', self.factory_setup)
+        mon_factory.connect('bind', self.factory_bind)
+        mon_model = Gtk.MultiSelection.new(mon_store)
+        mon_view = Gtk.ListView(css_name='sw_listview', single_click_activate=True)
+        mon_view.set_model(mon_model)
+        mon_view.set_factory(mon_factory)
+        mon_view.connect('activate', self.view_activate)
+
+        stack = Gtk.Stack(
+            css_name='sw_stack', transition_duration=250,
+            transition_type=Gtk.StackTransitionType.SLIDE_LEFT_RIGHT
+        )
+        stack.add_titled(mon_view, 'screens', 'Screens')
+        stack.add_titled(win_view, 'windows', 'Windows')
+
+        stack_switcher = Gtk.StackSwitcher(css_name='sw_stackswitcher', stack=stack)
+
+        box = Gtk.Box(css_name='sw_box', orientation=Gtk.Orientation.VERTICAL)
+        box.append(stack_switcher)
+        box.append(stack)
+
+        self.update_store(win_store, 'windows')
+        self.update_store(mon_store, 'monitors')
+
+        self.window = Gtk.Window(css_name='sw_window', application=self, child=box)
+        self.window.remove_css_class('background')
+        self.window.add_css_class('sw_background')
+        self.window.set_default_size(930, 420)
+        self.window.connect('close-request', self.terminate)
+        self.window.present()
+
+    def update_store(self, store, name):
+        """______"""
+
+        store.remove_all()
+        if name == 'monitors':
+            count = -1
+            for num, mon in self.mon_dict.items():
+                string = f"{mon['name']}:{mon['model']}"
+                item = Gtk.Label(name=f'screen_{num}', label=string)
+                store.append(item)
+
+        if name == 'windows':
+            count = -1
+            for xid, name in self.xid_dict.items():
+                count += 1
+                item = Gtk.Label(name=f'{xid}', label=f'{name}')
+                store.append(item)
+
+    def factory_setup(self, factory, item_list):
+        """______"""
+
+        label = Gtk.Label(
+            css_name='sw_box_view', xalign=0, ellipsize=Pango.EllipsizeMode.END
+        )
+        box = Gtk.Box(css_name='sw_box', hexpand=True)
+        box.append(label)
+        item_list.set_child(box)
+
+    def factory_bind(self, factory, item_list):
+        """______"""
+
+        item = item_list.get_item()
+        box = item_list.get_child()
+        label = box.get_first_child()
+        label.set_name(item.get_name())
+        label.set_label(item.get_label())
+
+    def view_activate(self, view, position):
+        """______"""
+
+        item = view.get_model().get_item(position)
+        xid = item.get_name()
+        name = item.get_label()
+        self.window.close()
+        self.quit()
+        if self.callback:
+            data = None
+            if 'screen_' in xid:
+                data = self.mon_dict.get(position)
+            else:
+                data = self.xid_dict.get(xid)
+
+            return self.callback(xid, name, data)
+
+    def terminate(self, window):
+        """______"""
+
+        if self.callback:
+            self.callback(None, None, None)
 
 
 class SwPathManager(Gtk.Application):
@@ -227,6 +358,7 @@ class SwPathManager(Gtk.Application):
 
         return None
 
+
 def try_create_swrc(dest_path):
     """___write new program path to rc config___"""
 
@@ -248,8 +380,6 @@ def run_menu():
         run(f'{dest_path}/data/scripts/sw_menu.py', start_new_session=True, check=False)
     else:
         print(f'{Path.home()}/.config/swrc not found...')
-
-#############################___APPLICATION___:
 
 
 class SwCrier(Gtk.Application):
@@ -274,9 +404,9 @@ class SwCrier(Gtk.Application):
         self.response = response
         self.file = file
         self.mime_types = mime_types
-        #self.connect('activate', self.activate)
+        self.connect('activate', self.activate)
 
-    def do_activate(self):
+    def activate(self, app):
         """Activate application."""
 
         if self.message_type in ['INFO', 'ERROR', 'WARNING']:
@@ -410,10 +540,18 @@ class SwCrier(Gtk.Application):
         btn_yes.connect('clicked', self.cb_btn, dialog)
         btn_yes.grab_focus()
         btn_no.connect('clicked', self.cb_btn_cancel)
+
+        ctrl_key = Gtk.EventControllerKey()
+        ctrl_key.connect('key_pressed', self.key_pressed, dialog)
+        dialog.add_controller(ctrl_key)
         dialog.set_default_size(540, 120)
         dialog.set_size_request(540, 120)
         dialog.set_resizable(False)
         dialog.present()
+
+    def key_pressed(self, _ctrl_key, keyval, _keycode, _state, _dialog):
+        if keyval == Gdk.KEY_Escape:
+            return self.cb_btn_cancel(None)
 
     def text_editor(self):
         """Building the text editor view."""
@@ -437,7 +575,7 @@ class SwCrier(Gtk.Application):
         )
         dialog.remove_css_class('background')
         dialog.add_css_class('sw_background')
-        dialog.set_default_size(960, 540)
+        dialog.set_default_size(1280, 720)
 
         btn_save = Gtk.Button(
                         css_name='sw_button_accept',
@@ -489,7 +627,15 @@ class SwCrier(Gtk.Application):
                     path=self.file, title=self.title, mime_types=self.mime_types,
                     *args, **kwargs
         )
-        if Path(self.file).is_file() or data is not None:
+        if data:
+            dialog.select_folder(
+                        parent=window,
+                        cancellable=Gio.Cancellable(),
+                        callback=self.cb_select_folder,
+                        user_data=data,
+            )
+
+        elif Path(self.file).is_file():
             dialog.open(
                         parent=window,
                         cancellable=Gio.Cancellable(),
@@ -513,14 +659,17 @@ class SwCrier(Gtk.Application):
             _path = '1'
         else:
             _path = result.get_path()
-            if data is not None:
-                Path(_path).write_text(data, encoding='utf-8')
+            if data:
+                try:
+                    Path(_path).write_text(data, encoding='utf-8')
+                except (OSError, IOError) as e:
+                    print(e)
 
         self.quit()
         print(_path)
         return _path
 
-    def cb_select_folder(self, dialog, res, _data):
+    def cb_select_folder(self, dialog, res, data):
         """Callback from the folder selection dialog."""
 
         try:
@@ -529,6 +678,12 @@ class SwCrier(Gtk.Application):
             _path = '1'
         else:
             _path = result.get_path()
+            if data:
+                name = time.strftime('%Y%M%d%S')
+                try:
+                    Path(f'{_path}/{name}.txt').write_text(data, encoding='utf-8')
+                except (OSError, IOError) as e:
+                    print(e)
 
         if _path is None:
             _path = '1'
@@ -554,10 +709,10 @@ class SwCrier(Gtk.Application):
 
         if Path(self.file).is_file():
             Path(self.file).write_text(buffer_text, encoding='utf-8')
+            self.quit()
         else:
             self.file_selector(window=dialog, data=buffer_text)
 
-        self.quit()
         p = '0'
         print(p)
         return p
@@ -603,7 +758,7 @@ class SwDialogEntry(Gtk.Widget):
                     css_name='sw_box',
                     orientation=Gtk.Orientation.HORIZONTAL,
         )
-        dialog = Gtk.Window(
+        self.dialog = Gtk.Window(
                             css_name='sw_window',
                             application=self.app,
                             transient_for=self.window,
@@ -612,8 +767,8 @@ class SwDialogEntry(Gtk.Widget):
                             title=self.title,
                             child=self.box,
         )
-        dialog.remove_css_class('background')
-        dialog.add_css_class('sw_background')
+        self.dialog.remove_css_class('background')
+        self.dialog.add_css_class('sw_background')
 
         btn_cancel = Gtk.Button(
                             css_name='sw_button_cancel',
@@ -630,10 +785,10 @@ class SwDialogEntry(Gtk.Widget):
         btn_accept.set_size_request(120, 16)
 
         btn_accept.connect(
-            'clicked', cb_btn_response, self.window, dialog, self.func[0]
+            'clicked', cb_btn_response, self.window, self.dialog, self.func[0]
         )
         btn_cancel.connect(
-            'clicked', cb_btn_response, self.window, dialog, self.func[1]
+            'clicked', cb_btn_response, self.window, self.dialog, self.func[1]
         )
         headerbar.pack_start(btn_cancel)
         headerbar.pack_end(btn_accept)
@@ -649,7 +804,7 @@ class SwDialogEntry(Gtk.Widget):
                             text=self.text_message[i]
             )
             entry.connect(
-                'activate', cb_btn_response, self.window, dialog, self.func[0]
+                'activate', cb_btn_response, self.window, self.dialog, self.func[0]
             )
             self.box.append(entry)
 
@@ -668,10 +823,17 @@ class SwDialogEntry(Gtk.Widget):
             dropdown_menu.set_model(model)
             self.box.append(dropdown_menu)
 
-        dialog.set_size_request(540, 120)
-        dialog.set_resizable(False)
-        dialog.present()
-        return dialog
+        self.ctrl_key = Gtk.EventControllerKey()
+        self.ctrl_key.connect('key_pressed', self.key_pressed, self.dialog)
+        self.dialog.add_controller(self.ctrl_key)
+        self.dialog.set_size_request(540, 120)
+        self.dialog.set_resizable(False)
+        self.dialog.present()
+        return self.dialog
+
+    def key_pressed(self, _ctrl_key_press, keyval, keycode, state, dialog):
+        if keyval == Gdk.KEY_Escape:
+            return self.dialog.close()
 
 
 class SwDialogQuestion(Gtk.Widget):
@@ -817,9 +979,16 @@ class SwDialogQuestion(Gtk.Widget):
                 btn.connect('clicked', cb_btn_response, self.window, self.dialog, func)
                 box_btn.append(btn)
 
+        self.ctrl_key = Gtk.EventControllerKey()
+        self.ctrl_key.connect('key_pressed', self.key_pressed, self.dialog)
+        self.dialog.add_controller(self.ctrl_key)
         self.dialog.set_size_request(self.width, self.height)
         self.dialog.set_resizable(False)
         self.dialog.present()
+
+    def key_pressed(self, _ctrl_key, keyval, _keycode, _state, _dialog):
+        if keyval == Gdk.KEY_Escape:
+            return self.dialog.close()
 
 
 def cb_btn_response(self, parent_window, dialog, func):
@@ -925,7 +1094,7 @@ class SwDialogDirectory(Gtk.FileDialog):
         return self
 
 
-class SwGrid(Gtk.Grid):
+class SwWidget(Gtk.Grid):
     """___custom widget with different effects"""
     def __init__(
                 self,
@@ -1555,8 +1724,6 @@ class SwProgressBar(Gtk.Widget):
         self.queue_draw()
         return True
 
-################################___DOWNLOAD___:
-
 
 def download(_url, _filename):
     """___download content from url___"""
@@ -1650,8 +1817,11 @@ class SwDownloadBar(Gtk.Application):
         self.url = _url
         self.totalsize = None
 
-        with urlopen(_url) as u:
-            self.totalsize = u.length
+        try:
+            with urlopen(_url) as u:
+                self.totalsize = u.length
+        except HTTPError as e:
+            print(e)
 
         self.filename = _filename
         self.program_name = 'StartWine'
@@ -1725,9 +1895,6 @@ class SwDownloadBar(Gtk.Application):
                 self.exit = self.quit()
 
         return True
-
-
-##############################___EXTRACTION___:
 
 
 def extract_tar(_filename, _path):
@@ -1891,17 +2058,13 @@ class SwExtractIcon:
                         pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_RESOURCE'])
 
         if not hasattr(self._pefile, 'DIRECTORY_ENTRY_RESOURCE'):
+            self.rt_group_icon = None
+            self.rt_icon = None
             print(f'{tc.RED}SW_EXTRACT_ICON: File has no icon{tc.END}')
-            exit(1)
-
-        res = {r.id: r for r in reversed(self._pefile.DIRECTORY_ENTRY_RESOURCE.entries)}
-
-        self.rt_group_icon = res.get(pefile.RESOURCE_TYPE['RT_GROUP_ICON'])
-        if not self.rt_group_icon:
-            print(f'{tc.RED}SW_EXTRACT_ICON: File has no group icon resources{tc.END}')
-            exit(1)
-
-        self.rt_icon = res.get(pefile.RESOURCE_TYPE['RT_ICON'])
+        else:
+            res = {r.id: r for r in reversed(self._pefile.DIRECTORY_ENTRY_RESOURCE.entries)}
+            self.rt_group_icon = res.get(pefile.RESOURCE_TYPE['RT_GROUP_ICON'])
+            self.rt_icon = res.get(pefile.RESOURCE_TYPE['RT_ICON'])
 
     def list_group_icons(self):
         """Returns all group icon entries as a list of (name, offset) tuples."""
@@ -1956,24 +2119,28 @@ class SwExtractIcon:
     def _write_ico(self, fd, _num=0):
         """Writes ICO data to a file descriptor."""
 
-        group_icons = self._get_group_icon_entries(_num=_num)
-        icon_images = self._get_icon_data([g.ID for g in group_icons])
-        icons = list(zip(group_icons, icon_images))
-        assert len(group_icons) == len(icon_images)
-        fd.write(b'\x00\x00')
-        fd.write(struct.pack('<H', 1))
-        fd.write(struct.pack('<H', len(icons)))
+        if not self.rt_group_icon or not self.rt_icon:
+            print(f'{tc.RED}SW_EXTRACT_ICON: File has no group icon resources{tc.END}')
+            return
+        else:
+            group_icons = self._get_group_icon_entries(_num=_num)
+            icon_images = self._get_icon_data([g.ID for g in group_icons])
+            icons = list(zip(group_icons, icon_images))
+            assert len(group_icons) == len(icon_images)
+            fd.write(b'\x00\x00')
+            fd.write(struct.pack('<H', 1))
+            fd.write(struct.pack('<H', len(icons)))
 
-        data_offset = 6 + (len(icons) * 16)
-        for i in icons:
-            group_icon, icon_data = i
-            fd.write(group_icon.__pack__()[:12])
-            fd.write(struct.pack('<I', data_offset))
-            data_offset += len(icon_data)
+            data_offset = 6 + (len(icons) * 16)
+            for i in icons:
+                group_icon, icon_data = i
+                fd.write(group_icon.__pack__()[:12])
+                fd.write(struct.pack('<I', data_offset))
+                data_offset += len(icon_data)
 
-        for i in icons:
-            group_icon, icon_data = i
-            fd.write(icon_data)
+            for i in icons:
+                group_icon, icon_data = i
+                fd.write(icon_data)
 
     def extract_icon(self, fname, _num=0):
         """Writes ICO data of the requested group icon ID to fname."""
@@ -2035,8 +2202,6 @@ class SwHudSize:
         self.hud_size = int(height / mh_ratio)
         print(self.hud_size)
 
-################___HELP_INFO___:
-
 
 def on_helper():
     """___Commandline help info___"""
@@ -2065,8 +2230,6 @@ def on_helper():
     -hud                                                    Print MangoHud font size
 ''')
 
-##########################___SYSTEM_ARGUMENTS___:
-
 
 if __name__ == '__main__':
 
@@ -2086,31 +2249,52 @@ if __name__ == '__main__':
 
             if argv[1] == '-i':
                 app = SwCrier(text_message=argv[2], message_type='INFO')
-                app.run()
+                try:
+                    app.run()
+                except KeyboardInterrupt:
+                    app.quit()
 
             elif argv[1] == '-e':
                 app = SwCrier(text_message=argv[2], message_type='ERROR')
-                app.run()
+                try:
+                    app.run()
+                except KeyboardInterrupt:
+                    app.quit()
 
             elif argv[1] == '-w':
                 app = SwCrier(text_message=argv[2], message_type='WARNING')
-                app.run()
+                try:
+                    app.run()
+                except KeyboardInterrupt:
+                    app.quit()
 
             elif argv[1] == '-q':
                 app = SwCrier(text_message=argv[2], message_type='QUESTION', response=None)
-                app.run()
+                try:
+                    app.run()
+                except KeyboardInterrupt:
+                    app.quit()
 
             elif argv[1] == '-t':
                 app = SwCrier(file=argv[2], message_type='TEXT')
-                app.run()
+                try:
+                    app.run()
+                except KeyboardInterrupt:
+                    app.quit()
 
             elif argv[1] == '-f':
                 app = SwCrier(file=argv[2], message_type='FILE')
-                app.run()
+                try:
+                    app.run()
+                except KeyboardInterrupt:
+                    app.quit()
 
             elif str(argv[1]) == str('-p'):
                 app = SwPathManager(argv[2])
-                app.run()
+                try:
+                    app.run()
+                except KeyboardInterrupt:
+                    app.quit()
                 run_menu()
             else:
                 on_helper()
@@ -2133,7 +2317,10 @@ if __name__ == '__main__':
                     Thread(target=download_progress, args=(data, queue)).start()
                 else:
                     app = SwDownloadBar(url, filename)
-                    app.run()
+                    try:
+                        app.run()
+                    except KeyboardInterrupt:
+                        app.quit()
 
             elif str(argv[1]) == str('-tar') or str(argv[1]) == str('--silent-tar'):
                 import tarfile
@@ -2146,7 +2333,10 @@ if __name__ == '__main__':
                 else:
                     app = SwExtractBar(filename, path)
                     Thread(target=app.extract_tar, args=[filename, path]).start()
-                    app.run()
+                    try:
+                        app.run()
+                    except KeyboardInterrupt:
+                        app.quit()
 
             elif str(argv[1]) == str('-zip') or str(argv[1]) == str('--silent-zip'):
                 import zipfile
@@ -2159,20 +2349,12 @@ if __name__ == '__main__':
                 else:
                     app = SwExtractBar(filename, path)
                     Thread(target=app.extract_zip, args=[filename, path]).start()
-                    app.run()
+                    try:
+                        app.run()
+                    except KeyboardInterrupt:
+                        app.quit()
 
             elif str(argv[1]) == str('-ico'):
-                import io
-                import struct
-                import pefile
-                from PIL import Image
-
-                ICON_DIR_ENTRY_FORMAT = (
-                    'GRPICONDIRENTRY',
-                    ('B,Width', 'B,Height','B,ColorCount','B,Reserved',
-                     'H,Planes','H,BitCount','I,BytesInRes','H,ID')
-                )
-                ICON_DIR_FORMAT = ('GRPICONDIR', ('H,Reserved', 'H,Type','H,Count'))
 
                 input_file = str(argv[2])
                 output_file = str(argv[3])
@@ -2188,12 +2370,13 @@ if __name__ == '__main__':
             if str(argv[1]) == str('-q'):
                 response = [argv[3], argv[4]]
                 app = SwCrier(text_message=argv[2], message_type='QUESTION', response=response)
-                app.run()
+                try:
+                    app.run()
+                except KeyboardInterrupt:
+                    app.quit()
             else:
                 on_helper()
-
         else:
             on_helper()
-
     else:
         on_helper()

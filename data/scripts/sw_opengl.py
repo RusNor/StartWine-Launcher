@@ -4,12 +4,9 @@
 from os import getenv
 from sys import argv
 from pathlib import Path
-#from datetime import datetime, date
 from array import array
 import time as clock
-start_time = clock.time()
 
-####___Third party modules___.
 import gi
 gi.require_version('Gtk', '4.0')
 from gi.repository import Gtk, GLib
@@ -17,16 +14,15 @@ from gi.repository import Gtk, GLib
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileShader
 
-####___Local data modules___.
-from sw_shaders import Shaders as sdr
+from sw_shaders import Shaders
 from sw_data import TermColors as tc
 
-link = f"{argv[0]}"
-sw_scripts = Path(link).absolute().parent
+start_time = clock.time()
+sw_scripts = Path(__file__).absolute().parent
 sw_path = Path(sw_scripts).parent.parent
 sw_img = Path(f'{sw_path}/data/img')
 sw_themes = f"{sw_img}/sw_themes"
-fragments_list = [s.value for s in list(sdr)]
+fragments_list = [s.value for s in list(Shaders)]
 
 vertex_src = '''
 #version 330
@@ -130,7 +126,8 @@ img_verts = array('f', img_vertices)
 img_inds = array('I', img_indices)
 
 
-class RenderArea(Gtk.GLArea):
+class SwRenderArea(Gtk.GLArea):
+    """OpenGL render area."""
 
     def __init__(self, parent, image):
         super().__init__(
@@ -252,7 +249,7 @@ class RenderArea(Gtk.GLArea):
             glViewport(0,0, width, height)
 
     def on_render(self, _gl_area, _context):
-        """Rendering signal handler in opengl area."""
+        """Rendering handler of opengl area."""
 
         if self.get_error() is not None:
             return False
@@ -435,7 +432,10 @@ class RenderArea(Gtk.GLArea):
             glUniform1f(time_location, self.dif_time)
 
         if date_location != -1:
-            pass    # glUniform1i(date_location, 1, int(T))
+            # time = f'{t:%H:%M:%S}'
+            # date_list = [int(x) for x in clock.strftime('%y %m %d %S').split()]
+            # glUniform4ui(date_location, 1, *date_list)
+            pass
 
         if mouse_location != -1:
             try:
@@ -450,7 +450,8 @@ class RenderArea(Gtk.GLArea):
             glUniform1i(frame_location, self.frame)
 
         if sample_rate_location != -1:
-            pass    # glUniform1i(sample_rate_location, samp);
+            # glUniform1i(sample_rate_location, samp);
+            pass
 
         glDrawArrays(GL_TRIANGLES, 0, 6)
 

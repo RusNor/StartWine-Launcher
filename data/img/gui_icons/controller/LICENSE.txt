@@ -1,0 +1,11 @@
+ This asset pack is made available under the Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0) license.
+
+ This means you are free to:
+    - Copy and redistribute the material in any medium or format and remix
+    - Transform and build upon the material for any purpose, even commercially
+
+ You can find more information about the license online at https://creativecommons.org/licenses/by-sa/4.0/
+
+ Attribution can be linked to the distribution page at https://robthefivenine.itch.io/flat-gamepad-icons or to my GitHub page at https://github.com/RobTheFiveNine
+
+ Additionally, if you do use it in any of your projects, I'd be interested to hear about it! If you'd like to let me know, please reach out via any of the methods listed on my GitHub profile.

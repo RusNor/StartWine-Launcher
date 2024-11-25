@@ -1,0 +1,7 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\Software\Wine\AppDefaults\ForzaHorizon5.exe\DllOverrides]
+"amd_ags_x64"="builtin,native"
+
+[HKEY_CURRENT_USER\Software\Wine\AppDefaults\ForzaHorizon5.exe]
+"Version"="win10"

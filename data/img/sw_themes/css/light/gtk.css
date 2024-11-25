@@ -1,7 +1,7 @@
 
 /* GLOBAL COLOR DEFINITIONS */
 @define-color sw_bg_color rgba(210,210,220,0.99);
-@define-color sw_accent_fg_color rgba(0,160,255,0.8);
+@define-color sw_accent_fg_color rgba(0,160,255,0.85);
 @define-color sw_accent_bg_color rgba(220,220,230,0.99);
 @define-color sw_header_bg_color rgba(240,240,250,0.99);
 @define-color sw_pop_bg_color rgba(220,220,230,0.99);

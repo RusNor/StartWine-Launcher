@@ -1,25 +1,26 @@
 #!/usr/bin/env python3
 """StartWine gdbus call wrapper and commandline parser."""
 
-import os
+import sys
+from time import sleep
 from sys import argv
+from os import environ, getenv
 from pathlib import Path
 from subprocess import run, PIPE
 from multiprocessing import Process
-import time
 
 
 def get_sw_scripts_path():
     """Get current StartWine scripts path"""
 
-    argv0 = os.getenv('ARGV0')
-    sw_rt = Path(argv0).absolute().parent.parent if (argv0 is not None and argv0 != '') else None
+    argv0 = getenv('ARGV0')
+    sw_rt = Path(argv0).absolute().parent.parent if argv0 else None
     sw_rc = swrc.read_text(encoding="utf-8").splitlines()[0] if swrc.exists() else None
 
-    if sw_rt is not None and Path(f'{sw_rt}/scripts/sw_menu.py').exists():
+    if sw_rt and Path(f'{sw_rt}/scripts/sw_menu.py').exists():
         _sw_scripts = Path(f'{sw_rt}/scripts')
 
-    elif sw_rc is not None and Path(f'{sw_rc}/data/scripts/sw_menu.py').exists():
+    elif sw_rc and Path(f'{sw_rc}/data/scripts/sw_menu.py').exists():
         _sw_scripts = Path(f'{sw_rc}/data/scripts')
 
     elif Path(f'{sw_default_path}/StartWine/data/scripts/sw_menu.py').exists():
@@ -34,26 +35,26 @@ def get_sw_scripts_path():
 
 swrc = Path(f'{Path.home()}/.config/swrc')
 sw_default_path = Path(f'{Path.home()}/.local/share')
-sw_scripts = os.getenv('SW_SCRIPTS_PATH')
-
-if sw_scripts is None or sw_scripts == '':
-    sw_scripts = get_sw_scripts_path()
+sw_scripts = getenv('SW_SCRIPTS_PATH')
+sw_scripts = sw_scripts if sw_scripts else get_sw_scripts_path()
 
 sw_menu = Path(f"{sw_scripts}/sw_menu.py")
 sw_crier = Path(f"{sw_scripts}/sw_crier.py")
 sw_tray = Path(f"{sw_scripts}/sw_tray.py")
 sw_shell = Path(f"{sw_scripts}/sw_term_shell.py")
+sw_input = Path(f"{sw_scripts}/sw_input.py")
+sw_cast = Path(f"{sw_scripts}/sw_cast.py")
 
 ################################___START___:
 
-CMD_SHOW = 'gdbus call -e --dest ru.project.StartWine \
---object-path /ru/project/StartWine --method ru.project.StartWine.Show "None"'
+CMD_SHOW = 'gdbus call -e --dest ru.launcher.StartWine \
+--object-path /ru/launcher/StartWine --method ru.launcher.StartWine.Show "None"'
 
-CMD_RUN = 'gdbus call -e --dest ru.project.StartWine \
---object-path /ru/project/StartWine --method ru.project.StartWine.Run "None"'
+CMD_RUN = 'gdbus call -e --dest ru.launcher.StartWine \
+--object-path /ru/launcher/StartWine --method ru.launcher.StartWine.Run "None"'
 
-CMD_ACTIVE = 'gdbus call -e --dest ru.project.StartWine \
---object-path /ru/project/StartWine --method ru.project.StartWine.Active "active"'
+CMD_ACTIVE = 'gdbus call -e --dest ru.launcher.StartWine \
+--object-path /ru/launcher/StartWine --method ru.launcher.StartWine.Active "active"'
 
 
 def init_icon_theme():
@@ -65,19 +66,24 @@ def init_icon_theme():
             shell=True, stdout=PIPE, encoding='UTF-8', check=False
     )
     if len(out.stdout.splitlines()) > 0:
-        os.environ['SW_GTK_ICON_THEME'] = out.stdout.splitlines()[0].strip("'")
+        environ['SW_GTK_ICON_THEME'] = out.stdout.splitlines()[0].strip("'")
         print('SW_GTK_ICON_THEME:', out.stdout.splitlines()[0].strip("'"))
 
 
 def silent_start(x_arg):
     """Running the menu in silent mode."""
 
-    if x_arg is None:
-        status = run(f'"{sw_menu}" "--silent"', shell=True, check=False)
+    if x_arg:
+        try:
+            run([sw_menu, "--silent", x_arg])
+        except KeyboardInterrupt:
+            sys.exit(0)
     else:
-        status = run(f'"{sw_menu}" "--silent" "{x_arg}"', shell=True, check=False)
+        try:
+            run([sw_menu, "--silent"])
+        except KeyboardInterrupt:
+            sys.exit(0)
 
-    return status
 
 def gdbus_run(x_arg, x_cmd):
     """Running by calling gdbus."""
@@ -86,16 +92,19 @@ def gdbus_run(x_arg, x_cmd):
         x_arg = x_arg.replace("'", '**')
 
     if x_cmd == CMD_SHOW:
-        x_cmd = f'gdbus call -e --dest ru.project.StartWine \
-        --object-path /ru/project/StartWine --method ru.project.StartWine.Show \
+        x_cmd = f'gdbus call -e --dest ru.launcher.StartWine \
+        --object-path /ru/launcher/StartWine --method ru.launcher.StartWine.Show \
         "{x_arg}"'
 
     if x_cmd == CMD_RUN:
-        x_cmd = f'gdbus call -e --dest ru.project.StartWine \
-        --object-path /ru/project/StartWine --method ru.project.StartWine.Run \
+        x_cmd = f'gdbus call -e --dest ru.launcher.StartWine \
+        --object-path /ru/launcher/StartWine --method ru.launcher.StartWine.Run \
         "{x_arg}"'
 
-    return run(f"/bin/bash -c '{x_cmd}' 2>/dev/null", shell=True, check=False)
+    try:
+        run(f"/bin/bash -c '{x_cmd}' 2>/dev/null", shell=True, check=False)
+    except KeyboardInterrupt:
+        sys.exit(0)
 
 
 def on_start(x_arg, x_cmd):
@@ -106,68 +115,167 @@ def on_start(x_arg, x_cmd):
             shell=True, stdout=PIPE, encoding='UTF-8', check=False
     )
     if out.stdout == '':
-        p = Process(target=silent_start, args=(x_arg,))
-        p.start()
+        ps = Process(target=silent_start, args=(x_arg,))
+        try:
+            ps.start()
+        except KeyboardInterrupt:
+            ps.terminate()
+            sys.exit(0)
+
         out = ''
         while out == '':
-            out = run(
+            check = run(
                     f'/bin/bash -c "{CMD_ACTIVE}" 2>/dev/null',
                     shell=True, stdout=PIPE, encoding='UTF-8', check=False
-            ).stdout
-            time.sleep(0.1)
+            )
+            out = check.stdout
+            sleep(0.1)
 
         if x_cmd == '--run':
-            Process(target=gdbus_run, args=(x_arg, CMD_RUN)).start()
+            p = Process(target=gdbus_run, args=(x_arg, CMD_RUN))
+            try:
+                p.start()
+            except KeyboardInterrupt:
+                p.terminate()
+                sys.exit(0)
         else:
-            Process(target=gdbus_run, args=(x_arg, CMD_SHOW)).start()
-
+            p = Process(target=gdbus_run, args=(x_arg, CMD_SHOW))
+            try:
+                p.start()
+            except KeyboardInterrupt:
+                p.terminate()
+                sys.exit(0)
     else:
         if x_cmd == '--run':
-            Process(target=gdbus_run, args=(x_arg, CMD_RUN)).start()
+            p = Process(target=gdbus_run, args=(x_arg, CMD_RUN))
+            try:
+                p.start()
+            except KeyboardInterrupt:
+                p.terminate()
+                sys.exit(0)
         else:
-            Process(target=gdbus_run, args=(x_arg, CMD_SHOW)).start()
+            p = Process(target=gdbus_run, args=(x_arg, CMD_SHOW))
+            try:
+                p.start()
+            except KeyboardInterrupt:
+                p.terminate()
+                sys.exit(0)
 
 
 def on_cube():
     """Running the StartWine OpenGL cube."""
 
-    return run('mangohud --dlsym cube -v', shell=True, check=False)
+    try:
+        run('mangohud --dlsym cube -v', shell=True, check=False)
+    except KeyboardInterrupt:
+        sys.exit(0)
 
 
 def on_tray():
     """Running the StartWine tray."""
 
-    return run(f'"{sw_tray}"', shell=True, check=False)
-
+    try:
+        run([sw_tray])
+    except KeyboardInterrupt:
+        sys.exit(0)
 
 def on_shell():
     """Running the StartWine terminal shell."""
 
-    return run(f'"{sw_shell}"', shell=True, check=False)
+    try:
+        run([sw_shell])
+    except KeyboardInterrupt:
+        sys.exit(0)
 
 
-def on_crier(x_args):
+def on_crier(args):
     """Running the StartWine Crier dialogs."""
 
-    return run(f"{sw_crier} {x_args}", shell=True, check=False)
+    if len(args) >= 2:
+        try:
+            run([sw_crier, *args])
+        except KeyboardInterrupt:
+            sys.exit(0)
+    else:
+        run([sw_crier, '-h'])
+
+
+def on_path(argv):
+    """Running the StartWine path manager."""
+
+    path = None
+
+    if len(argv) > 2:
+        path = str(argv[2])
+    elif len(argv) == 2:
+        path = str(sw_default_path)
+
+    if path:
+        try:
+            run([sw_crier, '-p', path])
+        except KeyboardInterrupt:
+            sys.exit(0)
+
+
+def on_input():
+    """Running the StartWine tool for handling input devices."""
+
+    run([sw_input, '-h'])
+    try:
+        arg = input('Input option:')
+    except KeyboardInterrupt:
+        sys.exit(0)
+    else:
+        if str(arg).startswith('--') or str(arg).startswith('-'):
+            try:
+                run([sw_input, arg])
+            except KeyboardInterrupt:
+                sys.exit(0)
+        else:
+            print('OptionError: option must be input with "-" or "--"')
+
+
+def on_cast():
+    """Running the StartWine screencast tool."""
+
+    try:
+        run([sw_cast])
+    except KeyboardInterrupt:
+        sys.exit(0)
 
 
 def on_helper():
     """commandline help info"""
 
     sw_start_help = '''
-    -c or --cube                          running opengl cube
-    -t or --tray                          running StartWine in tray
-    -d or --dialog ('-h' for print help)  running dialogs with message
-    -p or --path                          running StartWine path chooser
-    -h or --help                          print this help info and exit
+    ----------------------------------------------------------------------------
+    StartWine:
+    Is a Windows application launcher for GNU/Linux operating systems.
+    Includes many features, extensions, and fixes to improve performance,
+    visuals, and usability.
+
+    ----------------------------------------------------------------------------
+    Usage commandline: [sw] [argument] or [option]
+
+    ----------------------------------------------------------------------------
+    Arguments:
+    any system path to directory or file
+
+    ----------------------------------------------------------------------------
+    Options:
+    -c or --cube                    opengl and vulkan cube with mangohud overlay
+    -t or --tray                    running StartWine in tray
+    -d or --dialog                  set of tools with dialog windows and others
+    -i or --input                   set of tools for handling input devices
+    -r or --record                  screen recording tool
+    -h or --help                    print this help info and exit
+
+    ----------------------------------------------------------------------------
     '''
     print(sw_start_help)
 
 
 if __name__ == '__main__':
-
-    init_icon_theme()
 
     if len(argv) == 1:
         on_start(None, None)
@@ -184,18 +292,18 @@ if __name__ == '__main__':
             on_shell()
 
         elif argv[1] == '--dialog' or argv[1] == '-d':
-            if len(argv) > 2:
-                on_crier(argv[2])
-            else:
-                on_helper()
+            argv.remove(argv[0])
+            argv.remove(argv[0])
+            on_crier(argv)
 
         elif argv[1] == '--path' or argv[1] == '-p':
-            if len(argv) > 2:
-                on_crier('-p ' + str(argv[2]))
-            elif len(argv) == 2:
-                on_crier('-p ' + str(sw_default_path))
-            else:
-                on_helper()
+            on_path(argv)
+
+        elif argv[1] == '--input' or argv[1] == '-i':
+            on_input()
+
+        elif argv[1] == '--record' or argv[1] == '-r':
+            on_cast()
 
         elif argv[1] == '--help' or argv[1] == '-h':
             on_helper()
@@ -205,3 +313,4 @@ if __name__ == '__main__':
                 on_start(argv[1], argv[2])
             else:
                 on_start(argv[1], None)
+
