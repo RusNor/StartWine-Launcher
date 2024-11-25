@@ -3059,6 +3059,7 @@ def sw_activate(swgs):
         else:
             sorted_list = [g_file.query_info('*', Gio.FileQueryInfoFlags.NONE, None)]
 
+        sleep(0.15)
         if len(sorted_list) == 0:
             dir_list.set_file(g_file)
         else:
@@ -11369,13 +11370,13 @@ def sw_activate(swgs):
                 or swgs.cfg['view_widget'] == vw_dict['startapp_page']):
             on_shortcuts()
 
-        elif swgs.cfg['view_widget'] == vw_dict['files']:
-            swgs.current_dir = swgs.cfg['current_dir']
+        elif swgs.cfg.get('view_widget') == vw_dict['files']:
+            swgs.current_dir = swgs.cfg['current_dir'] if swgs.cfg.get('current_dir') else Path.home()
 
             if Path(swgs.current_dir).exists():
                 on_files(Path(swgs.current_dir))
             else:
-                swgs.default_dir = swgs.cfg['default_dir']
+                swgs.default_dir = swgs.cfg['default_dir'] if swgs.cfg.get('default_dir') else Path.home()
                 on_files(Path(swgs.default_dir))
         else:
             swgs.default_dir = swgs.cfg['default_dir']
@@ -15760,7 +15761,10 @@ def sw_activate(swgs):
     btn_scale_icons.set_range(24, 216)
     btn_scale_icons.set_snap_to_ticks(True)
     btn_scale_icons.set_update_policy(Gtk.SpinButtonUpdatePolicy.IF_VALID)
-    btn_scale_icons.set_value(swgs.cfg['icon_size'])
+    ic_size = (
+        int(swgs.cfg.get('icon_size')) if swgs.cfg.get('icon_size') else 60
+    )
+    btn_scale_icons.set_value(ic_size)
     btn_scale_icons.connect('value-changed', on_set_px_size)
 
     btn_scale_shortcuts = Gtk.SpinButton(css_name='sw_spinbutton')
@@ -15773,7 +15777,10 @@ def sw_activate(swgs):
     btn_scale_shortcuts.set_range(96, 288)
     btn_scale_shortcuts.set_snap_to_ticks(True)
     btn_scale_shortcuts.set_update_policy(Gtk.SpinButtonUpdatePolicy.IF_VALID)
-    btn_scale_shortcuts.set_value(swgs.cfg['shortcut_size'])
+    sc_size = (
+        int(swgs.cfg.get('shortcut_size')) if swgs.cfg.get('shortcut_size') else 120
+    )
+    btn_scale_shortcuts.set_value(sc_size)
     btn_scale_shortcuts.connect('value-changed', on_set_px_size)
 
     menu_box = Gtk.Grid()
