@@ -71,9 +71,6 @@ StartWine Screenshots (Doubtful, but okeey)
 ![sw_image5](/handbook/en/sw_image5.png)
 ![sw_image6](/handbook/en/sw_image6.png)
 ![sw_image7](/handbook/en/sw_image7.png)
-![sw_image8](/handbook/en/sw_image8.png)
-![sw_image9](/handbook/en/sw_image9.png)
-![sw_image10](/handbook/en/sw_image10.png)
 
 ## Creating shortcuts and running games
 If you click "NO" in the choice to create a prefix for .exe and other windup formats, the default prefix for the shortcut will be used by default.
