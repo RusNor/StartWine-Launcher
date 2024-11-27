@@ -69,9 +69,6 @@ https://github.com/RusNor/StartWine-Launcher/assets/81373196/54c14c12-05f8-48e2-
 ![sw_image5](/handbook/ru/sw_image5.png)
 ![sw_image6](/handbook/ru/sw_image6.png)
 ![sw_image7](/handbook/ru/sw_image7.png)
-![sw_image8](/handbook/ru/sw_image8.png)
-![sw_image9](/handbook/ru/sw_image9.png)
-![sw_image10](/handbook/ru/sw_image10.png)
 
 ## Cоздание ярлыков и запуск игр
 Если нажать кнопку "НЕТ" в выборе создания префикса для .exe и других виндовых форматов, то будет использоваться префикс по умолчанию для ярлыка.
