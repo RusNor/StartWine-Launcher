@@ -5,7 +5,7 @@ export START_WINE_PATH
 
 ###############################   VERSION   ####################################
 
-export SW_VER="407"
+export SW_VER="408"
 export UTILS_VER="2.6"
 export PFX_DEF_VER="0.2"
 
@@ -1110,23 +1110,6 @@ RUN_VULKAN () {
         cd "${SW_GAME_PATH}" || exit
 
         ${SW_RUN_MANGOHUD} "${WINELOADER}" ${VDESKTOP} "$@" ${LAUNCH_PARAMETERS}
-        "${WINESERVER}" -w
-
-        if [ -z "${WAYLAND_DISPLAY}" ]; then
-            if [ "$(command -v xrandr)" 1>/dev/null ]; then
-                SCREEN_RESOLUTION="$(xrandr -q | sed -n -e 's/.* connected primary \([^ +]*\).*/\1/p')"
-                SCREEN_OUTPUT="$(xrandr -q | sed -n -e 's/\([^ ]*\) connected primary.*/\1/p')"
-
-                if [ -z "${SCREEN_RESOLUTION}" ] || [ -z "${SCREEN_OUTPUT}" ]; then
-                    SCREEN_RESOLUTION="$(xrandr -q | sed -n -e 's/.* connected \([^ +]*\).*/\1/p')"
-                    SCREEN_OUTPUT="$(xrandr -q | sed -n -e 's/\([^ ]*\) connected.*/\1/p')"
-                fi
-
-                xrandr --output "${SCREEN_OUTPUT}" --mode "${SCREEN_RESOLUTION}" &>/dev/null
-                [ "$(command -v xgamma)" 1>/dev/null ] && \
-                    xgamma -gamma 1.0 &>/dev/null
-            fi
-        fi
 
     else
 
@@ -1311,23 +1294,7 @@ RUN_VULKAN () {
         cd "${SW_GAME_PATH}" || exit
 
         "${WINELOADER}" ${VDESKTOP} "$@" ${LAUNCH_PARAMETERS}
-        "${WINESERVER}" -w
 
-        if [ -z "${WAYLAND_DISPLAY}" ]; then
-            if [ "$(command -v xrandr)" 1>/dev/null ]; then
-                SCREEN_RESOLUTION="$(xrandr -q | sed -n -e 's/.* connected primary \([^ +]*\).*/\1/p')"
-                SCREEN_OUTPUT="$(xrandr -q | sed -n -e 's/\([^ ]*\) connected primary.*/\1/p')"
-
-                if [ -z "${SCREEN_RESOLUTION}" ] || [ -z "${SCREEN_OUTPUT}" ]; then
-                    SCREEN_RESOLUTION="$(xrandr -q | sed -n -e 's/.* connected \([^ +]*\).*/\1/p')"
-                    SCREEN_OUTPUT="$(xrandr -q | sed -n -e 's/\([^ ]*\) connected.*/\1/p')"
-                fi
-
-                xrandr --output "${SCREEN_OUTPUT}" --mode "${SCREEN_RESOLUTION}" &>/dev/null
-                [ "$(command -v xgamma)" 1>/dev/null ] && \
-                    xgamma -gamma 1.0 &>/dev/null
-            fi
-        fi
     fi
 
 }

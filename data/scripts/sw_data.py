@@ -155,7 +155,7 @@ sw_fm_cache_stats = Path(f'{sw_fm_cache}/stats')
 sw_runtime = Path(f"{sw_path}/data/runtime/sw_runtime")
 sys_sounds = Path(f'/usr/share/sounds/freedesktop/stereo')
 sw_sounds = Path(f'{sw_themes}/sounds')
-sw_startup_sounds = f'{sw_sounds}/startup'
+sw_startup_sounds = Path(f'{sw_sounds}/startup/ps.mp3')
 sw_bookmarks = Path(f'{Path.home()}/.cache/sw_fm/bookmarks')
 sw_playlist = Path(f'{Path.home()}/.cache/sw_fm/playlist')
 sw_background = Path(f'{sw_themes}/background')
@@ -326,7 +326,7 @@ default_bookmarks = str(
     + f'{sw_tmp}/logs\n'
 )
 default_playlist = str(
-    f'{sw_startup_sounds}/ps.mp3\n'
+    f'{sw_startup_sounds}\n'
 )
 
 default_ini = {

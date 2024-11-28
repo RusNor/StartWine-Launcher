@@ -22,6 +22,10 @@ import tarfile
 import zipfile
 import itertools
 
+environ['SW_DIFF_CSS_DARK'] = '1'
+environ['SW_DIFF_CSS_LIGHT'] = '1'
+environ['SW_DIFF_CSS_CUSTOM'] = '1'
+
 from sw_data import *
 from sw_data import sw_renderer
 
@@ -32,9 +36,6 @@ start_time = time()
 filterwarnings("ignore")
 ls_gpu_in_use = "lspci -nnk | grep -i vga -A3 | grep 'in use' | cut -d ' ' -f5-100"
 environ['WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS'] = '1'
-environ['SW_DIFF_CSS_DARK'] = '1'
-environ['SW_DIFF_CSS_LIGHT'] = '1'
-environ['SW_DIFF_CSS_CUSTOM'] = '1'
 #environ['GDK_DEBUG'] = 'fatal-criticals'
 
 gpu_in_use = None
@@ -895,12 +896,6 @@ def sw_activate(swgs):
                 return on_terminal()
 
         if ((state & all_mask) == Gdk.ModifierType.ALT_MASK
-                and k_val[1] in (Gdk.KEY_v, Gdk.KEY_V)):
-
-            if main_stack.get_visible_child() == files_view_grid:
-                return on_video()
-
-        if ((state & all_mask) == Gdk.ModifierType.ALT_MASK
                 and k_val[1] in (Gdk.KEY_m, Gdk.KEY_M)):
 
             if stack_progress_main.get_visible_child() != media_main_grid:
@@ -1001,11 +996,15 @@ def sw_activate(swgs):
             return on_sidebar()
 
         if keyval == Gdk.KEY_Escape:
+
             if stack_search_path.get_visible_child() != box_path:
                 entry_search.set_text('')
                 stack_search_path.set_visible_child(box_path)
 
-            if btn_back_main.get_visible():
+            if video_player.get_visible():
+                return on_video()
+
+            elif btn_back_main.get_visible():
                 return on_back_main()
 
             elif sidebar_revealer.get_reveal_child():
@@ -2326,8 +2325,10 @@ def sw_activate(swgs):
             stack_progress_main.set_visible_child(media_main_grid)
 
         if isinstance(samples, str):
-            stream.stream_unprepared()
-            media_file.clear()
+            if stream.has_audio() or stream.has_video():
+                stream.stream_unprepared()
+                media_file.clear()
+
             media_file.set_filename(f'{samples}')
             media_file.set_volume(volume)
             media_file.play()
@@ -2349,6 +2350,14 @@ def sw_activate(swgs):
             add_playlist_menu()
 
         update_playlist()
+
+    def check_the_sound():
+        """___check startup sound___"""
+
+        if swgs.cfg.get('sound') == 'on':
+            if sw_startup_sounds.exists():
+                media_play(media_file, str(sw_startup_sounds), media_controls, 0.7, False)
+        return False
 
     def cb_playlist_activate(self, position):
         """___playback media playlist item___"""
@@ -3059,7 +3068,6 @@ def sw_activate(swgs):
         else:
             sorted_list = [g_file.query_info('*', Gio.FileQueryInfoFlags.NONE, None)]
 
-        sleep(0.15)
         if len(sorted_list) == 0:
             dir_list.set_file(g_file)
         else:
@@ -16075,6 +16083,7 @@ def sw_activate(swgs):
     terminal.add_controller(ctrl_key_term)
 
     video_player = Gtk.Video()
+    video_player.set_visible(False)
 
 ####___file_view_lists___.
 
@@ -16586,19 +16595,12 @@ def sw_activate(swgs):
         #set_parent_layer(parent, monitor)
         parent.present()
 
-    ####___event handlers___.
+    ####___check event handlers___.
     GLib.timeout_add(200, check_reveal_flap)
     GLib.timeout_add(350, check_file_monitor_event)
     GLib.timeout_add(200, check_volume)
     GLib.timeout_add(100, key_event_handler)
-
-    ####___Sound_check___.
-    if swgs.cfg.get('sound') == 'on':
-        if Path(sw_startup_sounds).exists():
-            samples = get_samples_list(sw_startup_sounds)
-            if len(samples) > 0:
-                media_play(media_file, samples, media_controls, 0.7, False)
-
+    GLib.timeout_add(250, check_the_sound)
     set_print_run_time(True)
 
 

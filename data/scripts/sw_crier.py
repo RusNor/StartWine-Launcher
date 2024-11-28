@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+from os import environ
 import sys
 import time
 from sys import argv, exit
@@ -21,7 +22,7 @@ import pefile
 from PIL import Image
 
 if os.getenv('GSK_RENDERER') == 'vulkan':
-    os.environ['ENABLE_VKBASALT'] = '0'
+    environ['ENABLE_VKBASALT'] = '0'
 
 import gi
 gi.require_version('Gtk', '4.0')
@@ -29,6 +30,7 @@ gi.require_version('Gdk', '4.0')
 from gi.repository import Gdk, Gio, GLib, Gtk, Gsk, Graphene, Pango
 from sw_data import Msg as msg
 from sw_data import TermColors as tc
+
 filterwarnings('ignore')
 
 #############################___PATH_DATA___:
@@ -377,7 +379,7 @@ def run_menu():
         with open(f'{Path.home()}/.config/swrc', 'r', encoding='utf-8') as rc:
             dest_path = rc.read().splitlines()[0]
             rc.close()
-        run(f'{dest_path}/data/scripts/sw_menu.py', start_new_session=True, check=False)
+        run([f'{dest_path}/data/scripts/sw_menu.py'], check=False)
     else:
         print(f'{Path.home()}/.config/swrc not found...')
 

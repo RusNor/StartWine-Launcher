@@ -18,7 +18,8 @@ if getenv('XDG_SESSION_TYPE') == 'wayland':
 
     if gpu_in_use == 'nvidia':
         environ['PYOPENGL_PLATFORM'] = 'posix'
-        environ['GDK_DEBUG'] = 'gl-glx'
+        environ['GDK_DEBUG'] = 'gl-prefer-gl'
+        environ['GDK_DISABLE'] = 'egl'
         environ['GDK_BACKEND'] = 'x11'
         environ['GSK_RENDERER'] = 'opengl'
     else:
@@ -28,7 +29,8 @@ if getenv('XDG_SESSION_TYPE') == 'wayland':
         environ['GSK_RENDERER'] = 'opengl'
 else:
     environ['PYOPENGL_PLATFORM'] = 'posix'
-    environ['GDK_DEBUG'] = 'gl-glx'
+    environ['GDK_DEBUG'] = 'gl-prefer-gl'
+    environ['GDK_DISABLE'] = 'egl'
     environ['GDK_BACKEND'] = 'x11'
     environ['GSK_RENDERER'] = 'opengl'
 
