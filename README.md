@@ -74,6 +74,7 @@ StartWine Screenshots (Doubtful, but okeey)
 
 ## Creating shortcuts and running games
 Go to the directory, click 2 times on the .exe file and select “Create shortcut”
+
 After that you can just click on the “Start” button and start playing your exquisite game :)
 
 https://github.com/user-attachments/assets/8759ccd4-11ae-4b41-a181-f3b77a45c855
