@@ -71,6 +71,7 @@ StartWine Screenshots (Doubtful, but okeey)
 ![sw_image5](/handbook/en/sw_image5.png)
 ![sw_image6](/handbook/en/sw_image6.png)
 ![sw_image7](/handbook/en/sw_image7.png)
+![sw_image8](/handbook/en/sw_image8.png)
 
 ## Creating shortcuts and running games
 Go to the directory, click 2 times on the .exe file and select “Create shortcut”
