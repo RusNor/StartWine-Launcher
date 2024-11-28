@@ -50,6 +50,15 @@ bash -c "$(curl -sL 'https://huggingface.co/SudoNano/sw_repo/resolve/main/sw_ins
 bash -c "$(wget -qO - 'https://huggingface.co/SudoNano/sw_repo/resolve/main/sw_install?download=true')"
 ```
 
+Команды для Ubuntu если вдруг установка не проходит
+
+```shell
+sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+```
+```shell
+sudo tee -a /etc/sysctl.d/98-apparmor-unuserns.conf <<<kernel.apparmor_restrict_unprivileged_userns=0
+```
+
 ## Интерфейс
 
 Видео демонстрация интерфейса StartWine
