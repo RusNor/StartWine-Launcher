@@ -69,6 +69,7 @@ https://github.com/user-attachments/assets/6037ec38-a5ad-40b4-ad6d-81662f83911e
 ![sw_image5](/handbook/ru/sw_image5.png)
 ![sw_image6](/handbook/ru/sw_image6.png)
 ![sw_image7](/handbook/ru/sw_image7.png)
+![sw_image8](/handbook/ru/sw_image8.png)
 
 ## Cоздание ярлыков и запуск игр
 Заходим в каталог, щёлкаем 2 раза на .exe файл и выбираем "Создать ярлык"
