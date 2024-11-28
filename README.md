@@ -26,32 +26,40 @@ Discord > [Click](https://discord.gg/jjY3auVdfm)
 Make the file executable and launch it with a double click
 
 ## To install with one command:
-```
+```bash
 bash -c "$(curl -sL RusNor.github.io)"
 ```
 or
-```
+```bash
 bash -c "$(wget -qO - RusNor.github.io)"
 ```
 or
-```
+```bash
 bash -c "$(curl -sL nix-on-nix.github.io)"
 ```
 or
-```
+```bash
 bash -c "$(wget -qO - nix-on-nix.github.io)"
 ```
 
 Mirror: HuggingFace
 
-```
+```bash
 bash -c "$(curl -sL 'https://huggingface.co/SudoNano/sw_repo/resolve/main/sw_install?download=true')"
 ```
 or
-```
+```bash
 bash -c "$(wget -qO - 'https://huggingface.co/SudoNano/sw_repo/resolve/main/sw_install?download=true')"
 ```
 
+The command for Ubuntu if the installation suddenly fails
+
+```shell
+sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+```
+```shell
+sudo tee -a /etc/sysctl.d/98-apparmor-unuserns.conf <<<kernel.apparmor_restrict_unprivileged_userns=0
+```
 ## GUI
 
 Video demonstration of StartWine interface
