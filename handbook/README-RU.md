@@ -160,7 +160,7 @@ StartWine был написан с нуля, но с использование�
 
 Автор руководства > [Lintech](https://www.youtube.com/c/Lintech8)
 
-Веб-сайт > [Клик](https://startwine-project.ru/)
+Веб-сайт > [Клик](https://startwine-launcher.ru/)
 
 Телеграм > [Клик](https://t.me/StartWine)
 
