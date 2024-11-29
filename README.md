@@ -161,7 +161,7 @@ Thank you to everyone who participated in the testing and development of StartWi
 
 The author of the manual > [Lintech](https://www.youtube.com/c/Lintech8)
 
-Website > [Click](https://startwine-project.ru/)
+Website > [Click](https://startwine-launcher.ru/)
 
 Telegram > [Click](https://t.me/StartWine)
 
