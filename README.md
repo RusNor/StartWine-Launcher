@@ -142,7 +142,6 @@ StartWine was written from scratch, but using already ready-made components with
 - Survolog
 - Lex
 - Lintech
-- LinuxShef
 - Sheridan
 - Wik
 
