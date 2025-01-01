@@ -141,7 +141,6 @@ StartWine был написан с нуля, но с использование�
 - Survolog
 - Lex
 - Lintech
-- LinuxShef
 - Sheridan
 - Wik
 
