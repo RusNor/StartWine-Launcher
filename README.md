@@ -42,16 +42,6 @@ or
 bash -c "$(wget -qO - nix-on-nix.github.io)"
 ```
 
-Mirror: HuggingFace
-
-```bash
-bash -c "$(curl -sL 'https://huggingface.co/SudoNano/sw_repo/resolve/main/sw_install?download=true')"
-```
-or
-```bash
-bash -c "$(wget -qO - 'https://huggingface.co/SudoNano/sw_repo/resolve/main/sw_install?download=true')"
-```
-
 The command for Ubuntu if the installation suddenly fails
 
 ```shell
