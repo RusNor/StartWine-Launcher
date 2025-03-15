@@ -33,14 +33,6 @@ or
 ```bash
 bash -c "$(wget -qO - RusNor.github.io)"
 ```
-or
-```bash
-bash -c "$(curl -sL nix-on-nix.github.io)"
-```
-or
-```bash
-bash -c "$(wget -qO - nix-on-nix.github.io)"
-```
 
 The command for Ubuntu if the installation suddenly fails
 
