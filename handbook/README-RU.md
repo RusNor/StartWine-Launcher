@@ -31,24 +31,6 @@ bash -c "$(curl -sL RusNor.github.io)"
 ```
 bash -c "$(wget -qO - RusNor.github.io)"
 ```
-или
-```
-bash -c "$(curl -sL nix-on-nix.github.io)"
-```
-или
-```
-bash -c "$(wget -qO - nix-on-nix.github.io)"
-```
-
-Зеркало: HuggingFace
-
-```
-bash -c "$(curl -sL 'https://huggingface.co/SudoNano/sw_repo/resolve/main/sw_install?download=true')"
-```
-или
-```
-bash -c "$(wget -qO - 'https://huggingface.co/SudoNano/sw_repo/resolve/main/sw_install?download=true')"
-```
 
 Команды для Ubuntu если вдруг установка не проходит
 
