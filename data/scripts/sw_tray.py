@@ -21,8 +21,6 @@ filterwarnings("ignore")
 sw_link = Path(__file__).absolute().parent
 sw_scripts = f"{sw_link}"
 sw_path = Path(sw_scripts).parent.parent
-sw_fsh = Path(f"{sw_scripts}/sw_function.sh")
-sw_run = Path(f"{sw_scripts}/sw_run")
 sw_menu = Path(f"{sw_scripts}/sw_menu.py")
 sw_shortcuts = Path(f"{sw_path}/Shortcuts")
 

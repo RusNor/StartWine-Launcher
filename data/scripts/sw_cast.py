@@ -95,7 +95,7 @@ muxer_dict = {
 
 
 def get_screen_dict():
-    """"___Get X11 screen dictionary___"""
+    """___Get X11 screen dictionary___"""
 
     gi.require_version('Gdk', '4.0')
     from gi.repository import Gdk
@@ -120,7 +120,7 @@ def get_screen_dict():
 
 
 def get_xprop_list():
-    """"___Get X11 window xid dictionary___"""
+    """___Get X11 window xid dictionary___"""
 
     xid_list = list()
     xid_dict = dict()
@@ -137,7 +137,7 @@ def get_xprop_list():
 
 
 def get_xid_dict():
-    """"___Get X11 window xid dictionary___"""
+    """___Get X11 window xid dictionary___"""
 
     try:
         from Xlib.display import Display
@@ -676,6 +676,7 @@ class SwScreenCast:
         self.controller.quit()
         self.loop.quit()
 
+
 def print_encoder_list():
 
     f = ['mp4', 'mkv', 'ts', 'flv']
@@ -710,6 +711,7 @@ def print_audio_devices():
 
     app = SwScreenCast()
     app.get_audio_devices()
+
 
 def main(args):
 

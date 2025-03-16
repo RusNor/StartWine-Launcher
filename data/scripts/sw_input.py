@@ -764,7 +764,8 @@ class SwDeviceRedirectionSettings(Gtk.Widget):
     def close(self, _btn):
         """Close controller settings window."""
 
-        self.data['controller_active'] = True
+        if self.data:
+            self.data['controller_active'] = True
         self.is_active = False
         self.parent.close()
 
@@ -986,6 +987,8 @@ class SwDeviceRedirectionSettings(Gtk.Widget):
         """Listen input events from the device."""
 
         while self.widget_list == []:
+            if not self.is_active:
+                break
             time.sleep(1)
         else:
             while self.is_active:

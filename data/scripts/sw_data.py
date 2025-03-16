@@ -1769,7 +1769,7 @@ donation_source = {
 news_source = 'https://github.com/RusNor/StartWine-Launcher/releases'
 website_source = 'https://startwine-launcher.ru'
 github_source = 'https://github.com/RusNor'
-telegram_source = 'https://t.me/StartWine'
+telegram_source = 'https://t.me/Rus_Nor_SW'
 discord_source = 'https://discord.com/invite/37FrGUpDEj'
 license_source = 'https://www.gnu.org/licenses/gpl-3.0.html'
 
@@ -1787,7 +1787,7 @@ url_source = {
    # 'startwine': ['https://startwine-project.ru', f'{sw_gui_icons}/sw_icon.png'],
    # 'github': ['https://github.com/RusNor', f'{sw_symbolic_icons}/github.png'],
    # 'vkontakte': [' https://vk.com/club213719866', f'{sw_symbolic_icons}/vk.png'],
-   # 'telegram': ['https://t.me/StartWine', f'{sw_symbolic_icons}/telegram.png'],
+   # 'telegram': ['https://t.me/Rus_Nor_SW', f'{sw_symbolic_icons}/telegram.png'],
    # 'discord': ['https://discord.com/invite/37FrGUpDEj', f'{sw_symbolic_icons}/discord.png'],
    # 'license': ['https://www.gnu.org/licenses/gpl-3.0.html', f'{sw_symbolic_icons}/gnu.png'],
    # 'donation': ['https://my.qiwi.com/form/Nykyta-MhrLvGVgb3', f'{sw_symbolic_icons}/qiwi.png'],

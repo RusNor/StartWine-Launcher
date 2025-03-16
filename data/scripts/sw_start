@@ -41,7 +41,7 @@ sw_scripts = sw_scripts if sw_scripts else get_sw_scripts_path()
 sw_menu = Path(f"{sw_scripts}/sw_menu.py")
 sw_crier = Path(f"{sw_scripts}/sw_crier.py")
 sw_tray = Path(f"{sw_scripts}/sw_tray.py")
-sw_shell = Path(f"{sw_scripts}/sw_term_shell.py")
+sw_shell = Path(f"{sw_scripts}/sw_term.py")
 sw_input = Path(f"{sw_scripts}/sw_input.py")
 sw_cast = Path(f"{sw_scripts}/sw_cast.py")
 

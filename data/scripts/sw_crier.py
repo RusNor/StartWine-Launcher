@@ -11,7 +11,7 @@ from warnings import filterwarnings
 import json
 import urllib.request
 from urllib.request import Request, urlopen
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 from subprocess import run
 import itertools
 from collections import deque
@@ -21,7 +21,7 @@ import struct
 import pefile
 from PIL import Image
 
-if os.getenv('GSK_RENDERER') == 'vulkan':
+if not os.getenv('GSK_RENDERER') or os.getenv('GSK_RENDERER') == 'vulkan':
     environ['ENABLE_VKBASALT'] = '0'
 
 import gi
@@ -1742,11 +1742,11 @@ def download(_url, _filename):
     }
     try:
         _response = urlopen(Request(_url, headers=request_headers))
-    except HTTPError as e_1:
+    except (URLError, HTTPError) as e_1:
         print(e_1)
         try:
             urllib.request.urlretrieve(_url, _filename)
-        except HTTPError as e_2:
+        except (URLError, HTTPError) as e_2:
             print(e_2)
             exit(1)
         else:
@@ -1766,8 +1766,11 @@ def get_total_size(_url, _filename):
         totalsize = None
 
     if totalsize is None:
-        with urlopen(_url) as u:
-            totalsize = u.length
+        try:
+            with urlopen(_url) as u:
+                totalsize = u.length
+        except (URLError, HTTPError) as e:
+            totalsize = None
 
     sys.stdout.write(f'Total size: {totalsize}\t{Path(_filename).name}\n')
     return totalsize
@@ -1822,7 +1825,7 @@ class SwDownloadBar(Gtk.Application):
         try:
             with urlopen(_url) as u:
                 self.totalsize = u.length
-        except HTTPError as e:
+        except (URLError, HTTPError) as e:
             print(e)
 
         self.filename = _filename
@@ -2214,7 +2217,7 @@ def on_helper():
     It is a set of tools with dialog boxes, progress bars and others.
 
     ----------------------------------------------------------------------------
-    Usage Crier: [crier] [option]
+    Usage: [crier] [option] [optional arguments]
 
     ----------------------------------------------------------------------------
     Options:

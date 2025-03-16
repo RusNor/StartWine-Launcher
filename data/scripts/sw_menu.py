@@ -81,7 +81,7 @@ if getenv('XDG_SESSION_TYPE') == 'wayland' or getenv('WAYLAND_DISPLAY'):
             environ['GSK_RENDERER'] = str(getenv('SW_RENDERER'))
         #environ['GDK_VULKAN_DEVICE'] = 'list'
 else:
-    if str(sw_renderer) == 'vulkan':
+    if str(sw_renderer) == 'vulkan' and gpu_in_use != 'nvidia':
         environ['PYOPENGL_PLATFORM'] = 'egl'
         environ['GDK_DEBUG'] = 'gl-prefer-gl'
         environ['GDK_BACKEND'] = 'x11'
@@ -93,12 +93,6 @@ else:
         environ['GDK_BACKEND'] = 'x11'
         environ['GSK_RENDERER'] = 'opengl'
 
-#environ["LD_LIBRARY_PATH"] = os.path.sep + f'/usr/local/lib'
-#environ['GI_TYPELIB_PATH'] = os.path.sep + f'/usr/local/lib/girepository-1.0'
-#from ctypes import CDLL
-#CDLL('/usr/local/lib/libgtk4-layer-shell.so.1.0.1')
-#gi.require_version('Gtk4LayerShell', '1.0')
-#from gi.repository import Gtk4LayerShell as LayerShell
 
 import gi
 gi.require_version('Gtk', '4.0')
@@ -16600,7 +16594,10 @@ def sw_activate(swgs):
     GLib.timeout_add(350, check_file_monitor_event)
     GLib.timeout_add(200, check_volume)
     GLib.timeout_add(100, key_event_handler)
-    GLib.timeout_add(250, check_the_sound)
+
+    if gpu_in_use != 'nvidia':
+        GLib.timeout_add(250, check_the_sound)
+
     set_print_run_time(True)
 
 
@@ -16644,9 +16641,10 @@ if __name__ == '__main__':
     try:
         sw.run()
     except KeyboardInterrupt:
-        for p in process_workers:
-            p.terminate()
         sw.quit()
 
-    set_print_mem_info(False)
+    for p in process_workers:
+        p.terminate()
+
+    #set_print_mem_info(False)
 
