@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-19 23:33+0300\n"
+"POT-Creation-Date: 2025-04-03 19:15+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,218 +17,193 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: sw_data.py:1570
+#: sw_data.py:1610
 msgid "Dark"
 msgstr ""
 
-#: sw_data.py:1571
+#: sw_data.py:1611
 msgid "Light"
 msgstr ""
 
-#: sw_data.py:1572
+#: sw_data.py:1612
 msgid "Custom"
 msgstr ""
 
-#: sw_data.py:1578 sw_data.py:1579
+#: sw_data.py:1618 sw_data.py:1619
 msgid "Show/Hide StartWine"
 msgstr ""
 
-#: sw_data.py:1580
+#: sw_data.py:1620
 msgid "Run..."
 msgstr ""
 
-#: sw_data.py:1581 sw_data.py:2046
+#: sw_data.py:1621 sw_data.py:2096 sw_data.py:2113
 msgid "Shortcuts"
 msgstr ""
 
-#: sw_data.py:1582
+#: sw_data.py:1622
 msgid "Stop Wine processes"
 msgstr ""
 
-#: sw_data.py:1583 sw_data.py:1907 sw_data.py:4249
+#: sw_data.py:1623 sw_data.py:1926 sw_data.py:4180 sw_data.py:4284
 msgid "Shutdown"
 msgstr ""
 
-#: sw_data.py:1614 sw_data.py:1893 sw_data.py:4047
+#: sw_data.py:1654 sw_data.py:1912 sw_data.py:4076
 msgid "Games and apps"
 msgstr ""
 
-#: sw_data.py:1615 sw_data.py:1901 sw_data.py:4245
+#: sw_data.py:1655 sw_data.py:1920 sw_data.py:4280
 msgid "Interface settings"
 msgstr ""
 
-#: sw_data.py:1616 sw_data.py:1898 sw_data.py:4050
+#: sw_data.py:1656 sw_data.py:1917 sw_data.py:4079
 msgid "Wine builds"
 msgstr ""
 
-#: sw_data.py:1617 sw_data.py:1899 sw_data.py:4049
+#: sw_data.py:1657 sw_data.py:1918 sw_data.py:4078
 msgid "Apps and stores"
 msgstr ""
 
-#: sw_data.py:1618
+#: sw_data.py:1658
 msgid "Application start page"
 msgstr ""
 
-#: sw_data.py:1619 sw_data.py:2254 sw_data.py:4111
+#: sw_data.py:1659 sw_data.py:2331 sw_data.py:4141
 msgid "Launch settings"
 msgstr ""
 
-#: sw_data.py:1620 sw_data.py:2255
+#: sw_data.py:1660 sw_data.py:2332
 msgid "MangoHud settings"
 msgstr ""
 
-#: sw_data.py:1621 sw_data.py:2256
+#: sw_data.py:1661 sw_data.py:2333
 msgid "vkBasalt settings"
 msgstr ""
 
-#: sw_data.py:1622 sw_data.py:1963
+#: sw_data.py:1662 sw_data.py:1993
 msgid "Winetricks"
 msgstr ""
 
-#: sw_data.py:1623 sw_data.py:1894 sw_data.py:4048
+#: sw_data.py:1663 sw_data.py:1913 sw_data.py:4077
 msgid "Files"
 msgstr ""
 
-#: sw_data.py:1624
+#: sw_data.py:1664
 msgid "Web browser"
 msgstr ""
 
-#: sw_data.py:1625 sw_data.py:4183
+#: sw_data.py:1665 sw_data.py:4217
 msgid "Controller settings"
 msgstr ""
 
-#: sw_data.py:1641
+#: sw_data.py:1681
 msgid "Prefix: "
 msgstr ""
 
-#: sw_data.py:1642
+#: sw_data.py:1682
 msgid "Current prefix:\n"
 msgstr ""
 
-#: sw_data.py:1643
+#: sw_data.py:1683
 msgid "Current Wine:\n"
 msgstr ""
 
-#: sw_data.py:1644
+#: sw_data.py:1684
 msgid "Oops! Nothing to run..."
 msgstr ""
 
-#: sw_data.py:1665
+#: sw_data.py:1705
 msgid "New"
 msgstr ""
 
-#: sw_data.py:1666
+#: sw_data.py:1706
 msgid "Details"
 msgstr ""
 
-#: sw_data.py:1667
+#: sw_data.py:1707
 msgid "Authors"
 msgstr ""
 
-#: sw_data.py:1668
+#: sw_data.py:1708
 msgid "License"
 msgstr ""
 
-#: sw_data.py:1669
+#: sw_data.py:1709
 msgid "Donations and help"
 msgstr ""
 
-#: sw_data.py:1670
+#: sw_data.py:1710
 msgid "Check for updates"
 msgstr ""
 
-#: sw_data.py:1671
+#: sw_data.py:1711
 msgid "Code"
 msgstr ""
 
-#: sw_data.py:1672
+#: sw_data.py:1712
 msgid "Projects"
 msgstr ""
 
-#: sw_data.py:1673
+#: sw_data.py:1713
 msgid "Members"
 msgstr ""
 
-#: sw_data.py:1674
+#: sw_data.py:1714
 msgid "Design"
 msgstr ""
 
-#: sw_data.py:1675
+#: sw_data.py:1715
 msgid "Website"
 msgstr ""
 
-#: sw_data.py:1676
+#: sw_data.py:1716
 msgid "Github"
 msgstr ""
 
-#: sw_data.py:1677
+#: sw_data.py:1717
 msgid "Discord"
 msgstr ""
 
-#: sw_data.py:1678
+#: sw_data.py:1718
 msgid "Telegram"
 msgstr ""
 
-#: sw_data.py:1686
+#: sw_data.py:1726
 msgid ""
 "Is a Windows application launcher for GNU/Linux operating systems. Includes "
 "many features, extensions, and fixes to improve performance, visuals, and "
 "usability."
 msgstr ""
 
-#: sw_data.py:1691
+#: sw_data.py:1732
 msgid ""
-"This release adds the following features, updates, and fixes:\n"
-"Bug fixes and performance improvements.\n"
-"Locales updated.\n"
-"Updated prefix configurations.\n"
-"Updated list of Wine versions.\n"
-"Updated list of dxvk and vkd3d versions.\n"
-"Libraries and drivers in the container have been updated.\n"
-"Updated list of hotkeys.\n"
-"Updated the list of libraries in Winetricks.\n"
-"The graphical interface has been updated.\n"
-"All settings of the game or application have been moved to the shortcut "
-"launch page.\n"
-"The list of sidebar buttons has been changed.\n"
-"Added new background animation.\n"
-"Added the ability to rename the name of an installed application or game.\n"
-"Added the ability to change the path to the executable file of the game or "
-"application.\n"
-"Added new animations to the shader list.\n"
-"Added codecs for video playback.\n"
-"Added DirectX 8 support in dxvk mode.\n"
-"Improved image auto-search algorithm.\n"
-"Fixed interface freezes when Star tWine is turned off.\n"
-"Fixed the error of displaying the path when recursively searching in the "
-"file manager.\n"
-"Fixed an error when copying fonts to the prefix of an application or game.\n"
-"Outdated startup settings have been removed (GSTREAMER, GAMEMODE, "
-"DXVK_ASYNC).\n"
+"The full list of changes and fixes for the current release is available at "
+"the link below."
 msgstr ""
 
-#: sw_data.py:1717
+#: sw_data.py:1736
 msgid ""
 "Rustam Normatov\n"
 "Nikita Maslov"
 msgstr ""
 
-#: sw_data.py:1721
+#: sw_data.py:1740
 msgid ""
 "Rustam Normatov\n"
 "Nikita Maslov\n"
 "Maksim Tarasov"
 msgstr ""
 
-#: sw_data.py:1757
+#: sw_data.py:1775
 msgid "StartWine Design Team"
 msgstr ""
 
-#: sw_data.py:1759
+#: sw_data.py:1777
 msgid "GNU General Public License"
 msgstr ""
 
-#: sw_data.py:1762
+#: sw_data.py:1780
 msgid ""
 "StartWine is free software. You can redistribute it and/or modify it under "
 "the terms of the GNU General Public License as published by the Free "
@@ -237,11 +212,11 @@ msgid ""
 "GNU Lesser General Public License for more details."
 msgstr ""
 
-#: sw_data.py:1776
+#: sw_data.py:1794
 msgid "Contribute to the project"
 msgstr ""
 
-#: sw_data.py:1778
+#: sw_data.py:1796
 msgid ""
 "You can contribute to the project by spreading information about it, "
 "offering for discussion any ideas related to improving the functionality and "
@@ -250,159 +225,227 @@ msgid ""
 "amount to the development of the project using the link below."
 msgstr ""
 
-#: sw_data.py:1786
+#: sw_data.py:1804
 msgid "Card"
 msgstr ""
 
-#: sw_data.py:1892
+#: sw_data.py:1911
 msgid "Start"
 msgstr ""
 
-#: sw_data.py:1895 sw_data.py:4045
+#: sw_data.py:1914 sw_data.py:4074
 msgid "Create shortcut"
 msgstr ""
 
-#: sw_data.py:1896 sw_data.py:4180
+#: sw_data.py:1915 sw_data.py:4214
 msgid "Prefix tools"
 msgstr ""
 
-#: sw_data.py:1897 sw_data.py:4181
+#: sw_data.py:1916 sw_data.py:4215
 msgid "Wine tools"
 msgstr ""
 
-#: sw_data.py:1900 sw_data.py:4051 sw_data.py:4179
+#: sw_data.py:1919 sw_data.py:4080 sw_data.py:4213
 msgid "Settings"
 msgstr ""
 
-#: sw_data.py:1902 sw_data.py:4186
+#: sw_data.py:1921 sw_data.py:4220
 msgid "Debug"
 msgstr ""
 
-#: sw_data.py:1903 sw_data.py:4187
+#: sw_data.py:1922 sw_data.py:4221
 msgid "Terminate all processes"
 msgstr ""
 
-#: sw_data.py:1904 sw_data.py:4031 sw_data.py:4188 sw_data.py:4247
+#: sw_data.py:1923 sw_data.py:4060 sw_data.py:4222 sw_data.py:4282
 msgid "About"
 msgstr ""
 
-#: sw_data.py:1905 sw_data.py:4229
+#: sw_data.py:1924 sw_data.py:4264
 msgid "Properties"
 msgstr ""
 
-#: sw_data.py:1906
+#: sw_data.py:1925
 msgid "Bookmarks"
 msgstr ""
 
-#: sw_data.py:1908
+#: sw_data.py:1927
 msgid "Playlist"
 msgstr ""
 
-#: sw_data.py:1920
+#: sw_data.py:1939
 msgid "Default prefix"
 msgstr ""
 
-#: sw_data.py:1921
+#: sw_data.py:1940
 msgid "Application prefix"
 msgstr ""
 
-#: sw_data.py:1935
+#: sw_data.py:1954
 msgid "Remove current prefix"
 msgstr ""
 
-#: sw_data.py:1936
-msgid "Clear current prefix"
-msgstr ""
-
-#: sw_data.py:1937
+#: sw_data.py:1955
 msgid "Reinstall current prefix"
 msgstr ""
 
-#: sw_data.py:1938
+#: sw_data.py:1956
 msgid "Prefix backup"
 msgstr ""
 
-#: sw_data.py:1939
+#: sw_data.py:1957
 msgid "Prefix recovery"
 msgstr ""
 
-#: sw_data.py:1940
+#: sw_data.py:1958
 msgid "Backup of saves"
 msgstr ""
 
-#: sw_data.py:1941
+#: sw_data.py:1959
 msgid "Restoring saves"
 msgstr ""
 
-#: sw_data.py:1958
+#: sw_data.py:1962
+msgid "permanently delete all files of the current prefix."
+msgstr ""
+
+#: sw_data.py:1963
+msgid "reset the prefix to its default state."
+msgstr ""
+
+#: sw_data.py:1964
+msgid "reinstall the current prefix."
+msgstr ""
+
+#: sw_data.py:1965
+msgid ""
+"create a backup copy of the current prefix so that it can be restored if "
+"necessary."
+msgstr ""
+
+#: sw_data.py:1966
+msgid "restore the current prefix from the backup you previously created."
+msgstr ""
+
+#: sw_data.py:1967
+msgid ""
+"create a backup copy of your game saves so that they can be restored if "
+"necessary."
+msgstr ""
+
+#: sw_data.py:1968
+msgid "restore your game saves from a previously created backup."
+msgstr ""
+
+#: sw_data.py:1988
 msgid "Wine settings"
 msgstr ""
 
-#: sw_data.py:1959
+#: sw_data.py:1989
 msgid "Wine console"
 msgstr ""
 
-#: sw_data.py:1960
+#: sw_data.py:1990
 msgid "Regedit"
 msgstr ""
 
-#: sw_data.py:1961
+#: sw_data.py:1991
 msgid "File explorer"
 msgstr ""
 
-#: sw_data.py:1962
+#: sw_data.py:1992
 msgid "Uninstaller"
 msgstr ""
 
-#: sw_data.py:1964 sw_data.py:2258
+#: sw_data.py:1994 sw_data.py:2335
 msgid "Clear shader cache"
 msgstr ""
 
-#: sw_data.py:2032
+#: sw_data.py:1997
+msgid ""
+"is a GUI configuration tool for Wine, designed to make life a little easier "
+"than editing the registry."
+msgstr ""
+
+#: sw_data.py:1999
+msgid ""
+"is the Wine console manager, used to run console commands and applications."
+msgstr ""
+
+#: sw_data.py:2001
+msgid ""
+"is Wine's registry editor, similar in appearance and function to Window's "
+"regedit."
+msgstr ""
+
+#: sw_data.py:2003
+msgid ""
+"is the Wine file manager, with a similar design to early Microsoft Windows "
+"explorer."
+msgstr ""
+
+#: sw_data.py:2005
+msgid ""
+"is a GUI uninstaller for all setup programs that put an uninstall entry in "
+"the registry. It's similar in function to 'Add/Remove Programs' in Windows, "
+"except much simpler."
+msgstr ""
+
+#: sw_data.py:2008
+msgid ""
+"is a helper script to download and install various redistributable runtime "
+"libraries needed to run some programs in Wine."
+msgstr ""
+
+#: sw_data.py:2010
+msgid "removing Vulkan shaders compiled when loading D3D shaders in games."
+msgstr ""
+
+#: sw_data.py:2082
 msgid "Adding a new bookmark completed successfully"
 msgstr ""
 
-#: sw_data.py:2033
+#: sw_data.py:2083
 msgid "Remove bookmark completed successfully"
 msgstr ""
 
-#: sw_data.py:2034
+#: sw_data.py:2084
 msgid "Bookmark is already exists!"
 msgstr ""
 
-#: sw_data.py:2045
+#: sw_data.py:2095 sw_data.py:2112
 msgid "Games"
 msgstr ""
 
-#: sw_data.py:2047
+#: sw_data.py:2097 sw_data.py:2114
 msgid "Prefixes"
 msgstr ""
 
-#: sw_data.py:2048
+#: sw_data.py:2098 sw_data.py:2115
 msgid "Backups"
 msgstr ""
 
-#: sw_data.py:2049
+#: sw_data.py:2099 sw_data.py:2116
 msgid "Prefix configurations"
 msgstr ""
 
-#: sw_data.py:2050
+#: sw_data.py:2100 sw_data.py:2117
 msgid "Logs"
 msgstr ""
 
-#: sw_data.py:2056
+#: sw_data.py:2123
 msgid "Adding a new media file to playlist completed successfully"
 msgstr ""
 
-#: sw_data.py:2057
+#: sw_data.py:2124
 msgid "Remove media file from playlist completed successfully"
 msgstr ""
 
-#: sw_data.py:2058
+#: sw_data.py:2125
 msgid "Media file is already added to playlist!"
 msgstr ""
 
-#: sw_data.py:2062
+#: sw_data.py:2129
 msgid ""
 "Wine (originally an acronym for \"Wine Is Not an Emulator\") is a "
 "compatibility layer capable of running Windows applications on several POSIX-"
@@ -413,11 +456,11 @@ msgid ""
 "cleanly integrate Windows applications into your desktop."
 msgstr ""
 
-#: sw_data.py:2070
+#: sw_data.py:2137
 msgid "List of Wines to download and install"
 msgstr ""
 
-#: sw_data.py:2072
+#: sw_data.py:2139
 msgid ""
 "Wine Staging contains bug fixes and features, which have not been integrated "
 "into the development branch yet. The idea of Wine Staging is to provide "
@@ -426,21 +469,21 @@ msgid ""
 "into the main branch."
 msgstr ""
 
-#: sw_data.py:2077
+#: sw_data.py:2144
 msgid ""
 "Staging-TkG is a Wine build with the Staging patchset applied and with many "
 "additional useful patches. A complete list of patches is in wine-tkg-config."
 "txt inside the build directory."
 msgstr ""
 
-#: sw_data.py:2080
+#: sw_data.py:2147
 msgid ""
 "Is a Wine build modified by Valve and other contributors. It contains many "
 "useful patches (primarily for a better gaming experience), some of them are "
 "unique and not present in other builds."
 msgstr ""
 
-#: sw_data.py:2083
+#: sw_data.py:2150
 msgid ""
 "Proton with the most recent bleeding-edge Proton Experimental Wine. Things "
 "it contains that Valve's Proton does not: Additional media foundation "
@@ -449,11 +492,11 @@ msgid ""
 "staging patches applied as they become needed."
 msgstr ""
 
-#: sw_data.py:2144
+#: sw_data.py:2221
 msgid "List of applications and stores available for installation"
 msgstr ""
 
-#: sw_data.py:2147
+#: sw_data.py:2224
 msgid ""
 "Anomaly Zone - MMORPG, open world game, successor to \"stalker online\". You "
 "can remain alone or conquer the Zone in the company of other daredevils, "
@@ -462,13 +505,13 @@ msgid ""
 "plot."
 msgstr ""
 
-#: sw_data.py:2151
+#: sw_data.py:2228
 msgid ""
 "Battle.net is an online gaming service, including digital distribution and "
 "social platform functions, developed by Blizzard Entertainment."
 msgstr ""
 
-#: sw_data.py:2153
+#: sw_data.py:2230
 msgid ""
 "Caliber is a third-person and first-person multiplayer online game about "
 "modern special forces. The project belongs to the genre of tactical team "
@@ -476,14 +519,14 @@ msgid ""
 "distributed according to the free-to-play business model."
 msgstr ""
 
-#: sw_data.py:2157
+#: sw_data.py:2234
 msgid ""
 "Crossout is a computer multiplayer online game in the genre of post-"
 "apocalyptic action with a third-person view. The core of the game is session "
 "PvP battles in armored vehicles assembled by the players themselves."
 msgstr ""
 
-#: sw_data.py:2160
+#: sw_data.py:2237
 msgid ""
 "EA app is Electronic Arts latest and most advanced PC platform where you can "
 "play your favorite games without any hassle. The app features an improved "
@@ -491,20 +534,20 @@ msgid ""
 "seconds."
 msgstr ""
 
-#: sw_data.py:2163
+#: sw_data.py:2240
 msgid ""
 "Epic Games Store is an online digital distribution service for computer "
 "games developed and managed by the American company Epic Games."
 msgstr ""
 
-#: sw_data.py:2165
+#: sw_data.py:2242
 msgid ""
 "EVE Online is a space massively multiplayer online game developed by the "
 "Icelandic company CCP Games. PvE and PvP battles, research, resource "
 "extraction, production and a realistic economy."
 msgstr ""
 
-#: sw_data.py:2168
+#: sw_data.py:2245
 msgid ""
 "GOG GALAXY 2.0 is a program that will help you combine multiple game "
 "libraries and communicate with friends regardless of the gaming platform, "
@@ -512,14 +555,14 @@ msgid ""
 "to use multiple launchers, GOG GALAXY 2.0 is for you!"
 msgstr ""
 
-#: sw_data.py:2172
+#: sw_data.py:2249
 msgid ""
 "Client online games (MMORPG) and browser games (BBMMORPG), as well as games "
 "for mobile phones and tablets. RPG, Fantasy, Simulation, Adventure, "
 "Strategy, there is even a real life simulator (a la Sims)."
 msgstr ""
 
-#: sw_data.py:2175
+#: sw_data.py:2252
 msgid ""
 "VK Play is a platform for game lovers, developers and content creators. VK "
 "Play combines all the services necessary for the gaming community and offers "
@@ -527,7 +570,7 @@ msgid ""
 "e-sports and much more."
 msgstr ""
 
-#: sw_data.py:2179
+#: sw_data.py:2256
 msgid ""
 "Genshin Impact is an action-adventure computer game with an open world and "
 "RPG elements, developed by the Chinese company miHoYo Limited. The game is "
@@ -535,27 +578,27 @@ msgid ""
 "an in-game store that uses real currency."
 msgstr ""
 
-#: sw_data.py:2183
+#: sw_data.py:2260
 msgid ""
 "Lesta Game Center is part of the platform distribution (game launcher app) "
 "that brings together all your Lesta games, as well as read news about "
 "upcoming features and functions, watch videos and get amazing discounts!"
 msgstr ""
 
-#: sw_data.py:2186
+#: sw_data.py:2263
 msgid ""
 "Game Coast is a client for Lineage 2 - classic free-to-play MMORPG with a "
 "third-person perspective."
 msgstr ""
 
-#: sw_data.py:2188
+#: sw_data.py:2265
 msgid ""
 "Lost Light is a highly realistic hardcore shooter, focused on surviving and "
 "gathering loot with other players, as well as defending yourself from the "
 "unknown."
 msgstr ""
 
-#: sw_data.py:2190
+#: sw_data.py:2267
 msgid ""
 "Yuzu is a free and open source emulator of the Nintendo Switch console. "
 "Developed since January 2018 by the team responsible for Citra, a Nintendo "
@@ -563,14 +606,14 @@ msgid ""
 "is on the official website."
 msgstr ""
 
-#: sw_data.py:2194
+#: sw_data.py:2271
 msgid ""
 "Osu! is a free and open source music game developed and published by Dean "
 "Herbert. The gameplay is based on various popular games including Osu! "
 "Tatakae!"
 msgstr ""
 
-#: sw_data.py:2196
+#: sw_data.py:2273
 msgid ""
 "Path of Exile is an online action role-playing game developed and published "
 "by Grinding Gear Games. The game is based on: a powerful barter economy, "
@@ -578,20 +621,20 @@ msgid ""
 "ratings. The game is completely free."
 msgstr ""
 
-#: sw_data.py:2200
+#: sw_data.py:2277
 msgid ""
 "Plarium Play is a Light and Secure Desktop Game Launcher for PC. Play Free "
 "Games with Blazing HD Graphics and a Worldwide Gaming Community."
 msgstr ""
 
-#: sw_data.py:2202
+#: sw_data.py:2279
 msgid ""
 "Popcorn Time is a cross-platform free BitTorrent client that includes a "
 "media player. Watch popular series and series for people unfamiliar with "
 "movie file sharing technologies and accustomed to video streaming services."
 msgstr ""
 
-#: sw_data.py:2205
+#: sw_data.py:2282
 msgid ""
 "The project www.RPG-club.net is a voluntary non-profit association of fans "
 "of RPG games. Our site does not aim to distribute any RPG games, but is a "
@@ -599,14 +642,14 @@ msgid ""
 "of games."
 msgstr ""
 
-#: sw_data.py:2208
+#: sw_data.py:2285
 msgid ""
 "Riot Games - client for League of Legends, abbreviated as LoL, is a "
 "multiplayer computer game in the MOBA genre developed and published by the "
 "American company Riot Games."
 msgstr ""
 
-#: sw_data.py:2211
+#: sw_data.py:2288
 msgid ""
 "Rockstar Games Launcher is an application that allows you to quickly and "
 "easily manage your collection of Rockstar PC games, both digital and "
@@ -614,21 +657,21 @@ msgid ""
 "You can also use this app to purchase new games from Rockstar."
 msgstr ""
 
-#: sw_data.py:2215
+#: sw_data.py:2292
 msgid ""
 "EXBO launcher for StalCraft - bright and promising adaptation of a familiar "
 "setting in the format of a massive online first-person shooter. Successfully "
 "combining the complete freedom of PvP and interesting PvE elements."
 msgstr ""
 
-#: sw_data.py:2218
+#: sw_data.py:2295
 msgid ""
 "Stalker Online is an MMORPG with shooter elements, which is based on the "
 "spirit of stalking - exploration of mysterious, forgotten and abandoned "
 "areas of the planet by humanity."
 msgstr ""
 
-#: sw_data.py:2221
+#: sw_data.py:2298
 msgid ""
 "Steam is an online digital distribution service for computer games and "
 "programs developed and maintained by Valve. Steam serves as a technical "
@@ -636,14 +679,14 @@ msgid ""
 "a social network for gamers."
 msgstr ""
 
-#: sw_data.py:2225
+#: sw_data.py:2302
 msgid ""
 "Ubisoft Connect is a digital game distribution, DRM, online gaming and "
 "communication service created by Ubisoft. Supports the achievement/trophy "
 "system used in other similar services."
 msgstr ""
 
-#: sw_data.py:2228
+#: sw_data.py:2305
 msgid ""
 "Wargaming.net Game Center is part of a digital distribution platform (game "
 "launcher app) that allows you to keep all your Wargaming games in one place, "
@@ -651,21 +694,21 @@ msgid ""
 "deals!"
 msgstr ""
 
-#: sw_data.py:2231
+#: sw_data.py:2308
 msgid ""
 "Client for World of Sea Battle - A large-scale online game with an open "
 "world in the setting of the Age of Sail! Become a pirate or merchant, team "
 "up with other players."
 msgstr ""
 
-#: sw_data.py:2234
+#: sw_data.py:2311
 msgid ""
 "Zona is a BitTorrent client for watching streaming video content. In "
 "addition to on-demand movies and television series, Zona offers streaming "
 "music, live television channels, news, live sports, and games."
 msgstr ""
 
-#: sw_data.py:2237
+#: sw_data.py:2314
 msgid ""
 "RetroBat is a software designed for emulation and to be the easiest way to "
 "enjoy your game collection. The EmulationStation interface is functional and "
@@ -673,2396 +716,2420 @@ msgid ""
 "visuals to enhance the presentation of your collection."
 msgstr ""
 
-#: sw_data.py:2250
+#: sw_data.py:2327
 msgid "Move settings"
 msgstr ""
 
-#: sw_data.py:2251
+#: sw_data.py:2328
 msgid "Reset interface settings"
 msgstr ""
 
-#: sw_data.py:2257
+#: sw_data.py:2334
 msgid "Reset app settings"
 msgstr ""
 
-#: sw_data.py:2280
+#: sw_data.py:2357
 msgid "Optimization, patches, tools, utilities and libraries"
 msgstr ""
 
-#: sw_data.py:2283
-msgid "LAUNCH_PARAMETERS"
-msgstr ""
-
-#: sw_data.py:2284
-msgid "WINEDLLOVERRIDES"
-msgstr ""
-
-#: sw_data.py:2287
-msgid "WINEARCH"
-msgstr ""
-
-#: sw_data.py:2288
-msgid "WINDOWS_VER"
-msgstr ""
-
-#: sw_data.py:2289
-msgid "REGEDIT_PATCH"
-msgstr ""
-
-#: sw_data.py:2290
-msgid "DXVK_VER"
-msgstr ""
-
-#: sw_data.py:2291
-msgid "VKD3D_VER"
-msgstr ""
-
-#: sw_data.py:2292
-msgid "FSR_MODE"
-msgstr ""
-
-#: sw_data.py:2293
-msgid "LANG_MODE"
-msgstr ""
-
-#: sw_data.py:2295
-msgid "FPS_LIMIT"
-msgstr ""
-
-#: sw_data.py:2298
-msgid "CPU_TOPOLOGY"
-msgstr ""
-
-#: sw_data.py:2337
+#: sw_data.py:2411
 msgid "Set launch parameters"
 msgstr ""
 
-#: sw_data.py:2338
+#: sw_data.py:2412
 msgid "Override dll in the current prefix"
 msgstr ""
 
-#: sw_data.py:2339
-msgid "Set the architecture bit depth for the prefix"
-msgstr ""
-
-#: sw_data.py:2340
+#: sw_data.py:2413
 msgid "Set windows version"
 msgstr ""
 
-#: sw_data.py:2341
+#: sw_data.py:2414
 msgid "Add registry patch"
 msgstr ""
 
-#: sw_data.py:2342
+#: sw_data.py:2415
 msgid "Set dxvk version"
 msgstr ""
 
-#: sw_data.py:2343
+#: sw_data.py:2416
 msgid "Set vkd3d version"
 msgstr ""
 
-#: sw_data.py:2344
+#: sw_data.py:2417
 msgid "Set AMD FSR scaling mode"
 msgstr ""
 
-#: sw_data.py:2345
+#: sw_data.py:2418
 msgid "Set the language for the game or application"
 msgstr ""
 
-#: sw_data.py:2346
+#: sw_data.py:2419
 msgid "Limit frame rate, value \"0\" - no limit"
 msgstr ""
 
-#: sw_data.py:2347
+#: sw_data.py:2420
 msgid "Limit cpu core, value \"0\" - no limit"
 msgstr ""
 
-#: sw_data.py:2387
+#: sw_data.py:2449
 msgid "Ultra"
 msgstr ""
 
-#: sw_data.py:2387
+#: sw_data.py:2449
 msgid "Quality"
 msgstr ""
 
-#: sw_data.py:2387
+#: sw_data.py:2449
 msgid "Balanced"
 msgstr ""
 
-#: sw_data.py:2387
+#: sw_data.py:2449
 msgid "Performance"
 msgstr ""
 
-#: sw_data.py:2428
+#: sw_data.py:2498
 msgid "Using dxvk version from wine-proton-ge"
 msgstr ""
 
-#: sw_data.py:2429
+#: sw_data.py:2499
 msgid "Using vkd3d version from wine-proton-ge"
 msgstr ""
 
-#: sw_data.py:2430
+#: sw_data.py:2500
 msgid "Sytem monitoring for OpenGL mode"
 msgstr ""
 
-#: sw_data.py:2431
+#: sw_data.py:2501
 msgid "Force use opengl, for applications that d'nt run in dxvk and vkd3d"
 msgstr ""
 
-#: sw_data.py:2432
+#: sw_data.py:2502
 msgid "System monitoring in opengl or vulkan (dxvk, vkd3d)"
 msgstr ""
 
-#: sw_data.py:2433
+#: sw_data.py:2503
 msgid "System monitoring in vulkan (dxvk, vkd3d)"
 msgstr ""
 
-#: sw_data.py:2434
+#: sw_data.py:2504
 msgid "Enable windows desktop emulation"
 msgstr ""
 
-#: sw_data.py:2435
+#: sw_data.py:2505
 msgid ""
 "Enable game controller redirection to other input devices such as mouse and "
 "keyboard"
 msgstr ""
 
-#: sw_data.py:2436
+#: sw_data.py:2506
 msgid "Improving frame rates and responsiveness with scheduling policies"
 msgstr ""
 
-#: sw_data.py:2437
+#: sw_data.py:2507
 msgid ""
 "Increase performance for some games, especially ones that rely heavily on "
 "the CPU"
 msgstr ""
 
-#: sw_data.py:2438
+#: sw_data.py:2508
 msgid "For old games that crash on very long extension strings"
 msgstr ""
 
-#: sw_data.py:2439
+#: sw_data.py:2509
 msgid ""
 "Disabling the nvapi library required by PhysX to enable GPU acceleration via "
 "CUDA"
 msgstr ""
 
-#: sw_data.py:2440
+#: sw_data.py:2510
 msgid "Disable debugging mode for Wine to improve performance"
 msgstr ""
 
-#: sw_data.py:2441
+#: sw_data.py:2511
 msgid "Allocate to a 32-bit application more than 2 GB of RAM"
 msgstr ""
 
-#: sw_data.py:2442
+#: sw_data.py:2512
 msgid "To simulate the memory management system of Windows"
 msgstr ""
 
-#: sw_data.py:2443
+#: sw_data.py:2513
 msgid ""
 "Simulated Write Copy - Emulates how Windows loads DLLs into memory more "
 "accurately"
 msgstr ""
 
-#: sw_data.py:2444
+#: sw_data.py:2514
 msgid "Сan optimize some Wineserver calls by using shared memory"
 msgstr ""
 
-#: sw_data.py:2445
+#: sw_data.py:2515
 msgid "System monitoring in dxvk"
 msgstr ""
 
-#: sw_data.py:2446
+#: sw_data.py:2516
 msgid ""
 "vkBasalt is a Vulkan post processing layer to enhance the visual graphics in "
 "games"
 msgstr ""
 
-#: sw_data.py:2447
+#: sw_data.py:2517
 msgid ""
 "AMD FidelityFX Super Resolution - advanced upscaling technologies for higher "
 "fps"
 msgstr ""
 
-#: sw_data.py:2448
+#: sw_data.py:2518
 msgid "Used to manage hybrid graphics found on recent desktops and laptops"
 msgstr ""
 
-#: sw_data.py:2449
+#: sw_data.py:2519
 msgid "Open-source and cross-platform implementation of the .NET Framework"
 msgstr ""
 
-#: sw_data.py:2450
+#: sw_data.py:2520
 msgid ""
 "BattlEye anti-cheat service required to run online games that use this "
 "service"
 msgstr ""
 
-#: sw_data.py:2451
+#: sw_data.py:2521
 msgid "EasyAntCheat service required to run online games that use this service"
 msgstr ""
 
-#: sw_data.py:2452
+#: sw_data.py:2522
 msgid "Preload d3d libraries"
 msgstr ""
 
-#: sw_data.py:2453
+#: sw_data.py:2523
 msgid "Forcibly disabling vsync solves performance issues in some apps"
 msgstr ""
 
-#: sw_data.py:2454
+#: sw_data.py:2524
 msgid ""
 "Hides the definition of nvidia video cards. Required to run some applications"
 msgstr ""
 
-#: sw_data.py:2455
+#: sw_data.py:2525
 msgid "To run games using directx 8 and below, in dxvk mode"
 msgstr ""
 
-#: sw_data.py:2456
+#: sw_data.py:2526
 msgid ""
 "Nvidia DLSS - advanced upscaling technologies for higher fps for higher "
 "frame rate per second"
 msgstr ""
 
-#: sw_data.py:2457
+#: sw_data.py:2527
 msgid "Disable prefix update on startup"
 msgstr ""
 
-#: sw_data.py:2458
+#: sw_data.py:2528
 msgid "Enable or disable shader cache"
 msgstr ""
 
-#: sw_data.py:2508
+#: sw_data.py:2578
 msgid "Current CPU temperature"
 msgstr ""
 
-#: sw_data.py:2509
+#: sw_data.py:2579
 msgid "CPU draw in watts"
 msgstr ""
 
-#: sw_data.py:2510
+#: sw_data.py:2580
 msgid "Load and frequency per core"
 msgstr ""
 
-#: sw_data.py:2511
+#: sw_data.py:2581
 msgid "Shows the CPUs current MHz"
 msgstr ""
 
-#: sw_data.py:2512
+#: sw_data.py:2582
 msgid "Shows the Steam Deck fan rpm"
 msgstr ""
 
-#: sw_data.py:2513
+#: sw_data.py:2583
 msgid "GPU name from pci.ids"
 msgstr ""
 
-#: sw_data.py:2514
+#: sw_data.py:2584
 msgid "Current GPU temperature"
 msgstr ""
 
-#: sw_data.py:2515
+#: sw_data.py:2585
 msgid "GPU draw in watts"
 msgstr ""
 
-#: sw_data.py:2516
+#: sw_data.py:2586
 msgid "GPU core frequency"
 msgstr ""
 
-#: sw_data.py:2517
+#: sw_data.py:2587
 msgid "GPU memory frequency"
 msgstr ""
 
-#: sw_data.py:2518
+#: sw_data.py:2588
 msgid "System RAM usage"
 msgstr ""
 
-#: sw_data.py:2519
+#: sw_data.py:2589
 msgid "System VRAM usage"
 msgstr ""
 
-#: sw_data.py:2520
+#: sw_data.py:2590
 msgid "Swap space usage next to system RAM usage"
 msgstr ""
 
-#: sw_data.py:2521
+#: sw_data.py:2591
 msgid "Process resident memory usage"
 msgstr ""
 
-#: sw_data.py:2522
+#: sw_data.py:2592
 msgid "Process shared memory usage"
 msgstr ""
 
-#: sw_data.py:2523
+#: sw_data.py:2593
 msgid "Process virtual memory usage"
 msgstr ""
 
-#: sw_data.py:2524
+#: sw_data.py:2594
 msgid "Show non-cached IO read, in MiB/s"
 msgstr ""
 
-#: sw_data.py:2525
+#: sw_data.py:2595
 msgid "Show non-cached IO write, in MiB/s"
 msgstr ""
 
-#: sw_data.py:2526
+#: sw_data.py:2596
 msgid "Enables most of the toggleable parameters"
 msgstr ""
 
-#: sw_data.py:2527
+#: sw_data.py:2597
 msgid "Use primary font size for smaller text like units"
 msgstr ""
 
-#: sw_data.py:2528
+#: sw_data.py:2598
 msgid "Show media player metadata"
 msgstr ""
 
-#: sw_data.py:2529
+#: sw_data.py:2599
 msgid "Shows current MangoHud version"
 msgstr ""
 
-#: sw_data.py:2530
+#: sw_data.py:2600
 msgid "Show if the application is 32 or 64 bit"
 msgstr ""
 
-#: sw_data.py:2531
+#: sw_data.py:2601
 msgid "Change fps graph to histogram"
 msgstr ""
 
-#: sw_data.py:2532
+#: sw_data.py:2602
 msgid "Displays used vulkan driver"
 msgstr ""
 
-#: sw_data.py:2533
+#: sw_data.py:2603
 msgid "OpenGL or vulkan-based render engine's version"
 msgstr ""
 
-#: sw_data.py:2534
+#: sw_data.py:2604
 msgid "Shows current Wine or Proton version in use"
 msgstr ""
 
-#: sw_data.py:2535
+#: sw_data.py:2605
 msgid "Frametime next to fps text"
 msgstr ""
 
-#: sw_data.py:2536
+#: sw_data.py:2606
 msgid "Frame count"
 msgstr ""
 
-#: sw_data.py:2537
+#: sw_data.py:2607
 msgid "Current resolution"
 msgstr ""
 
-#: sw_data.py:2538
+#: sw_data.py:2608
 msgid "Current fps limit"
 msgstr ""
 
-#: sw_data.py:2539
+#: sw_data.py:2609
 msgid "Shows if vkBasalt is on"
 msgstr ""
 
-#: sw_data.py:2540
+#: sw_data.py:2610
 msgid "Current battery percent and energy consumption"
 msgstr ""
 
-#: sw_data.py:2541
+#: sw_data.py:2611
 msgid "Battery icon instead of percent"
 msgstr ""
 
-#: sw_data.py:2542
+#: sw_data.py:2612
 msgid "Battey of wireless gamepads (xone,xpadneo,ds4)"
 msgstr ""
 
-#: sw_data.py:2543
+#: sw_data.py:2613
 msgid "Gamepad battery percent with icon. *enabled by default"
 msgstr ""
 
-#: sw_data.py:2544
+#: sw_data.py:2614
 msgid "Show FPS only"
 msgstr ""
 
-#: sw_data.py:2545
+#: sw_data.py:2615
 msgid "Displays local time"
 msgstr ""
 
-#: sw_data.py:2548
+#: sw_data.py:2618
 msgid "System monitoring indicators"
 msgstr ""
 
-#: sw_data.py:2557
+#: sw_data.py:2627
 msgid "Supposedly imitation of rendering on the legendary 3dfx video cards."
 msgstr ""
 
-#: sw_data.py:2558
+#: sw_data.py:2628
 msgid ""
 "Adaptive fog. Used most for creating a color background, or putting a "
 "subject in shadows."
 msgstr ""
 
-#: sw_data.py:2560
+#: sw_data.py:2630
 msgid ""
 "Contrast Adaptive Sharpening. An image sharpening method that observes the "
 "contrast of the local environment."
 msgstr ""
 
-#: sw_data.py:2562
+#: sw_data.py:2632
 msgid ""
 "Ambient light. Bloom mixed with the EyeAdaption shader effect and lens dirt."
 msgstr ""
 
-#: sw_data.py:2563
+#: sw_data.py:2633
 msgid "For those who miss text games and Matrix fans."
 msgstr ""
 
-#: sw_data.py:2564
+#: sw_data.py:2634
 msgid "Сorrects aspect ratio in stretched images."
 msgstr ""
 
-#: sw_data.py:2565
+#: sw_data.py:2635
 msgid ""
 "A shader for simulating image blur depending on the brightness of the scene."
 msgstr ""
 
-#: sw_data.py:2567
+#: sw_data.py:2637
 msgid ""
 "If you want to add borders in image but want the subject to hover over said "
 "border then try this shader."
 msgstr ""
 
-#: sw_data.py:2569
+#: sw_data.py:2639
 msgid "Creates an outline effect that makes the image look more cartoonish."
 msgstr ""
 
-#: sw_data.py:2570
+#: sw_data.py:2640
 msgid "Setting a blue or green screen away from the camera."
 msgstr ""
 
-#: sw_data.py:2572
+#: sw_data.py:2642
 msgid ""
 "It operates in HDR, simulating the physical effect of light passing through "
 "a prism inside a camera."
 msgstr ""
 
-#: sw_data.py:2574
+#: sw_data.py:2644
 msgid "Based on the most realistic and most used Depth of Field shader."
 msgstr ""
 
-#: sw_data.py:2575
+#: sw_data.py:2645
 msgid ""
 "Shader for image enhancement, makes things look sharper. Can rid the picture "
 "of haze."
 msgstr ""
 
-#: sw_data.py:2577
+#: sw_data.py:2647
 msgid ""
 "Editing colors using the color matrix. Essentially changes the brightness of "
 "the color channels: red, green and blue."
 msgstr ""
 
-#: sw_data.py:2580
+#: sw_data.py:2650
 msgid "Saturates faded colors without touching the bright ones."
 msgstr ""
 
-#: sw_data.py:2582
+#: sw_data.py:2652
 msgid ""
 "To simulate a cathode ray tube monitor. The combination with the "
 "PerfectPerspective shader will shed a tear of nostalgia."
 msgstr ""
 
-#: sw_data.py:2586
+#: sw_data.py:2656
 msgid ""
 "Increases the contrast of the image, while not touching the bright and dark "
 "areas, so that the detail in the shadows and the sky is not lost."
 msgstr ""
 
-#: sw_data.py:2589
+#: sw_data.py:2659
 msgid "Removes some colors."
 msgstr ""
 
-#: sw_data.py:2591
+#: sw_data.py:2661
 msgid ""
 "Remove banding - gradients that dont blend smoothly into each other when "
 "there arent enough tones available to recreate a smooth gradation."
 msgstr ""
 
-#: sw_data.py:2595
+#: sw_data.py:2665
 msgid ""
 "Remove dot noise. If possible, turn off the noise in the game itself, "
 "because the noise reduction shader reduces the frame rate."
 msgstr ""
 
-#: sw_data.py:2598
+#: sw_data.py:2668
 msgid "Split screen for owners of virtual reality glasses."
 msgstr ""
 
-#: sw_data.py:2600
+#: sw_data.py:2670
 msgid ""
 "Simple depth-blur that makes far-away objects look slightly blurred, with "
 "fog based on depth and screen position."
 msgstr ""
 
-#: sw_data.py:2603
+#: sw_data.py:2673
 msgid ""
 "This is a shader mostly useful for checking if the depth buffer is working "
 "as intended."
 msgstr ""
 
-#: sw_data.py:2604
+#: sw_data.py:2674
 msgid ""
 "Loss of sharpness in distant objects with the effect of chromatic aberration."
 msgstr ""
 
-#: sw_data.py:2605
+#: sw_data.py:2675
 msgid ""
 "Makes the image look like it was converted from film to Cineon DPX. Can be "
 "used to create a sunny look."
 msgstr ""
 
-#: sw_data.py:2607
+#: sw_data.py:2677
 msgid ""
 "Make a part of the scene pop out more while other parts are de-emphasized. "
 "By default, it desaturates the areas which are not in focus."
 msgstr ""
 
-#: sw_data.py:2610
+#: sw_data.py:2680
 msgid ""
 "This shader brightens or darkens the image depending on the average "
 "brightness of the screen."
 msgstr ""
 
-#: sw_data.py:2611
+#: sw_data.py:2681
 msgid ""
 "Should restore detail in too dark and bright areas of the frame. Darkens the "
 "image in practice."
 msgstr ""
 
-#: sw_data.py:2612
+#: sw_data.py:2682
 msgid "Pseudo motion blur."
 msgstr ""
 
-#: sw_data.py:2613 sw_data.py:2614
+#: sw_data.py:2683 sw_data.py:2684
 msgid "Film grain without copying texture."
 msgstr ""
 
-#: sw_data.py:2615 sw_data.py:2617 sw_data.py:2623 sw_data.py:2641
+#: sw_data.py:2685 sw_data.py:2687 sw_data.py:2693 sw_data.py:2711
 msgid "Sharpering for more cinema-like look."
 msgstr ""
 
-#: sw_data.py:2616
+#: sw_data.py:2686
 msgid "Applies some common color adjustments to mimic a more cinema-like look."
 msgstr ""
 
-#: sw_data.py:2618
+#: sw_data.py:2688
 msgid ""
 "The most primitive and fastest of the anti-aliasing filters (pixel "
 "smoothing)."
 msgstr ""
 
-#: sw_data.py:2619
+#: sw_data.py:2689
 msgid "Just blurs the image."
 msgstr ""
 
-#: sw_data.py:2621
+#: sw_data.py:2691
 msgid ""
 "To simulate a failing video card and cause nausea. People with epilepsy "
 "should not turn on this filter!"
 msgstr ""
 
-#: sw_data.py:2625
+#: sw_data.py:2695
 msgid ""
 "Smoothing nearby pixels with filling in the missing parts. Is useful for "
 "smoothing objects in pixel games."
 msgstr ""
 
-#: sw_data.py:2627
+#: sw_data.py:2697
 msgid "Lightweight focus and sharpering effect."
 msgstr ""
 
-#: sw_data.py:2628
+#: sw_data.py:2698
 msgid ""
 "Make own layer.png and overwrite on of the textures. It support alpha "
 "transparency."
 msgstr ""
 
-#: sw_data.py:2630
+#: sw_data.py:2700
 msgid ""
 "Shifts white and black points. will help in the absence of real black "
 "(everything is whitish, as if in a fog) or white is too gray."
 msgstr ""
 
-#: sw_data.py:2633
+#: sw_data.py:2703
 msgid "Shifts white and black points. will help in the absence of real black."
 msgstr ""
 
-#: sw_data.py:2635
+#: sw_data.py:2705
 msgid ""
 "Gamma correction in color channels: red, green and blue. Can stylization of "
 "some games under a certain color shade."
 msgstr ""
 
-#: sw_data.py:2639
+#: sw_data.py:2709
 msgid ""
 "The most lightweight defocus shader in terms of function, which does not "
 "greatly reduce performance."
 msgstr ""
 
-#: sw_data.py:2642
+#: sw_data.py:2712
 msgid ""
 "In the context of game shaders, loot allows you to give the picture a cinema-"
 "like look."
 msgstr ""
 
-#: sw_data.py:2644
+#: sw_data.py:2714
 msgid ""
 "Shader based on scene luminosity. It uses a Gaussian blur applied on the "
 "fly. It blends the bloom with the rest using the Screen blending method."
 msgstr ""
 
-#: sw_data.py:2647
+#: sw_data.py:2717
 msgid "The effect of simulating a black and white image."
 msgstr ""
 
-#: sw_data.py:2648
+#: sw_data.py:2718
 msgid "Hollywood preset LUT included."
 msgstr ""
 
-#: sw_data.py:2649
+#: sw_data.py:2719
 msgid ""
 "The effect of self-shadowing of objects, visually adding volume to them."
 msgstr ""
 
-#: sw_data.py:2650
+#: sw_data.py:2720
 msgid "For those who are nostalgic for a night vision device?"
 msgstr ""
 
-#: sw_data.py:2651
+#: sw_data.py:2721
 msgid ""
 "Shader to create a 4-bit frame. Tries to mimic the look of very old "
 "computers or console systems."
 msgstr ""
 
-#: sw_data.py:2653
+#: sw_data.py:2723
 msgid ""
 "The shader tilts the image and changes the point of view of the image. Can "
 "be useful for owners of virtual reality glasses."
 msgstr ""
 
-#: sw_data.py:2656
+#: sw_data.py:2726
 msgid ""
 "Filter that adds a glow around bright screen areas, adapting to the current "
 "scene brightness."
 msgstr ""
 
-#: sw_data.py:2657
+#: sw_data.py:2727
 msgid ""
 "If you want to add godrays to a scene then this shader can help you with "
 "that."
 msgstr ""
 
-#: sw_data.py:2659
+#: sw_data.py:2729
 msgid ""
 "Yet Another Chromatic Aberration: It operates in HDR, is the only shader "
 "with a correct spectral gradient."
 msgstr ""
 
-#: sw_data.py:2662
+#: sw_data.py:2732
 msgid ""
 "Adds reflections to objects in the frame. Can improve the picture in older "
 "games without reflection support, but is useless in modern ones."
 msgstr ""
 
-#: sw_data.py:2665
+#: sw_data.py:2735
 msgid ""
 "Applying a shade of brown. Color inherent in old black and white photographs."
 msgstr ""
 
-#: sw_data.py:2667
+#: sw_data.py:2737
 msgid ""
 "Advanced implementation of anti-aliasing. Highlight the objects in the frame "
 "and blur their boundaries without erasing the small details of the frame."
 msgstr ""
 
-#: sw_data.py:2670
+#: sw_data.py:2740
 msgid ""
 "Resize image, positioning it, rotating it and use different blending modes."
 msgstr ""
 
-#: sw_data.py:2671
+#: sw_data.py:2741
 msgid "Reduction in object detail without blurring contrasting contours."
 msgstr ""
 
-#: sw_data.py:2672
+#: sw_data.py:2742
 msgid ""
 "Makes the image look like it was processed using a three-strip Technicolor "
 "process."
 msgstr ""
 
-#: sw_data.py:2673
+#: sw_data.py:2743
 msgid ""
 "Like Technicolor, but gives a different picture, more aggressively changing "
 "colors."
 msgstr ""
 
-#: sw_data.py:2674
+#: sw_data.py:2744
 msgid ""
 "For simulating tilt-shift photography, but recommended to use CinematicDOF."
 msgstr ""
 
-#: sw_data.py:2675
+#: sw_data.py:2745
 msgid "Tone map for brightness, color and gamma correction."
 msgstr ""
 
-#: sw_data.py:2677
+#: sw_data.py:2747
 msgid ""
 "Detects the presence of a UI on the screen and switches the visibility of "
 "effects depending on its presence."
 msgstr ""
 
-#: sw_data.py:2680
+#: sw_data.py:2750
 msgid ""
 "Shader-mask that makes holes in the effects in the places of the menu items, "
 "provided that they do not move anywhere."
 msgstr ""
 
-#: sw_data.py:2684
+#: sw_data.py:2754
 msgid ""
 "Saturates faded colors without touching the bright ones. The default "
 "settings are almost invisible."
 msgstr ""
 
-#: sw_data.py:2686
+#: sw_data.py:2756
 msgid "Adds vignetting, reducing the brightness of the frame at the edges."
 msgstr ""
 
-#: sw_data.py:2689
+#: sw_data.py:2759
 msgid "Vulkan layer postprocessing visual effects"
 msgstr ""
 
-#: sw_data.py:2690
+#: sw_data.py:2760
 msgid "Effect intensity"
 msgstr ""
 
-#: sw_data.py:2694
+#: sw_data.py:2764
 msgid "MangoHud colors"
 msgstr ""
 
-#: sw_data.py:2695
+#: sw_data.py:2765
 msgid "MangoHud indicator color scheme settings"
 msgstr ""
 
-#: sw_data.py:2715
+#: sw_data.py:2785
 msgid "GPU indicator"
 msgstr ""
 
-#: sw_data.py:2716
+#: sw_data.py:2786
 msgid "CPU indicator"
 msgstr ""
 
-#: sw_data.py:2717
+#: sw_data.py:2787
 msgid "VRAM indicator"
 msgstr ""
 
-#: sw_data.py:2718
+#: sw_data.py:2788
 msgid "RAM indicator"
 msgstr ""
 
-#: sw_data.py:2719
+#: sw_data.py:2789
 msgid "IO indicator"
 msgstr ""
 
-#: sw_data.py:2720
+#: sw_data.py:2790
 msgid "Render engines version"
 msgstr ""
 
-#: sw_data.py:2721
+#: sw_data.py:2791
 msgid "Frametime indicator"
 msgstr ""
 
-#: sw_data.py:2722
+#: sw_data.py:2792
 msgid "Overlay background"
 msgstr ""
 
-#: sw_data.py:2723
+#: sw_data.py:2793
 msgid "Text color"
 msgstr ""
 
-#: sw_data.py:2724
+#: sw_data.py:2794
 msgid "Media player color"
 msgstr ""
 
-#: sw_data.py:2725
+#: sw_data.py:2795
 msgid "Wine color"
 msgstr ""
 
-#: sw_data.py:2726
+#: sw_data.py:2796
 msgid "GPU load color"
 msgstr ""
 
-#: sw_data.py:2727
+#: sw_data.py:2797
 msgid "CPU load color"
 msgstr ""
 
-#: sw_data.py:2728
+#: sw_data.py:2798
 msgid "Battery indicator"
 msgstr ""
 
-#: sw_data.py:2733
+#: sw_data.py:2803
 msgid "Controller redirection settings"
 msgstr ""
 
-#: sw_data.py:2734
+#: sw_data.py:2804
 msgid ""
 "Map for binding controller buttons to keys of other input devices such as a "
 "keyboard or mouse."
 msgstr ""
 
-#: sw_data.py:2735
+#: sw_data.py:2805
 msgid "Not set"
 msgstr ""
 
-#: sw_data.py:2736
+#: sw_data.py:2806
 msgid "Press any key for binding"
 msgstr ""
 
-#: sw_data.py:2739
+#: sw_data.py:2809
 msgid "enter or accept"
 msgstr ""
 
-#: sw_data.py:2740 sw_data.py:3043
+#: sw_data.py:2810 sw_data.py:3052
 msgid "go back or cancel"
 msgstr ""
 
-#: sw_data.py:2743
+#: sw_data.py:2813
 msgid "control"
 msgstr ""
 
-#: sw_data.py:2744
+#: sw_data.py:2814
 msgid "alt"
 msgstr ""
 
-#: sw_data.py:2745
+#: sw_data.py:2815
 msgid "tabulation"
 msgstr ""
 
-#: sw_data.py:2746
+#: sw_data.py:2816
 msgid "middle mouse button"
 msgstr ""
 
-#: sw_data.py:2747
+#: sw_data.py:2817
 msgid "right shift"
 msgstr ""
 
-#: sw_data.py:2748 sw_data.py:3072
+#: sw_data.py:2818 sw_data.py:3081
 msgid "show or hide sidebar menu"
 msgstr ""
 
-#: sw_data.py:2749
+#: sw_data.py:2819
 msgid "show context menu"
 msgstr ""
 
-#: sw_data.py:2750
+#: sw_data.py:2820
 msgid "scroll page right or left"
 msgstr ""
 
-#: sw_data.py:2751
+#: sw_data.py:2821
 msgid "scroll page up or down"
 msgstr ""
 
-#: sw_data.py:2752
+#: sw_data.py:2822
 msgid "mouse movement on the x-axis"
 msgstr ""
 
-#: sw_data.py:2753
+#: sw_data.py:2823
 msgid "mouse movement on the y-axis"
 msgstr ""
 
-#: sw_data.py:2754
+#: sw_data.py:2824
 msgid "right mouse button"
 msgstr ""
 
-#: sw_data.py:2755
+#: sw_data.py:2825
 msgid "left mouse button"
 msgstr ""
 
-#: sw_data.py:2756
+#: sw_data.py:2826
 msgid "left, right"
 msgstr ""
 
-#: sw_data.py:2757
+#: sw_data.py:2827
 msgid "up, down"
 msgstr ""
 
-#: sw_data.py:2758 sw_data.py:3050
+#: sw_data.py:2828 sw_data.py:3059
 msgid "shutdown StartWine"
 msgstr ""
 
-#: sw_data.py:2759
+#: sw_data.py:2829
 msgid "show or hide StartWine window"
 msgstr ""
 
-#: sw_data.py:2760 sw_data.py:3075
+#: sw_data.py:2830 sw_data.py:3084
 msgid "show or hide list of mounted volumes"
 msgstr ""
 
-#: sw_data.py:2761 sw_data.py:3053
+#: sw_data.py:2831 sw_data.py:3062
 msgid "reduce the size of the icons and shortcuts"
 msgstr ""
 
-#: sw_data.py:2762 sw_data.py:3052
+#: sw_data.py:2832 sw_data.py:3061
 msgid "increase the size of the icons and shortcuts"
 msgstr ""
 
-#: sw_data.py:2763 sw_data.py:3069
+#: sw_data.py:2833 sw_data.py:3078
 msgid "go to the directory up in the file manager"
 msgstr ""
 
-#: sw_data.py:2764
+#: sw_data.py:2834
 msgid "open main context menu"
 msgstr ""
 
-#: sw_data.py:2765
+#: sw_data.py:2835
 msgid "show or hide media playlist"
 msgstr ""
 
-#: sw_data.py:2766 sw_data.py:3076
+#: sw_data.py:2836 sw_data.py:3085
 msgid "show or hide bookmarks list"
 msgstr ""
 
-#: sw_data.py:2767 sw_data.py:3070
+#: sw_data.py:2837 sw_data.py:3079
 msgid "go to the next menu page"
 msgstr ""
 
-#: sw_data.py:2768 sw_data.py:3071
+#: sw_data.py:2838 sw_data.py:3080
 msgid "go to the previous menu page"
 msgstr ""
 
-#: sw_data.py:2769 sw_data.py:3080
+#: sw_data.py:2839 sw_data.py:3089
 msgid "show file properties"
 msgstr ""
 
-#: sw_data.py:2908
+#: sw_data.py:2917
 msgid "Confirm changes"
 msgstr ""
 
-#: sw_data.py:2909
+#: sw_data.py:2918
 msgid "MangoHud preview"
 msgstr ""
 
-#: sw_data.py:2911
+#: sw_data.py:2920
 msgid "Custom theme"
 msgstr ""
 
-#: sw_data.py:2912
+#: sw_data.py:2921
 msgid "Custom interface color scheme settings"
 msgstr ""
 
-#: sw_data.py:2914
+#: sw_data.py:2923
 msgid "Window control buttons"
 msgstr ""
 
-#: sw_data.py:2915
+#: sw_data.py:2924
 msgid "Select a style for the window control buttons"
 msgstr ""
 
-#: sw_data.py:2917
+#: sw_data.py:2926
 msgid "Built-in icon theme"
 msgstr ""
 
-#: sw_data.py:2918
+#: sw_data.py:2927
 msgid "Choose a color for the built-in icon theme"
 msgstr ""
 
-#: sw_data.py:2940
+#: sw_data.py:2949
 msgid "Primary background"
 msgstr ""
 
-#: sw_data.py:2941
+#: sw_data.py:2950
 msgid "Accent color"
 msgstr ""
 
-#: sw_data.py:2942
+#: sw_data.py:2951
 msgid "Accent background"
 msgstr ""
 
-#: sw_data.py:2943
+#: sw_data.py:2952
 msgid "Headerbars"
 msgstr ""
 
-#: sw_data.py:2944
+#: sw_data.py:2953
 msgid "Popover context menu"
 msgstr ""
 
-#: sw_data.py:2949
+#: sw_data.py:2958
 msgid "Additional general parameters and interface settings"
 msgstr ""
 
-#: sw_data.py:2951
+#: sw_data.py:2960
 msgid "Startup options"
 msgstr ""
 
-#: sw_data.py:2952
+#: sw_data.py:2961
 msgid "Some settings will take effect the next time you start"
 msgstr ""
 
-#: sw_data.py:2954
+#: sw_data.py:2963
 msgid "Language"
 msgstr ""
 
-#: sw_data.py:2955
+#: sw_data.py:2964
 msgid "Change the interface language"
 msgstr ""
 
-#: sw_data.py:2957
+#: sw_data.py:2966
 msgid "Autostart"
 msgstr ""
 
-#: sw_data.py:2958
+#: sw_data.py:2967
 msgid "Run StartWine in the tray at system startup"
 msgstr ""
 
-#: sw_data.py:2960
+#: sw_data.py:2969
 msgid "Restore menu"
 msgstr ""
 
-#: sw_data.py:2961
+#: sw_data.py:2970
 msgid "Restore the menu after exiting a game or application"
 msgstr ""
 
-#: sw_data.py:2963
+#: sw_data.py:2972
 msgid "Auto Stop"
 msgstr ""
 
-#: sw_data.py:2964
+#: sw_data.py:2973
 msgid "Auto terminate all Wine processes after exiting a game or application"
 msgstr ""
 
-#: sw_data.py:2966
+#: sw_data.py:2975
 msgid "Auto-hide top header"
 msgstr ""
 
-#: sw_data.py:2967
+#: sw_data.py:2976
 msgid "Auto-hide the top panel of the window and show it on mouseover"
 msgstr ""
 
-#: sw_data.py:2969
+#: sw_data.py:2978
 msgid "Auto-hide bottom header"
 msgstr ""
 
-#: sw_data.py:2970
+#: sw_data.py:2979
 msgid "Auto-hide the bottom panel of the window and show it on mouseover"
 msgstr ""
 
-#: sw_data.py:2972
+#: sw_data.py:2981
 msgid "Icons"
 msgstr ""
 
-#: sw_data.py:2973
+#: sw_data.py:2982
 msgid "Use system icon theme"
 msgstr ""
 
-#: sw_data.py:2975
+#: sw_data.py:2984
 msgid "Compact mode"
 msgstr ""
 
-#: sw_data.py:2976
+#: sw_data.py:2985
 msgid "Always run the menu in compact size mode"
 msgstr ""
 
-#: sw_data.py:2978
+#: sw_data.py:2987
 msgid "Default directory"
 msgstr ""
 
-#: sw_data.py:2979
+#: sw_data.py:2988
 msgid ""
 "The default directory in which files will be opened in the StartWine file "
 "manager"
 msgstr ""
 
-#: sw_data.py:2981
+#: sw_data.py:2990
 msgid "Rendering"
 msgstr ""
 
-#: sw_data.py:2982
+#: sw_data.py:2991
 msgid "Graphical interface rendering options"
 msgstr ""
 
-#: sw_data.py:2984
+#: sw_data.py:2993
 msgid "Vulkan"
 msgstr ""
 
-#: sw_data.py:2985
+#: sw_data.py:2994
 msgid "Use Vulkan to render the graphical interface"
 msgstr ""
 
-#: sw_data.py:2987
+#: sw_data.py:2996
 msgid "Live background"
 msgstr ""
 
-#: sw_data.py:2989
+#: sw_data.py:2998
 msgid ""
 "Animation based on selected shaders. Warning!!! This function can lead to "
 "slowdowns and additional load on the graphics card."
 msgstr ""
 
-#: sw_data.py:2993
+#: sw_data.py:3002
 msgid "Shaders"
 msgstr ""
 
-#: sw_data.py:2994
+#: sw_data.py:3003
 msgid "Select shaders for the live background from the list"
 msgstr ""
 
-#: sw_data.py:2996 sw_data.py:4246
+#: sw_data.py:3005 sw_data.py:4281
 msgid "Hotkeys"
 msgstr ""
 
-#: sw_data.py:2997
+#: sw_data.py:3006
 msgid "List of default hotkeys settings"
 msgstr ""
 
-#: sw_data.py:2999
+#: sw_data.py:3008
 msgid ""
 "Wrong path, path does not exist, specify the correct path to the directory"
 msgstr ""
 
-#: sw_data.py:3044
+#: sw_data.py:3053
 msgid "show hotkey settings window"
 msgstr ""
 
-#: sw_data.py:3045
+#: sw_data.py:3054
 msgid "show help"
 msgstr ""
 
-#: sw_data.py:3046
+#: sw_data.py:3055
 msgid "about StartWine"
 msgstr ""
 
-#: sw_data.py:3047
+#: sw_data.py:3056
 msgid "enable / disable MangoHud overlay in the game"
 msgstr ""
 
-#: sw_data.py:3048
+#: sw_data.py:3057
 msgid "toggle MangoHud overlay postion in the game"
 msgstr ""
 
-#: sw_data.py:3049
+#: sw_data.py:3058
 msgid "enable / disable vkBasalt effects in the game"
 msgstr ""
 
-#: sw_data.py:3051
+#: sw_data.py:3060
 msgid "close StartWine window"
 msgstr ""
 
-#: sw_data.py:3054
+#: sw_data.py:3063
 msgid "update files or shortcuts list view"
 msgstr ""
 
-#: sw_data.py:3055
+#: sw_data.py:3064
 msgid "split view for viewing files"
 msgstr ""
 
-#: sw_data.py:3056
+#: sw_data.py:3065
 msgid "show files in a grid or table view"
 msgstr ""
 
-#: sw_data.py:3057
+#: sw_data.py:3066
 msgid "to display or not to display hidden files"
 msgstr ""
 
-#: sw_data.py:3058
+#: sw_data.py:3067
 msgid "show current directory path string"
 msgstr ""
 
-#: sw_data.py:3059
+#: sw_data.py:3068
 msgid "select all files in file manager"
 msgstr ""
 
-#: sw_data.py:3060
+#: sw_data.py:3069
 msgid "create new directory"
 msgstr ""
 
-#: sw_data.py:3061
+#: sw_data.py:3070
 msgid "create symbolic links for selected files"
 msgstr ""
 
-#: sw_data.py:3062
+#: sw_data.py:3071
 msgid "copy to clipboard"
 msgstr ""
 
-#: sw_data.py:3063
+#: sw_data.py:3072
 msgid "paste from clipboard"
 msgstr ""
 
-#: sw_data.py:3064
+#: sw_data.py:3073
 msgid "cut selected files"
 msgstr ""
 
-#: sw_data.py:3065
+#: sw_data.py:3074
 msgid "terminate all processes"
 msgstr ""
 
-#: sw_data.py:3066
+#: sw_data.py:3075
 msgid "move to trash selected files"
 msgstr ""
 
-#: sw_data.py:3067
+#: sw_data.py:3076
 msgid "permanently delete selected files"
 msgstr ""
 
-#: sw_data.py:3068
+#: sw_data.py:3077
 msgid "rename file or directory in file manager"
 msgstr ""
 
-#: sw_data.py:3073
+#: sw_data.py:3082
 msgid "show the page of installed games and applications"
 msgstr ""
 
-#: sw_data.py:3074
+#: sw_data.py:3083
 msgid "open file manager"
 msgstr ""
 
-#: sw_data.py:3077
+#: sw_data.py:3086
 msgid "show the wine builds page"
 msgstr ""
 
-#: sw_data.py:3078
+#: sw_data.py:3087
 msgid "show the application page to launch"
 msgstr ""
 
-#: sw_data.py:3079
+#: sw_data.py:3088
 msgid "open interface settings menu"
 msgstr ""
 
-#: sw_data.py:3087
+#: sw_data.py:3096
 msgid "Description"
 msgstr ""
 
-#: sw_data.py:3088
+#: sw_data.py:3097
 msgid "Confirm install"
 msgstr ""
 
-#: sw_data.py:3089
+#: sw_data.py:3098
 msgid "Libraries"
 msgstr ""
 
-#: sw_data.py:3090
+#: sw_data.py:3099
 msgid "Fonts"
 msgstr ""
 
-#: sw_data.py:3091
+#: sw_data.py:3100
 msgid "Library list"
 msgstr ""
 
-#: sw_data.py:3092
+#: sw_data.py:3101
 msgid "Fonts list"
 msgstr ""
 
-#: sw_data.py:3093
+#: sw_data.py:3102
 msgid "Installing native windows library to the current prefix"
 msgstr ""
 
-#: sw_data.py:3097
+#: sw_data.py:3106
 msgid "Recommended libraries kit"
 msgstr ""
 
-#: sw_data.py:3098
+#: sw_data.py:3107
 msgid "MS .NET libraries kit"
 msgstr ""
 
-#: sw_data.py:3099
+#: sw_data.py:3108
 msgid "D3D libraries kit"
 msgstr ""
 
-#: sw_data.py:3100
+#: sw_data.py:3109
 msgid "Visual C++ libraries kit"
 msgstr ""
 
-#: sw_data.py:4032
+#: sw_data.py:4061
 msgid "A good day is like a good Wine..."
 msgstr ""
 
-#: sw_data.py:4033
+#: sw_data.py:4062
 msgid "Yes"
 msgstr ""
 
-#: sw_data.py:4034
+#: sw_data.py:4063
 msgid "No"
 msgstr ""
 
-#: sw_data.py:4035
+#: sw_data.py:4064
 msgid "Ok"
 msgstr ""
 
-#: sw_data.py:4036
+#: sw_data.py:4065
 msgid "Add"
 msgstr ""
 
-#: sw_data.py:4037
+#: sw_data.py:4066
 msgid "Cancel"
 msgstr ""
 
-#: sw_data.py:4038
+#: sw_data.py:4067
 msgid "Accept"
 msgstr ""
 
-#: sw_data.py:4039
+#: sw_data.py:4068
 msgid "Select"
 msgstr ""
 
-#: sw_data.py:4040 sw_data.py:4200
+#: sw_data.py:4069 sw_data.py:4235
 msgid "Open"
 msgstr ""
 
-#: sw_data.py:4041 sw_data.py:4167
+#: sw_data.py:4070 sw_data.py:4201
 msgid "Save"
 msgstr ""
 
-#: sw_data.py:4042 sw_data.py:4199
+#: sw_data.py:4071 sw_data.py:4233
 msgid "Run"
 msgstr ""
 
-#: sw_data.py:4043 sw_data.py:4094
+#: sw_data.py:4072 sw_data.py:4123
 msgid "Install"
 msgstr ""
 
-#: sw_data.py:4044
+#: sw_data.py:4073
 msgid "Installed"
 msgstr ""
 
-#: sw_data.py:4046 sw_data.py:4208
+#: sw_data.py:4075 sw_data.py:4243
 msgid "Change Wine"
 msgstr ""
 
-#: sw_data.py:4052 sw_data.py:4222
+#: sw_data.py:4081 sw_data.py:4257
 msgid "Rename"
 msgstr ""
 
-#: sw_data.py:4053
+#: sw_data.py:4082
 msgid "Create"
 msgstr ""
 
-#: sw_data.py:4054
+#: sw_data.py:4083
 msgid "Create new directory"
 msgstr ""
 
-#: sw_data.py:4055
+#: sw_data.py:4084
 msgid "New directory"
 msgstr ""
 
-#: sw_data.py:4056
+#: sw_data.py:4085
 msgid "Add shortcut to desktop"
 msgstr ""
 
-#: sw_data.py:4057
+#: sw_data.py:4086
 msgid "[ Original name ] + "
 msgstr ""
 
-#: sw_data.py:4058
+#: sw_data.py:4087
 msgid "File's"
 msgstr ""
 
-#: sw_data.py:4059
+#: sw_data.py:4088
 msgid "Rename directory"
 msgstr ""
 
-#: sw_data.py:4060
+#: sw_data.py:4089
 msgid "Rename file"
 msgstr ""
 
-#: sw_data.py:4061
+#: sw_data.py:4090
 msgid "Replace file"
 msgstr ""
 
-#: sw_data.py:4062
+#: sw_data.py:4091
 msgid "Copying completed successfully"
 msgstr ""
 
-#: sw_data.py:4063
+#: sw_data.py:4092
 msgid "Move completed successfully"
 msgstr ""
 
-#: sw_data.py:4064
+#: sw_data.py:4093
 msgid "Move to trash completed successfully"
 msgstr ""
 
-#: sw_data.py:4065
+#: sw_data.py:4094
 msgid "Deletion completed successfully"
 msgstr ""
 
-#: sw_data.py:4066
+#: sw_data.py:4095
 msgid "Rename completed successfully"
 msgstr ""
 
-#: sw_data.py:4067
+#: sw_data.py:4096
 msgid "Download completed successfully"
 msgstr ""
 
-#: sw_data.py:4068
+#: sw_data.py:4097
 msgid "Compression completed successfully"
 msgstr ""
 
-#: sw_data.py:4069
+#: sw_data.py:4098
 msgid "Choose an action"
 msgstr ""
 
-#: sw_data.py:4070 sw_data.py:4189
+#: sw_data.py:4099 sw_data.py:4223
 msgid "Choose the application to transfer settings"
 msgstr ""
 
-#: sw_data.py:4071
+#: sw_data.py:4100
 msgid "Do you really want to reset settings?"
 msgstr ""
 
-#: sw_data.py:4072
+#: sw_data.py:4101
 msgid "Do you really want to clear shader cache?"
 msgstr ""
 
-#: sw_data.py:4073
+#: sw_data.py:4102
 msgid "Do you really want to permanently delete"
 msgstr ""
 
-#: sw_data.py:4074
+#: sw_data.py:4103
 msgid "Oops! Wrong path..."
 msgstr ""
 
-#: sw_data.py:4075
+#: sw_data.py:4104
 msgid ""
 "Another file with the same name already exists. Replacing will overwrite "
 "content"
 msgstr ""
 
-#: sw_data.py:4076
+#: sw_data.py:4105
 msgid "You have not selected any libraries to install"
 msgstr ""
 
-#: sw_data.py:4077
+#: sw_data.py:4106
 msgid "Path not exist, try to create new shortcut"
 msgstr ""
 
-#: sw_data.py:4078
+#: sw_data.py:4107
 msgid ""
 "You already have an executable and a prefix with the same name. To create a "
 "shortcut for this executable, rename it or delete the existing shortcut and "
 "prefix"
 msgstr ""
 
-#: sw_data.py:4080
+#: sw_data.py:4109
 msgid "Termination of active processes..."
 msgstr ""
 
-#: sw_data.py:4081
+#: sw_data.py:4110
 msgid "You can't copy a directory to itself"
 msgstr ""
 
-#: sw_data.py:4082
+#: sw_data.py:4111
 msgid "is not installed, download it now?"
 msgstr ""
 
-#: sw_data.py:4083
+#: sw_data.py:4112
 msgid "is not installed"
 msgstr ""
 
-#: sw_data.py:4084
+#: sw_data.py:4113
 msgid "It is impossible to create a file in the current directory"
 msgstr ""
 
-#: sw_data.py:4085
+#: sw_data.py:4114
 msgid "Path does not exist!!! Please select correct path"
 msgstr ""
 
-#: sw_data.py:4086
+#: sw_data.py:4115
 msgid "Select the location of the StartWine directory"
 msgstr ""
 
-#: sw_data.py:4087
+#: sw_data.py:4116
 msgid "Select directory"
 msgstr ""
 
-#: sw_data.py:4088
+#: sw_data.py:4117
 msgid "Create a compressed archive"
 msgstr ""
 
-#: sw_data.py:4089
+#: sw_data.py:4118
 msgid "Compression..."
 msgstr ""
 
-#: sw_data.py:4090
+#: sw_data.py:4119
 msgid "Extraction..."
 msgstr ""
 
-#: sw_data.py:4091
+#: sw_data.py:4120
 msgid "New archive"
 msgstr ""
 
-#: sw_data.py:4092
+#: sw_data.py:4121
 msgid "Launch error"
 msgstr ""
 
-#: sw_data.py:4093 sw_data.py:4164 sw_data.py:4204
+#: sw_data.py:4122 sw_data.py:4198 sw_data.py:4239
 msgid "Remove"
 msgstr ""
 
-#: sw_data.py:4095
-msgid "Launchers and game stores"
-msgstr ""
-
-#: sw_data.py:4096
-msgid "Volume name"
-msgstr ""
-
-#: sw_data.py:4097
-msgid "Device ID"
-msgstr ""
-
-#: sw_data.py:4098
-msgid "Device UUID"
-msgstr ""
-
-#: sw_data.py:4099
-msgid "Drive name"
-msgstr ""
-
-#: sw_data.py:4100
-msgid "Device size"
-msgstr ""
-
-#: sw_data.py:4101
-msgid "Mount options"
-msgstr ""
-
-#: sw_data.py:4102
-msgid "Incorrect launch parameters"
-msgstr ""
-
-#: sw_data.py:4103
-msgid "Reset the application settings?"
-msgstr ""
-
-#: sw_data.py:4104
-msgid "The path to the executable file was not found, launch is impossible"
-msgstr ""
-
-#: sw_data.py:4105
-msgid "Do you want to specify a new path to the executable file?"
-msgstr ""
-
-#: sw_data.py:4106
-msgid "Сopied to clipboard"
-msgstr ""
-
-#: sw_data.py:4107
-msgid "Total"
-msgstr ""
-
-#: sw_data.py:4108
-msgid "Free"
-msgstr ""
-
-#: sw_data.py:4109
-msgid "Used"
-msgstr ""
-
-#: sw_data.py:4110
-msgid "Action not supported"
-msgstr ""
-
-#: sw_data.py:4112
-msgid "The file you are trying to access does not exist"
-msgstr ""
-
-#: sw_data.py:4113
-msgid "Name"
-msgstr ""
-
-#: sw_data.py:4114
-msgid "Size"
-msgstr ""
-
-#: sw_data.py:4115
-msgid "Type"
-msgstr ""
-
-#: sw_data.py:4116
-msgid "Modified date"
-msgstr ""
-
-#: sw_data.py:4117
-msgid "Creation date"
-msgstr ""
-
-#: sw_data.py:4118
-msgid "Modified/Created"
-msgstr ""
-
-#: sw_data.py:4119
-msgid "Can-readable"
-msgstr ""
-
-#: sw_data.py:4120
-msgid "Can-writable"
-msgstr ""
-
-#: sw_data.py:4121
-msgid "Non-readable"
-msgstr ""
-
-#: sw_data.py:4122
-msgid "Non-writable"
-msgstr ""
-
-#: sw_data.py:4123
-msgid "Executable"
-msgstr ""
-
 #: sw_data.py:4124
-msgid "Symbolic link to"
+msgid "Applications and game stores"
 msgstr ""
 
 #: sw_data.py:4125
-msgid "Directory size"
+msgid "Partitions"
 msgstr ""
 
 #: sw_data.py:4126
-msgid "Application"
+msgid "Volume name"
 msgstr ""
 
 #: sw_data.py:4127
-msgid "Path"
+msgid "Device ID"
 msgstr ""
 
 #: sw_data.py:4128
-msgid "Startup mode"
+msgid "Device UUID"
 msgstr ""
 
 #: sw_data.py:4129
-msgid "Access"
+msgid "Drive name"
 msgstr ""
 
 #: sw_data.py:4130
-msgid "Owner/Group"
+msgid "Device size"
 msgstr ""
 
 #: sw_data.py:4131
-msgid "Permission"
+msgid "Mount options"
 msgstr ""
 
 #: sw_data.py:4132
-msgid "Total time"
+msgid "Incorrect launch parameters"
 msgstr ""
 
 #: sw_data.py:4133
-msgid "Average fps"
+msgid "Reset the application settings?"
 msgstr ""
 
 #: sw_data.py:4134
-msgid "seconds"
+msgid "The path to the executable file was not found, launch is impossible"
 msgstr ""
 
 #: sw_data.py:4135
-msgid "minutes"
+msgid "Do you want to specify a new path to the executable file?"
 msgstr ""
 
 #: sw_data.py:4136
-msgid "hours"
+msgid "Сopied to clipboard"
 msgstr ""
 
 #: sw_data.py:4137
-msgid "days"
+msgid "Total"
 msgstr ""
 
 #: sw_data.py:4138
-msgid "Unknown"
+msgid "Free"
 msgstr ""
 
 #: sw_data.py:4139
-msgid "Error, Wine not found..."
+msgid "Used"
 msgstr ""
 
 #: sw_data.py:4140
-msgid "Check Wine updates"
+msgid "Action not supported"
 msgstr ""
 
-#: sw_data.py:4141 sw_data.py:4209
-msgid "Specify executable file"
-msgstr ""
-
-#: sw_data.py:4142 sw_data.py:4210
-msgid "Specify the new location..."
+#: sw_data.py:4142
+msgid "The file you are trying to access does not exist"
 msgstr ""
 
 #: sw_data.py:4143
-msgid "It is impossible to rename the file, the image is missing"
+msgid "Name"
 msgstr ""
 
 #: sw_data.py:4144
-msgid "Album"
+msgid "Size"
 msgstr ""
 
 #: sw_data.py:4145
-msgid "Title"
+msgid "Type"
 msgstr ""
 
 #: sw_data.py:4146
-msgid "Artist"
+msgid "Modified date"
 msgstr ""
 
 #: sw_data.py:4147
-msgid "Year"
+msgid "Creation date"
 msgstr ""
 
 #: sw_data.py:4148
-msgid "Do you really want to remove the prefix?"
+msgid "Modified/Created"
 msgstr ""
 
 #: sw_data.py:4149
-msgid "Download failed..."
+msgid "Can-readable"
+msgstr ""
+
+#: sw_data.py:4150
+msgid "Can-writable"
+msgstr ""
+
+#: sw_data.py:4151
+msgid "Non-readable"
+msgstr ""
+
+#: sw_data.py:4152
+msgid "Non-writable"
+msgstr ""
+
+#: sw_data.py:4153
+msgid "Executable"
+msgstr ""
+
+#: sw_data.py:4154
+msgid "Symbolic link to"
 msgstr ""
 
 #: sw_data.py:4155
-msgid "Go to the home directory"
+msgid "Directory size"
 msgstr ""
 
 #: sw_data.py:4156
-msgid "Move up directory"
+msgid "Application"
 msgstr ""
 
 #: sw_data.py:4157
-msgid "Current directory menu"
+msgid "Path"
 msgstr ""
 
 #: sw_data.py:4158
-msgid "Сome back"
+msgid "Startup mode"
 msgstr ""
 
 #: sw_data.py:4159
-msgid "Change menu size"
+msgid "Access"
 msgstr ""
 
 #: sw_data.py:4160
-msgid "Change color scheme"
+msgid "Owner/Group"
 msgstr ""
 
 #: sw_data.py:4161
-msgid "Change icons size"
+msgid "Permission"
 msgstr ""
 
 #: sw_data.py:4162
-msgid "Show or hide sidebar"
+msgid "Total time"
 msgstr ""
 
 #: sw_data.py:4163
-msgid "Vertical or horizontal icons"
+msgid "Average fps"
+msgstr ""
+
+#: sw_data.py:4164
+msgid "seconds"
 msgstr ""
 
 #: sw_data.py:4165
-msgid "Show search entry"
+msgid "minutes"
 msgstr ""
 
 #: sw_data.py:4166
-msgid "Show path entry"
+msgid "hours"
+msgstr ""
+
+#: sw_data.py:4167
+msgid "days"
 msgstr ""
 
 #: sw_data.py:4168
-msgid "Choose color"
+msgid "Unknown"
 msgstr ""
 
 #: sw_data.py:4169
-msgid "Edit color value"
+msgid "Error, Wine not found..."
 msgstr ""
 
 #: sw_data.py:4170
-msgid "Current rgb value"
+msgid "Check Wine updates"
 msgstr ""
 
-#: sw_data.py:4171
-msgid "Choose directory"
+#: sw_data.py:4171 sw_data.py:4244
+msgid "Specify executable file"
 msgstr ""
 
-#: sw_data.py:4172
-msgid "Show or hide volume list"
+#: sw_data.py:4172 sw_data.py:4245
+msgid "Specify the new location..."
 msgstr ""
 
 #: sw_data.py:4173
-msgid "Show or hide bookmarks list"
+msgid "It is impossible to rename the file, the image is missing"
 msgstr ""
 
 #: sw_data.py:4174
-msgid "Show or hide media playlist"
+msgid "Album"
 msgstr ""
 
 #: sw_data.py:4175
-msgid "Apply"
+msgid "Title"
 msgstr ""
 
 #: sw_data.py:4176
-msgid "registry patch"
+msgid "Artist"
 msgstr ""
 
 #: sw_data.py:4177
-msgid "Download Wine"
+msgid "Year"
 msgstr ""
 
 #: sw_data.py:4178
-msgid "Install apps and game stores"
+msgid "Do you really want to remove the prefix?"
+msgstr ""
+
+#: sw_data.py:4179
+msgid "Download failed..."
+msgstr ""
+
+#: sw_data.py:4181
+msgid "Stop"
 msgstr ""
 
 #: sw_data.py:4182
-msgid "Tools"
+msgid "Press any key"
 msgstr ""
 
-#: sw_data.py:4184
-msgid "Keyboard settings"
+#: sw_data.py:4183
+msgid "Edit"
 msgstr ""
 
-#: sw_data.py:4185
-msgid "Statistics and data"
+#: sw_data.py:4189
+msgid "Go to the home directory"
 msgstr ""
 
 #: sw_data.py:4190
-msgid "Show web entry"
+msgid "Move up directory"
 msgstr ""
 
 #: sw_data.py:4191
-msgid "Menu"
+msgid "Current directory menu"
 msgstr ""
 
 #: sw_data.py:4192
-msgid "Check and update the Wine list"
+msgid "Сome back"
 msgstr ""
 
 #: sw_data.py:4193
-msgid "Scroll up the page"
+msgid "Change menu size"
 msgstr ""
 
-#: sw_data.py:4201
-msgid "Open with..."
+#: sw_data.py:4194
+msgid "Change color scheme"
+msgstr ""
+
+#: sw_data.py:4195
+msgid "Change icons size"
+msgstr ""
+
+#: sw_data.py:4196
+msgid "Show or hide sidebar"
+msgstr ""
+
+#: sw_data.py:4197
+msgid "Vertical or horizontal icons"
+msgstr ""
+
+#: sw_data.py:4199
+msgid "Show search entry"
+msgstr ""
+
+#: sw_data.py:4200
+msgid "Show path entry"
 msgstr ""
 
 #: sw_data.py:4202
-msgid "Open file location"
+msgid "Choose color"
 msgstr ""
 
 #: sw_data.py:4203
-msgid "App settings"
+msgid "Edit color value"
+msgstr ""
+
+#: sw_data.py:4204
+msgid "Current rgb value"
 msgstr ""
 
 #: sw_data.py:4205
-msgid "App to menu"
+msgid "Choose directory"
 msgstr ""
 
 #: sw_data.py:4206
-msgid "App to desktop"
+msgid "Show or hide volume list"
 msgstr ""
 
 #: sw_data.py:4207
-msgid "App to Steam Deck menu"
+msgid "Show or hide bookmarks list"
+msgstr ""
+
+#: sw_data.py:4208
+msgid "Show or hide media playlist"
+msgstr ""
+
+#: sw_data.py:4209
+msgid "Apply"
+msgstr ""
+
+#: sw_data.py:4210
+msgid "registry patch"
 msgstr ""
 
 #: sw_data.py:4211
-msgid "Winehq"
+msgid "Download Wine"
 msgstr ""
 
 #: sw_data.py:4212
-msgid "Protondb"
+msgid "Install apps and game stores"
 msgstr ""
 
-#: sw_data.py:4213
-msgid "Search for an image"
+#: sw_data.py:4216
+msgid "Tools"
+msgstr ""
+
+#: sw_data.py:4218
+msgid "Keyboard settings"
 msgstr ""
 
 #: sw_data.py:4219
-msgid "Create file"
-msgstr ""
-
-#: sw_data.py:4220
-msgid "Create directory"
-msgstr ""
-
-#: sw_data.py:4221
-msgid "Create link"
-msgstr ""
-
-#: sw_data.py:4223
-msgid "Cut"
+msgid "Statistics and data"
 msgstr ""
 
 #: sw_data.py:4224
-msgid "Copy"
+msgid "Show web entry"
 msgstr ""
 
 #: sw_data.py:4225
-msgid "Paste"
+msgid "Menu"
 msgstr ""
 
 #: sw_data.py:4226
-msgid "Select all"
+msgid "Check and update the Wine list"
 msgstr ""
 
 #: sw_data.py:4227
-msgid "Move to trash"
-msgstr ""
-
-#: sw_data.py:4228
-msgid "Delete permanently"
-msgstr ""
-
-#: sw_data.py:4230
-msgid "Text"
-msgstr ""
-
-#: sw_data.py:4231
-msgid "Bourne shell"
-msgstr ""
-
-#: sw_data.py:4232
-msgid "Python"
-msgstr ""
-
-#: sw_data.py:4233
-msgid "Desktop"
+msgid "Scroll up the page"
 msgstr ""
 
 #: sw_data.py:4234
-msgid "Copy current path"
-msgstr ""
-
-#: sw_data.py:4235
-msgid "Add to bookmark"
+msgid "View"
 msgstr ""
 
 #: sw_data.py:4236
-msgid "Compress..."
+msgid "Open with..."
 msgstr ""
 
 #: sw_data.py:4237
-msgid "Extract..."
+msgid "Open file location"
 msgstr ""
 
 #: sw_data.py:4238
-msgid "Hidden files"
-msgstr ""
-
-#: sw_data.py:4239
-msgid "Sort..."
+msgid "App settings"
 msgstr ""
 
 #: sw_data.py:4240
-msgid "By type"
+msgid "App to menu"
 msgstr ""
 
 #: sw_data.py:4241
-msgid "By size"
+msgid "App to desktop"
 msgstr ""
 
 #: sw_data.py:4242
-msgid "By date"
+msgid "App to Steam Deck menu"
 msgstr ""
 
-#: sw_data.py:4243
-msgid "By name"
+#: sw_data.py:4246
+msgid "Winehq"
 msgstr ""
 
-#: sw_data.py:4244
-msgid "Reverse"
+#: sw_data.py:4247
+msgid "Protondb"
 msgstr ""
 
 #: sw_data.py:4248
-msgid "Help"
+msgid "Search for an image"
 msgstr ""
 
-#: sw_data.py:4250
-msgid "Add to playlist..."
+#: sw_data.py:4254
+msgid "Create file"
 msgstr ""
 
-#: sw_data.py:4251
-msgid "sample"
+#: sw_data.py:4255
+msgid "Create directory"
+msgstr ""
+
+#: sw_data.py:4256
+msgid "Create link"
 msgstr ""
 
 #: sw_data.py:4258
-msgid "Search..."
+msgid "Cut"
 msgstr ""
 
 #: sw_data.py:4259
-msgid "Loaded successfully"
+msgid "Copy"
 msgstr ""
 
 #: sw_data.py:4260
-msgid "The app is loading..."
+msgid "Paste"
 msgstr ""
 
 #: sw_data.py:4261
-msgid "Squashfs..."
+msgid "Select all"
 msgstr ""
 
 #: sw_data.py:4262
-msgid "installation in progress please wait..."
+msgid "Move to trash"
+msgstr ""
+
+#: sw_data.py:4263
+msgid "Delete permanently"
 msgstr ""
 
 #: sw_data.py:4265
-msgid "Deletion"
+msgid "Text"
 msgstr ""
 
 #: sw_data.py:4266
-msgid "Сopying"
+msgid "Bourne shell"
 msgstr ""
 
 #: sw_data.py:4267
-msgid "Removal"
+msgid "Python"
 msgstr ""
 
 #: sw_data.py:4268
-msgid "copy"
+msgid "Desktop"
+msgstr ""
+
+#: sw_data.py:4269
+msgid "Copy current path"
+msgstr ""
+
+#: sw_data.py:4270
+msgid "Add to bookmark"
+msgstr ""
+
+#: sw_data.py:4271
+msgid "Compress..."
+msgstr ""
+
+#: sw_data.py:4272
+msgid "Extract..."
+msgstr ""
+
+#: sw_data.py:4273
+msgid "Hidden files"
 msgstr ""
 
 #: sw_data.py:4274
-msgid "blue plasma waves"
+msgid "Sort..."
 msgstr ""
 
 #: sw_data.py:4275
-msgid "red plasma waves"
+msgid "By type"
 msgstr ""
 
 #: sw_data.py:4276
-msgid "teal plasma waves"
+msgid "By size"
 msgstr ""
 
 #: sw_data.py:4277
-msgid "mint plasma waves"
+msgid "By date"
 msgstr ""
 
 #: sw_data.py:4278
-msgid "golden plasma waves"
+msgid "By name"
 msgstr ""
 
 #: sw_data.py:4279
-msgid "purple plasma waves"
-msgstr ""
-
-#: sw_data.py:4280
-msgid "brown plasma waves"
-msgstr ""
-
-#: sw_data.py:4281
-msgid "gray plasma waves"
-msgstr ""
-
-#: sw_data.py:4282
-msgid "teal damask rose"
+msgid "Reverse"
 msgstr ""
 
 #: sw_data.py:4283
-msgid "red damask rose"
-msgstr ""
-
-#: sw_data.py:4284
-msgid "blue damask rose"
+msgid "Help"
 msgstr ""
 
 #: sw_data.py:4285
-msgid "purple damask rose"
+msgid "Add to playlist..."
 msgstr ""
 
 #: sw_data.py:4286
-msgid "golden damask rose"
+msgid "sample"
 msgstr ""
 
 #: sw_data.py:4287
-msgid "mint damask rose"
+msgid "Toggle"
 msgstr ""
 
 #: sw_data.py:4288
-msgid "brown damask rose"
+msgid "Toggle directory"
 msgstr ""
 
 #: sw_data.py:4289
-msgid "gray damask rose"
+msgid "Toggle focus"
 msgstr ""
 
 #: sw_data.py:4290
-msgid "blue parabolic waves"
+msgid "Cursor up"
 msgstr ""
 
 #: sw_data.py:4291
-msgid "red parabolic waves"
+msgid "Cursor down"
 msgstr ""
 
 #: sw_data.py:4292
-msgid "teal parabolic waves"
+msgid "Scroll up"
 msgstr ""
 
 #: sw_data.py:4293
-msgid "mint parabolic waves"
+msgid "Scroll down"
 msgstr ""
 
 #: sw_data.py:4294
-msgid "golden parabolic waves"
+msgid "Page up"
 msgstr ""
 
 #: sw_data.py:4295
-msgid "purple parabolic waves"
+msgid "Page down"
 msgstr ""
 
 #: sw_data.py:4296
-msgid "brown parabolic waves"
+msgid "Command line"
 msgstr ""
 
 #: sw_data.py:4297
-msgid "gray parabolic waves"
+msgid "Shell"
 msgstr ""
 
 #: sw_data.py:4298
-msgid "macos monterey"
-msgstr ""
-
-#: sw_data.py:4299
-msgid "neon road"
-msgstr ""
-
-#: sw_data.py:4300
-msgid "alien planet"
-msgstr ""
-
-#: sw_data.py:4301
-msgid "wallpaper"
-msgstr ""
-
-#: sw_data.py:4302
-msgid "ice and fire"
-msgstr ""
-
-#: sw_data.py:4303
-msgid "voronoi gradient"
-msgstr ""
-
-#: sw_data.py:4304
-msgid "pixelated rgb"
+msgid "Filter files"
 msgstr ""
 
 #: sw_data.py:4305
-msgid "blue ps3 home background"
+msgid "Search..."
 msgstr ""
 
 #: sw_data.py:4306
-msgid "red ps3 home background"
+msgid "Loaded successfully"
 msgstr ""
 
 #: sw_data.py:4307
-msgid "teal ps3 home background"
+msgid "The app is loading..."
 msgstr ""
 
 #: sw_data.py:4308
-msgid "mint ps3 home background"
+msgid "Squashfs..."
 msgstr ""
 
 #: sw_data.py:4309
-msgid "golden ps3 home background"
-msgstr ""
-
-#: sw_data.py:4310
-msgid "purple ps3 home background"
-msgstr ""
-
-#: sw_data.py:4311
-msgid "brown ps3 home background"
+msgid "installation in progress please wait..."
 msgstr ""
 
 #: sw_data.py:4312
-msgid "gray ps3 home background"
+msgid "Deletion"
 msgstr ""
 
 #: sw_data.py:4313
-msgid "infinite hexes background"
+msgid "Сopying"
 msgstr ""
 
 #: sw_data.py:4314
-msgid "floating playstation shapes"
+msgid "Removal"
 msgstr ""
 
 #: sw_data.py:4315
-msgid "abstract movement background"
-msgstr ""
-
-#: sw_data.py:4316
-msgid "dark chocolate"
-msgstr ""
-
-#: sw_data.py:4317
-msgid "red waves"
-msgstr ""
-
-#: sw_data.py:4318
-msgid "vista-esque wallpaper thing"
-msgstr ""
-
-#: sw_data.py:4319
-msgid "misty grid"
-msgstr ""
-
-#: sw_data.py:4320
-msgid "factory windows"
+msgid "copy"
 msgstr ""
 
 #: sw_data.py:4321
-msgid "star nest"
+msgid "blue plasma waves"
 msgstr ""
 
 #: sw_data.py:4322
-msgid "neon triangle"
+msgid "red plasma waves"
 msgstr ""
 
 #: sw_data.py:4323
-msgid "firestorm"
+msgid "teal plasma waves"
 msgstr ""
 
 #: sw_data.py:4324
-msgid "underwater bubbles"
+msgid "mint plasma waves"
 msgstr ""
 
 #: sw_data.py:4325
-msgid "universe within"
+msgid "golden plasma waves"
 msgstr ""
 
 #: sw_data.py:4326
-msgid "fractal galaxy"
+msgid "purple plasma waves"
 msgstr ""
 
 #: sw_data.py:4327
-msgid "glowing stars"
+msgid "brown plasma waves"
 msgstr ""
 
 #: sw_data.py:4328
-msgid "colored bagel"
+msgid "gray plasma waves"
 msgstr ""
 
 #: sw_data.py:4329
-msgid "protonophore"
+msgid "teal damask rose"
 msgstr ""
 
 #: sw_data.py:4330
-msgid "simplicity"
+msgid "red damask rose"
 msgstr ""
 
 #: sw_data.py:4331
-msgid "melting colors"
+msgid "blue damask rose"
 msgstr ""
 
 #: sw_data.py:4332
-msgid "generators redux"
+msgid "purple damask rose"
 msgstr ""
 
 #: sw_data.py:4333
-msgid "water turbulence"
+msgid "golden damask rose"
 msgstr ""
 
 #: sw_data.py:4334
-msgid "perspex web lattice"
+msgid "mint damask rose"
 msgstr ""
 
 #: sw_data.py:4335
-msgid "monochrome waves"
+msgid "brown damask rose"
 msgstr ""
 
 #: sw_data.py:4336
-msgid "galaxies of the universe"
+msgid "gray damask rose"
 msgstr ""
 
 #: sw_data.py:4337
-msgid "auroras"
+msgid "blue parabolic waves"
 msgstr ""
 
 #: sw_data.py:4338
-msgid "super mario bros"
+msgid "red parabolic waves"
 msgstr ""
 
 #: sw_data.py:4339
-msgid "fractal flythrough"
+msgid "teal parabolic waves"
 msgstr ""
 
 #: sw_data.py:4340
-msgid "blue circles"
+msgid "mint parabolic waves"
 msgstr ""
 
 #: sw_data.py:4341
-msgid "smiley"
+msgid "golden parabolic waves"
 msgstr ""
 
 #: sw_data.py:4342
-msgid "water high light"
+msgid "purple parabolic waves"
 msgstr ""
 
 #: sw_data.py:4343
-msgid "triangle gradients"
+msgid "brown parabolic waves"
 msgstr ""
 
 #: sw_data.py:4344
-msgid "shadow dance"
+msgid "gray parabolic waves"
 msgstr ""
 
 #: sw_data.py:4345
-msgid "neon sunset"
+msgid "macos monterey"
 msgstr ""
 
 #: sw_data.py:4346
-msgid "synthwave sunset logo"
+msgid "neon road"
 msgstr ""
 
 #: sw_data.py:4347
-msgid "portal"
+msgid "alien planet"
 msgstr ""
 
 #: sw_data.py:4348
-msgid "jellow lights"
+msgid "wallpaper"
 msgstr ""
 
 #: sw_data.py:4349
-msgid "evil membrane"
+msgid "ice and fire"
 msgstr ""
 
 #: sw_data.py:4350
-msgid "abstract pattern"
+msgid "voronoi gradient"
 msgstr ""
 
 #: sw_data.py:4351
-msgid "sun rays"
+msgid "pixelated rgb"
 msgstr ""
 
 #: sw_data.py:4352
-msgid "spiral riders"
+msgid "blue ps3 home background"
 msgstr ""
 
 #: sw_data.py:4353
-msgid "inside the matrix"
+msgid "red ps3 home background"
 msgstr ""
 
 #: sw_data.py:4354
-msgid "plexus particles"
+msgid "teal ps3 home background"
 msgstr ""
 
 #: sw_data.py:4355
-msgid "windows 95"
+msgid "mint ps3 home background"
 msgstr ""
 
 #: sw_data.py:4356
-msgid "sin cos 3d"
+msgid "golden ps3 home background"
 msgstr ""
 
 #: sw_data.py:4357
-msgid "static abstraction"
+msgid "purple ps3 home background"
 msgstr ""
 
 #: sw_data.py:4358
-msgid "galaxy/nebula and stars"
+msgid "brown ps3 home background"
 msgstr ""
 
 #: sw_data.py:4359
-msgid "nebula 112"
+msgid "gray ps3 home background"
 msgstr ""
 
 #: sw_data.py:4360
-msgid "magic ball"
+msgid "infinite hexes background"
 msgstr ""
 
 #: sw_data.py:4361
+msgid "floating playstation shapes"
+msgstr ""
+
+#: sw_data.py:4362
+msgid "abstract movement background"
+msgstr ""
+
+#: sw_data.py:4363
+msgid "dark chocolate"
+msgstr ""
+
+#: sw_data.py:4364
+msgid "red waves"
+msgstr ""
+
+#: sw_data.py:4365
+msgid "vista-esque wallpaper thing"
+msgstr ""
+
+#: sw_data.py:4366
+msgid "misty grid"
+msgstr ""
+
+#: sw_data.py:4367
+msgid "factory windows"
+msgstr ""
+
+#: sw_data.py:4368
+msgid "star nest"
+msgstr ""
+
+#: sw_data.py:4369
+msgid "neon triangle"
+msgstr ""
+
+#: sw_data.py:4370
+msgid "firestorm"
+msgstr ""
+
+#: sw_data.py:4371
+msgid "underwater bubbles"
+msgstr ""
+
+#: sw_data.py:4372
+msgid "universe within"
+msgstr ""
+
+#: sw_data.py:4373
+msgid "fractal galaxy"
+msgstr ""
+
+#: sw_data.py:4374
+msgid "glowing stars"
+msgstr ""
+
+#: sw_data.py:4375
+msgid "colored bagel"
+msgstr ""
+
+#: sw_data.py:4376
+msgid "protonophore"
+msgstr ""
+
+#: sw_data.py:4377
+msgid "simplicity"
+msgstr ""
+
+#: sw_data.py:4378
+msgid "melting colors"
+msgstr ""
+
+#: sw_data.py:4379
+msgid "generators redux"
+msgstr ""
+
+#: sw_data.py:4380
+msgid "water turbulence"
+msgstr ""
+
+#: sw_data.py:4381
+msgid "perspex web lattice"
+msgstr ""
+
+#: sw_data.py:4382
+msgid "monochrome waves"
+msgstr ""
+
+#: sw_data.py:4383
+msgid "galaxies of the universe"
+msgstr ""
+
+#: sw_data.py:4384
+msgid "auroras"
+msgstr ""
+
+#: sw_data.py:4385
+msgid "super mario bros"
+msgstr ""
+
+#: sw_data.py:4386
+msgid "fractal flythrough"
+msgstr ""
+
+#: sw_data.py:4387
+msgid "blue circles"
+msgstr ""
+
+#: sw_data.py:4388
+msgid "smiley"
+msgstr ""
+
+#: sw_data.py:4389
+msgid "water high light"
+msgstr ""
+
+#: sw_data.py:4390
+msgid "triangle gradients"
+msgstr ""
+
+#: sw_data.py:4391
+msgid "shadow dance"
+msgstr ""
+
+#: sw_data.py:4392
+msgid "neon sunset"
+msgstr ""
+
+#: sw_data.py:4393
+msgid "synthwave sunset logo"
+msgstr ""
+
+#: sw_data.py:4394
+msgid "portal"
+msgstr ""
+
+#: sw_data.py:4395
+msgid "jellow lights"
+msgstr ""
+
+#: sw_data.py:4396
+msgid "evil membrane"
+msgstr ""
+
+#: sw_data.py:4397
+msgid "abstract pattern"
+msgstr ""
+
+#: sw_data.py:4398
+msgid "sun rays"
+msgstr ""
+
+#: sw_data.py:4399
+msgid "spiral riders"
+msgstr ""
+
+#: sw_data.py:4400
+msgid "inside the matrix"
+msgstr ""
+
+#: sw_data.py:4401
+msgid "plexus particles"
+msgstr ""
+
+#: sw_data.py:4402
+msgid "windows 95"
+msgstr ""
+
+#: sw_data.py:4403
+msgid "sin cos 3d"
+msgstr ""
+
+#: sw_data.py:4404
+msgid "static abstraction"
+msgstr ""
+
+#: sw_data.py:4405
+msgid "galaxy/nebula and stars"
+msgstr ""
+
+#: sw_data.py:4406
+msgid "nebula 112"
+msgstr ""
+
+#: sw_data.py:4407
+msgid "magic ball"
+msgstr ""
+
+#: sw_data.py:4408
 msgid "zippy zaps"
+msgstr ""
+
+#: sw_data.py:4409
+msgid "singularity"
 msgstr ""

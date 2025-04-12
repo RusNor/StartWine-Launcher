@@ -11,8 +11,11 @@ import gi
 gi.require_version('Gtk', '4.0')
 from gi.repository import Gtk, GLib
 
-from OpenGL.GL import *
 from OpenGL.GL.shaders import compileShader
+#from OpenGL.GLES2 import *
+#from OpenGL.GLES2.OES import *
+#from OpenGL.GLES2.shaders import compileShader
+from OpenGL.GL import *
 
 from sw_shaders import Shaders
 from sw_data import TermColors as tc
@@ -38,25 +41,25 @@ void main() {
 '''
 
 fragment_prefix = '''
-    #version 330
+#version 330
 
-    uniform vec3      iResolution;
-    uniform float     iTime;
-    uniform float     iTimeDelta;
-    uniform int       iFrame;
-    uniform float     iFrameRate;
-    uniform float     iChannelTime[4];
-    uniform vec3      iChannelResolution[4];
-    uniform vec4      iMouse;
-    uniform sampler2D iChannel0;
-    uniform sampler2D iChannel1;
-    uniform sampler2D iChannel2;
-    uniform sampler2D iChannel3;
-    uniform vec4      iDate;
-    uniform float     iSampleRate;
+uniform vec3      iResolution;
+uniform float     iTime;
+uniform float     iTimeDelta;
+uniform int       iFrame;
+uniform float     iFrameRate;
+uniform float     iChannelTime[4];
+uniform vec3      iChannelResolution[4];
+uniform vec4      iMouse;
+uniform sampler2D iChannel0;
+uniform sampler2D iChannel1;
+uniform sampler2D iChannel2;
+uniform sampler2D iChannel3;
+uniform vec4      iDate;
+uniform float     iSampleRate;
 
-    out vec4 fragColor;
-    in vec2 fragCoord;
+out vec4 fragColor;
+in vec2 fragCoord;
 '''
 
 fragment_main = '''

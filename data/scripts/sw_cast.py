@@ -1,21 +1,19 @@
 #!/usr/bin/python3
 
-import os
 import time
-from os import environ, getenv
+from os import getenv
 from sys import argv, stdout, stderr
 from pathlib import Path
 from threading import Thread
-from subprocess import Popen, run, check_output, PIPE
+from subprocess import run, check_output, PIPE
 
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 import gi
 gi.require_version('Gst', '1.0')
-from gi.repository import GObject, Gst, GLib
+from gi.repository import Gst, GLib
 import pulsectl
 import pychromecast
-from pychromecast.controllers.media import MediaController
 from sw_input import SwKeyController
 
 """
@@ -124,7 +122,7 @@ def get_xprop_list():
 
     xid_list = list()
     xid_dict = dict()
-    x_prop = f"xprop -root _NET_CLIENT_LIST | sed 's/.*# //'"
+    x_prop = "xprop -root _NET_CLIENT_LIST | sed 's/.*# //'"
     out = run(x_prop, shell=True, stdout=PIPE, encoding='utf-8').stdout
     xid_list = out.replace(',', '').replace('\n', '').split(' ')
     for xid in xid_list:
@@ -141,11 +139,11 @@ def get_xid_dict():
 
     try:
         from Xlib.display import Display
-    except ImportError as e:
+    except ImportError:
         return None
     try:
         from Xlib.X import AnyPropertyType
-    except ImportError as e:
+    except ImportError:
         return None
 
     xid_dict = dict()
@@ -350,7 +348,6 @@ class SwScreenCast:
 
         buff = venc_dict['buff']
         raw = aenc_dict.get('raw')
-        opus = aenc_dict.get('opus')
         h264 = venc_dict.get('h264')
         venc = venc_dict.get(self.v_enc)
         aenc = aenc_dict.get(self.a_enc)
@@ -383,7 +380,7 @@ class SwScreenCast:
 
                 pipeline0 = Gst.parse_launch(
                     f'ximagesrc {xid} {sx} {sy} {ex} {ey}  use-damage=0 '
-                    +f'! videoscale method=0 ! videoconvert ! queue ! vaapisink'
+                    +'! videoscale method=0 ! videoconvert ! queue ! vaapisink'
                 )
 
             self.pipelines.append(pipeline0)
@@ -445,14 +442,17 @@ class SwScreenCast:
         if self.chromecast:
             self.chromecast_stream(fd, node_id, h264, muxer)
 
-    def chromecast_stream(fd, node_id, venc, mp4mux):
+    def chromecast_stream(self, fd, node_id, venc, mp4mux):
         """___Start a chromecast stream using gstreamer___"""
 
-        cast = find_chromecasts()
+        cast = self.find_chromecasts()
         mc = cast.media_controller
         host = cast.cast_info.host
         port = cast.cast_info.port
-        stream_url = f"tcp://{host}:{port}"
+        # stream_url = f"tcp://{host}:{port}"
+        raw = aenc_dict.get('raw')
+        opus = aenc_dict.get('opus')
+        h264 = venc_dict.get('h264')
 
         print("Casting to: ", f"tcp://{host}:{port}")
         print(f"Setting transmission to {cast.cast_info.friendly_name}")
@@ -564,10 +564,10 @@ class SwScreenCast:
 
         pa = pulsectl.Pulse('SwSourceCapture')
         pa_default_sink = pa.server_info().default_sink_name
-        volume = 1.0
+
         try:
             pa.sink_info(0)
-        except IndexError as e:
+        except IndexError:
             pass
         else:
             volume = round(pa.sink_info(0).volume.values[0], 2)

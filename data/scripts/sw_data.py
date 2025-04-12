@@ -10,7 +10,7 @@ from gi.repository import GLib
 import psutil
 from psutil import Process
 from sw_shaders import Shaders
-
+from subprocess import Popen, run, PIPE
 
 class TermColors:
     """___terminal colors pallete___"""
@@ -119,10 +119,10 @@ sw_default_config = Path(f"{sw_app_config}/.default/default")
 sw_img = Path(f"{sw_data_dir}/img")
 sw_gui_icons = Path(f"{sw_data_dir}/img/gui_icons")
 sw_symbolic_icons = Path(f"{sw_data_dir}/img/gui_icons/hicolor/symbolic/apps")
-sw_icon_apps_symbolic = Path(f"/usr/share/icons/SWSuru++/apps/symbolic")
-sw_icon_action_symbolic = Path(f"/usr/share/icons/SWSuru++/actions/symbolic")
-sw_icon_apps_16 = Path(f"/usr/share/icons/SWSuru++/apps/16")
-sw_icon_action_16 = Path(f"/usr/share/icons/SWSuru++/actions/16")
+sw_icon_apps_symbolic = Path("/usr/share/icons/SWSuru++/apps/symbolic")
+sw_icon_action_symbolic = Path("/usr/share/icons/SWSuru++/actions/symbolic")
+sw_icon_apps_16 = Path("/usr/share/icons/SWSuru++/apps/16")
+sw_icon_action_16 = Path("/usr/share/icons/SWSuru++/actions/16")
 sw_app_icons = Path(f'{sw_img}/app_icons')
 sw_app_vicons = Path(f'{sw_img}/app_icons/vertical')
 sw_app_hicons = Path(f'{sw_img}/app_icons/horizontal')
@@ -152,8 +152,9 @@ sw_fm_cache_thumbnail = Path(f'{sw_fm_cache}/thumbnail')
 sw_fm_cache_database = Path(f'{sw_fm_cache}/database')
 sw_fm_cache_donloads = Path(f'{sw_fm_cache}/downloads')
 sw_fm_cache_stats = Path(f'{sw_fm_cache}/stats')
+sw_runtime_link = Path(f"{sw_path}/data/runtime/sw")
 sw_runtime = Path(f"{sw_path}/data/runtime/sw_runtime")
-sys_sounds = Path(f'/usr/share/sounds/freedesktop/stereo')
+sys_sounds = Path('/usr/share/sounds/freedesktop/stereo')
 sw_sounds = Path(f'{sw_themes}/sounds')
 sw_startup_sounds = Path(f'{sw_sounds}/startup/ps.mp3')
 sw_bookmarks = Path(f'{Path.home()}/.cache/sw_fm/bookmarks')
@@ -172,7 +173,7 @@ sw_external_json = Path(f'{sw_fm_cache}/external_data.json')
 sw_exe_data_json = Path(f'{sw_fm_cache}/exe_data.json')
 sw_dxvk_vkd3d_json = Path(f'{sw_scripts}/dxvk_vkd3d_version.json')
 sw_input_json = Path(f'{sw_scripts}/sw_input.json')
-sw_icons = f'/usr/share/icons'
+sw_icons = '/usr/share/icons'
 
 if not sw_shortcuts.exists():
     sw_shortcuts.mkdir(parents=True, exist_ok=True)
@@ -268,10 +269,10 @@ else:
 dir_autostart = f'{xdg_config_home}/autostart'
 sw_tray_autostart = Path(f'{xdg_config_home}/autostart/StartWine-Tray.desktop')
 
-if Path(f'/usr/bin/vendor_perl/exiftool').exists() is True:
-    sw_exiftool = Path(f'/usr/bin/vendor_perl/exiftool')
+if Path('/usr/bin/vendor_perl/exiftool').exists() is True:
+    sw_exiftool = Path('/usr/bin/vendor_perl/exiftool')
 else:
-    sw_exiftool = Path(f'/usr/bin/exiftool')
+    sw_exiftool = Path('/usr/bin/exiftool')
 
 if sw_version.exists():
     version = sw_version.read_text().splitlines()[0]
@@ -301,13 +302,16 @@ gdbus_node_sample = (
     "      <arg type='s' name='show' direction='in'>"
     "      </arg>"
     "    </method>"
-    "    <method name='ShowHide'/>"
+    "    <method name='ShowHide'>"
+    "      <arg type='s' name='showhide' direction='in'>"
+    "      </arg>"
+    "    </method>"
     "    <method name='Shutdown'/>"
     "  </interface>"
     "</node>"
 )
 
-fshread = sw_fsh.read_text().split('\n')
+fshread = ['#!/usr/bin/env bash','. "$(dirname $(readlink -f "$0"))/sw_runlib"']
 
 default_bookmarks = str(
     f'{dir_home}\n'
@@ -332,7 +336,7 @@ default_playlist = str(
 default_ini = {
     "view_mode": "grid",
     "view_widget": "files",
-    "icon_size": 60,
+    "icon_size": 48,
     "shortcut_size": 120,
     "icon_position": "horizontal",
     "icon_color": "blue",
@@ -350,7 +354,7 @@ default_ini = {
     "sorting_reverse": "False",
     "renderer": "opengl",
     "opengl_bg": "True",
-    "shader_src": 38,
+    "shader_src": 7,
     "on_tray": "True",
     "language": "ru_RU",
     "icons": "builtin",
@@ -680,7 +684,7 @@ Icon=sample
 '''
 sample_tray_desktop = '''[Desktop Entry]
 Name=StartWine-Tray
-Exec=env '''f'"{sw_runtime}" "{sw_start}"'''' -t %F
+Exec=env '''f'"{sw_runtime_link}"'''' --run %F
 Comment=StartWine-Launcher
 Type=Application
 MimeType=text/x-python3
@@ -696,9 +700,9 @@ builtin_icon_colors = [
 ]
 
 default_mangohud = (
-    'fps_color_change,round_corners=12,cpu_load_change,gpu_load_change,core_load_change'
+    'fps_color_change,round_corners=10,cpu_load_change,gpu_load_change,core_load_change'
     + ',background_alpha=0.2,font_size=20,background_color=020202,position=top-right'
-    + ',toggle_hud_position='
+    + ',toggle_hud_position=Shift_R+F11'
 )
 
 default_mangohud_colors = {
@@ -1065,9 +1069,14 @@ def read_menu_conf():
     """___return dict from menu configuration file___"""
 
     with open(sw_menu_json, 'r', encoding='utf-8') as f:
-        json_data = json.load(f)
-        data_dict = json_data
-        f.close()
+        try:
+            json_data = json.load(f)
+        except (Exception,):
+            return None
+        else:
+            data_dict = json_data
+        finally:
+            f.close()
 
     return data_dict
 
@@ -1084,13 +1093,15 @@ def diff_menu_conf():
     """___checking differences between current and default menu config___"""
 
     data_dict = read_menu_conf()
-
-    for k, v in default_ini.items():
-        if k not in data_dict.keys():
-            data_dict[k] = default_ini[k]
+    if data_dict:
+        for k, v in default_ini.items():
+            if k not in data_dict.keys():
+                data_dict[k] = default_ini[k]
+        else:
+            write_menu_conf(data_dict)
     else:
-        write_menu_conf(data_dict)
-
+        Path(sw_menu_json).unlink()
+        create_menu_json()
 
 def get_roman(number):
     """___get roman number from arabic___"""
@@ -1225,35 +1236,36 @@ def check_exe_data(json_path, shortcut_dir, icon_dir):
 
     for r, d, f in walk(icon_dir):
         for icon in f:
-            exe = str(icon).split('_')[0]
-            id_ = str(Path(icon).stem).split('_')[-1]
-            name = str(icon).split('_')[-2]
-            if exe_dict.get(exe):
-                exe_dict[exe]['name'] = str(name)
-                exe_dict[exe]['id'] = str(id_)
-                if '_vertical_' in str(icon):
-                    exe_dict[exe]['vertical'] = str(icon)
-                elif '_horizontal_' in str(icon):
-                    exe_dict[exe]['horizontal'] = str(icon)
-                elif '_heroes_' in str(icon):
-                    exe_dict[exe]['heroes'] = str(icon)
+            if len(str(icon).split('_')) > 2:
+                exe = str(icon).split('_')[0]
+                id_ = str(Path(icon).stem).split('_')[-1]
+                name = str(icon).split('_')[-2]
+                if exe_dict.get(exe):
+                    exe_dict[exe]['name'] = str(name)
+                    exe_dict[exe]['id'] = str(id_)
+                    if '_vertical_' in str(icon):
+                        exe_dict[exe]['vertical'] = str(icon)
+                    elif '_horizontal_' in str(icon):
+                        exe_dict[exe]['horizontal'] = str(icon)
+                    elif '_heroes_' in str(icon):
+                        exe_dict[exe]['heroes'] = str(icon)
+                    else:
+                        exe_dict[exe]['default'] = str(icon)
                 else:
-                    exe_dict[exe]['default'] = str(icon)
-            else:
-                exe_dict[exe] = {
-                    'name': None, 'id': None, 'default': None, 'vertical': None,
-                    'horizontal': None, 'heroes': None, 'path': None
-                }
-                exe_dict[exe]['name'] = str(name)
-                exe_dict[exe]['id'] = str(id_)
-                if '_vertical_' in str(icon):
-                    exe_dict[exe]['vertical'] = str(icon)
-                elif '_horizontal_' in str(icon):
-                    exe_dict[exe]['horizontal'] = str(icon)
-                elif '_heroes_' in str(icon):
-                    exe_dict[exe]['heroes'] = str(icon)
-                else:
-                    exe_dict[exe]['default'] = str(icon)
+                    exe_dict[exe] = {
+                        'name': None, 'id': None, 'default': None, 'vertical': None,
+                        'horizontal': None, 'heroes': None, 'path': None
+                    }
+                    exe_dict[exe]['name'] = str(name)
+                    exe_dict[exe]['id'] = str(id_)
+                    if '_vertical_' in str(icon):
+                        exe_dict[exe]['vertical'] = str(icon)
+                    elif '_horizontal_' in str(icon):
+                        exe_dict[exe]['horizontal'] = str(icon)
+                    elif '_heroes_' in str(icon):
+                        exe_dict[exe]['heroes'] = str(icon)
+                    else:
+                        exe_dict[exe]['default'] = str(icon)
 
     if Path(json_path).exists():
         write_json_data(json_path, exe_dict)
@@ -1266,7 +1278,6 @@ class ExeData(dict):
     """___Data of executable items___"""
 
     def __init__(self, *args, **kwargs):
-
         super().__init__(*args, **kwargs)
         self.default_value = {
             'name': None, 'id': None, 'default': None, 'vertical': None,
@@ -1274,7 +1285,6 @@ class ExeData(dict):
         }
 
     def __setitem__(self, key, value):
-
         key = ''.join(e for e in key if e.isalnum())
         if isinstance(value, dict):
             super().__setitem__(key, value)
@@ -1285,19 +1295,16 @@ class ExeData(dict):
                 print(e)
 
     def __getitem__(self, key):
-
         key = ''.join(e for e in key if e.isalnum())
         return self.get(key)
 
     def get_(self, item):
         """___get item key and value___"""
-
         item = ''.join(e for e in item if e.isalnum())
         return self.get(item)
 
     def set_(self, item, key, value):
         """___set item key and value___"""
-
         item = ''.join(e for e in item if e.isalnum())
         if value:
             value = value.strip('"')
@@ -1312,12 +1319,46 @@ class ExeData(dict):
 
     def del_(self, item):
         """___remove item from data___"""
-
         item = ''.join(e for e in item if e.isalnum())
         if self.get(item):
             print('remove item:', item)
             del self[item]
 
+
+def set_backend_environ():
+    """___set environment variables for gui backend___."""
+
+    environ['WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS'] = '1'
+
+    ls_gpu_in_use = "lspci -nnk | grep -i vga -A3 | grep 'in use' | cut -d ' ' -f5-100"
+    #cat_ver = "cat /sys/module/nvidia/version"
+    #smi_ver = "nvidia-smi --query-gpu driver_version --format=csv,noheader"
+    gpu_in_use = None
+    #nv_drv_ver = None
+    try:
+        gpu_in_use = run(
+            ls_gpu_in_use, shell=True, stdout=PIPE, encoding='UTF-8'
+        ).stdout.splitlines()[0]
+    except IndexError:
+        print('GPU_IN_USE:', gpu_in_use)
+    else:
+        print('GPU_IN_USE:', gpu_in_use)
+
+    environ['GPU_IN_USE'] = str(gpu_in_use)
+    environ['PYOPENGL_PLATFORM'] = 'egl'
+    environ['GDK_DEBUG'] = 'gl-prefer-gl'
+    environ['GDK_DISABLE'] = 'gles-api'
+    # environ['GST_GL_WINDOW'] = 'wayland'
+    # environ['GST_GL_PLATFORM'] = 'egl'
+    # environ['GST_GL_API'] = 'opengl'
+    environ['GSK_RENDERER'] = str(sw_renderer)
+    if getenv('SW_RENDERER'):
+        environ['GSK_RENDERER'] = str(getenv('SW_RENDERER'))
+
+    if getenv('XDG_SESSION_TYPE') == 'wayland' or getenv('WAYLAND_DISPLAY'):
+        environ['GDK_BACKEND'] = 'wayland'
+    else:
+        environ['GDK_BACKEND'] = 'x11'
 
 ################################___Checking_config_files___:
 
@@ -1721,7 +1762,6 @@ list_projects = [
     'ValveSoftware/Proton',
     'Kron4ek/Wine-Builds',
     'GloriousEggroll/proton-ge-custom',
-    'GloriousEggroll/wine-ge-custom',
     'Winetricks/winetricks',
     'flightlessmango/MangoHud',
     'DadSchoorse/vkBasalt',
@@ -1769,7 +1809,7 @@ donation_source = {
 news_source = 'https://github.com/RusNor/StartWine-Launcher/releases'
 website_source = 'https://startwine-launcher.ru'
 github_source = 'https://github.com/RusNor'
-telegram_source = 'https://t.me/Rus_Nor_SW'
+telegram_source = 'https://t.me/StartWine'
 discord_source = 'https://discord.com/invite/37FrGUpDEj'
 license_source = 'https://www.gnu.org/licenses/gpl-3.0.html'
 
@@ -1787,7 +1827,7 @@ url_source = {
    # 'startwine': ['https://startwine-project.ru', f'{sw_gui_icons}/sw_icon.png'],
    # 'github': ['https://github.com/RusNor', f'{sw_symbolic_icons}/github.png'],
    # 'vkontakte': [' https://vk.com/club213719866', f'{sw_symbolic_icons}/vk.png'],
-   # 'telegram': ['https://t.me/Rus_Nor_SW', f'{sw_symbolic_icons}/telegram.png'],
+   # 'telegram': ['https://t.me/StartWine', f'{sw_symbolic_icons}/telegram.png'],
    # 'discord': ['https://discord.com/invite/37FrGUpDEj', f'{sw_symbolic_icons}/discord.png'],
    # 'license': ['https://www.gnu.org/licenses/gpl-3.0.html', f'{sw_symbolic_icons}/gnu.png'],
    # 'donation': ['https://my.qiwi.com/form/Nykyta-MhrLvGVgb3', f'{sw_symbolic_icons}/qiwi.png'],
@@ -1880,7 +1920,7 @@ btn_labels = [
     _('Settings'),
     _('Interface settings'),
     _('Debug'),
-    _('Terminate all processes'),
+    _('Terminate all wine processes'),
     _('About'),
     _('Properties'),
     _('Bookmarks'),
@@ -1913,22 +1953,32 @@ str_sw_use_pfx = 'SW_USE_PFX'
 
 prefix_tools_labels = [
     _('Remove current prefix'),
-    _('Clear current prefix'),
     _('Reinstall current prefix'),
     _('Prefix backup'),
     _('Prefix recovery'),
     _('Backup of saves'),
     _('Restoring saves')
 ]
+prefix_tools_desc = [
+    _('permanently delete all files of the current prefix.'),
+    _('reinstall the current prefix.'),
+    _('create a backup copy of the current prefix so that it can be restored if necessary.'),
+    _('restore the current prefix from the backup you previously created.'),
+    _('create a backup copy of your game saves so that they can be restored if necessary.'),
+    _('restore your game saves from a previously created backup.')
+]
 prefix_tools_widgets = [
     'pfx_remove',
-    'pfx_clear',
     'pfx_reinstall',
     'pfx_backup',
     'pfx_restore',
     'saves_backup',
     'saves_restore'
 ]
+
+prefix_tools_desc_dict = dict()
+for w, l in zip(prefix_tools_widgets, prefix_tools_desc):
+    prefix_tools_desc_dict[w] = l
 
 prefix_tools_dict = dict()
 for w, l in zip(prefix_tools_widgets, prefix_tools_labels):
@@ -1943,6 +1993,22 @@ wine_tools_labels = [
     _('Winetricks'),
     _('Clear shader cache'),
 ]
+wine_tools_desc = [
+    _('is a GUI configuration tool for Wine, designed to make life a little \
+easier than editing the registry.'),
+    _('is the Wine console manager, used to run console commands and \
+applications.'),
+    _("is Wine's registry editor, similar in appearance and function to \
+Window's regedit."),
+    _('is the Wine file manager, with a similar design to early Microsoft \
+Windows explorer.'),
+    _("is a GUI uninstaller for all setup programs that put an uninstall entry \
+in the registry. It's similar in function to 'Add/Remove Programs' in Windows, \
+except much simpler."),
+    _('is a helper script to download and install various redistributable \
+runtime libraries needed to run some programs in Wine.'),
+    _('removing Vulkan shaders compiled when loading D3D shaders in games.'),
+]
 wine_tools_widgets = [
     'wine_settings',
     'wine_console',
@@ -1952,6 +2018,10 @@ wine_tools_widgets = [
     'winetricks',
     'clear_shader_cache',
 ]
+
+wine_tools_desc_dict = dict()
+for d, w in zip(wine_tools_desc, wine_tools_widgets):
+    wine_tools_desc_dict[w] = d
 
 wine_tools_dict = dict()
 for n, w in zip(wine_tools_labels, wine_tools_widgets):
@@ -2030,6 +2100,23 @@ bookmarks_dict = {
     str(sw_logs): [IconPath.icon_regedit, _('Logs')],
 }
 
+termmarks_dict = {
+    dir_home: [' ', None],
+    dir_desktop: [' ', None],
+    dir_videos: [' ', None],
+    dir_docs: [' ', None],
+    dir_downloads: [' ', None],
+    dir_pics: [' ', None],
+    dir_music: [' ', None],
+    str(sw_wine): ['󰕰 ', None],
+    str(sw_games): ['  ', _('Games')],
+    str(sw_shortcuts): [' ', _('Shortcuts')],
+    str(sw_pfx): [' ', _('Prefixes')],
+    str(sw_pfx_backup): [' ', _('Backups')],
+    str(sw_app_config): [' ', _('Prefix configurations')],
+    str(sw_logs): [' ', _('Logs')],
+}
+
 ################################___Playlist___:
 
 playlist = []
@@ -2074,10 +2161,10 @@ wine_list = [
     'wine_staging_tkg',
 ]
 wine_labels = [
-    f'Wine Staging',
-    f'Wine Steam Proton',
-    f'Wine Proton GE',
-    f'Wine Staging TKG',
+    'Wine Staging',
+    'Wine Steam Proton',
+    'Wine Proton GE',
+    'Wine Staging TKG',
 ]
 str_sw_use_wine = 'SW_USE_WINE'
 
@@ -2086,6 +2173,12 @@ wine_func_list = [
     'WINE_2',
     'WINE_3',
     'WINE_4',
+]
+wine_ver_list = [
+    'STAG_VER',
+    'SP_VER',
+    'GE_VER',
+    'STAG_VER',
 ]
 wine_source = [
     'https://github.com/Kron4ek/Wine-Builds',
@@ -2116,6 +2209,10 @@ for w in wine_list:
 wine_func_dict = dict()
 for w, f in zip(wine_list, wine_func_list):
     wine_func_dict[w] = f
+
+wine_ver_dict = dict()
+for w, v in zip(wine_list, wine_ver_list):
+    wine_ver_dict[w] = v
 
 winever_data, latest_wine_dict, wine_download_dict = get_wine_dicts()
 
@@ -2260,22 +2357,21 @@ settings_icons = [
 str_lp_subtitle = _('Optimization, patches, tools, utilities and libraries')
 
 lp_entry_list = [
-    _('LAUNCH_PARAMETERS'),
-    _('WINEDLLOVERRIDES'),
+    'LAUNCH_PARAMETERS',
+    'WINEDLLOVERRIDES',
 ]
 lp_combo_list = [
-    _("WINEARCH"),
-    _('WINDOWS_VER'),
-    _('REGEDIT_PATCH'),
-    _('DXVK_VER'),
-    _('VKD3D_VER'),
-    _('FSR_MODE'),
-    _('LANG_MODE'),
+    'WINDOWS_VER',
+    'REGEDIT_PATCH',
+    'DXVK_VER',
+    'VKD3D_VER',
+    'FSR_MODE',
+    'LANG_MODE',
 ]
-str_fps_limit = _('FPS_LIMIT')
+str_fps_limit = 'FPS_LIMIT'
 export_fps_limit = 'export SW_USE_FPS_LIMIT'
 
-str_cpu_topology = _('CPU_TOPOLOGY')
+str_cpu_topology = 'WINE_CPU_TOPOLOGY'
 export_cpu_topology = 'export SW_USE_WINE_CPU_TOPOLOGY'
 
 str_example = [
@@ -2285,7 +2381,6 @@ str_example = [
 lp_list = [
     'launch_parameters',
     'override_dll',
-    'win_arch',
     'win_ver',
     'reg_patch',
     'dxvk_ver',
@@ -2298,7 +2393,6 @@ lp_list = [
 lp_title = [
     'LAUNCH_PARAMETERS',
     'WINEDLLOVERRIDES',
-    "WINEARCH",
     'WINDOWS_VER',
     'REGEDIT_PATCH',
     'DXVK_VER',
@@ -2306,7 +2400,7 @@ lp_title = [
     'FSR_MODE',
     'LANG_MODE',
     'FPS_LIMIT',
-    'CPU_TOPOLOGY',
+    'WINE_CPU_TOPOLOGY',
 ]
 
 lp_title_dict = dict()
@@ -2316,7 +2410,6 @@ for n, t in zip(lp_list, lp_title):
 lp_desc = [
     _('Set launch parameters'),
     _('Override dll in the current prefix'),
-    _("Set the architecture bit depth for the prefix"),
     _('Set windows version'),
     _('Add registry patch'),
     _('Set dxvk version'),
@@ -2330,17 +2423,6 @@ lp_desc = [
 lp_desc_dict = dict()
 for t, d in zip(lp_list, lp_desc):
     lp_desc_dict[t] = d
-
-winarch = [
-    '64 bit architecture', '32 bit architecture'
-]
-arch_index = [
-    'win64', 'win32'
-]
-
-winarch_dict = dict()
-for a,i in zip(winarch, arch_index):
-    winarch_dict[a] = i
 
 winver = [
     'Windows 11',
@@ -2363,10 +2445,18 @@ reg_patches = [''] + [
 dxvk_ver = dxvk_vkd3d_data['dxvk'].split()
 vkd3d_ver = dxvk_vkd3d_data['vkd3d'].split()
 
-combo_list = winarch + winver + reg_patches + dxvk_ver + vkd3d_ver
+combo_list = winver + reg_patches + dxvk_ver + vkd3d_ver
 fsr_mode = {_('Ultra'): 'ultra', _('Quality'): 'quality', _('Balanced'): 'balanced', _('Performance'): 'performance'}
 
 lang_mode = ['', 'en_US', 'ru_RU.UTF-8']
+
+combo_models = [
+    ver_index, reg_patches, dxvk_ver, vkd3d_ver,
+    fsr_mode.values(), lang_mode
+]
+combo_model_dict = dict()
+for model, combo in zip(combo_models, lp_combo_list):
+    combo_model_dict[combo] = model
 
 ################################___Switch_check___:
 
@@ -2925,8 +3015,13 @@ hotkey_list = [
     ['R_Shift', 'F12', ''],
     ['R_Shift','F11',''],
     ['HOME', '', ''],
+    ['L_Ctrl', 'L_Shift', 'K'],
+    ['L_Ctrl', 'L_Shift', 'PrintScreen'],
     ['Ctrl', 'Q', ''],
     ['Ctrl', 'W', ''],
+    ['L_Ctrl', 'L_Shift', 'Home'],
+    ['Ctrl', 'Shift', 'F'],
+    ['F11', '', ''],
     ['Ctrl', '+', ''],
     ['Ctrl', '-', ''],
     ['F5', '', ''],
@@ -2940,7 +3035,6 @@ hotkey_list = [
     ['Ctrl', 'C', ''],
     ['Ctrl', 'V', ''],
     ['Ctrl', 'X', ''],
-    ['Ctrl', 'Shift', 'K'],
     ['Delete', '', ''],
     ['Shift', 'Delete', ''],
     ['F2', '', ''],
@@ -2966,8 +3060,13 @@ hotkey_desc = [
     _('enable / disable MangoHud overlay in the game'),
     _('toggle MangoHud overlay postion in the game'),
     _('enable / disable vkBasalt effects in the game'),
+    _('terminate all wine processes'),
+    _('capture screen or window for record video'),
     _('shutdown StartWine'),
     _('close StartWine window'),
+    _('restore StartWine window'),
+    _('fullscreen StartWine window'),
+    _('fullscreen StartWine window'),
     _('increase the size of the icons and shortcuts'),
     _('reduce the size of the icons and shortcuts'),
     _('update files or shortcuts list view'),
@@ -2981,7 +3080,6 @@ hotkey_desc = [
     _('copy to clipboard'),
     _('paste from clipboard'),
     _('cut selected files'),
-    _('terminate all processes'),
     _('move to trash selected files'),
     _('permanently delete selected files'),
     _('rename file or directory in file manager'),
@@ -3022,12 +3120,12 @@ dll_templates_labels = [
 dll_templates_desc = [
     '',
     'mfc120 mfc42 msvcirt openal physx vb6run vcrun2005 vcrun2008 vcrun2010 \
-    vcrun2012 vcrun2013 vcrun2019 vcrun2022 vcrun6 vcrun6sp6 lucida nocrashdialog',
+vcrun2012 vcrun2013 vcrun2019 vcrun2022 vcrun6 vcrun6sp6 lucida nocrashdialog',
     'dotnet20sp2 dotnet48 dotnet6 dotnet7',
     'd3dcompiler_42 d3dcompiler_43 d3dcompiler_46 d3dcompiler_47 d3dx10 \
-    d3dx10_43 d3dx11_42 d3dx11_43 d3dx9',
+d3dx10_43 d3dx11_42 d3dx11_43 d3dx9',
     'vcrun2005 vcrun2008 vcrun2010 vcrun2012 vcrun2013 vcrun2019 vcrun2022 \
-    vcrun6 vcrun6sp6',
+vcrun6 vcrun6sp6',
 ]
 
 dll_templates_dict = dict()
@@ -3122,6 +3220,7 @@ dotnet48
 dotnet6
 dotnet7
 dotnet8
+dotnet9
 dotnet_verifier
 dotnetcore2
 dotnetcore3
@@ -3129,6 +3228,7 @@ dotnetcoredesktop3
 dotnetdesktop6
 dotnetdesktop7
 dotnetdesktop8
+dotnetdesktop9
 dpvoice
 dsdmo
 dsound
@@ -3139,25 +3239,6 @@ dxdiagn
 dxdiagn_feb2010
 dxtrans
 dxvk
-dxvk0054
-dxvk0060
-dxvk0061
-dxvk0062
-dxvk0063
-dxvk0064
-dxvk0065
-dxvk0070
-dxvk0071
-dxvk0072
-dxvk0080
-dxvk0081
-dxvk0090
-dxvk0091
-dxvk0092
-dxvk0093
-dxvk0094
-dxvk0095
-dxvk0096
 dxvk1000
 dxvk1001
 dxvk1002
@@ -3206,6 +3287,12 @@ dxvk2000
 dxvk2010
 dxvk2020
 dxvk2030
+dxvk2040
+dxvk2041
+dxvk2050
+dxvk2051
+dxvk2052
+dxvk2053
 dxvk_nvapi0061
 esent
 faudio
@@ -3447,6 +3534,7 @@ MS .NET 4.8 (Microsoft, 2019)
 MS .NET Runtime 6.0 LTS (Microsoft, 2023)
 MS .NET Runtime 7.0 LTS (Microsoft, 2023)
 MS .NET Runtime 8.0 LTS (Microsoft, 2024)
+MS .NET Runtime 9.0 LTS (Microsoft, 2024)
 MS .NET Verifier (Microsoft, 2016)
 MS .NET Core Runtime 2.1 LTS (Microsoft, 2020)
 MS .NET Core Runtime 3.1 LTS (Microsoft, 2020)
@@ -3454,6 +3542,7 @@ MS .NET Core Desktop Runtime 3.1 LTS (Microsoft, 2020)
 MS .NET Desktop Runtime 6.0 LTS (Microsoft, 2023)
 MS .NET Desktop Runtime 7.0 LTS (Microsoft, 2023)
 MS .NET Desktop Runtime 8.0 LTS (Microsoft, 2024)
+MS .NET Desktop Runtime 9.0 LTS (Microsoft, 2024)
 Microsoft dpvoice dpvvox dpvacm Audio dlls (Microsoft, 2002)
 MS dsdmo.dll (Microsoft, 2010)
 MS DirectSound from DirectX user redistributable (Microsoft, 2010)
@@ -3463,26 +3552,7 @@ DirectX Diagnostic Tool (Microsoft, 2010)
 DirectX Diagnostic Library (Microsoft, 2011)
 DirectX Diagnostic Library (February 2010) (Microsoft, 2010)
 MS dxtrans.dll (Microsoft, 2002)
-Vulkan-based D3D9/D3D10/D3D11 implementation for Linux / Wine (latest) (Philip Rebohle, 2023)
-Vulkan-based D3D11 implementation for Linux / Wine (0.54) (Philip Rebohle, 2017)
-Vulkan-based D3D11 implementation for Linux / Wine (0.60) (Philip Rebohle, 2017)
-Vulkan-based D3D11 implementation for Linux / Wine (0.61) (Philip Rebohle, 2017)
-Vulkan-based D3D11 implementation for Linux / Wine (0.62) (Philip Rebohle, 2017)
-Vulkan-based D3D11 implementation for Linux / Wine (0.63) (Philip Rebohle, 2017)
-Vulkan-based D3D11 implementation for Linux / Wine (0.64) (Philip Rebohle, 2017)
-Vulkan-based D3D11 implementation for Linux / Wine (0.65) (Philip Rebohle, 2017)
-Vulkan-based D3D10/D3D11 implementation for Linux / Wine (0.70) (Philip Rebohle, 2017)
-Vulkan-based D3D10/D3D11 implementation for Linux / Wine (0.71) (Philip Rebohle, 2017)
-Vulkan-based D3D10/D3D11 implementation for Linux / Wine (0.72) (Philip Rebohle, 2017)
-Vulkan-based D3D10/D3D11 implementation for Linux / Wine (0.80) (Philip Rebohle, 2017)
-Vulkan-based D3D10/D3D11 implementation for Linux / Wine (0.81) (Philip Rebohle, 2017)
-Vulkan-based D3D10/D3D11 implementation for Linux / Wine (0.90) (Philip Rebohle, 2017)
-Vulkan-based D3D10/D3D11 implementation for Linux / Wine (0.91) (Philip Rebohle, 2017)
-Vulkan-based D3D10/D3D11 implementation for Linux / Wine (0.92) (Philip Rebohle, 2017)
-Vulkan-based D3D10/D3D11 implementation for Linux / Wine (0.93) (Philip Rebohle, 2017)
-Vulkan-based D3D10/D3D11 implementation for Linux / Wine (0.94) (Philip Rebohle, 2017)
-Vulkan-based D3D10/D3D11 implementation for Linux / Wine (0.95) (Philip Rebohle, 2017)
-Vulkan-based D3D10/D3D11 implementation for Linux / Wine (0.96) (Philip Rebohle, 2017)
+Vulkan-based D3D8/D3D9/D3D10/D3D11 implementation for Linux / Wine (latest) (Philip Rebohle, 2024)
 Vulkan-based D3D10/D3D11 implementation for Linux / Wine (1.0) (Philip Rebohle, 2017)
 Vulkan-based D3D10/D3D11 implementation for Linux / Wine (1.0.1) (Philip Rebohle, 2017)
 Vulkan-based D3D10/D3D11 implementation for Linux / Wine (1.0.2) (Philip Rebohle, 2017)
@@ -3531,6 +3601,12 @@ Vulkan-based D3D9/D3D10/D3D11 implementation for Linux / Wine (2.0) (Philip Rebo
 Vulkan-based D3D9/D3D10/D3D11 implementation for Linux / Wine (2.1) (Philip Rebohle, 2023)
 Vulkan-based D3D9/D3D10/D3D11 implementation for Linux / Wine (2.2) (Philip Rebohle, 2023)
 Vulkan-based D3D9/D3D10/D3D11 implementation for Linux / Wine (2.3) (Philip Rebohle, 2023)
+Vulkan-based D3D8/D3D9/D3D10/D3D11 implementation for Linux / Wine (2.4) (Philip Rebohle, 2024)
+Vulkan-based D3D8/D3D9/D3D10/D3D11 implementation for Linux / Wine (2.4.1) (Philip Rebohle, 2024)
+Vulkan-based D3D8/D3D9/D3D10/D3D11 implementation for Linux / Wine (2.5) (Philip Rebohle, 2024)
+Vulkan-based D3D8/D3D9/D3D10/D3D11 implementation for Linux / Wine (2.5.1) (Philip Rebohle, 2024)
+Vulkan-based D3D8/D3D9/D3D10/D3D11 implementation for Linux / Wine (2.5.2) (Philip Rebohle, 2024)
+Vulkan-based D3D8/D3D9/D3D10/D3D11 implementation for Linux / Wine (2.5.3) (Philip Rebohle, 2025)
 Alternative NVAPI Vulkan implementation on top of DXVK for Linux / Wine (0.6.1) (Jens Peters, 2023)
 MS Extensible Storage Engine (Microsoft, 2011)
 FAudio (xaudio reimplementation, with xna support) builds for win32 (20.07) (Kron4ek, 2019)
@@ -3798,13 +3874,16 @@ exe_mime_types = [
 
 bin_mime_types = [
     'application/x-executable',
-    'application/vnd.appimage'
+    'application/x-pie-executable',
+    'application/vnd.appimage',
 ]
 
 script_mime_types = [
     'text/x-python',
     'text/x-python3',
+    'text/x-script.python',
     'application/x-shellscript',
+    'text/x-shellscript',
 ]
 
 app_mime_types = [
@@ -3816,12 +3895,24 @@ swd_mime_types = [
 ]
 
 text_mime_types = [
+    'text/markdown',
     'text/plain',
     'text/x-python',
+    'text/x-script.python',
+    'application/x-shellscript',
+    'text/x-shellscript',
     'text/win-bat',
     'text/x-ms-regedit',
+    'text/x-wine-extension-reg',
+    'text/x-wine-extension-ini',
     'text/x-log',
     'application/x-zerosize',
+    'application/json',
+    'text/html',
+    'text/xml',
+    'text/yaml',
+    'text/x-c',
+    'text/x-java',
 ]
 
 image_mime_types = [
@@ -3884,6 +3975,7 @@ video_mime_types = [
     'video/x-ogm',
     'video/x-mjpeg',
     'video/x-pn-realvideo',
+    'video/x-msvideo',
 ]
 
 audio_mime_types = [
@@ -3924,16 +4016,20 @@ audio_mime_types = [
 iso_mime_types = [
     'application/x-cd-image',
     'image/x-panasonic-rw',
-    'application/x-raw-disk-image'
+    'application/x-raw-disk-image',
+    'application/x-iso9660-image',
+    'application/octet-stream',
 ]
 
 archive_mime_types = [
     'application/x-compressed-tar',
     'application/x-xz-compressed-tar',
+    'application/x-xz',
     'application/x-zstd-compressed-tar',
     'application/zstd',
     'application/x-tar',
     'application/zip',
+    'application/gzip',
 ]
 
 archive_formats = [
@@ -4012,6 +4108,7 @@ To create a shortcut for this executable, rename it or delete the existing short
         ('remove', _('Remove')),
         ('install_title', _('Install')),
         ('install_desc', _('Applications and game stores')),
+        ('partitions', _('Partitions')),
         ('device_name', _('Volume name')),
         ('device_id', _('Device ID')),
         ('device_uuid', _('Device UUID')),
@@ -4066,6 +4163,10 @@ To create a shortcut for this executable, rename it or delete the existing short
         ('year', _('Year')),
         ('remove_pfx', _('Do you really want to remove the prefix?')),
         ('download_failed', _('Download failed...')),
+        ('shutdown', _('Shutdown')),
+        ('stop', _('Stop')),
+        ('press_any', _('Press any key')),
+        ('edit', _('Edit')),
     ])
 
     ################################___Tooltips___:
@@ -4085,7 +4186,7 @@ To create a shortcut for this executable, rename it or delete the existing short
         ('path', _('Show path entry')),
         ('save', _('Save')),
         ('color', _('Choose color')),
-        ('edit', _('Edit color value')),
+        ('edit_color', _('Edit color value')),
         ('current', _('Current rgb value')),
         ('directory', _('Choose directory')),
         ('gmount', _('Show or hide volume list')),
@@ -4103,7 +4204,7 @@ To create a shortcut for this executable, rename it or delete the existing short
         ('keyboard', _('Keyboard settings')),
         ('stats', _('Statistics and data')),
         ('debug', _('Debug')),
-        ('stop', _('Terminate all processes')),
+        ('stop', _('Terminate all wine processes')),
         ('about', _('About')),
         ('choose_app', _('Choose the application to transfer settings')),
         ('web', _('Show web entry')),
@@ -4116,6 +4217,7 @@ To create a shortcut for this executable, rename it or delete the existing short
 
     ctx_dict = dict([
         ('run', _('Run')),
+        ('view', _('View')),
         ('open', _('Open')),
         ('open_with', _('Open with...')),
         ('open_location', _('Open file location')),
@@ -4168,6 +4270,18 @@ To create a shortcut for this executable, rename it or delete the existing short
         ('shutdown', (_('Shutdown'), '<Ctrl>Q')),
         ('add_media', _('Add to playlist...')),
         ('sample', _('sample')),
+        ('toggle', _('Toggle')),
+        ('toggle_node', _('Toggle directory')),
+        ('toggle_focus', _('Toggle focus')),
+        ('cursor_up', _('Cursor up')),
+        ('cursor_down', _('Cursor down')),
+        ('scroll_up', _('Scroll up')),
+        ('scroll_down', _('Scroll down')),
+        ('page_up', _('Page up')),
+        ('page_down', _('Page down')),
+        ('command_line', _('Command line')),
+        ('shell', _('Shell')),
+        ('filter_files', _('Filter files')),
     ])
 
 
@@ -4278,8 +4392,8 @@ fragments_labels = [
     _('nebula 112'),
     _('magic ball'),
     _('zippy zaps'),
-#    _('Charset mandelbrot'),
-#    _('_')
+    _('singularity'),
+    #_('_'),
 ]
 
 ################################___Apps_ID___:
@@ -4292,7 +4406,8 @@ url_app_dtls = 'https://store.steampowered.com/api/appdetails?appids=1091500'
 
 request_headers = {
     "User-Agent": (
-        "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"
+        "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) \
+        Chrome/30.0.1599.101 Safari/537.36"
     ),
     "Accept-Language": "fr-FR,fr;q=0.8,en-US;q=0.6,en;q=0.4",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -4459,3 +4574,4 @@ romans = {
     0: 'X', 9: 'IX', 8: 'VIII', 7: 'VII', 6: 'VI',
     5: 'V', 4: 'IV', 3: 'III', 2: 'II', 1:'I'
 }
+

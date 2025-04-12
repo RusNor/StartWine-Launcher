@@ -6,14 +6,11 @@ Windows Registry Editor Version 5.00
 [HKEY_CURRENT_USER\Software\Wine\AppDefaults\steam.exe]
 "Version"="win10"
 
-[HKEY_CURRENT_USER\Software\Wine\DllOverrides]
-"msxml3"="native,builtin"
-
-[HKEY_CURRENT_USER\Software\Valve\Steam]
-"DWriteEnable"="dword:00000000"
-
 [HKEY_CURRENT_USER\Software\Valve\Steam]
 "GPUAccelWebViews"="dword:1"
+"DWriteEnable"="dword:00000000"
 
 [HKEY_CURRENT_USER\Software\Wine\DllOverrides]
 "libglesv2"="builtin"
+"msxml3"="native,builtin"
+

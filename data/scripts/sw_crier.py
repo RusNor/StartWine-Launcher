@@ -15,7 +15,7 @@ from urllib.error import HTTPError, URLError
 from subprocess import run
 import itertools
 from collections import deque
-from time import sleep
+# from time import sleep
 import io
 import struct
 import pefile
@@ -377,9 +377,13 @@ def run_menu():
 
     if Path(f'{Path.home()}/.config/swrc').exists():
         with open(f'{Path.home()}/.config/swrc', 'r', encoding='utf-8') as rc:
-            dest_path = rc.read().splitlines()[0]
+            data = rc.read().splitlines()
+            dest_path = data[0] if data else None
             rc.close()
-        run([f'{dest_path}/data/scripts/sw_menu.py'], check=False)
+        if dest_path:
+            run([f'{dest_path}/data/scripts/sw_menu.py'], check=False)
+        else:
+            print(f'{Path.home()}/.config/swrc incorrect...')
     else:
         print(f'{Path.home()}/.config/swrc not found...')
 
@@ -1769,7 +1773,7 @@ def get_total_size(_url, _filename):
         try:
             with urlopen(_url) as u:
                 totalsize = u.length
-        except (URLError, HTTPError) as e:
+        except (URLError, HTTPError):
             totalsize = None
 
     sys.stdout.write(f'Total size: {totalsize}\t{Path(_filename).name}\n')
@@ -2221,18 +2225,18 @@ def on_helper():
 
     ----------------------------------------------------------------------------
     Options:
-    -h or '--help'                                          Show help and exit
-    -i    'text message'                                    Info dialog window
-    -e    'text message'                                    Error dialog window
-    -w    'text message'                                    Warning dialog window
-    -q    'text message' 'button_name1 'button_name2'       Question dialog window
-    -t    'text or path to text file'                       Show text or open file in text editor
-    -f    'path'                                            File chooser dialog window
-    -d    'url' 'output_file'                               Download progress bar window
-    -tar  'input_file, output_file'                         Tar archive extraction progress bar window
-    -zip  'input_file, output_file'                         Zip archive extraction progress bar window
-    -ico  'input_file, output_file'                         Ico extraction from DLL or EXE file
-    -hud                                                    Print MangoHud font size
+    -h or '--help'                                       Show help and exit
+    -i     'text message'                                Info dialog window
+    -e     'text message'                                Error dialog window
+    -w     'text message'                                Warning dialog window
+    -q     'text message' 'button_name1 'button_name2'   Question dialog window
+    -f     'path'                                        File chooser dialog window
+    -d     'url' 'output_file'                           Download progress bar window
+    --edit 'text or path to text file'                   Show text or open file in text editor
+    --tar  'input_file, output_file'                     Tar archive extraction progress bar window
+    --zip  'input_file, output_file'                     Zip archive extraction progress bar window
+    --ico  'input_file, output_file'                     Ico extraction from DLL or EXE file
+    --hud                                                Print MangoHud font size
 ''')
 
 
@@ -2244,7 +2248,7 @@ if __name__ == '__main__':
             if str(argv[1]) == str('-h') or str(argv[1]) == str('--help'):
                 on_helper()
 
-            elif str(argv[1]) == str('-hud'):
+            elif str(argv[1]) == str('--hud'):
                 import os
                 SwHudSize()
             else:
@@ -2252,49 +2256,49 @@ if __name__ == '__main__':
 
         elif len(argv) == 3:
 
-            if argv[1] == '-i':
+            if argv[1] == '-i' or argv[1] == '--info':
                 app = SwCrier(text_message=argv[2], message_type='INFO')
                 try:
                     app.run()
                 except KeyboardInterrupt:
                     app.quit()
 
-            elif argv[1] == '-e':
+            elif argv[1] == '-e' or argv[1] == '--error':
                 app = SwCrier(text_message=argv[2], message_type='ERROR')
                 try:
                     app.run()
                 except KeyboardInterrupt:
                     app.quit()
 
-            elif argv[1] == '-w':
+            elif argv[1] == '-w' or argv[1] == '--warning':
                 app = SwCrier(text_message=argv[2], message_type='WARNING')
                 try:
                     app.run()
                 except KeyboardInterrupt:
                     app.quit()
 
-            elif argv[1] == '-q':
+            elif argv[1] == '-q' or argv[1] == '--question':
                 app = SwCrier(text_message=argv[2], message_type='QUESTION', response=None)
                 try:
                     app.run()
                 except KeyboardInterrupt:
                     app.quit()
 
-            elif argv[1] == '-t':
+            elif argv[1] == '--edit':
                 app = SwCrier(file=argv[2], message_type='TEXT')
                 try:
                     app.run()
                 except KeyboardInterrupt:
                     app.quit()
 
-            elif argv[1] == '-f':
+            elif argv[1] == '-f' or argv[1] == '--file':
                 app = SwCrier(file=argv[2], message_type='FILE')
                 try:
                     app.run()
                 except KeyboardInterrupt:
                     app.quit()
 
-            elif str(argv[1]) == str('-p'):
+            elif str(argv[1]) == str('-p') or argv[1] == '--path':
                 app = SwPathManager(argv[2])
                 try:
                     app.run()
@@ -2306,7 +2310,8 @@ if __name__ == '__main__':
 
         elif len(argv) == 4:
 
-            if str(argv[1]) == str('-d') or str(argv[1]) == str('--silent-download'):
+            if (str(argv[1]) == str('-d') or str(argv[1]) == str('--download')
+                    or str(argv[1]) == str('--silent-download')):
                 import os
                 import multiprocessing as mp
                 from threading import Thread
@@ -2327,7 +2332,7 @@ if __name__ == '__main__':
                     except KeyboardInterrupt:
                         app.quit()
 
-            elif str(argv[1]) == str('-tar') or str(argv[1]) == str('--silent-tar'):
+            elif str(argv[1]) == str('--tar') or str(argv[1]) == str('--silent-tar'):
                 import tarfile
                 from threading import Thread
 
@@ -2343,7 +2348,7 @@ if __name__ == '__main__':
                     except KeyboardInterrupt:
                         app.quit()
 
-            elif str(argv[1]) == str('-zip') or str(argv[1]) == str('--silent-zip'):
+            elif str(argv[1]) == str('--zip') or str(argv[1]) == str('--silent-zip'):
                 import zipfile
                 from threading import Thread
 
@@ -2359,7 +2364,7 @@ if __name__ == '__main__':
                     except KeyboardInterrupt:
                         app.quit()
 
-            elif str(argv[1]) == str('-ico'):
+            elif str(argv[1]) == str('--ico'):
 
                 input_file = str(argv[2])
                 output_file = str(argv[3])
@@ -2372,7 +2377,7 @@ if __name__ == '__main__':
 
         elif len(argv) == 5:
 
-            if str(argv[1]) == str('-q'):
+            if str(argv[1]) == str('-q') or str(argv[1]) == str('--question'):
                 response = [argv[3], argv[4]]
                 app = SwCrier(text_message=argv[2], message_type='QUESTION', response=response)
                 try:

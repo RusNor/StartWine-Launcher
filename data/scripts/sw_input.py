@@ -64,15 +64,15 @@
 import sys
 from sys import argv
 import time
-from pathlib import Path
+# from pathlib import Path
 import evdev
-from evdev import UInput, AbsInfo, InputDevice, ecodes, categorize, ff, list_devices
+from evdev import UInput, InputDevice, ecodes, categorize, ff
 from threading import Thread
-import multiprocessing as mp
+# import multiprocessing as mp
 import asyncio
-import signal
+# import signal
 from select import select
-import math
+# import math
 
 import gi
 gi.require_version('Gtk', '4.0')
@@ -80,8 +80,8 @@ gi.require_version('Gdk', '4.0')
 from gi.repository import Gtk, Gdk, Gio, GLib
 from sw_data import (
     str_gc_title, str_gc_subtitle, str_not_set, str_press_any_key, sw_css_dark,
-    default_app_bind_profile, default_gui_bind_profile, app_bind_profile,
-    controller_icons, IconPath, write_json_data, Msg as msg, vl_dict, sw_input_json
+    default_app_bind_profile, app_bind_profile, controller_icons, IconPath,
+    write_json_data, Msg as msg, vl_dict, sw_input_json
 )
 from sw_func import check_alive
 
@@ -143,11 +143,11 @@ def get_key_dict(dev_name, dev_type):
 
         try:
             ev_key = dev_caps[('EV_KEY', 1)]
-        except KeyError as e:
+        except KeyError:
             ev_key = []
         try:
             ev_abs = dev_caps[('EV_ABS', 3)]
-        except KeyError as e:
+        except KeyError:
             ev_abs = []
 
         for k in ev_key:
@@ -168,10 +168,10 @@ def get_key_dict(dev_name, dev_type):
 def bind_device_key(device, key_name, bind_dict):
     """Create dicrionary with key bindings from commandline."""
 
-    key_bind = None
-    mouse_bind = None
-    mouse_list = get_device_list(MOUSEPAD)
-    keyboard_list = get_device_list(KEYBOARD)
+    # key_bind = None
+    # mouse_bind = None
+    # mouse_list = get_device_list(MOUSEPAD)
+    # keyboard_list = get_device_list(KEYBOARD)
 
     inp = []
     while inp == []:
@@ -816,7 +816,7 @@ class SwDeviceRedirectionSettings(Gtk.Widget):
             t.start()
             f = self.update_item
             q = (key_name, key_widget)
-            timeout = GLib.timeout_add(100, check_alive, t, f, q, None)
+            GLib.timeout_add(100, check_alive, t, f, q, None)
 
     def update_item(self, key_name, key_widget):
         """Update item of binding list."""
@@ -894,19 +894,19 @@ class SwDeviceRedirectionSettings(Gtk.Widget):
 
         if controller_icons.get(name):
             image_key_name.set_from_file(controller_icons.get(name))
-            text = self.bind_dict.get(name) if self.bind_dict[name] else str_not_set
+            text = self.bind_dict.get(name) if self.bind_dict.get(name) else str_not_set
             if isinstance(text, list):
                 text = text[0]
 
         elif '_RIGHT' in cap_var:
             image_key_name.set_from_file(controller_icons.get(name+'rt'))
-            text = self.bind_dict.get(name) if self.bind_dict[name] else str_not_set
+            text = self.bind_dict.get(name) if self.bind_dict.get(name) else str_not_set
             if text and isinstance(text, list):
                 text = text[0]
 
         elif '_LEFT' in cap_var:
             image_key_name.set_from_file(controller_icons.get(name+'lt'))
-            text = self.bind_dict.get(name) if self.bind_dict[name] else str_not_set
+            text = self.bind_dict.get(name) if self.bind_dict.get(name) else str_not_set
             if text and isinstance(text, list):
                 if len(text) == 1:
                     text = text[0]
@@ -915,13 +915,13 @@ class SwDeviceRedirectionSettings(Gtk.Widget):
 
         elif '_DOWN' in cap_var:
             image_key_name.set_from_file(controller_icons.get(name+'dn'))
-            text = self.bind_dict.get(name) if self.bind_dict[name] else str_not_set
+            text = self.bind_dict.get(name) if self.bind_dict.get(name) else str_not_set
             if text and isinstance(text, list):
                 text = text[0]
 
         elif '_UP' in cap_var:
             image_key_name.set_from_file(controller_icons.get(name+'up'))
-            text = self.bind_dict.get(name) if self.bind_dict[name] else str_not_set
+            text = self.bind_dict.get(name) if self.bind_dict.get(name) else str_not_set
             if text and isinstance(text, list):
                 if len(text) == 1:
                     text = text[0]
@@ -1097,7 +1097,7 @@ def run_device_redirection_settings():
     app = SwDeviceRedirectionApp(bind_dict=app_bind_profile)
     try:
         app.run()
-    except KeyboardInterrupt as e:
+    except KeyboardInterrupt:
         print('Exit...')
         app.terminate()
 
@@ -1117,7 +1117,7 @@ def run_device_redirection(device, data):
             print(f'{device.name} connected')
             try:
                 redirection.run()
-            except (KeyboardInterrupt, OSError) as e:
+            except (KeyboardInterrupt, OSError):
                 data['device_connected'] = ''
                 print(f'{device.name} disconnected')
 
@@ -1147,10 +1147,10 @@ def run_zero_device_redirection(event, data):
                     break
         time.sleep(0.5)
     else:
-        data['device_connected'] = devices[0].name
+        data['device_connected'] = gamepad.name
         try:
-            run_device_redirection(devices[0], data)
-        except (KeyboardInterrupt, OSError) as e:
+            run_device_redirection(gamepad, data)
+        except (KeyboardInterrupt, OSError):
             sys.exit(0)
 
 
@@ -1168,12 +1168,12 @@ def run_commandline(run_type, dev_type=None):
 
         try:
             dev_num = input('Input device number: ')
-        except KeyboardInterrupt as e:
+        except KeyboardInterrupt:
             sys.exit(0)
 
         try:
             dev_num = eval(dev_num)
-        except (SyntaxError, NameError) as e:
+        except (SyntaxError, NameError):
             print('Invalid value! Must be a number of device')
             sys.exit(1)
 
@@ -1187,14 +1187,14 @@ def run_commandline(run_type, dev_type=None):
             data['controller_active'] = True
             try:
                 run_device_redirection(device, data)
-            except KeyboardInterrupt as e:
+            except KeyboardInterrupt:
                 sys.exit(0)
 
         elif run_type == 'custom':
             for k, v in key_dict.items():
                 try:
                     bind_device_key(device, k, bind_dict)
-                except KeyboardInterrupt as e:
+                except KeyboardInterrupt:
                     sys.exit(0)
             else:
                 data = dict()
@@ -1202,13 +1202,13 @@ def run_commandline(run_type, dev_type=None):
                 data['controller_active'] = True
                 try:
                     run_device_redirection(device, data)
-                except KeyboardInterrupt as e:
+                except KeyboardInterrupt:
                     sys.exit(0)
 
         elif run_type == 'monitoring':
             try:
                 run_device_event_monitoring(device, key_dict, abs_dict)
-            except KeyboardInterrupt as e:
+            except KeyboardInterrupt:
                 print('Exit...')
                 sys.exit(0)
 

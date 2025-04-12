@@ -6,10 +6,9 @@ import os
 from os import environ, getenv, scandir
 from os.path import join
 from sys import argv, exit
-from subprocess import Popen, run, PIPE, DEVNULL
+from subprocess import Popen, run, check_output, PIPE, DEVNULL
 from pathlib import Path
 from threading import Thread
-import mimetypes
 import urllib.request
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
@@ -27,28 +26,12 @@ from sw_data import Msg as msg
 from sw_data import TermColors as tc
 
 
-def get_arg_mimetype():
-    """___get exe path from system commandline arg___"""
-
-    try:
-        exc_type = tuple(mimetypes.guess_type(f'{argv[2]}', strict=True))[0]
-    except (Exception,):
-        exc_type = tuple(mimetypes.guess_type(f'{argv[0]}', strict=True))[0]
-    else:
-        if Path(argv[2]).suffix in swd_mime_types:
-            exc_type = 'application-x-swd'
-
-    return exc_type
-
-
 def set_print_mem_info(mapped):
     """___print used memory info___"""
-
     mem_info = Process().memory_full_info()
     mem_map = Process().memory_maps(grouped=True)
     rss_memory = round(mem_info.rss / (1024**2), 2)
     shared_memory = round(mem_info.shared / (1024**2), 2)
-
     print(
         tc.SELECTED + tc.YELLOW
         + "\n----------------< MEMORY_INFO >----------------\n"
@@ -74,7 +57,6 @@ def set_print_mem_info(mapped):
         tc.VIOLET2 + 'SWAP_MEMORY:   ' + tc.GREEN
         + str(round(mem_info.swap / (1024**2), 2)) + tc.END, "\n"
         )
-
     if mapped:
         for x in mem_map:
             try:
@@ -87,7 +69,6 @@ def set_print_mem_info(mapped):
 
 def get_app_path():
     """___get application path___"""
-
     app_path = getenv('SW_EXEC')
     if app_path == '' or app_path is None:
         app_path = 'StartWine'
@@ -104,9 +85,7 @@ def get_app_path():
 
 def get_out():
     """___get application name___"""
-
     app_path = get_app_path()
-
     if app_path == str('StartWine'):
         app_name = app_path
     else:
@@ -117,7 +96,6 @@ def get_out():
 
 def get_suffix():
     """___get application suffix___"""
-
     app_path = get_app_path()
     app_suffix = str(Path(app_path).suffix).strip('"')
 
@@ -125,7 +103,7 @@ def get_suffix():
 
 
 def get_lnk_data(lnk_path):
-
+    """___get filename extension and path from .lnk file___"""
     lnk_path = lnk_path.strip('"')
 
     with open(lnk_path, 'rb') as f:
@@ -176,7 +154,7 @@ def get_lnk_data(lnk_path):
 
             print(
                 tc.SELECTED + tc.GREEN,
-                f'-----------------< LNK DATA >-----------------\n' + tc.END
+                '-----------------< LNK DATA >-----------------\n' + tc.END
                 + f'APP_NAME={format_name}\n'
                 + f'APP_SUFFIX={format_suffix}\n'
                 + f'APP_PATH={format_path}'
@@ -188,11 +166,11 @@ def get_lnk_data(lnk_path):
 
 def get_lnk_exec(app_name, app_path, app_suffix, app_lnk_path):
     """___get executable file path from x-ms-shortcut___"""
-
     if app_lnk_path is not None:
         partitions = psutil.disk_partitions()
         exist_path = ''
         format_app_name = app_name.replace(' ', '_')
+
         for x in sorted(partitions):
             for m in ['/mnt/', '/run/media/', '/home', '/var/']:
                 if m in x.mountpoint:
@@ -213,7 +191,6 @@ def get_lnk_exec(app_name, app_path, app_suffix, app_lnk_path):
                         break
 
         if exist_path == '':
-
             if Path(f'{sw_path}/{app_lnk_path}').exists():
                 exist_path = Path(f'{sw_path}/{app_lnk_path}')
                 environ['SW_EXEC'] = f'"{exist_path}"'
@@ -236,7 +213,6 @@ def get_lnk_exec(app_name, app_path, app_suffix, app_lnk_path):
 
 def create_app_conf():
     """___create application config___"""
-
     app_name = get_out()
     app_conf = Path(f"{sw_app_config}/" + str(app_name))
     launcher_conf = Path(f"{sw_app_config}/.default/" + str(app_name))
@@ -272,7 +248,6 @@ def create_app_conf():
 
 def clear_tmp():
     """___remove shortcuts from tmp directory___"""
-
     if sw_tmp.exists():
         for x in scandir(path=sw_tmp):
             x_path = Path(join(sw_tmp, x.name))
@@ -283,7 +258,6 @@ def clear_tmp():
 
 def start_tray():
     """___run menu in system tray___"""
-
     if sw_cfg.get('on_tray') == 'True':
         app_path = get_app_path()
         p = Popen(['ps', '-AF'], stdout=PIPE, encoding='UTF-8')
@@ -291,20 +265,22 @@ def start_tray():
 
         is_active = []
         for line in out.splitlines():
-            if str('sw_tray.py') in line:
+            if str('sw_start -t') in line or str('sw_start --tray') in line:
                 is_active.append('1')
+                break
 
         if not is_active:
             try:
-                Popen([sw_tray, app_path])
+                p = Popen([sw_start, "-t"])
+                process_workers.append(p)
             except KeyboardInterrupt:
-                exit(0)
+                p.terminate()
+
             print(f'{tc.VIOLET2} SW_TRAY: {tc.GREEN}done', tc.END)
 
 
 def get_pfx_path():
     """___get current prefix path___"""
-
     try:
         dpath = Path(f"{sw_app_config}/" + get_out())
         pfx = dpath.read_text().splitlines()
@@ -324,7 +300,6 @@ def get_pfx_path():
 
 def get_pfx_name():
     """___get application prefix name___"""
-
     pfx_path = get_pfx_path()
     pfx_name = str(Path(pfx_path).stem)
     pfx_label = pfx_name.replace('pfx_', '')
@@ -335,7 +310,6 @@ def get_pfx_name():
 
 def write_app_conf(x_path):
     """___create application config when create shortcut___"""
-
     app_name = str(Path(x_path).stem).strip('"').replace(' ', '_')
     launcher_conf = Path(f"{sw_app_config}/.default/" + str(app_name))
     app_conf = Path(f"{sw_app_config}/" + str(app_name))
@@ -351,7 +325,6 @@ def write_app_conf(x_path):
 
 def write_app_stat(stat_path: str, var: str, val: float):
     """___Writing total time in the app___"""
-
     if Path(stat_path).exists():
         text = Path(stat_path).read_text()
         lines = text.splitlines()
@@ -381,7 +354,6 @@ def write_app_stat(stat_path: str, var: str, val: float):
 
 def read_app_stat(stat_path: str, var: str):
     """___Reading total time in the app___"""
-
     if Path(stat_path).exists():
         lines = Path(stat_path).read_text().splitlines()
         line = [line for line in lines if f'{var}=' in line]
@@ -424,9 +396,7 @@ def read_app_stat(stat_path: str, var: str):
 
 def read_overlay_output(app_name: str):
     """___Getting average fps from output log___"""
-
     fps_tmp = f'{sw_tmp}/stats/{app_name}.txt'
-
     if Path(fps_tmp).exists():
         with open(fps_tmp, 'r') as f:
             lines = f.read().splitlines()
@@ -452,7 +422,6 @@ def read_overlay_output(app_name: str):
 
 def app_info(x_path):
     """___get application settings dictionary___"""
-
     app_dict = {}
     if Path(x_path).exists():
         x_path = x_path
@@ -474,9 +443,7 @@ def app_info(x_path):
 
 def app_conf_info(x_path, x_list):
     """___get application config dictionary___"""
-
     app_conf_dict = {}
-
     if Path(x_path).exists():
         x_path = x_path
     elif str(sw_app_config) in str(x_path):
@@ -498,9 +465,7 @@ def app_conf_info(x_path, x_list):
 
 def preload_runlib(enable_env: bool):
     """___preload runlib functions___"""
-
     app_name = get_out()
-
     if enable_env:
         for k, v in env_dict.items():
             print(tc.BLUE, f'{k}={tc.GREEN}{v}')
@@ -508,13 +473,11 @@ def preload_runlib(enable_env: bool):
 
     cmd = f"{sw_scripts}/sw_runlib {app_name}"
     run(cmd, shell=True, check=False)
-
     print(tc.VIOLET2, f'PRELOAD_RUNLIB: {tc.YELLOW}done{tc.END}')
 
 
 def get_exe_icon():
     """___get icon from exe file___"""
-
     app_name = get_out()
     app_name_isalnum = ''.join(e for e in app_name if e.isalnum())
     app_def_icon = list(sw_app_default_icons.rglob(f'{app_name_isalnum}_*x256.png'))
@@ -522,25 +485,16 @@ def get_exe_icon():
         print(f'{tc.VIOLET} SW_DEFAULT_ICON: {tc.BLUE}{app_def_icon}{tc.END}')
         print(f'{tc.VIOLET} SW_DEFAULT_ICON: {tc.BLUE}icon for {app_name} exists, skip...{tc.END}')
     else:
-        print(f'{tc.VIOLET} SW_DEFAULT_ICON: {tc.BLUE} try to get icon from {app_name}{tc.END}')
         func = f"CREATE_ICON \"$@\""
         app_path = get_app_path()
         app_suffix = get_suffix()
-
         if app_suffix:
-            count = 1
-            try:
-                for _line in fshread:
-                    count += 1
-                    sw_fsh.write_text(sw_fsh.read_text().replace(fshread[count], ''))
-            except IndexError:
-                sw_fsh.write_text(fshread[0] + '\n' + fshread[1] + '\n' + func)
-                run(f"{sw_fsh} {app_path}", shell=True)
+            sw_fsh.write_text('\n'.join([fshread[0], fshread[1], func]))
+            run(f"{sw_fsh} {app_path}", shell=True)
 
 
 def try_get_appid_json():
     """___get json data file from url___"""
-
     try:
         response = Request(url_app_id, headers=request_headers)
     except HTTPError as e:
@@ -577,7 +531,6 @@ def try_get_appid_json():
 
 def convert_image(in_file, out_file, width, height):
     """___generate thumbnail for image mime type files___"""
-
     size = width, height
     try:
         image = Image.open(in_file)
@@ -603,9 +556,7 @@ def convert_image(in_file, out_file, width, height):
 
 def request_urlopen(url, dest, auth):
     """___download content from open URL___"""
-
-    key = f'9bd57c167c0f9b466539d0c8f9bdbd70'
-
+    key = '9bd57c167c0f9b466539d0c8f9bdbd70'
     if auth:
         request_headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 \
@@ -641,7 +592,6 @@ def request_urlopen(url, dest, auth):
 
 def try_download_logo(app_id, app_name, original_name, orientation):
     """___try download application logo by id___"""
-
     image_type = Path('') 
     image_dir = Path('')
 
@@ -680,7 +630,6 @@ def try_download_logo(app_id, app_name, original_name, orientation):
 
 def get_steam_appid_dict(orig_name, desc_name, dir_name, exe_name, info_list):
     """___get application id dictionary from json data___"""
-
     app_id_dict.clear()
     name_dict.clear()
 
@@ -738,33 +687,59 @@ def compare_name(
         orig_name, orig_name_, desc_name, desc_name_, dir_name, dir_name_,
         exe_name, exe_name_, app_name, info_list):
     """___compare application metadata info with application id data___"""
-
-    match_vert = compare_sgdb_vertical(orig_name_, desc_name_, dir_name_, exe_name_, app_name, 'exact_match')
+    match_vert = compare_sgdb_vertical(
+        orig_name_, desc_name_, dir_name_, exe_name_, app_name, 'exact_match'
+    )
     if match_vert is None:
-        app_id_dict, name_dict = get_steam_appid_dict(orig_name, desc_name, dir_name, exe_name, info_list)
+        app_id_dict, name_dict = get_steam_appid_dict(
+            orig_name, desc_name, dir_name, exe_name, info_list
+        )
         if len(app_id_dict) > 0:
-            steamdb_vert = check_download_steamdb(app_id_dict, app_name, name_dict, 'vertical')
-            steamdb_hero = check_download_steamdb(app_id_dict, app_name, name_dict, 'heroes')
+            steamdb_vert = check_download_steamdb(
+                app_id_dict, app_name, name_dict, 'vertical'
+            )
+            steamdb_hero = check_download_steamdb(
+                app_id_dict, app_name, name_dict, 'heroes'
+            )
             if not steamdb_vert or not steamdb_hero:
-                compare_sgdb_vertical(orig_name_, desc_name_, dir_name_, exe_name_, app_name, 'inaccurate_match')
+                compare_sgdb_vertical(
+                    orig_name_, desc_name_, dir_name_, exe_name_, app_name,
+                    'inaccurate_match'
+                )
         else:
-            compare_sgdb_vertical(orig_name_, desc_name_, dir_name_, exe_name_, app_name, 'inaccurate_match')
+            compare_sgdb_vertical(
+                orig_name_, desc_name_, dir_name_, exe_name_, app_name,
+                'inaccurate_match'
+            )
 
-    match_horiz = compare_sgdb_horizontal(orig_name_, desc_name_, dir_name_, exe_name_, app_name, 'exact_match')
+    match_horiz = compare_sgdb_horizontal(
+        orig_name_, desc_name_, dir_name_, exe_name_, app_name, 'exact_match'
+    )
     if match_horiz is None:
-        app_id_dict, name_dict = get_steam_appid_dict(orig_name, desc_name, dir_name, exe_name, info_list)
+        app_id_dict, name_dict = get_steam_appid_dict(
+            orig_name, desc_name, dir_name, exe_name, info_list
+        )
         if len(app_id_dict) > 0:
-            steamdb_horiz = check_download_steamdb(app_id_dict, app_name, name_dict, 'horizontal')
-            steamdb_hero = check_download_steamdb(app_id_dict, app_name, name_dict, 'heroes')
+            steamdb_horiz = check_download_steamdb(
+                app_id_dict, app_name, name_dict, 'horizontal'
+            )
+            steamdb_hero = check_download_steamdb(
+                app_id_dict, app_name, name_dict, 'heroes'
+            )
             if not steamdb_horiz or not steamdb_hero:
-                compare_sgdb_horizontal(orig_name_, desc_name_, dir_name_, exe_name_, app_name, 'inaccurate_match')
+                compare_sgdb_horizontal(
+                    orig_name_, desc_name_, dir_name_, exe_name_, app_name,
+                    'inaccurate_match'
+                )
         else:
-            compare_sgdb_horizontal(orig_name_, desc_name_, dir_name_, exe_name_, app_name, 'inaccurate_match')
+            compare_sgdb_horizontal(
+                orig_name_, desc_name_, dir_name_, exe_name_, app_name,
+                'inaccurate_match'
+            )
 
 
 def compare_sgdb_vertical(orig_name_, desc_name_, dir_name_, exe_name_, app_name, match_type):
     """___compare application metadata info with application id data___"""
-
     check_db_vert = None
     compare_dict = {
         orig_name_: 'Original name',
@@ -795,7 +770,6 @@ def compare_sgdb_vertical(orig_name_, desc_name_, dir_name_, exe_name_, app_name
 
 def compare_sgdb_horizontal(orig_name_, desc_name_, dir_name_, exe_name_, app_name, match_type):
     """___compare application metadata info with application id data___"""
-
     check_db_horiz = None
     compare_dict = {
         orig_name_: 'Original name',
@@ -826,7 +800,6 @@ def compare_sgdb_horizontal(orig_name_, desc_name_, dir_name_, exe_name_, app_na
 
 def edit_cur_name(cur_name):
     """___edit application name for searching steamgriddb content___"""
-
     length = len(cur_name)
     count = 0
     parts = []
@@ -853,10 +826,9 @@ def edit_cur_name(cur_name):
 
 
 def get_sgdb_match(data, cur_name, match_type):
-
+    """___sort searching app id by match type___"""
     app_id_list = list()
     name_list = list()
-
     for app in data:
         key_name = str(app['name'].encode('ascii','ignore'), encoding='utf-8')
         key_name = re.sub(r'[ЁёА-я]', '', key_name)
@@ -902,7 +874,6 @@ def get_sgdb_match(data, cur_name, match_type):
 
 def check_download_sgdb(cur_name, app_name, width, height, orientation, match_type):
     """___search and download content from steamgriddb___"""
-
     if cur_name is not None:
         app_name_isalnum = ''.join(e for e in app_name if e.isalnum())
         edited_name = edit_cur_name(cur_name)
@@ -1020,7 +991,6 @@ def check_download_sgdb(cur_name, app_name, width, height, orientation, match_ty
 
 def get_app_id_dict():
     """___get dictionary of app IDs from icon names___"""
-
     id_dict = dict()
     for icon in sw_app_vicons.iterdir():
         app_nm = str(icon.stem).split('_')[0]
@@ -1033,7 +1003,6 @@ def get_app_id_dict():
 
 def request_external_data():
     """___get external JSON data using ID dictionary___"""
-
     id_dict = get_app_id_dict()
     ext_data_dict = read_json_data(sw_external_json)
     for k, v in id_dict.items():
@@ -1043,10 +1012,8 @@ def request_external_data():
 
 def check_external_data(app_name_isalnum, app_id):
     """___get external steam platform data for application by app id___"""
-
     url_stm_id = f'https://www.steamgriddb.com/api/v2/games/id/{app_id}?platformdata=steam'
     external_json_cache = f'{sw_fm_cache_database}/{app_name_isalnum}_{app_id}.json'
-
     try:
         request_urlopen(url_stm_id, external_json_cache, True)
     except Exception as e:
@@ -1082,12 +1049,10 @@ def check_external_data(app_name_isalnum, app_id):
 
 
 def check_sgdb_heroes(app_name_isalnum, app_id, data_name):
-
+    """___check steamgriddb and try to download heroes logo by app id___"""
     if not f'{sw_app_heroes_icons}/{app_name_isalnum}_heroes_' in str([x for x in list(sw_app_heroes_icons.iterdir())]):
-
         size_dict = {3840: 1240, 1920: 620, 1600: 650}
         url_heroes_icon = []
-
         for width, height in size_dict.items():
             url_heroes = f'https://www.steamgriddb.com/api/v2/heroes/game/{app_id}?dimentions={width}x{height}'
             try:
@@ -1134,9 +1099,8 @@ def check_sgdb_heroes(app_name_isalnum, app_id, data_name):
 
 
 def check_download_steamdb(app_id_dict, app_name, name_dict, orientation):
-
+    """___check steamdb and try download logo by app id___"""
     check_io = False
-
     if len(list(app_id_dict)) > 0:
         for key, name in zip(list(app_id_dict), list(name_dict)):
             if 'original' in key:
@@ -1152,7 +1116,7 @@ def check_download_steamdb(app_id_dict, app_name, name_dict, orientation):
                     if 'description' in key:
                         print(
                             tc.VIOLET2
-                            + f'Try download by Description: '
+                            + 'Try download by Description: '
                             + f'{app_id_dict[key]} {name_dict[name]}'
                             + tc.END
                         )
@@ -1167,7 +1131,7 @@ def check_download_steamdb(app_id_dict, app_name, name_dict, orientation):
                             if 'directory' in key:
                                 print(
                                     tc.VIOLET2
-                                    + f'Try download by DirectoryName: '
+                                    + 'Try download by DirectoryName: '
                                     + f'{app_id_dict[key]} {name_dict[name]}'
                                     + tc.END
                                 )
@@ -1182,7 +1146,7 @@ def check_download_steamdb(app_id_dict, app_name, name_dict, orientation):
                                     if 'exe' in key:
                                         print(
                                             tc.VIOLET2
-                                            + f'Try download by ExeName: '
+                                            + 'Try download by ExeName: '
                                             + f'{app_id_dict[key]} {name_dict[name]}'
                                             + tc.END
                                         )
@@ -1195,17 +1159,16 @@ def check_download_steamdb(app_id_dict, app_name, name_dict, orientation):
                                     else:
                                         pass
                                 else:
-                                    print(tc.RED + f'application id not found' + tc.END)
+                                    print(tc.RED + 'application id not found' + tc.END)
                                     return False
         return check_io
     else:
-        print(tc.RED + f'application id not found' + tc.END)
+        print(tc.RED + 'application id not found' + tc.END)
         return False
 
 
 def get_meta_prod(metadata):
     """___get exe product name info from metadata___"""
-
     try:
         md_prod = metadata['ProductName']
     except (Exception,):
@@ -1217,7 +1180,6 @@ def get_meta_prod(metadata):
 
 def get_meta_orig(app_name, app_path, metadata):
     """___get exe original name info from metadata___"""
-
     cmd = str()
     out_cmd = None
     metadata_original = None
@@ -1243,13 +1205,13 @@ def get_meta_orig(app_name, app_path, metadata):
         try:
             metadata_original = json.loads(out_cmd)[0]
         except (Exception,):
-            print(f'<< OriginalFileName: metadata not found... >>')
+            print('<< OriginalFileName: metadata not found... >>')
             return None
         else:
             try:
                 md_orig_prod = metadata_original['ProductName']
             except (Exception,):
-                print(f'<< ProductName of OriginalFileName: metadata not found >>')
+                print('<< ProductName of OriginalFileName: metadata not found >>')
                 return None
             else:
                 return md_orig_prod
@@ -1259,7 +1221,6 @@ def get_meta_orig(app_name, app_path, metadata):
 
 def get_meta_desc(metadata):
     """___get exe description info from metadata___"""
-
     try:
         md_desc = metadata['FileDescription']
     except (Exception,):
@@ -1271,7 +1232,6 @@ def get_meta_desc(metadata):
 
 def get_exe_metadata(app_name, app_path, event):
     """___get exe logo id from json data___"""
-
     dir_list = list()
     metadata = None
     orig_name = None
@@ -1285,7 +1245,7 @@ def get_exe_metadata(app_name, app_path, event):
     print_metadata = (lambda:
         print(
             tc.SELECTED + tc.GREEN,
-            f'-----------------< METADATA >-----------------' + tc.END
+            '-----------------< METADATA >-----------------' + tc.END
         )
     )
     cmd = f'{sw_exiftool} -j {app_path}'
@@ -1419,7 +1379,6 @@ def get_exe_metadata(app_name, app_path, event):
 
 def check_exe_logo(app_name):
     """___check if image exists for current application___"""
-
     hicons = False
     vicons = False
     heroes = False
@@ -1454,7 +1413,6 @@ def check_exe_logo(app_name):
 
 def get_bookmark_list():
     """___get bookmarks list from cache file___"""
-
     bookmarks_list.clear()
     with open(sw_bookmarks, 'r') as f:
         lines = f.read().splitlines()
@@ -1467,7 +1425,6 @@ def get_bookmark_list():
 
 def get_playlist():
     """___get playlist from cache file___"""
-
     playlist.clear()
     with open(sw_playlist, 'r') as f:
         lines = f.read().splitlines()
@@ -1480,14 +1437,13 @@ def get_playlist():
 
 def get_media_metadata(media_path):
     """___get media info from metadata___"""
-
     md_media = {}
     cmd = f'{sw_exiftool} -j "{media_path}"'
     out_cmd = run(cmd, shell=True, stdout=PIPE).stdout
     try:
         media_metadata = json.loads(out_cmd)[0]
     except (Exception,):
-        print(f'<< MediaFile: metadata not found... >>')
+        print('<< MediaFile: metadata not found... >>')
     else:
         for md in ['Album', 'Title', 'Artist', 'Year']:
             if media_metadata.get(md):
@@ -1500,7 +1456,6 @@ def get_media_metadata(media_path):
 
 def get_media_info(x_file):
     """___get media info from metadata___"""
-
     media_data = msg.msg_dict['unknown']
     if x_file is not None:
         path = x_file.get_path()
@@ -1516,7 +1471,6 @@ def get_media_info(x_file):
 
 def volume_control(volume, step):
     """___volume control dictionary for gstreamer media controls___"""
-
     value = volume.get('volume') if volume.get('volume') else 1.0
     if value < 0.0:
         value = 0.0
@@ -1532,108 +1486,81 @@ def notify_send(data):
     Popen(f'notify-send -t 1500 "{data}"', shell=True)
 
 
-def echo_func_name(func_name):
+def echo_func_name(func_name, event=None):
     """___write and run function to function.sh___"""
-
-    func = func_name + str(' \"$@\"')
     app_path = get_app_path()
     app_name = get_out()
+    func = func_name + str(' \"$@\"')
 
-    app_log = f"{sw_logs}/{app_name}.log"
-    stderr_log = open(app_log, 'w')
+    if (str(func) == str("ADD_SHORTCUT_TO_MENU \"$@\"")
+            or str(func) == str("ADD_SHORTCUT_TO_DESKTOP \"$@\"")):
 
-    count = -1
-    try:
-        for _line in fshread:
-            count += 1
-            if count > 1:
-                sw_fsh.write_text(sw_fsh.read_text().replace(fshread[count], ''))
-    except IOError as e:
-        print(e)
+        shortcut_name = f"export CUSTOME_GAME_NAME={getenv('CUSTOM_GAME_NAME')}"
+        shortcut_path = f"export SW_DESKTOP_DIR={getenv('CUSTOM_GAME_PATH')}"
+
+        sw_fsh.write_text(
+            '\n'.join([fshread[0], fshread[1], shortcut_name, shortcut_path, func])
+        )
+        run(f"{sw_fsh} {app_path}", shell=True)
     else:
-        if (str(func) == str("ADD_SHORTCUT_TO_MENU \"$@\"")
-                or str(func) == str("ADD_SHORTCUT_TO_DESKTOP \"$@\"")
-                or str(func) == str("ADD_SHORTCUT_TO_STEAM \"$@\"")):
+        stderr_log = open(f"{sw_logs}/{app_name}.log", 'w')
+        sw_fsh.write_text('\n'.join([fshread[0], fshread[1], func]))
+        run(
+            f"{sw_fsh} {app_path}", shell=True, start_new_session=True,
+            stderr=stderr_log, encoding='utf-8'
+        )
+        stderr_log.close()
 
-            shortcut_name = f"export CUSTOME_GAME_NAME={getenv('CUSTOM_GAME_NAME')}"
-            shortcut_path = f"export SW_DESKTOP_DIR={getenv('CUSTOM_GAME_PATH')}"
-
-            sw_fsh.write_text(
-                fshread[0] + '\n' + fshread[1] + '\n' + shortcut_name + '\n'
-                + shortcut_path + '\n' + func
-            )
-            run(f"{sw_fsh} {app_path}", shell=True)
-        else:
-            sw_fsh.write_text(fshread[0] + '\n' + fshread[1] + '\n' + func)
-            run(
-                f"{sw_fsh} {app_path}", shell=True, start_new_session=True,
-                stderr=stderr_log, encoding='UTF-8'
-            )
+    if event:
+        event.set()
 
 
 def cs_wine(wine_name, app_name, app_path):
     """___write and run create shortcut function to function.sh___"""
-
     wine_download = wine_func_dict.get(wine_name) if wine_func_dict.get(wine_name) else None
-    func_cs = f"CREATE_SHORTCUT \"$@\""
-    count = -1
-    try:
-        for _line in fshread:
-            count += 1
-            if count > 1:
-                sw_fsh.write_text(sw_fsh.read_text().replace(fshread[count], ''))
-    except IOError as e:
-        print(e)
+    func_cs = "CREATE_SHORTCUT \"$@\""
+
+    if (not Path(f"{sw_wine}/{wine_name}/bin/wine").exists()
+            and wine_download is not None):
+
+        wine_ok = "export WINE_OK=1"
+        func_download = f"{wine_download} \"$@\""
+
+        sw_fsh.write_text(
+            '\n'.join([fshread[0], fshread[1], wine_ok, func_download, func_cs])
+        )
+        run(f"{sw_fsh} {app_path}", shell=True)
     else:
-        if (not Path(f"{sw_wine}/{wine_name}/bin/wine").exists()
-                and wine_download is not None):
-
-            wine_ok = f"export WINE_OK=1"
-            func_download = f"{wine_download} \"$@\""
-
-            sw_fsh.write_text(
-                fshread[0] + '\n' + fshread[1] + '\n' + wine_ok + '\n'
-                + func_download + '\n' + func_cs
-            )
-            run(
-                f"{sw_fsh} {app_path}", shell=True, start_new_session=True,
-                encoding='UTF-8'
-            )
-        else:
-            sw_fsh.write_text(fshread[0] + '\n' + fshread[1] + '\n' + func_cs)
-            run(
-                f"{sw_fsh} {app_path}", shell=True, start_new_session=True,
-                encoding='UTF-8'
-            )
+        sw_fsh.write_text('\n'.join([fshread[0], fshread[1], func_cs]))
+        run(f"{sw_fsh} {app_path}", shell=True)
 
 
 def echo_wine(wine_name, name_ver, wine_ver):
     """___write and run download wine function to function.sh___"""
-
-    export_wine_ver = f'export {name_ver}="{wine_ver}"'
     app_path = get_app_path()
+    export_wine_ver = f'export {name_ver}="{wine_ver}"'
     wine_num = wine_name + str(' \"$@\"')
-    count = -1
+    sw_fsh.write_text(
+        '\n'.join([fshread[0], fshread[1], export_wine_ver, wine_num])
+    )
+    run(f"{sw_fsh} {app_path}", shell=True)
 
-    try:
-        for _line in fshread:
-            count += 1
-            if count > 1:
-                sw_fsh.write_text(
-                    sw_fsh.read_text().replace(fshread[count], '')
-                )
-    except IOError as e:
-        print(e)
-    else:
-        sw_fsh.write_text(
-            fshread[0] + '\n' + fshread[1] + '\n' + export_wine_ver + '\n' + wine_num
-        )
-        run(f"{sw_fsh} {app_path}", shell=True)
+
+def echo_install_dll(dll_list):
+    """___install changed dll from winetricks list___"""
+    app_path = get_app_path()
+    func_name = "SW_WINETRICKS \"$@\""
+    export_dll = f"export DLL=\"{' '.join(dll_list)}\""
+    print(f'{tc.VIOLET2}setup_list: {tc.GREEN}{" ".join(dll_list)}{tc.END}')
+
+    sw_fsh.write_text(
+        '\n'.join([fshread[0], fshread[1], export_dll, func_name])
+    )
+    run(f"{sw_fsh} {app_path}", shell=True)
 
 
 def check_alive(thread, func, args, parent):
     """___run the function when thread it completes___"""
-
     if thread.is_alive():
         return True
     else:
@@ -1652,9 +1579,7 @@ def check_alive(thread, func, args, parent):
 
 def vulkan_info(q):
     """___get driver name from vulkaninfo___"""
-
-    cmd = f"vulkaninfo | grep driverName | cut -d '=' -f2"
-
+    cmd = "vulkaninfo | grep driverName | cut -d '=' -f2"
     proc = run(
             cmd, shell=True, stderr=DEVNULL,
             stdout=PIPE, encoding='UTF-8'
@@ -1668,7 +1593,6 @@ def vulkan_info(q):
 
 def check_wine():
     """___check the existence of the path to wine___"""
-
     app_name = get_out()
     app_conf = Path(f"{sw_app_config}/{app_name}")
     app_dict = app_info(app_conf)
@@ -1682,7 +1606,6 @@ def check_wine():
 
 def find_process(app_suffix):
     """___Return a list of processes matching name___"""
-
     procs = psutil.Process(os.getpid()).children(recursive=True)
     for p in procs:
         try:
@@ -1700,7 +1623,6 @@ def find_process(app_suffix):
 
 def get_samples_list(samples_dir):
     """___get a list of sound samples from a directory___"""
-
     samples_dict = dict()
     samples_list = sorted(list(Path(samples_dir).iterdir()))
     for i, x in enumerate(samples_list):
@@ -1711,7 +1633,6 @@ def get_samples_list(samples_dir):
 
 def get_cpu_core_num():
     """___try get cpu core numbers___"""
-
     cpu_core_num = None
     try:
         cpu_affinity = psutil.Process().cpu_affinity()
@@ -1729,30 +1650,81 @@ def get_cpu_core_num():
 
 def run_vulkan():
     """___run application in vulkan mode___"""
-
-    func_name = f"RUN_VULKAN"
+    func_name = "RUN_VULKAN"
     echo_func_name(func_name)
 
 
 def run_opengl():
     """___run application in opengl mode___"""
-
-    func_name = f"SW_USE_OPENGL='1' RUN_VULKAN"
+    func_name = "SW_USE_OPENGL='1' RUN_VULKAN"
     echo_func_name(func_name)
 
 
 def debug_vulkan():
     """___run application in vulkan debug mode___"""
-
-    func_name = f"DEBUG_VULKAN"
+    func_name = "DEBUG_VULKAN"
     echo_func_name(func_name)
 
 
 def debug_opengl():
     """___run application in opengl debug mode___"""
-
-    func_name = f"SW_USE_OPENGL='1' DEBUG_VULKAN"
+    func_name = "SW_USE_OPENGL='1' DEBUG_VULKAN"
     echo_func_name(func_name)
+
+
+def run_install_launchers(x_name):
+    """___run install launchers function___"""
+    launcher_name = str(x_name).upper()
+    func = f'INSTALL_{launcher_name}'
+    echo_func_name(func)
+
+
+def cb_btn_wine_1(wine_ver):
+    name_ver = "STAG_VER"
+    wine_name = "WINE_1"
+    echo_wine(wine_name, name_ver, wine_ver)
+
+
+def cb_btn_rm_wine_1(wine_ver):
+    name_ver = "STAG_VER"
+    wine_name = "RM_WINE_1"
+    echo_wine(wine_name, name_ver, wine_ver)
+
+
+def cb_btn_wine_2(wine_ver):
+    name_ver = "SP_VER"
+    wine_name = "WINE_2"
+    echo_wine(wine_name, name_ver, wine_ver)
+
+
+def cb_btn_rm_wine_2(wine_ver):
+    name_ver = "SP_VER"
+    wine_name = "RM_WINE_2"
+    echo_wine(wine_name, name_ver, wine_ver)
+
+
+def cb_btn_wine_3(wine_ver):
+    name_ver = "GE_VER"
+    wine_name = "WINE_3"
+    echo_wine(wine_name, name_ver, wine_ver)
+
+
+def cb_btn_rm_wine_3(wine_ver):
+    name_ver = "GE_VER"
+    wine_name = "RM_WINE_3"
+    echo_wine(wine_name, name_ver, wine_ver)
+
+
+def cb_btn_wine_4(wine_ver):
+    name_ver = "STAG_VER"
+    wine_name = "WINE_4"
+    echo_wine(wine_name, name_ver, wine_ver)
+
+
+def cb_btn_rm_wine_4(wine_ver):
+    name_ver = "STAG_VER"
+    wine_name = "RM_WINE_4"
+    echo_wine(wine_name, name_ver, wine_ver)
 
 
 def run_screencast():
@@ -1767,17 +1739,17 @@ def run_screencast():
                 p.kill()
     """
     cmd = f'{sw_scripts}/sw_cast.py'
-    Popen([cmd])
+    Popen([cmd], stdout=DEVNULL)
 
 
 def process_event_wait(event, data):
     """___wait for the process event to be set___"""
-
     event.wait()
     print(f'{tc.GREEN}multiprocessing {event} done...{tc.END}')
     func = None
     args = None
     if data and isinstance(data, dict):
+        print(f'execute {data}')
         if data.get('func'):
             func = data.get('func')
         if data.get('args'):
@@ -1787,6 +1759,228 @@ def process_event_wait(event, data):
         else:
             return func()
     return None
+
+
+def on_mangohud_preview(monitor_height):
+    """___run mangohud preview___"""
+    get_mangohud_config(monitor_height)
+    Popen(f"mangohud {sw_start} -v", shell=True)
+
+
+def get_mangohud_config(monitor_height):
+    """___get mangohud config from application config___"""
+    key_reload = 'Control_L+Shift_L+r'
+    gl_x = '0'
+    gl_y = '0'
+
+    mh_config = str()
+    app_name = get_out()
+    app_conf = Path(f"{sw_app_config}/" + str(app_name))
+    app_conf_read = app_conf.read_text().splitlines()
+
+    for line in app_conf_read:
+
+        if 'MANGOHUD_CONFIG' in line:
+            mh_config = str(line.split('"')[1])
+
+        if 'SW_USE_MESA_OVERLAY_HUD' in line:
+            environ["SW_USE_MESA_OVERLAY_HUD"] = str(line.split('=')[1])
+
+        if 'SW_USE_GALLIUM_HUD' in line:
+            environ['SW_USE_GALLIUM_HUD'] = str(line.split('=')[1])
+
+    for x in mh_config.split(','):
+        if 'reload_cfg' in x:
+            mh_config = mh_config.replace(x + ',', '')
+            key_reload = 'Control_L+Shift_L+r'
+
+    if monitor_height:
+        font_size = int(monitor_height/55)
+    else:
+        font_size = 14
+
+    mhud_conf = (
+                f'reload_cfg={key_reload},offset_x={gl_x},offset_y={gl_y},'
+                + f'{default_mangohud},font_size={font_size},{mh_config}'
+    )
+    environ["MANGOHUD_CONFIG"] = mhud_conf
+
+
+def on_winecfg():
+    """___run wine settings___"""
+    func_name = "WINECFG"
+    echo_func_name(func_name)
+
+
+def on_wineconsole():
+    """___run wine console___"""
+    func_name = "WINECONSOLE"
+    echo_func_name(func_name)
+
+
+def on_regedit():
+    """___run wine regedit___"""
+    func_name = "REGEDIT"
+    echo_func_name(func_name)
+
+
+def on_explorer():
+    """___run wine file explorer___"""
+    func_name = "WINEFILE"
+    echo_func_name(func_name)
+
+
+def on_uninstaller():
+    """___run wine uninstaller___"""
+    func_name = "UNINSTALLER"
+    echo_func_name(func_name)
+
+
+def on_clear_shader_cache():
+    """___clear shader cache___"""
+    if sw_mesa_shader_cache.exists():
+        for cache in sw_mesa_shader_cache.iterdir():
+            if cache.is_dir():
+                shutil.rmtree(cache)
+            if cache.is_file():
+                cache.unlink()
+
+    if sw_gl_shader_cache.exists():
+        for cache in sw_gl_shader_cache.iterdir():
+            if cache.is_dir():
+                shutil.rmtree(cache)
+            if cache.is_file():
+                cache.unlink()
+
+    if sw_vulkan_shader_cache.exists():
+        for cache in sw_vulkan_shader_cache.iterdir():
+            if cache.is_dir():
+                shutil.rmtree(cache)
+            if cache.is_file():
+                cache.unlink()
+
+    if sw_gst_home_cache.exists():
+        for cache in sw_gst_home_cache.iterdir():
+            if cache.is_dir():
+                shutil.rmtree(cache)
+            if cache.is_file():
+                cache.unlink()
+
+    print(f'{tc.RED}Clear shader cache...')
+
+
+def on_pfx_remove(event=None):
+    """___remove current prefix___"""
+    func_name = "REMOVE_PFX"
+    echo_func_name(func_name, event)
+
+
+def on_pfx_reinstall():
+    """___reinstall current prefix___"""
+    func_name = "REINSTALL_PFX"
+    echo_func_name(func_name)
+
+
+def on_pfx_backup():
+    """___backup current prefix___"""
+    func_name = "SW_PFX_BACKUP"
+    echo_func_name(func_name)
+
+
+def on_pfx_restore():
+    """___restore current prefix___"""
+    func_name = "SW_PFX_RESTORE"
+    echo_func_name(func_name)
+
+
+def on_app_saves_backup():
+    """___backup of app saves___"""
+    func_name = "SW_APP_SAVES_BACKUP"
+    echo_func_name(func_name)
+
+
+def on_app_saves_restore():
+    """___restoring saves from backup___"""
+    func_name = "SW_APP_SAVES_RESTORE"
+    echo_func_name(func_name)
+
+
+def add_shortcut_to_menu(shortcut_name):
+    """___add application shortcut to system menu___"""
+    if not Path(f'{sw_local}/{shortcut_name}').exists():
+        environ['CUSTOM_GAME_NAME'] = f'"{shortcut_name}"'
+        echo_func_name("ADD_SHORTCUT_TO_MENU")
+
+
+def add_shortcut_to_desktop(custom_name, custom_path):
+    """___add application shortcut to desktop___"""
+    if not Path(f'{dir_desktop}/{custom_name}').exists():
+        environ['CUSTOM_GAME_NAME'] = f'"{custom_name}"'
+        if custom_path is None:
+            environ['CUSTOM_GAME_PATH'] = f'"{dir_desktop}"'
+        else:
+            environ['CUSTOM_GAME_PATH'] = f'"{custom_path}"'
+
+        echo_func_name("ADD_SHORTCUT_TO_DESKTOP")
+
+
+def on_regedit_patch():
+    """___registry patch for current prefix___"""
+    echo_func_name('TRY_REGEDIT_PATCH')
+
+
+def check_sw_update():
+    """___checking update___"""
+    func_name = f"try_update_sw"
+    echo_func_name(func_name)
+
+
+def get_dll_info(x_path):
+    """___get installed dll list from winetricks log___"""
+    w_log = Path(f'{x_path}/winetricks.log')
+    if w_log.exists():
+        read_w_log = w_log.read_text().splitlines()
+        return read_w_log
+    else:
+        read_w_log = []
+        return read_w_log
+
+
+def get_file_signature(path):
+    """Get file signature."""
+    try:
+        data = open(path, "rb").read()
+    except IOError:
+        return None
+
+    header_byte = data[0:3].encode("hex").lower()
+    return header_byte
+
+
+def get_file_mimetype(path):
+    """Get file mime type."""
+    mime_type = None
+    if Path(path).exists():
+        cmd = check_output(
+            f'file --mime-type "{path}"', shell=True, encoding='utf-8'
+        )
+        mime_type = cmd.split()[-1] if cmd.split() else None
+
+    return mime_type
+
+
+class Clipper():
+    """Clibboard manger."""
+    def __init__(self):
+        self.clip = 'wl' if getenv("WAYLAND_DISPLAY") else 'xclip'
+
+    def copy(self, data: str | None = None) -> None:
+        if self.clip == 'wl':
+            Popen(['wl-copy', f'{data}'])
+
+    def paste(self, data: str | None = None) -> None:
+        if self.clip == 'wl':
+            Popen(['wl-paste'])
 
 
 if __name__ == "__main__":

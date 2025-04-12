@@ -8,12 +8,12 @@ sw_progressbar {
 
 sw_progressbar > trough {
     background-color: rgba(127, 127, 137, 0.8);
-    border-radius: 16px;
+    border-radius: 14px;
 }
 
 sw_progressbar > trough > progress {
     background-color: @sw_accent_fg_color;
-    border-radius: 16px;
+    border-radius: 14px;
 }
 
 sw_progressbar.horizontal > trough {
@@ -65,7 +65,7 @@ sw_picture.sw_blur {
 }
 
 sw_picture {
-    border-radius: 16px;
+    border-radius: 14px;
     background-size: cover;
     background-position: center;
     background-clip: border-box;
@@ -109,7 +109,7 @@ sw_picture.rotate {
 }
 
 .corner {
-    border-radius: 16px;
+    border-radius: 14px;
 }
 
 .corner_0 {
@@ -291,7 +291,7 @@ sw_image.sw_blur {
 sw_image {
     min-height: 16px;
     min-width: 16px;
-    border-radius: 16px;
+    border-radius: 14px;
     background-size: cover;
     background-position: center;
     background: none;
@@ -335,7 +335,7 @@ sw_label.button {
     font-size: 14pt;
     padding: 8px;
     border: 1px solid alpha(gray, 0.25);
-    border-radius: 16px;
+    border-radius: 14px;
     transition: all 225ms cubic-bezier(0.25, 0.5, 0.75, 0.94);
     transition-property: outline, outline-width, outline-offset, outline-color;
     transition-duration: 225ms;
@@ -348,7 +348,7 @@ sw_label_desc.button {
     font-size: 12pt;
     padding: 8px;
     border: 1px solid alpha(gray, 0.25);
-    border-radius: 16px;
+    border-radius: 14px;
     transition: all 225ms cubic-bezier(0.25, 0.5, 0.75, 0.94);
     transition-property: outline, outline-width, outline-offset, outline-color;
     transition-duration: 225ms;
@@ -448,14 +448,14 @@ sw_window {
 
 sw_window.sw_background.csd {
     border: 1px solid @sw_header_bg_color;
-    border-radius: 16px;
+    border-radius: 14px;
     box-shadow: none;
     margin: 0px;
 }
 
 sw_window.sw_background {
     border: 1px solid @sw_bg_color;
-    border-radius: 16px;
+    border-radius: 14px;
     background-color: @sw_bg_color;
     background-image: image(@sw_bg_color);
     box-shadow: none;
@@ -560,7 +560,7 @@ sw_wc_maximize:active {
 sw_button_accept {
     font-size: 12pt;
     padding: 6px;
-    border-radius: 16px;
+    border-radius: 14px;
     color: white;
     background-color: #0099ff;
     background-image: image(#0099ff);
@@ -589,7 +589,7 @@ sw_button_accept:focus {
 sw_button_cancel {
     font-size: 12pt;
     padding: 6px;
-    border-radius: 16px;
+    border-radius: 14px;
     color: white;
     background-color: #ff6060;
     background-image: image(#ff6060);
@@ -647,7 +647,7 @@ sw_button_custom {
     background-color: rgba(0, 0, 0, 0.8);
     background-image: image(rgba(0, 0, 0, 0.8));
     padding: 10px;
-    border-radius: 16px;
+    border-radius: 14px;
 }
 
 sw_button_custom:hover {
@@ -668,7 +668,7 @@ sw_button_path {
     font-size: 12pt;
     padding: 4px;
     border: 2px solid alpha(gray, 0.25);
-    border-radius: 16px;
+    border-radius: 14px;
     color: @sw_invert_accent_bg_color;
     background-color: @sw_accent_bg_color;
     background-image: image(@sw_accent_bg_color);
@@ -695,7 +695,7 @@ sw_button_path:active {
 sw_button_header {
     font-size: 12pt;
     padding: 10px;
-    border-radius: 16px;
+    border-radius: 14px;
     background-color: transparent;
     background-image: none;
     transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -732,7 +732,7 @@ sw_button {
     font-size: 12pt;
     padding: 10px;
     border: 1px solid alpha(gray, 0.25);
-    border-radius: 16px;
+    border-radius: 14px;
     background-clip: padding-box;
     color: @sw_invert_accent_bg_color;
     background-color: @sw_accent_bg_color;
@@ -911,7 +911,7 @@ sw_button.link>label {
 }
 
 sw_link {
-    border-radius: 16px;
+    border-radius: 14px;
     background-color: transparent;
 }
 
@@ -1187,18 +1187,18 @@ sw_listview>row {
     animation-timing-function: ease-in-out;
     outline: 1px solid transparent;
     outline-offset: 40px;
-    border-radius: 16px;
+    border-radius: 14px;
     background-color: transparent;
 }
 
 sw_listview>row:hover {
-    border-radius: 16px;
+    border-radius: 14px;
     background-color: rgba(235,245,255,0.1);
     background-image: image(alpha(@sw_accent_fg_color, 0.1));
 }
 
 sw_listview>row:selected.activatable {
-    border-radius: 16px;
+    border-radius: 14px;
     background-image: image(alpha(@sw_accent_fg_color, 0.1));
 }
 
@@ -1217,7 +1217,7 @@ sw_box {
     border-width: 0px;
     background-clip: padding-box;
     background-color: transparent;
-    border-radius: 16px;
+    border-radius: 14px;
     background: none;
 }
 
@@ -1230,7 +1230,7 @@ sw_box_tab {
     border-width: 0px;
     background-clip: padding-box;
     background-color: @sw_bg_color;
-    border-radius: 16px;
+    border-radius: 14px;
 }
 
 sw_box_view {
@@ -1242,7 +1242,7 @@ sw_box_view {
     border-width: 0px;
     background-clip: padding-box;
     background-color: transparent;
-    border-radius: 16px;
+    border-radius: 14px;
 }
 
 sw_box_view_tabs {
@@ -1255,7 +1255,7 @@ sw_box_view_tabs {
     background-clip: padding-box;
     background-color: transparent;
     background-image: image(@sw_header_bg_color);
-    border-radius: 16px;
+    border-radius: 14px;
 }
 
 sw_box_overlay {
@@ -1264,7 +1264,7 @@ sw_box_overlay {
     border-width: 0px;
     background-clip: padding-box;
     background-color: rgba(0,0,0,0.8);
-    border-radius: 16px;
+    border-radius: 14px;
     margin: 1px;
 }
 
@@ -1320,18 +1320,18 @@ sw_columnview listview row {
     animation-timing-function: ease-in-out;
     outline: 1px solid transparent;
     outline-offset: 40px;
-    border-radius: 16px;
+    border-radius: 14px;
     background-color: transparent;
     border-bottom: 1px solid alpha(@sw_invert_bg_color, 0.2);
 }
 
 sw_columnview>listview>row:hover {
-    border-radius: 16px;
+    border-radius: 14px;
     background-image: image(alpha(@sw_accent_fg_color, 0.1));
 }
 
 sw_columnview>listview>row:selected.activatable {
-    border-radius: 16px;
+    border-radius: 14px;
     background-image: image(alpha(@sw_accent_fg_color, 0.1));
 }
 
@@ -1343,7 +1343,7 @@ sw_columnview>header {
     border-image: none;
     background-color: transparent;
     background-image: none;
-    border-radius: 16px;
+    border-radius: 14px;
 }
 
 sw_columnview>header>button {
@@ -1354,7 +1354,7 @@ sw_columnview>header>button {
     margin-left: 2px;
     margin-top: 6px;
     margin-bottom: 6px;
-    border-radius: 16px;
+    border-radius: 14px;
     border-color: transparent;
     color: @sw_invert_accent_bg_color;
     background-color: alpha(@sw_accent_bg_color, 0.85);
@@ -1423,7 +1423,7 @@ sw_columnview_view>listview {
     color: @sw_invert_bg_color;
     background-color: @sw_bg_color;
     padding-bottom: 32px;
-    border-radius: 16px;
+    border-radius: 14px;
 }
 
 sw_columnview_view label,
@@ -1448,19 +1448,19 @@ sw_columnview_view listview row {
     animation-timing-function: ease-in-out;
     outline: 1px solid transparent;
     outline-offset: 40px;
-    border-radius: 16px;
+    border-radius: 14px;
     background-color: transparent;
     border-bottom: 1px solid alpha(@sw_invert_bg_color, 0.2);
 }
 
 sw_columnview_view>listview>row:hover {
-    border-radius: 16px;
+    border-radius: 14px;
     background-image: image(alpha(@sw_accent_fg_color, 0.1));
 }
 
 sw_columnview_view>listview>row:selected.activatable {
     font-weight: 500;
-    border-radius: 16px;
+    border-radius: 14px;
     background-image: image(alpha(@sw_accent_fg_color, 0.1));
 }
 
@@ -1472,7 +1472,7 @@ sw_columnview_view>header {
     border-image: none;
     background-color: transparent;
     background-image: none;
-    border-radius: 16px;
+    border-radius: 14px;
 }
 
 sw_columnview_view>header>button {
@@ -1484,7 +1484,7 @@ sw_columnview_view>header>button {
     margin-top: 6px;
     margin-bottom: 6px;
     border-color: transparent;
-    border-radius: 16px;
+    border-radius: 14px;
     color: @sw_invert_accent_bg_color;
     background-color: @sw_accent_bg_color;
     background-image: image(@sw_accent_bg_color);
@@ -1509,18 +1509,18 @@ sw_grid listview row {
     animation-timing-function: ease-in-out;
     outline: 1px solid transparent;
     outline-offset: 40px;
-    border-radius: 16px;
+    border-radius: 14px;
     background-color: transparent;
 }
 
 sw_grid listview>row:hover {
-    border-radius: 16px;
+    border-radius: 14px;
     background-color: alpha(@sw_accent_fg_color, 0.1);
     background-image: image(alpha(@sw_accent_fg_color, 0.1));
 }
 
 sw_grid listview>row:selected.activatable {
-    border-radius: 16px;
+    border-radius: 14px;
     background-color: alpha(@sw_accent_fg_color, 0.1);
     background-image: image(alpha(@sw_accent_fg_color, 0.1));
 }
@@ -1537,7 +1537,7 @@ sw_grid header {
     border-image: none;
     background-color: transparent;
     background-image: none;
-    border-radius: 16px;
+    border-radius: 14px;
 }
 
 sw_grid header label {
@@ -1551,7 +1551,7 @@ sw_grid header button:hover label {
 sw_grid header button.title {
     font-size: 12pt;
     padding: 6px;
-    border-radius: 16px;
+    border-radius: 14px;
     border-color: transparent;
     color: @sw_invert_accent_bg_color;
     background-color: @sw_accent_bg_color;
@@ -1589,7 +1589,7 @@ sw_pref_box {
     border-width: 0px;
     background-clip: padding-box;
     background-color: @sw_bg_color;
-    border-radius: 16px;
+    border-radius: 14px;
 }
 
 sw_pref_box listview row {
@@ -1598,18 +1598,18 @@ sw_pref_box listview row {
     animation-timing-function: ease-in-out;
     outline: 1px solid transparent;
     outline-offset: 40px;
-    border-radius: 16px;
+    border-radius: 14px;
     background-color: transparent;
 }
 
 sw_pref_box listview>row:hover {
-    border-radius: 16px;
+    border-radius: 14px;
     background-color: rgba(235,245,255,0.1);
     background-image: image(alpha(@sw_accent_fg_color, 0.1));
 }
 
 sw_pref_box listview>row:selected.activatable {
-    border-radius: 16px;
+    border-radius: 14px;
     background-color: rgba(235,245,255,0.1);
     background-image: image(alpha(@sw_accent_fg_color, 0.1));
 }
@@ -1622,7 +1622,7 @@ sw_pref_box header {
     border-image: none;
     background-color: transparent;
     background-image: none;
-    border-radius: 16px;
+    border-radius: 14px;
 }
 
 sw_pref_box header label {
@@ -1640,7 +1640,7 @@ sw_pref_box sw_columnview>header>button:hover {
 sw_pref_box header button.title {
     font-size: 12pt;
     padding: 6px;
-    border-radius: 16px;
+    border-radius: 14px;
     border-color: transparent;
     color: @sw_invert_accent_bg_color;
     background-color: @sw_accent_bg_color;
@@ -1681,7 +1681,7 @@ sw_gridview {
     border-color: @sw_bg_color;
     border-width: 0px;
     background-clip: padding-box;
-    border-radius: 16px;
+    border-radius: 14px;
 }
 
 sw_gridview sw_label_desc {
@@ -1691,7 +1691,7 @@ sw_gridview sw_label_desc {
 sw_gridview>child {
     margin: 8px;
     transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    border-radius: 16px;
+    border-radius: 14px;
     transition-property: outline, outline-width, outline-offset, outline-color;
     transition-duration: 225ms;
     animation-timing-function: ease-in-out;
@@ -1734,13 +1734,13 @@ sw_gridview.shortcuts {
     border-color: @sw_bg_color;
     border-width: 0px;
     background-clip: padding-box;
-    border-radius: 16px;
+    border-radius: 14px;
 }
 
 sw_gridview.shortcuts>child {
     margin: 12px;
     transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    border-radius: 16px;
+    border-radius: 14px;
     transition-property: outline, outline-width, outline-offset, outline-color;
     transition-duration: 225ms;
     animation-timing-function: ease-in-out;
@@ -1847,7 +1847,7 @@ sw_flowboxchild {
     margin: 8px;
     transition: all 200ms cubic-bezier(0.25, 0.5, 0.75, 0.94);
     border: 1px solid alpha(gray, 0.25);
-    border-radius: 16px;
+    border-radius: 14px;
     transition-property: outline, outline-width, outline-offset, outline-color;
     transition-duration: 225ms;
     animation-timing-function: ease-in-out;
@@ -1905,7 +1905,7 @@ sw_row {
     color: @sw_invert_header_bg_color;
     background-color: @sw_header_bg_color;
     border: 1px solid transparent;
-    border-radius: 16px;
+    border-radius: 14px;
 }
 
 sw_row sw_label {
@@ -1920,14 +1920,14 @@ sw_preferencesgroup {
     background-color: transparent;
     border: 1px solid transparent;
     border-color: transparent;
-    border-radius: 16px;
+    border-radius: 14px;
 }
 
 sw_preferencesgroup list {
     background-color: transparent;
     border: 1px solid transparent;
     border-color: transparent;
-    border-radius: 16px;
+    border-radius: 14px;
     background-image: none;
 }
 
@@ -1952,7 +1952,7 @@ sw_popovermenu > arrow.right {
 }
 
 sw_popovermenu {
-    border-radius: 16px;
+    border-radius: 14px;
     color: @sw_invert_pop_bg_color;
     background: none;
 }
@@ -1967,7 +1967,7 @@ sw_popovermenu > contents {
     padding-bottom: 4px;
     padding-left: 12px;
     padding-right: 12px;
-    border-radius: 16px;
+    border-radius: 14px;
     background-image: image(@sw_pop_bg_color);
 }
 
@@ -1978,7 +1978,7 @@ sw_popovermenu > contents box {
 
 sw_popovermenu > contents box > modelbutton {
     padding: 4px;
-    border-radius: 16px;
+    border-radius: 14px;
     font-weight: 500;
     font-size: 12pt;
     color: @sw_invert_pop_bg_color;
@@ -2021,7 +2021,7 @@ popover.background contents {
 
 sw_popover {
     padding: 4px;
-    border-radius: 16px;
+    border-radius: 14px;
     color: @sw_invert_pop_bg_color;
     background-color: @sw_pop_bg_color;
     background-image: image(@sw_pop_bg_color);
@@ -2046,7 +2046,7 @@ sw_popover > contents box > button {
     font-weight: 500;
     font-size: 12pt;
     color: @sw_invert_pop_bg_color;
-    border-radius: 16px;
+    border-radius: 14px;
 }
 
 sw_popover sw_label {
@@ -2100,7 +2100,7 @@ sw_entry {
     margin: 4px;
     padding-left: 4px;
     padding-right: 4px;
-    border-radius: 16px;
+    border-radius: 14px;
     border-spacing: 4px;
     background-clip: padding-box;
     transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -2152,7 +2152,7 @@ sw_box_row {
     margin: 4px;
     border: 1px solid transparent;
     border-spacing: 4px;
-    border-radius: 16px;
+    border-radius: 14px;
     background-clip: padding-box;
     color: @sw_invert_accent_bg_color;
     background-color: @sw_accent_bg_color;
@@ -2173,7 +2173,7 @@ sw_action_row {
     margin: 4px;
     border: 1px solid transparent;
     border-spacing: 4px;
-    border-radius: 16px;
+    border-radius: 14px;
     background-clip: padding-box;
     color: @sw_invert_accent_bg_color;
     background-color: @sw_accent_bg_color;
@@ -2222,7 +2222,7 @@ sw_entry_row {
     padding-right: 8px;
     padding-left: 8px;
     border: 1px solid transparent;
-    border-radius: 16px;
+    border-radius: 14px;
     background-color: darker(@sw_accent_bg_color);
     color: @sw_invert_accent_bg_color;
     box-shadow: inset 0 -1px rgba(163, 163, 163, 0.3);
@@ -2271,7 +2271,7 @@ sw_entry image:active {
 /*___COMBO_BOXES___*/
 
 sw_dropdown {
-    border-radius: 16px;
+    border-radius: 14px;
     color: @sw_invert_accent_bg_color;
     background-color: @sw_accent_bg_color;
     background-image: image(@sw_accent_bg_color);
@@ -2310,7 +2310,7 @@ sw_dropdown listview label {
 
 sw_dropdown contents listview box {
     padding: 6px;
-    border-radius: 16px;
+    border-radius: 14px;
 }
 
 sw_dropdown contents listview box:hover {
@@ -2356,7 +2356,7 @@ sw_dropdown > popover.menu > contents listview > row {
 }
 
 sw_dropdown > popover.menu > contents listview > row:selected {
-    border-radius: 16px;
+    border-radius: 14px;
     background-color: rgba(160,160,160,0.16);
     background-image: image(rgba(160,160,160,0.16));
 }
@@ -2375,7 +2375,7 @@ sw_dropdown > popover.menu > contents listview > row:selected image {
 
 .sw_dropdown-searchbar > entry.search {
     border-image: none;
-    border-radius: 16px;
+    border-radius: 14px;
     box-shadow: none;
     background-color: transparent;
 }
@@ -2388,7 +2388,7 @@ button.combo:only-child {
     box-shadow: inset 0 -1px rgba(163, 163, 163, 0.3);
     background-color: transparent;
     caret-color: @sw_accent_fg_color;
-    border-radius: 16px;
+    border-radius: 14px;
 }
 
 sw_dropdown > button.toggle:focus,
@@ -2471,7 +2471,7 @@ sw_message_box {
     border-width: 0px;
     background-clip: padding-box;
     background-color: transparent;
-    border-radius: 16px;
+    border-radius: 14px;
 }
 
 sw_message_box>sw_label,
@@ -2488,7 +2488,7 @@ sw_message_box>sw_label_desc {
 tooltip {
     color: @sw_invert_accent_fg_color;
     padding: 6px 10px;
-    border-radius: 16px;
+    border-radius: 14px;
     box-shadow: none;
 }
 
@@ -2715,7 +2715,7 @@ sw_stackswitcher>button {
     padding: 10px;
     margin: 4px;
     border: 1px solid alpha(gray, 0.25);
-    border-radius: 16px 16px 0 0;
+    border-radius: 14px 16px 0 0;
     background-clip: padding-box;
     color: @sw_invert_accent_bg_color;
     background-color: @sw_accent_bg_color;
@@ -2840,7 +2840,7 @@ sw_media_controls button {
     color: @sw_invert_accent_bg_color;
     font-size: 12pt;
     margin: 4px;
-    border-radius: 16px;
+    border-radius: 14px;
     background-color: transparent;
     background-image: none;
     transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -2864,7 +2864,7 @@ sw_media_controls button:active {
 }
 
 sw_media_controls popover > contents {
-    border-radius: 16px;
+    border-radius: 14px;
     background-image: image(@sw_pop_bg_color);
 }
 
@@ -2876,6 +2876,6 @@ sw_media_controls popover > contents box > button {
     font-weight: 500;
     font-size: 12pt;
     color: @sw_invert_pop_bg_color;
-    border-radius: 16px;
+    border-radius: 14px;
 }
 
