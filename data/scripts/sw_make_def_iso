@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+
+unset VK_INSTANCE_LAYERS VK_LOADER_LAYERS_ENABLE
+
+try_remove "${START_WINE_PATH}/data/scripts/winetricks"
+
+export URL="https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks"
+"$CRIER" -d "${URL}" "${START_WINE_PATH}/data/scripts/winetricks" &&
+chmod +x "${START_WINE_PATH}/data/scripts/winetricks"
+
+export SW_MAKE_PFX_ON_GE=1
+
+if [ "${SW_MAKE_PFX_ON_GE}" == 1 ]; then
+    GE_VER="10-15"
+    WINE_OK=1
+    WINE_3
+    USE_WINE_BUILD="GE-Proton${GE_VER}"
+else
+    STAG_VER="10.14"
+    WINE_OK=1
+    WINE_4
+    USE_WINE_BUILD="wine-${STAG_VER}-staging-tkg-amd64"
+fi
+
+export WINEARCH="win64"
+export SW_USE_PFX="pfx_default"
+export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
+export WINEDIR="${START_WINE_PATH}/data/wine/${USE_WINE_BUILD}"
+export WINELOADER="${WINEDIR}/bin/wine"
+export WINESERVER="${WINEDIR}/bin/wineserver"
+export WINE="${WINELOADER}"
+
+try_remove "${START_WINE_PATH}/data/pfx/pfx_default"
+
+#    dotnet20sp2 dotnet35sp1 dotnet48 lavfilters
+
+"${START_WINE_PATH}/data/scripts/winetricks" -q -f corefonts lucida mfc120 mfc42 msvcirt openal physx vb6run \
+vcrun2005 vcrun2008 vcrun2010 vcrun2012 vcrun2013 vcrun2022 vcrun6 vcrun6sp6 nocrashdialog || libraries_init_error
+"${WINESERVER}" -w
+
+"${WINE}" regedit "${START_WINE_PATH}/data/app_patches/make_def_iso_patch.reg" "$@"
+"${WINESERVER}" -w
+
+export URL="http://legionfonts.com/storage/archives/Segoe%20Script.zip"
+"$CRIER" -d "${URL}" "${START_WINE_PATH}/data/tmp/SegoeScript.zip" &&
+"$CRIER" --zip "${START_WINE_PATH}/data/tmp/SegoeScript.zip" "${START_WINE_PATH}/data/tmp" &&
+try_move "${START_WINE_PATH}/data/tmp/Segoe Script.ttf" "$WINEPREFIX/drive_c/windows/Fonts/segoe script.ttf"
+try_remove "${START_WINE_PATH}/data/tmp/SegoeScript.zip"
+
+cat > "${START_WINE_PATH}/data/tmp/klcp_basic_unattended.ini" <<_EOF_
+[Setup]
+Group=K-Lite Codec Pack
+NoIcons=1
+SetupType=custom
+Components=video\lav, video\lav\hevc, video\lav\h264, video\lav\mpeg4, video\lav\mpeg2, video\lav\mpeg1, video\lav\vc1, video\lav\wmv, video\lav\other, audio\lav, audio\lav\ac3dts, audio\lav\truehd, audio\lav\aac, audio\lav\flac, audio\lav\mpeg, audio\lav\wma, audio\lav\other, sourcefilter\lav, sourcefilter\lav\avi, sourcefilter\lav\matroska, sourcefilter\lav\mp4, sourcefilter\lav\mpegps, sourcefilter\lav\mpegts, sourcefilter\lav\wmv, sourcefilter\lav\other, subtitles\vsfilter, tools\codectweaktool, shell\icaros_thumbnail, shell\icaros_property, misc\brokencodecs, misc\brokenfilters
+Tasks=reset_settings\fresh, wmp_reg_formats, adjust_preferred_decoders
+NoRestart=1
+CloseApplications=0
+[Data]
+uim_version=12
+creationdate=20210117
+creationtime=022013
+[Settings]
+abort_if_existing_version_is_newer=1
+keep_existing_settings_on_upgrade=1
+install_only_x64_components=0
+[Thumbnails]
+Extensions=.avi;.divx;.amv;.mpeg;.mpg;.m1v;.m2v;.mp2v;.mpv2;.vob;.wmv;.asf;.mp4;.m4v;.mp4v;.mpv4;.mov;.hdmov;.3g2;.3gp;.3gp2;.3gpp;.mkv;.mk3d;.webm;.ts;.m2ts;.mts;.m2t;.tp;.flv;.f4v;.ogm;.ogv;.rm;.rmvb;.dv;.mxf;.ivf;.evo;.video;.cbr;.cbz;.cb7;.mp3;.wav;.m4a;.ape;.flac;.ogg;.mka;.mpc;.opus;.tak;.wv
+[Audio Configuration]
+audio_passthrough=0
+bitstream_ac3=0
+bitstream_dts=0
+bitstream_eac3=0
+bitstream_dtshd=0
+bitstream_truehd=0
+[Hardware Acceleration]
+hwa_other_auto=1
+[Languages]
+lang_set_preferred=1
+lang_autodetect=1
+_EOF_
+
+#   https://codecguide.com/download_kl.htm
+export CODEC_VER="1910"
+export URL="https://files3.codecguide.com/K-Lite_Codec_Pack_${CODEC_VER}_Basic.exe"
+"$CRIER" -d "${URL}" "${START_WINE_PATH}/data/tmp/K-K-Lite_Codec_Pack_${CODEC_VER}_Basic.exe" &&
+"${WINE}" "${START_WINE_PATH}/data/tmp/K-K-Lite_Codec_Pack_${CODEC_VER}_Basic.exe" /verysilent /norestart /LoadInf="${START_WINE_PATH}/data/tmp/klcp_basic_unattended.ini" "$@"
+"${WINESERVER}" -w
+
+#   https://developer.microsoft.com/en-us/microsoft-edge/webview2/
+#export URL="https://msedge.sf.dl.delivery.mp.microsoft.com/filestreamingservice/files/2e372271-55ba-41c0-89b9-dfc306dee437/MicrosoftEdgeWebView2RuntimeInstallerX64.exe"
+#"$CRIER" -d "${URL}" "${START_WINE_PATH}/data/tmp/MicrosoftEdgeWebView2RuntimeInstallerX64.exe" &&
+#"${WINE}" start.exe /exec "${START_WINE_PATH}/data/tmp/MicrosoftEdgeWebView2RuntimeInstallerX64.exe"
+#"${WINESERVER}" -w
+
+#try_remove "${START_WINE_PATH}/data/tmp/MicrosoftEdgeWebView2RuntimeInstallerX64.exe"
+try_remove "${START_WINE_PATH}/data/tmp/K-K-Lite_Codec_Pack_${CODEC_VER}_Basic.exe"
+try_remove "${START_WINE_PATH}/data/tmp/klcp_basic_unattended.ini"
+try_remove "$WINEPREFIX/drive_c/windows/Installer/"*
+try_remove "$WINEPREFIX/drive_c/windows/temp/"*
+try_remove "$WINEPREFIX/.update-timestamp"
+try_remove "$WINEPREFIX/dosdevices"
+try_remove "$WINEPREFIX/drive_c/users"
+try_remove "$WINEPREFIX/drive_c/windows/Fonts/corefonts.installed"
+try_remove "$WINEPREFIX/drive_c/ProgramData/Package Cache"
+try_link "${START_WINE_PATH}/data/app_saves" "$WINEPREFIX/drive_c/users"
+try_remove "${START_WINE_PATH}/data/tmp/pfx_default.iso"
+mksquashfs "${START_WINE_PATH}/data/pfx/pfx_default" "${START_WINE_PATH}/data/tmp/pfx_default.iso" -noappend -b 1M -comp zstd -Xcompression-level 1 &&
+"$CRIER" -i "$(eval_gettext "Backup completed successfully")"
+

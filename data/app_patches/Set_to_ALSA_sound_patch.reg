@@ -1,0 +1,21 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\Software\Wine\Drivers]
+"Audio"="alsa"
+
+[HKEY_CURRENT_USER\Software\Wine\Drivers\winealsa.drv]
+
+[HKEY_CURRENT_USER\Software\Wine\Drivers\winealsa.drv\devices]
+
+[HKEY_CURRENT_USER\Software\Wine\Drivers\winealsa.drv\devices\0,plughw:0,3]
+"guid"=hex:32,00,e2,4e,c7,02,31,40,bb,3b,cc,b4,0d,b3,e6,0f
+
+[HKEY_CURRENT_USER\Software\Wine\Drivers\winealsa.drv\devices\0,plughw:1,0]
+"guid"=hex:a9,bd,c7,ca,8e,2e,6f,4f,bc,31,91,e4,4e,49,b9,72
+
+[HKEY_CURRENT_USER\Software\Wine\Drivers\winealsa.drv\devices\1,plughw:1,0]
+"guid"=hex:ef,5d,1c,5e,41,7e,42,4f,93,cf,00,38,81,77,3c,ec
+
+[HKEY_CURRENT_USER\Software\Wine\Drivers\winealsa.drv\devices\1,plughw:2,0]
+"guid"=hex:ef,01,15,6b,44,a6,04,4b,81,98,12,e7,a4,3b,8b,a0
+

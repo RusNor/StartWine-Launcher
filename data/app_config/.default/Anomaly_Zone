@@ -39,12 +39,23 @@ export SW_USE_DLSS=0
 export SW_USE_DISABLE_UPDATE_PFX=0
 export SW_USE_SHADER_CACHE=1
 export SW_USE_WINE_CPU_TOPOLOGY=""
-export SW_USE_DXVK_VER="2.5"
-export SW_USE_VKD3D_VER="2.13"
+export SW_USE_DXVK_VER="2.7.1"
+export SW_USE_VKD3D_VER="2.14.1"
 export SW_USE_VKBASALT_EFFECTS="cas:Tonemap:Colourfulness:"
 export SW_USE_VKBASALT_CAS="0.4"
 export SW_USE_FPS_LIMIT="0.0"
 export SW_USE_MANGOHUD_CONFIG="cpu_temp,ram,core_load,cpu_mhz,wine,gpu_temp,gpu_core_clock,vram"
 export SW_USE_WINE="GE-Proton9-20"
 export SW_USE_PFX="pfx_Anomaly_Zone"
+################################################################################
+
+export SOURSE0="${SW_GAME_EXE}"
+export SOURSE1="${SW_GAME_PATH}/Launcher.exe"
+
+[ -f "$SOURSE1" ] && \
+    try_copy "$SOURSE1" "$SOURSE0"
+
+[ ! -f "$SOURSE1" ] && \
+    try_copy "$SOURSE0" "$SOURSE1"
+
 ################################################################################

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 ################################################################################
 export SW_USE_LAUNCH_PARAMETERS=""
-export SW_USE_WINEDLLOVERRIDES="libglesv2=b"
+export SW_USE_WINEDLLOVERRIDES=""
 export SW_USE_WINEARCH="win64"
 export SW_USE_WINDOWS_VER="10"
 export SW_USE_REGEDIT_PATCH=""
@@ -39,7 +39,7 @@ export SW_USE_DLSS=0
 export SW_USE_DISABLE_UPDATE_PFX=0
 export SW_USE_SHADER_CACHE=1
 export SW_USE_WINE_CPU_TOPOLOGY=""
-export SW_USE_DXVK_VER="2.6.1"
+export SW_USE_DXVK_VER="2.7.1"
 export SW_USE_VKD3D_VER="2.14.1"
 export SW_USE_VKBASALT_EFFECTS="cas:Tonemap:Colourfulness:"
 export SW_USE_VKBASALT_CAS="0.4"

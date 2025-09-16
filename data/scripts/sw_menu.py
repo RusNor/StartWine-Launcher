@@ -9051,7 +9051,6 @@ def sw_activate(swgs):
                     except (Exception,):
                         pass
 
-            print(wineloader_list)
 
         wineloader_list = []
         t = Thread(target=get_wineloader_list, args=(wineloader_list,))
