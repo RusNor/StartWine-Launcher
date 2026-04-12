@@ -19350,8 +19350,8 @@ def sw_activate(swgs):
     GLib.timeout_add(200, check_volume)
     GLib.timeout_add(100, key_event_handler)
 
-    if getenv("GPU_IN_USE") != "nvidia":
-        GLib.timeout_add(250, check_the_sound)
+#    if getenv("GPU_IN_USE") != "nvidia":
+#        GLib.timeout_add(250, check_the_sound)
 
     set_print_run_time(True)
     check_arg_on_direct_start()
