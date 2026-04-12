@@ -46,11 +46,7 @@ sudo tee -a /etc/sysctl.d/98-apparmor-unuserns.conf <<<kernel.apparmor_restrict_
 
 Video demonstration of StartWine interface
 
-https://github.com/user-attachments/assets/d477c4a5-f525-4162-a78f-fd770427c3e9
-
 If you need quick access to folders or to add your own folder to a bookmark, click on the corresponding icon as shown in the video demonstration.
-
-https://github.com/user-attachments/assets/c19b7e1c-cd5d-46e2-b523-11fc7524f78a
 
 StartWine Screenshots
 
@@ -72,8 +68,6 @@ StartWine Screenshots
 Go to the directory, click 2 times on the .exe file and select “Create shortcut”
 
 After that you can just click on the “Start” button and start playing your exquisite game :)
-
-https://github.com/user-attachments/assets/8759ccd4-11ae-4b41-a181-f3b77a45c855
 
 Tip!
 
