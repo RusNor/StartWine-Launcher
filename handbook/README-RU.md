@@ -25,13 +25,12 @@ Discord > [Click](https://discord.gg/jjY3auVdfm)
 
 ## Установка одной командой:
 ```
-curl -sL RusNor.github.io|bash
+bash -c "$(curl -sL RusNor.github.io)"
 ```
 или
 ```
-wget -qO - RusNor.github.io|bash
+bash -c "$(wget -qO - RusNor.github.io)"
 ```
-
 Команды для Ubuntu если вдруг установка не проходит
 
 ```shell
