@@ -27,11 +27,11 @@ Make the file executable and launch it with a double click
 
 ## Installation with one command:
 ```bash
-curl -sL RusNor.github.io|bash
+bash -c "$(curl -sL RusNor.github.io)"
 ```
 or
 ```bash
-wget -qO - RusNor.github.io|bash
+bash -c "$(wget -qO - RusNor.github.io)"
 ```
 
 The command for Ubuntu if the installation suddenly fails
