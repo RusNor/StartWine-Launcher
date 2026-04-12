@@ -45,11 +45,7 @@ sudo tee -a /etc/sysctl.d/98-apparmor-unuserns.conf <<<kernel.apparmor_restrict_
 
 Видео демонстрация интерфейса StartWine
 
-https://github.com/user-attachments/assets/0fd2f05a-c7e4-4c16-90ee-5cd53da0f7e3
-
 Если вам надо быстрый доступ к папкам или добавить в закладку свою папку, то нажмите на соответсвующий значок как показано в видео
-
-https://github.com/user-attachments/assets/6037ec38-a5ad-40b4-ad6d-81662f83911e
 
 Скриншоты StartWine
 
@@ -71,8 +67,6 @@ https://github.com/user-attachments/assets/6037ec38-a5ad-40b4-ad6d-81662f83911e
 Заходим в каталог, щёлкаем 2 раза на .exe файл и выбираем "Создать ярлык"
 
 После можете просто нажать на кнопку "Пуск" и начать играть в свою изысканную игру :)
-
-https://github.com/user-attachments/assets/a9754fba-6c97-4ecd-8ebb-95c0b1e4e3ed
 
 Совет!
 
