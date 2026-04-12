@@ -1,0 +1,13 @@
+pygobject
+pycairo
+PyOpenGL
+PyOpenGL-accelerate
+numpy
+pillow
+psutil
+evdev
+textual
+rich
+pychromecast
+requests
+dbus-python

@@ -4,19 +4,22 @@ unset VK_INSTANCE_LAYERS VK_LOADER_LAYERS_ENABLE
 
 try_remove "${START_WINE_PATH}/data/scripts/winetricks"
 
-export URL="https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks"
-"$CRIER" -d "${URL}" "${START_WINE_PATH}/data/scripts/winetricks" && \
+export FTP_URL="https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks"
+
+sw_check_url
+
+"$CRIER" -d "${URL_DOWNLOAD}" "${START_WINE_PATH}/data/scripts/winetricks" && \
 chmod +x "${START_WINE_PATH}/data/scripts/winetricks"
 
 export SW_MAKE_PFX_ON_GE=1
 
 if [ "${SW_MAKE_PFX_ON_GE}" == 1 ]; then
-    GE_VER="10-25"
+    GE_VER="10-34"
     WINE_OK=1
     WINE_3
     USE_WINE_BUILD="GE-Proton${GE_VER}"
 else
-    STAG_VER="10.19"
+    STAG_VER="11.1"
     WINE_OK=1
     WINE_4
     USE_WINE_BUILD="wine-${STAG_VER}-staging-tkg-amd64"
@@ -41,11 +44,16 @@ vcrun2005 vcrun2008 vcrun2010 vcrun2012 vcrun2013 vcrun2022 vcrun6 vcrun6sp6 noc
 "${WINE}" regedit "${START_WINE_PATH}/data/app_patches/make_def_iso_patch.reg" "$@"
 "${WINESERVER}" -w
 
-export URL="http://legionfonts.com/storage/archives/Segoe%20Script.zip"
-"$CRIER" -d "${URL}" "${START_WINE_PATH}/data/tmp/SegoeScript.zip" && \
+export FTP_URL="http://legionfonts.com/storage/archives/Segoe%20Script.zip"
+
+sw_check_url
+
+"$CRIER" -d "${URL_DOWNLOAD}" "${START_WINE_PATH}/data/tmp/SegoeScript.zip" && \
 "$CRIER" --zip "${START_WINE_PATH}/data/tmp/SegoeScript.zip" "${START_WINE_PATH}/data/tmp" && \
 try_move "${START_WINE_PATH}/data/tmp/Segoe Script.ttf" "$WINEPREFIX/drive_c/windows/Fonts/segoe script.ttf"
 try_remove "${START_WINE_PATH}/data/tmp/SegoeScript.zip"
+
+################################################################################
 
 cat > "${START_WINE_PATH}/data/tmp/klcp_basic_unattended.ini" <<_EOF_
 [Setup]
@@ -81,11 +89,20 @@ lang_autodetect=1
 _EOF_
 
 #   https://codecguide.com/download_kl.htm
-export CODEC_VER="1925"
-export URL="https://files3.codecguide.com/K-Lite_Codec_Pack_${CODEC_VER}_Basic.exe"
-"$CRIER" -d "${URL}" "${START_WINE_PATH}/data/tmp/K-K-Lite_Codec_Pack_${CODEC_VER}_Basic.exe" && \
-"${WINE}" "${START_WINE_PATH}/data/tmp/K-K-Lite_Codec_Pack_${CODEC_VER}_Basic.exe" /verysilent /norestart /LoadInf="${START_WINE_PATH}/data/tmp/klcp_basic_unattended.ini" "$@"
+export CODEC_VER="1815"
+
+export FTP_URL=(
+    "https://files2.codecguide.com/K-Lite_Codec_Pack_${CODEC_VER}_Basic.exe"
+    "https://files3.codecguide.com/K-Lite_Codec_Pack_${CODEC_VER}_Basic.exe"
+)
+
+sw_check_url
+
+"$CRIER" -d "${URL_DOWNLOAD}" "${START_WINE_PATH}/data/tmp/K-Lite_Codec_Pack_${CODEC_VER}_Basic.exe" && \
+"${WINE}" "${START_WINE_PATH}/data/tmp/K-Lite_Codec_Pack_${CODEC_VER}_Basic.exe" /verysilent /norestart /LoadInf="${START_WINE_PATH}/data/tmp/klcp_basic_unattended.ini" "$@"
 "${WINESERVER}" -w
+
+################################################################################
 
 #   https://developer.microsoft.com/en-us/microsoft-edge/webview2/
 #export URL="https://msedge.sf.dl.delivery.mp.microsoft.com/filestreamingservice/files/2e372271-55ba-41c0-89b9-dfc306dee437/MicrosoftEdgeWebView2RuntimeInstallerX64.exe"
@@ -94,7 +111,7 @@ export URL="https://files3.codecguide.com/K-Lite_Codec_Pack_${CODEC_VER}_Basic.e
 #"${WINESERVER}" -w
 
 #try_remove "${START_WINE_PATH}/data/tmp/MicrosoftEdgeWebView2RuntimeInstallerX64.exe"
-try_remove "${START_WINE_PATH}/data/tmp/K-K-Lite_Codec_Pack_${CODEC_VER}_Basic.exe"
+try_remove "${START_WINE_PATH}/data/tmp/K-Lite_Codec_Pack_${CODEC_VER}_Basic.exe"
 try_remove "${START_WINE_PATH}/data/tmp/klcp_basic_unattended.ini"
 try_remove "$WINEPREFIX/drive_c/windows/Installer/"*
 try_remove "$WINEPREFIX/drive_c/windows/temp/"*

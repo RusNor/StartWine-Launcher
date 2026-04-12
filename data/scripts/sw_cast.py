@@ -1,20 +1,45 @@
 #!/usr/bin/python3
+"""
+Copyright (c) 2020 Maslov N.G. Normatov R.R.
+
+This file is part of StartWine-Launcher.
+https://github.com/RusNor/StartWine-Launcher
+
+StartWine-Launcher is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version.
+
+StartWine-Launcher is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+StartWine-Launcher. If not, see http://www.gnu.org/licenses/.
+"""
 
 import time
 from os import getenv
 from sys import argv, stdout, stderr
 from pathlib import Path
 from threading import Thread
-from subprocess import run, check_output, PIPE
+from subprocess import run, PIPE
 
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 import gi
 gi.require_version('Gst', '1.0')
-from gi.repository import Gst, GLib
-import pulsectl
-import pychromecast
+gi.require_version('Gdk', '4.0')
+from gi.repository import Gst, GLib, Gdk
+
+try:
+    import pychromecast
+except ImportError as e:
+    print(e)
+    pychromecast = None
+
 from sw_input import SwKeyController
+from sw_func import convert_image
 
 """
 -------------
@@ -25,7 +50,7 @@ mp4:
     audio_enc: faac, lamemp3enc, avenc_mp2, avenc_alac
     muxer: mp4mux
 
-mkv: 
+mkv:
     video_enc: x264enc, vaapih264enc
     audio_enc: faac, avenc_mp2, opusenc, vorbisenc, flacenc, pcm
     muxer: matroskamux
@@ -65,7 +90,7 @@ rate-control={cqp, vbr, cbr}
 """
 
 sw_data = Path(__file__).parent.parent
-sw_icon = Path(f'{sw_data}/img/gui_icons/sw_icon.png')
+sw_icon = sw_data.joinpath('img', 'gui_icons', 'sw_icon.png')
 
 venc_dict = {
     'buff': '! queue max-size-buffers=0 max-size-time=0 max-size-bytes=0',
@@ -93,10 +118,8 @@ muxer_dict = {
 
 
 def get_screen_dict():
-    """___Get X11 screen dictionary___"""
+    """___Get screen dictionary___"""
 
-    gi.require_version('Gdk', '4.0')
-    from gi.repository import Gdk
     screen_dict = dict()
     display = Gdk.Display().get_default()
     monitors = display.get_monitors()
@@ -149,8 +172,6 @@ def get_xid_dict():
     xid_dict = dict()
     display = Display()
     root = display.screen().root
-    width = display.screen().width_in_pixels
-    height = display.screen().height_in_pixels
     _NET_CLIENT_LIST = display.get_atom('_NET_CLIENT_LIST')
     _NET_WM_NAME = display.get_atom('_NET_WM_NAME')
 
@@ -164,8 +185,9 @@ def get_xid_dict():
         name = window.get_full_property(
             _NET_WM_NAME,
             property_type=AnyPropertyType,
-        ).value
-        xid_dict[xid] = str(name, encoding='utf-8')
+        )
+        if name:
+            xid_dict[xid] = str(name.value, encoding='utf-8')
 
     return xid_dict
 
@@ -174,12 +196,14 @@ class SwScreenCast:
     """A tool for capture, broadcast and recording screen"""
 
     def __init__(
-            self, preview=None, record=None, stream=None, chromecast=None,
-            v_enc=None, v_fmt=None, a_enc=None, output=None, key_mod=None, keys=[],
-            mode=None, a_dev=None, volume=None):
+            self, preview=None, record=None, shot=None, stream=None, connect=None,
+            chromecast=None, v_enc=None, v_fmt=None, a_enc=None, output=None,
+            key_mod=None, keys=[], mode=None, a_dev=None, volume=None):
 
         DBusGMainLoop(set_as_default=True)
         Gst.init(None)
+        self.devmon = Gst.DeviceMonitor.new()
+        self.alsa_default = self.alsa_default_sink()
 
         if getenv('WAYLAND_DISPLAY') or getenv('XDG_SESSION_TYPE') == 'wayland':
             self.session_type = 'wayland'
@@ -192,7 +216,9 @@ class SwScreenCast:
         self.mode = mode
         self.preview = preview
         self.record = record
+        self.shot = shot
         self.stream = stream
+        self.connect = connect
         self.chromecast = chromecast
         self.v_enc = v_enc if v_enc and v_enc in venc_dict.keys() else 'h264'
         self.a_enc = a_enc if a_enc and a_enc in aenc_dict.keys() else 'mp4'
@@ -204,15 +230,15 @@ class SwScreenCast:
         output = output if output else Path.home()
 
         if output == Path.home():
-            self.output = f'{Path.home()}/video_{self.time}.{self.ext}'
+            self.output = Path.home().joinpath(f'rec_{self.time}.{self.ext}')
 
-        elif Path(output).suffix():
+        elif Path(output).suffix:
             self.output = output
 
-        elif Path(output).exist() and Path(output).is_dir():
-            self.output = f'{output}/video_{self.time}.{self.ext}'
+        elif Path(output).exists() and Path(output).is_dir():
+            self.output = Path(output).joinpath(f'rec_{self.time}.{self.ext}')
         else:
-            self.output = f'{Path.home()}/video_{self.time}.{self.ext}'
+            self.output = Path.home().joinpath(f'rec_{self.time}.{self.ext}')
 
         self.key_mod = key_mod
         self.keys = keys
@@ -221,13 +247,10 @@ class SwScreenCast:
         self.request_token_counter = 0
         self.session_token_counter = 0
         self.sender_name = str(self.bus.get_unique_name()[1:]).replace('.', '_')
-        self.audio_device = a_dev
-        self.volume = volume
-
-        if not self.audio_device:
-            self.audio_device, self.volume = self.pulseaudio_default_sink()
-
+        self.audio_device = a_dev if a_dev else self.alsa_default
+        self.volume = volume if volume else 1.0
         self.screencast = 'org.freedesktop.portal.ScreenCast'
+        self.screenshot = 'org.freedesktop.portal.Screenshot'
         self.notify = 'org.freedesktop.portal.Notification'
         self.desktop_object = 'org.freedesktop.portal.Desktop'
         self.desktop_path = '/org/freedesktop/portal/desktop'
@@ -259,25 +282,48 @@ class SwScreenCast:
         """___Create new screencast session___"""
 
         if self.session_type == 'wayland':
-            self.gdbus_call(
-                self.portal.CreateSession, self.create_session_response,
-                options={'session_handle_token': self.session_token}, interface=self.screencast
-            )
-            t = Thread(target=self.controller.run)
-            t.start()
-            GLib.timeout_add(100, self.controller_callback)
+            if self.shot:
+                self.gdbus_call(
+                    self.portal.Screenshot,
+                    self.screenshot_response,
+                    '',
+                    options={'handle_token': self.session_token},
+                    interface=self.screenshot
+                )
+            elif self.connect:
+                self.run_stream(None, None)
+            elif self.chromecast:
+                self.chromecast_stream()
+            else:
+                self.gdbus_call(
+                    self.portal.CreateSession,
+                    self.create_session_response,
+                    options={'session_handle_token': self.session_token},
+                    interface=self.screencast
+                )
+                t = Thread(target=self.controller.run)
+                t.start()
+                GLib.timeout_add(100, self.controller_callback)
         else:
-            scr = get_screen_dict()
-            xid = get_xid_dict()
+            if self.shot:
+                self.gdbus_call(
+                    self.portal.Screenshot,
+                    self.screenshot_response,
+                    '',
+                    options={'handle_token': self.session_token},
+                    interface=self.screenshot
+                )
+            else:
+                self.select_x11_source()
 
-            if not xid:
-                xid = get_xprop_list()
-
-            if not self.mode:
-                self.select_x11_source(scr, xid)
-
-    def select_x11_source(self, screen_data, xid_data):
+    def select_x11_source(self):
         """___Running dilaog window for selecting x11 source to capture___"""
+
+        screen_data = get_screen_dict()
+        xid_data = get_xid_dict()
+
+        if not xid_data:
+            xid_data = get_xprop_list()
 
         from sw_crier import SourceSelectionWindow
         dialog = SourceSelectionWindow(
@@ -321,7 +367,7 @@ class SwScreenCast:
                     return False
         return True
 
-    def bus_message(self, bus, message):
+    def bus_message(self, _, message):
         """___Gstreamer message handler___"""
 
         t = message.type
@@ -344,136 +390,137 @@ class SwScreenCast:
             fd_object = self.portal.OpenPipeWireRemote(
             self.session_handle, db_dict, dbus_interface=self.screencast
             )
-            fd = fd_object.take()
+            fd = fd_object.take() if fd_object else 0
+            buff = venc_dict.get('buff')
+            # raw = aenc_dict.get('raw')
+            # h264 = venc_dict.get('h264')
+            venc = venc_dict.get(self.v_enc)
+            aenc = aenc_dict.get(self.a_enc)
+            muxer = muxer_dict.get(self.muxer)
+            out = self.output
 
-        buff = venc_dict['buff']
-        raw = aenc_dict.get('raw')
-        h264 = venc_dict.get('h264')
-        venc = venc_dict.get(self.v_enc)
-        aenc = aenc_dict.get(self.a_enc)
-        muxer = muxer_dict.get(self.muxer)
-        out = self.output
+            if self.preview:
+                if self.session_type == 'wayland':
+                    pipeline0 = Gst.parse_launch(
+                        f'pipewiresrc fd={fd} path={node_id} '
+                        + '! videoconvert ! queue ! vaapisink'
+                    )
+                else:
+                    xid = f'xid={node_id}'
+                    sx = sy = ex = ey = ''
+                    w = h = None
+                    x_pos = y_pos = None
 
-        if self.preview:
-            if self.session_type == 'wayland':
-                pipeline0 = Gst.parse_launch(
-                    f'pipewiresrc fd={fd} path={node_id} ! videoconvert ! queue ! vaapisink'
-                )
-            else:
-                xid = f'xid={node_id}'
-                sx = sy = ex = ey = ''
-                w = h = None
-                x_pos = y_pos = None
+                    if isinstance(data, dict):
+                        xid = ''
+                        w = data.get('width')
+                        h = data.get('height')
+                        x_pos = data.get('x')
+                        y_pos = data.get('y')
 
-                if isinstance(data, dict):
-                    xid = ''
-                    w = data.get('width')
-                    h = data.get('height')
-                    x_pos = data.get('x')
-                    y_pos = data.get('y')
+                        if w and h and x_pos is not None and y_pos is not None:
+                            sx = f'startx={x_pos}'
+                            sy = f'starty={y_pos}'
+                            ex = f'endx={int(x_pos) + int(w)-1}'
+                            ey = f'endy={int(y_pos) + int(h)-1}'
 
-                    if w and h and x_pos is not None and y_pos is not None:
-                        sx = f'startx={x_pos}'
-                        sy = f'starty={y_pos}'
-                        ex = f'endx={int(x_pos) + int(w)-1}'
-                        ey = f'endy={int(y_pos) + int(h)-1}'
+                    pipeline0 = Gst.parse_launch(
+                        f'ximagesrc {xid} {sx} {sy} {ex} {ey}  use-damage=0 '
+                        +'! videoscale method=0 ! videoconvert ! queue ! vaapisink'
+                    )
 
-                pipeline0 = Gst.parse_launch(
-                    f'ximagesrc {xid} {sx} {sy} {ex} {ey}  use-damage=0 '
-                    +'! videoscale method=0 ! videoconvert ! queue ! vaapisink'
-                )
+                self.pipelines.append(pipeline0)
+                pipeline0.set_state(Gst.State.PLAYING)
+                pipeline0.get_bus().connect('message', self.bus_message)
 
-            self.pipelines.append(pipeline0)
-            pipeline0.set_state(Gst.State.PLAYING)
-            pipeline0.get_bus().connect('message', self.bus_message)
+            if self.record:
+                if self.session_type == 'wayland':
+                    if not self.audio_device:
+                        pipeline1 = Gst.parse_launch(
+                            f'pipewiresrc fd={fd} path={node_id} '
+                            + f'{buff} {venc} ! progressreport update-freq=1 '
+                            + f'! queue ! {muxer} ! filesink location={out}'
+                        )
+                    else:
+                        pipeline1 = Gst.parse_launch(
+                            f'pipewiresrc fd={fd} path={node_id} '
+                            + f'{buff} {venc} ! progressreport update-freq=1 '
+                            + '! queue ! mux. '
+                            + f'pulsesrc device="{self.audio_device}.monitor" '
+                            + f'volume={self.volume} '
+                            + f'{aenc} ! queue ! mux. {muxer} '
+                            + f'! filesink location={out}'
+                        )
+                else:
+                    xid = f'xid={node_id}'
+                    sx = sy = ex = ey = ''
+                    w = h = None
+                    x_pos = y_pos = None
+                    if isinstance(data, dict):
+                        w = data.get('width')
+                        h = data.get('height')
+                        x_pos = data.get('x')
+                        y_pos = data.get('y')
+                        xid = ''
+                        if w and h and x_pos and y_pos:
+                            sx = f'startx={x_pos}'
+                            sy = f'starty={y_pos}'
+                            ex = f'endx={int(x_pos) + int(w)-1}'
+                            ey = f'endy={int(y_pos) + int(h)-1}'
 
-        if self.record:
-            if self.session_type == 'wayland':
-                pipeline1 = Gst.parse_launch(
-                    f'pipewiresrc fd={fd} path={node_id} '
-                    + f'{buff} {venc} ! progressreport update-freq=1 ! queue ! mux. '
-                    + f'pulsesrc device="{self.audio_device}.monitor" volume={self.volume} '
-                    + f'{buff} {raw} {aenc} ! queue ! mux. {muxer} '
-                    + f'! filesink location={out}'
-                )
-            else:
-                xid = f'xid={node_id}'
-                sx = sy = ex = ey = ''
-                w = h = None
-                x_pos = y_pos = None
-                if isinstance(data, dict):
-                    w = data.get('width')
-                    h = data.get('height')
-                    x_pos = data.get('x')
-                    y_pos = data.get('y')
-                    xid = ''
-                    if w and h and x_pos is not None and y_pos is not None:
-                        sx = f'startx={x_pos}'
-                        sy = f'starty={y_pos}'
-                        ex = f'endx={int(x_pos) + int(w)-1}'
-                        ey = f'endy={int(y_pos) + int(h)-1}'
+                    if not self.audio_device:
+                        pipeline1 = Gst.parse_launch(
+                            f'ximagesrc {xid} {sx} {sy} {ex} {ey} '
+                            + f'{buff} {venc} ! progressreport update-freq=1 '
+                            + f'! queue ! {muxer} ! filesink location={out}'
+                        )
+                    else:
+                        pipeline1 = Gst.parse_launch(
+                            f'ximagesrc {xid} {sx} {sy} {ex} {ey} '
+                            + f'{buff} {venc} ! progressreport update-freq=1 '
+                            + '! queue ! mux. '
+                            + f'pulsesrc device="{self.audio_device}.monitor" '
+                            + f'volume={self.volume} '
+                            + f'{aenc} ! queue ! mux. {muxer} '
+                            + f'! filesink location={out}'
+                        )
 
-                pipeline1 = Gst.parse_launch(
-                    f'ximagesrc {xid} {sx} {sy} {ex} {ey} '
-                    + f'{buff} {venc} ! progressreport update-freq=1 ! queue ! mux. '
-                    + f'pulsesrc device="{self.audio_device}.monitor" volume={self.volume} '
-                    + f'{buff} {raw} {aenc} ! queue ! mux. {muxer} '
-                    + f'! filesink location={out}'
-                )
+                self.pipelines.append(pipeline1)
+                pipeline1.set_state(Gst.State.PLAYING)
+                bus = pipeline1.get_bus()
+                bus.add_signal_watch()
+                bus.connect('message', self.bus_message)
 
-            pipeline1.set_state(Gst.State.PLAYING)
-            self.pipelines.append(pipeline1)
-
-            bus = pipeline1.get_bus()
-            bus.add_signal_watch()
-            bus.connect('message', self.bus_message)
-
-        if self.stream:
-            pipeline2 = Gst.parse_launch(
-                f'pipewiresrc fd={fd} path={node_id} '
-                + f'{h264} ! rtph264pay config-interval=1 pt=96 ! udpsink host=127.0.0.1 port=5000 '
-                #+ f'pulsesrc device="{self.audio_device}.monitor" '
-                #+ f'{raw} {opus} ! queue ! rtpopuspay pt=97 ! udpsink host=127.0.0.1 port=5002'
-            )
-            pipeline2.set_state(Gst.State.PLAYING)
-            pipeline2.get_bus().connect('message', self.bus_message)
-            self.pipelines.append(pipeline2)
-
-        if self.chromecast:
-            self.chromecast_stream(fd, node_id, h264, muxer)
-
-    def chromecast_stream(self, fd, node_id, venc, mp4mux):
+    def chromecast_stream(self):
         """___Start a chromecast stream using gstreamer___"""
 
         cast = self.find_chromecasts()
-        mc = cast.media_controller
-        host = cast.cast_info.host
-        port = cast.cast_info.port
-        # stream_url = f"tcp://{host}:{port}"
-        raw = aenc_dict.get('raw')
-        opus = aenc_dict.get('opus')
-        h264 = venc_dict.get('h264')
+        if cast:
+            mc = cast.media_controller
+            host = cast.cast_info.host
+            port = cast.cast_info.port
+            print(host, port)
+            print(f"Setting transmission to {cast.cast_info.friendly_name}")
 
-        print("Casting to: ", f"tcp://{host}:{port}")
-        print(f"Setting transmission to {cast.cast_info.friendly_name}")
-
-        if self.session_type == 'wayland':
             pipeline3 = Gst.parse_launch(
-                f'pipewiresrc fd={fd} path={node_id} '
-                f'{h264} ! rtph264pay config-interval=1 pt=96 ! udpsink host=127.0.0.1 port=5000 '
-                + f'pulsesrc device="{self.audio_device}.monitor" '
-                + f'{raw} {opus} ! queue ! rtpopuspay pt=97 ! udpsink host=127.0.0.1 port=5002'
+                'rtspsrc location=rtsp://localhost:8554/lander '
+                + '! rtph264depay ! h264parse ! mpegtsmux '
+                + '! hlssink location=./hls/segment%05d.ts '
+                + 'playlist-location=./hls/playlist.m3u8'
+                + 'target-duration=1 max-files=12'
             )
             pipeline3.set_state(Gst.State.PLAYING)
             self.pipelines.append(pipeline3)
             pipeline3.get_bus().connect('message', self.bus_message)
 
-            print("Starting chromecast transmission with gstreamer...")
-            mc.play_media(f"tcp://{host}:{port}", 'video/mp4')
+            mc.play_media(
+                'http://192.168.1.102:8080/hls/playlist.m3u8',
+                'application/vnd.apple.mpegurl'
+            )
             mc.block_until_active()
+            mc.play()
         else:
-            #TODO
-            print('x11 session chromecast...')
+            print('Error: Chromcast device no found!')
 
     def get_request_path(self):
         """___Get new request path and token___"""
@@ -496,12 +543,17 @@ class SwScreenCast:
 
         request_path, request_token = self.get_request_path()
         options['handle_token'] = request_token
+
         self.bus.add_signal_receiver(
-            callback, 'Response', self.request_object, self.desktop_object, request_path,
+            callback,
+            'Response',
+            self.request_object,
+            self.desktop_object,
+            request_path,
         )
         method(*(args + (options,)), dbus_interface=interface)
 
-    def gdbus_notify(self, method, notification, interface):
+    def gdbus_notify(self, method, notification):
         """___Gdbus call notification interface___"""
 
         if notification:
@@ -513,9 +565,12 @@ class SwScreenCast:
 
         self.notify_dict['title'] = title if title else self.title
         self.notify_dict['body'] = message if message else self.message
+
         self.gdbus_notify(
-            self.portal.AddNotification, notification=self.notify_dict, interface=self.notify
+            self.portal.AddNotification,
+            notification=self.notify_dict
         )
+
         to = Thread(target=self.timeout)
         to.start()
 
@@ -523,7 +578,7 @@ class SwScreenCast:
         """___Start a pipewire stream and play it using gstreamer___"""
 
         if response == 0:
-            for (node_id, stream_properties) in result['streams']:
+            for (node_id, _) in result['streams']:
                 print(f"stream {node_id}")
                 self.run_stream(node_id)
                 self.send_notify(None, 'is started...')
@@ -532,12 +587,19 @@ class SwScreenCast:
             self.terminate()
             return
 
-    def select_sources_response(self, response, result):
+    def select_sources_response(self, response, _):
         """___Start screencast when source is selected___"""
 
         if response == 0:
             print(f'start session {self.session_handle}')
-            self.gdbus_call(self.portal.Start, self.start_response, self.session_handle, '', interface=self.screencast)
+
+            self.gdbus_call(
+                self.portal.Start,
+                self.start_response,
+                self.session_handle,
+                '',
+                interface=self.screencast
+            )
         else:
             print(f'Failed to select sources: {response}')
             self.terminate()
@@ -546,121 +608,124 @@ class SwScreenCast:
     def create_session_response(self, response, result):
         """___Select source for created session___"""
 
-        print(response, result)
         if response == 0:
             self.session_handle = result['session_handle']
-            print(f'create session {self.session_handle}')
+            print(f'Create session {self.session_handle} done')
+
             self.gdbus_call(
-                    self.portal.SelectSources, self.select_sources_response, self.session_handle,
-                    options={'multiple': False, 'types': dbus.UInt32(1|2)}, interface=self.screencast
+                    self.portal.SelectSources,
+                    self.select_sources_response,
+                    self.session_handle,
+                    options={'multiple': False, 'types': dbus.UInt32(1|2)},
+                    interface=self.screencast
             )
         else:
-            print(f'Failed to create session: {response}')
+            print(f'Failed to create session: {response} {result}')
             self.terminate()
             return
 
-    def pulseaudio_default_sink(self):
-        """___Get pulse audio default sink name and volune value___"""
+    def screenshot_response(self, response, result):
+        """___Response to request to take a screenshot___"""
 
-        pa = pulsectl.Pulse('SwSourceCapture')
-        pa_default_sink = pa.server_info().default_sink_name
-
-        try:
-            pa.sink_info(0)
-        except IndexError:
-            pass
+        if response == 0:
+            screen_dict = get_screen_dict()
+            self.uri = result['uri']
+            tmp = self.uri.removeprefix('file://')
+            left = right = 0
+            for num, screen in screen_dict.items():
+                out = Path(self.output).parent.joinpath(f's{num}_{self.time}.jpg')
+                width = screen.get('width')
+                height = screen.get('height')
+                right += width
+                pos = (left, 0, right, height)
+                convert_image(tmp, out, width, height, crop=True, position=pos)
+                left += width
+                print(f'Screenshot: {out} done.')
+            self.terminate()
+            return
         else:
-            volume = round(pa.sink_info(0).volume.values[0], 2)
-        print(
-            f'Audio sink: {pa_default_sink}\n'
-            +f'Volume: {volume*100}%'
-        )
-        return pa_default_sink, volume
+            print(f'Screenshot: {response} {result}')
+            self.terminate()
+            return
+
+    def alsa_default_sink(self):
+        """___Get default audio device___"""
+
+        alsa_output = None
+        self.devmon.start()
+        devices = self.devmon.get_devices()
+        for _, d in enumerate(devices):
+            props = d.get_properties()
+            node_name = props.get_string('node.name')
+            if 'alsa_output' in str(node_name):
+                print('Default output:', node_name)
+                alsa_output = str(node_name)
+                break
+        self.devmon.stop()
+        return alsa_output
 
     def get_audio_devices(self):
         """___Get available audio devices___"""
 
-        devmon = Gst.DeviceMonitor.new()
-        devmon.start()
-        devices = devmon.get_devices()
+        self.devmon.start()
+        devices = self.devmon.get_devices()
 
-        for i, d in enumerate(devices):
+        for _, d in enumerate(devices):
             props = d.get_properties()
-            #print(props)
-            if props['alsa.card']:
+            if props.get_string('alsa.card'):
                 data = {
-                    '\tnode.nick': props['node.nick'],
-                    '\tobject.path': props['object.path'],
-                    '\tcard_name': props['alsa.card_name'],
-                    '\tmixer_name': props['alsa.mixer_name'],
-                    '\talsa.name': props['alsa.name'],
-                    '\tresolution': props['alsa.resolution_bits'],
-                    '\talsa.path': props['api.alsa.path'],
-                    '\tpcm.stream': props['api.alsa.pcm.stream'],
-                    '\tchannels': props['audio.channels'],
-                    '\tposition':props['audio.position'],
+                    '\tnode.nick': props.get_string('node.nick'),
+                    '\tobject.path': props.get_string('object.path'),
+                    '\tcard_name': props.get_string('alsa.card_name'),
+                    '\tmixer_name': props.get_string('alsa.mixer_name'),
+                    '\talsa.name': props.get_string('alsa.name'),
+                    '\tresolution': props.get_string('alsa.resolution_bits'),
+                    '\talsa.path': props.get_string('api.alsa.path'),
+                    '\tpcm.stream': props.get_string('api.alsa.pcm.stream'),
+                    '\tchannels': props.get_string('audio.channels'),
+                    '\tposition':props.get_string('audio.position'),
                 }
                 print(
-                '''------------------------------------------------------------------------''')
-                print(f"\t{props['node.description']}:")
+                '''----------------------------------------------------------''')
+                print(f"\t{props.get_string('node.description')}:")
                 print(
-                '''------------------------------------------------------------------------''')
-                print(f"\t{props['alsa.card']}: {props['node.name']}")
+                '''----------------------------------------------------------''')
+                print(
+                    f'\t{props.get_string("alsa.card")}: '
+                    + f'{props.get_string("node.name")}'
+                )
                 for k, v in data.items():
                     print(f'\t{k}:\t{v}')
-        devmon.stop()
-
-    def get_monitors(self):
-        """___Get dictionary of connected x11 monitors___"""
-
-        monitors = {}
-        xrandr_output = check_output(["xrandr", "--listactivemonitors"]).decode()
-        for num, line in enumerate(xrandr_output.splitlines()):
-            if line.strip():
-                if len(line.split()) == 4:
-                    c = line.split()[0].strip(':')
-                    r = line.split()[2]
-                    n = line.split()[3]
-                    monitors[int(c)] = {'name': n, 'resolution': r}
-        return monitors
+        self.devmon.stop()
 
     def find_chromecasts(self):
         """___Searching and selecting available chromecast devices___"""
+        if pychromecast:
+            print("Searching Chromecast devices...")
+            chromecasts, _ = pychromecast.get_chromecasts()
+            if not chromecasts:
+                print("Not found.")
+                return None
 
-        print("Searching Chromecast devices...")
-        chromecasts, browser = pychromecast.get_chromecasts()
-        if not chromecasts:
-            print("Not found.")
-            return None
+            print("Available chromecast devices:")
+            for i, cc in enumerate(chromecasts):
+                print(f"{i}: {cc.cast_info.friendly_name}")
 
-        print("Chromecast devices availble:")
-        for i, cc in enumerate(chromecasts):
-            print(f"{i}: {cc.cast_info.friendly_name}")
-
-        selection = int(input("Select Chromecast device: "))
-        cast = chromecasts[selection]
-        print(f"Connected to {cast.cast_info.friendly_name}")
-        cast.wait()
-        return cast
-
-    def get_bus_service(self):
-        """___Get system and session bus services___"""
-
-        for service in dbus.SystemBus().list_names():
-            print(service)
-
-        for service in dbus.SessionBus().list_names():
-            print(service)
+            selection = int(input("Select Chromecast device: "))
+            cast = chromecasts[selection]
+            print(f"Connected to {cast.cast_info.friendly_name}")
+            cast.wait()
+            return cast
 
     def timeout(self):
+        """___Notify timeout___"""
+
         count = 0
         while count < 3:
             count += 1
             time.sleep(1)
         else:
-            self.gdbus_notify(
-                self.portal.RemoveNotification, None, interface=self.notify
-            )
+            self.gdbus_notify(self.portal.RemoveNotification, None)
 
     def terminate(self):
         """___Stop gstreamer and exit main loop___"""
@@ -678,13 +743,12 @@ class SwScreenCast:
 
 
 def print_encoder_list():
-
+    """___Print available encoder list___"""
     f = ['mp4', 'mkv', 'ts', 'flv']
     m = {k: v for k, v in zip(muxer_dict.keys(), f)}
     v = venc_dict
     a = aenc_dict
     del v['buff']
-
     print('''
     ------------------------------------------------------------------------
     Video formats:''')
@@ -703,18 +767,13 @@ def print_encoder_list():
 
 
 def print_audio_devices():
-
-    #pa = pulsectl.Pulse('SwSourceCapture')
-    #pa_info = pa.server_info()
-    #print(pa_info.default_sink_name)
-    #print(pa_info.default_source_name)
-
+    """___Get available audio device list___"""
     app = SwScreenCast()
     app.get_audio_devices()
 
 
 def main(args):
-
+    """___Run SwScreenCast___"""
     app = SwScreenCast(**args)
     try:
         app.run()
@@ -724,8 +783,8 @@ def main(args):
 
 def helper():
     """___Commandline help info___"""
-
-    print('''
+    out = Path.home().joinpath(f"rec_{time.strftime('%Y%M%d%S')}.mkv")
+    print(f'''
     ------------------------------------------------------------------------
     StartWine ScreenCast:
     A tool for capture, broadcast and recording screen
@@ -737,9 +796,9 @@ def helper():
     General options:
     -h or --help            Show help and exit
     -r or --record          Capture and record selected screen or window
+    -s or --shot            Take screenshot
     -p or --preview         Сapture selected source for preview
     -c or --chromecast      Connect to Chromecast device over local network
-    -s or --stream          Start stream over the network
     -l or --list            List of available encoders and formats
     -a or --audio-devices   List of available audio devices
 
@@ -750,15 +809,7 @@ def helper():
     --a_enc="encoder"       set audio encoder (default mp4)
     --a_dev="device"        set audio device for capture (default output)
     --volume="volume"       set volume of audio device (range 0.0 to 1.0)
-    --output="output"       path to the output file (default $HOME)
-
-    ------------------------------------------------------------------------
-    Stream options:
-
-    ------------------------------------------------------------------------
-    Chromecast options:
-
-    ------------------------------------------------------------------------
+    --output="path"         path to the output file (default: {out})
     ''')
 
 
@@ -777,14 +828,14 @@ if __name__ == '__main__':
         elif argv[1] == '-r' or argv[1] == '--record':
             args['record'] = True
 
+        elif argv[1] == '-s' or argv[1] == '--shot':
+            args['shot'] = True
+
         elif argv[1] == '-p' or argv[1] == '--preview':
             args['preview'] = True
 
         elif argv[1] == '-c' or argv[1] == '--chromecast':
             args['chromecast'] = True
-
-        elif argv[1] == '-s' or argv[1] == '--stream':
-            args['stream'] = True
 
         elif argv[1] == '-l' or argv[1] == '--list-encoders':
             print_encoder_list()
@@ -822,11 +873,14 @@ if __name__ == '__main__':
             if not args:
                 helper()
 
-        elif argv[1] == '-s':
-            print('Oops! Stream options in development, nothing to do...')
+        elif argv[1] == '-s' or argv[1] == '--shot':
+            args['shot'] = True
+            for arg in argv:
+                if '--output=' in arg:
+                    args['output'] = str(arg.split('=')[1])
 
-        elif argv[1] == '-c':
-            print('Oops! Chromecast options in development, nothing to do...')
+        elif argv[1] == '-c' or argv[1] == '--chromecast':
+            args['chromecast'] = True
 
         else:
             helper()
@@ -835,4 +889,3 @@ if __name__ == '__main__':
 
     if args:
         main(args)
-

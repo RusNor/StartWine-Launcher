@@ -1,0 +1,50 @@
+This release adds the following features, updates, and fixes:
+• Updated list of Wine versions.
+• Updated list of dxvk and vkd3d versions.
+• Updated libraries in StartWine runtime.
+• Updated default prefix backup.
+• Updated prefix configurations.
+• Updated locales.
+• Updated winetricks dll list.
+
+• Fixed helper functions in sw_runlib.
+• Fixed functions uninstaller StartWine-Launcher.
+• Fixed the problem of loading game images related to blocking resources.
+• Fixed incorrect detection of some hotkeys when changing the keyboard layout.
+• Fixed incorrect termination of processes when the connection was lost while downloading files.
+
+• Libraries and drivers in the container have been updated.
+• Authorization and game libraries of GOG.COM and Epic Games Store services are integrated into the StartWine interface.
+
+• Added virtual keyboard for gamepad.
+• Added several animations for the interface.
+• Added color scheme sample "Darkside".
+• Added the StartWine RU repository for downloading and installing.
+• Added automatic selection of a quick repository for downloading and installing StartWine.
+• Added Wine Proton EM.
+• Added StartWine Uninstaller.
+• Added WOW64 subsystem for better compability with 32 bit applications.
+• Added NTSYNC option for better perfomance.
+• Added Wine WAYLAND driver option to run using pure Wayland.
+• Added Lossless Scaling algorithm for frame generation.
+• Added HDR If the game supports HDR, the switch in the game will be unlocked.
+• Added automatic download function from the fastest server.
+• Added StartWine build system from source code.
+• Portuguese localization has been added.
+
+• The GOG.COM game library is integrated into the StartWine interface.
+• The Epic Games Store game library is integrated into the StartWine interface.
+• The backup update period has been added to the settings.
+
+• Hotkeys list are grouped by category.
+• Moved some configuration files to the cache directory to save user settings after an update StartWine.
+• All paths in the code are unified.
+• Some of the code has been rewritten in Rust.
+
+StartWineShell:
+• Added color schemes for the interface.
+• Added highlighting of exe files.
+• Added the ability to load Wine when starting the game.
+• Added the ability to launch GOG and Epic games installed via StartWine.
+• Added environment variable SW_EDITOR to set the default text editor.
+

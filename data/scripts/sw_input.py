@@ -1,4 +1,22 @@
 #!/usr/bin/env python3
+"""
+Copyright (c) 2020 Maslov N.G. Normatov R.R.
+
+This file is part of StartWine-Launcher.
+https://github.com/RusNor/StartWine-Launcher
+
+StartWine-Launcher is free software: you can redistribute it and/or modify it 
+under the terms of the GNU General Public License as published by the Free 
+Software Foundation, either version 3 of the License, or (at your option) any 
+later version.
+
+StartWine-Launcher is distributed in the hope that it will be useful, but 
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
+FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with 
+StartWine-Launcher. If not, see http://www.gnu.org/licenses/.
+"""
 
 """
 #define BTN_JOYSTICK    0x120
@@ -64,31 +82,32 @@
 import sys
 from sys import argv
 import time
-# from pathlib import Path
 import evdev
-from evdev import UInput, InputDevice, ecodes, categorize, ff
-from threading import Thread
-# import multiprocessing as mp
-import asyncio
-# import signal
+from evdev import ecodes, ff
+from evdev.device import InputDevice
+from evdev.uinput import UInput
+from evdev.util import categorize
+from threading import Thread, Event as ThreadEvent
+import multiprocessing as mp
 from select import select
-# import math
 
 import gi
 gi.require_version('Gtk', '4.0')
 gi.require_version('Gdk', '4.0')
 from gi.repository import Gtk, Gdk, Gio, GLib
+
 from sw_data import (
     str_gc_title, str_gc_subtitle, str_not_set, str_press_any_key, sw_css_dark,
     default_app_bind_profile, app_bind_profile, controller_icons, IconPath,
-    write_json_data, Msg as msg, vl_dict, sw_input_json
+    write_json_data, Msg as msg, sw_input_json, TermColors as tc,
+    kbd_shift, kbd_keys, kbd_codes, kbd_len
 )
 from sw_func import check_alive
 
-
 dev_except = [
     'POWERBUTTON', 'SPEAKER', 'HDA', 'CONSUMERCONTROL', 'SYSTEMCONTROL',
-    'MOUSEKEYBOARD', 'LIDSWITCH', 'VIDEOBUS', 'HDAUDIO', 'SWKEYPAD'
+    'MOUSEKEYBOARD', 'LIDSWITCH', 'VIDEOBUS', 'HDAUDIO', 'SWKEYPAD',
+    'PYTHON-EVDEV-UINPUT',
 ]
 KEYBOARD = 'keyboard'
 GAMEPAD = 'gamepad'
@@ -99,7 +118,6 @@ Display = Gdk.Display().get_default()
 
 def get_device_list(device_type=None):
     """Get filtered list of connected input devices."""
-
     if device_type == GAMEPAD:
         _dev_except = dev_except + ['MOUSE', 'KEYBOARD', 'HOTKEY', 'TOUCHPAD' ]
 
@@ -134,12 +152,12 @@ def get_device_list(device_type=None):
 
 def get_key_dict(dev_name, dev_type):
     """Get device capabilities dictionaries."""
-
     key_dict = {}
     abs_dict = {}
     device_dict = {dev.name: dev for dev in get_device_list(dev_type)}
-    if device_dict.get(dev_name):
-        dev_caps = device_dict.get(dev_name).capabilities(verbose=True)
+    device = device_dict.get(dev_name)
+    if device:
+        dev_caps = device.capabilities(verbose=True)
 
         try:
             ev_key = dev_caps[('EV_KEY', 1)]
@@ -167,12 +185,10 @@ def get_key_dict(dev_name, dev_type):
 
 def bind_device_key(device, key_name, bind_dict):
     """Create dicrionary with key bindings from commandline."""
-
     # key_bind = None
     # mouse_bind = None
     # mouse_list = get_device_list(MOUSEPAD)
     # keyboard_list = get_device_list(KEYBOARD)
-
     inp = []
     while inp == []:
         inp = input(f'press Enter to configure the {device.name}: ')
@@ -183,7 +199,6 @@ def bind_device_key(device, key_name, bind_dict):
 
 def bind_key(key_name, bind_dict):
     """Create dicrionary with key bindings."""
-
     key_bind = None
     mouse_bind = None
     mouse_list = get_device_list(MOUSEPAD)
@@ -265,8 +280,7 @@ def bind_key(key_name, bind_dict):
 class DeviceRedirection:
     """Redirecting user input events to another device."""
 
-    def __init__(self, device=None, data=None, *args, **kwargs):
-
+    def __init__(self, device=None, data=None):
         self.monitor = Display.get_monitors()[0]
         self.width = self.monitor.get_geometry().width
         self.height = self.monitor.get_geometry().height
@@ -276,6 +290,7 @@ class DeviceRedirection:
         self.mouse = get_device_list(MOUSEPAD)
         self.keyboard = get_device_list(KEYBOARD)
         self.key_dict, self.abs_dict = get_key_dict(self.name, GAMEPAD)
+
         if self.mouse and self.keyboard:
             self.ui = UInput.from_device(*self.mouse, *self.keyboard, name='SwKeyPad')
         else:
@@ -291,204 +306,191 @@ class DeviceRedirection:
 
     def run(self):
         """Running device redirection."""
-
-        for cap in self.device.capabilities():
-            if ecodes.EV_FF == cap:
-                self.effect_id = self.device.upload_effect(self.effect)
-                self.device.write(ecodes.EV_FF, self.effect_id, 1)
-                time.sleep(self.duration / 1000)
-                self.device.erase_effect(self.effect_id)
+        device = self.device
+        if device:
+            for cap in device.capabilities():
+                if ecodes.EV_FF == cap:
+                    self.effect_id = device.upload_effect(self.effect)
+                    device.write(ecodes.EV_FF, self.effect_id, 1)
+                    time.sleep(self.duration / 1000)
+                    device.erase_effect(self.effect_id)
 
         if self.ui:
-            print(f'{self.name} redirection is running...')
+            print(f'{tc.GREEN}{self.name} redirection is running...{tc.END}')
             self._async_read()
         else:
-            print('The devices required for redirection were not found...')
+            print('{tc.RED}The devices required for redirection were not found...{tc.END}')
 
     def terminate(self):
         """Terminate reading device events."""
-
         sys.exit(0)
 
     def _async_read(self):
         """Running async reading device events."""
-
         self.rx = list()
         self.ry = list()
         self.lx = list()
         self.ly = list()
-
-        for event in self.device.async_read_loop():
-
-            if self.data.get('bind_profile'):
+        device = self.device
+        if device:
+            for event in device.async_read_loop():
                 bind_dict = self.data.get('bind_profile')
+                if bind_dict and self.data.get('controller_active'):
+                    key_name = None
+                    abs_name = None
+                    binding = None
 
-            if self.data.get('controller_active'):
-                key_name = None
-                abs_name = None
-                binding = None
+                    if event.type == ecodes.EV_KEY:
+                        key_name = ecodes.bytype[ecodes.EV_KEY][event.code]
+                        if isinstance(key_name, list) or isinstance(key_name, tuple):
+                            key_name = key_name[0]
 
-                if event.type == ecodes.EV_KEY:
-                    key_name = ecodes.bytype[ecodes.EV_KEY][event.code]
-                    if isinstance(key_name, list) or isinstance(key_name, tuple):
-                        key_name = key_name[0]
+                    if event.type == ecodes.EV_ABS:
+                        abs_name = ecodes.bytype[ecodes.EV_ABS][event.code]
+                        if isinstance(abs_name, list) or isinstance(abs_name, tuple):
+                            abs_name = abs_name[0]
 
-                if event.type == ecodes.EV_ABS:
-                    abs_name = ecodes.bytype[ecodes.EV_ABS][event.code]
-                    if isinstance(abs_name, list) or isinstance(abs_name, tuple):
-                        abs_name = abs_name[0]
+                    if key_name and bind_dict.get(key_name):
 
-                if key_name and bind_dict.get(key_name):
+                        if isinstance(bind_dict[key_name], list):
+                            binding = bind_dict[key_name][0]
+                            self._ev_key_write(event, 1, binding)
 
-                    if isinstance(bind_dict[key_name], list):
-                        binding = bind_dict[key_name][0]
-                        self._ev_key_write(event, 1, binding)
+                    if abs_name and bind_dict.get(abs_name) and self.abs_dict.get(abs_name):
 
-                if abs_name and bind_dict.get(abs_name) and self.abs_dict.get(abs_name):
+                        abs_bind = None
+                        abs_bind0 = None
+                        abs_bind1 = None
+                        max_ = self.abs_dict[abs_name].max
+                        min_ = self.abs_dict[abs_name].min
 
-                    abs_bind = None
-                    abs_bind0 = None
-                    abs_bind1 = None
-                    max_ = self.abs_dict[abs_name].max
-                    min_ = self.abs_dict[abs_name].min
+                        if isinstance(bind_dict[abs_name], list) and len(bind_dict[abs_name]) == 1:
+                            abs_bind = bind_dict[abs_name][0]
 
-                    if isinstance(bind_dict[abs_name], list) and len(bind_dict[abs_name]) == 1:
-                        abs_bind = bind_dict[abs_name][0]
+                        if isinstance(bind_dict[abs_name], list) and len(bind_dict[abs_name]) > 1:
+                            abs_bind0 = bind_dict[abs_name][0]
+                            abs_bind1 = bind_dict[abs_name][1]
 
-                    if isinstance(bind_dict[abs_name], list) and len(bind_dict[abs_name]) > 1:
-                        abs_bind0 = bind_dict[abs_name][0]
-                        abs_bind1 = bind_dict[abs_name][1]
+                        if abs_bind and 'REL_' in abs_bind:
 
-                    if abs_bind and 'REL_' in abs_bind:
+                            if event.code == ecodes.ABS_RX:
+                                tx = time.time_ns()
 
-                        if event.code == ecodes.ABS_RX:
-                            tx = time.time_ns()
+                                if event.value > max_ * 0.05:
+                                    self.rx.append(event.value)
 
-                            if event.value > max_ * 0.05:
-                                self.rx.append(event.value)
+                                elif event.value < min_ * 0.05:
+                                    self.lx.append(event.value)
 
-                            elif event.value < min_ * 0.05:
-                                self.lx.append(event.value)
+                                elif min_ * 0.05 <= event.value <= max_* 0.05:
+                                    self.rx.clear()
+                                    self.lx.clear()
 
-                            elif min_ * 0.05 <= event.value <= max_* 0.05:
-                                self.rx.clear()
-                                self.lx.clear()
+                                self._translate_xy(event, min_, max_, tx)
 
-                            self._translate_xy(event, min_, max_, tx)
+                            elif event.code == ecodes.ABS_RY:
+                                ty = time.time_ns()
 
-                        elif event.code == ecodes.ABS_RY:
-                            ty = time.time_ns()
+                                if event.value > max_ * 0.05:
+                                    self.ry.append(event.value)
 
-                            if event.value > max_ * 0.05:
-                                self.ry.append(event.value)
+                                elif event.value < min_ * 0.05:
+                                    self.ly.append(event.value)
 
-                            elif event.value < min_ * 0.05:
-                                self.ly.append(event.value)
+                                elif min_ * 0.05 <= event.value <= max_* 0.05:
+                                    self.ry.clear()
+                                    self.ly.clear()
 
-                            elif min_ * 0.05 <= event.value <= max_* 0.05:
-                                self.ry.clear()
-                                self.ly.clear()
+                                self._translate_xy(event, min_, max_, ty)
+                            else:
+                                self._ev_rel_write(event, min_, max_, abs_bind)
 
-                            self._translate_xy(event, min_, max_, ty)
-                        else:
-                            self._ev_rel_write(event, min_, max_, abs_bind)
+                        elif abs_bind and ('KEY_' in abs_bind or 'BTN_' in abs_bind):
+                            self._ev_key_write(event, max_, abs_bind)
 
-                    elif abs_bind and ('KEY_' in abs_bind or 'BTN_' in abs_bind):
-                        self._ev_key_write(event, max_, abs_bind)
-
-                    elif abs_bind0 and abs_bind1 and 'KEY_' in abs_bind0 and 'KEY_' in abs_bind1:
-                        self._ev_keys_write(event, min_, max_, abs_bind0, abs_bind1)
+                        elif abs_bind0 and abs_bind1 and 'KEY_' in abs_bind0 and 'KEY_' in abs_bind1:
+                            self._ev_keys_write(event, min_, max_, abs_bind0, abs_bind1)
 
     def _ev_key_write(self, event, max_, binding):
         """Write uinput key press event."""
+        ui = self.ui
 
-        if event.value > max_ * 0.1:
+        if event.value > max_ * 0.1 and ui:
             print(categorize(event))
-            self.ui.write(ecodes.EV_KEY, ecodes.ecodes[binding], 1)
-            self.ui.syn()
-        else:
-            self.ui.write(ecodes.EV_KEY, ecodes.ecodes[binding], 0)
-            self.ui.syn()
+            ui.write(ecodes.EV_KEY, ecodes.ecodes[binding], 1)
+            ui.syn()
+        elif ui:
+            ui.write(ecodes.EV_KEY, ecodes.ecodes[binding], 0)
+            ui.syn()
 
     def _ev_keys_write(self, event, min_, max_, bind0, bind1):
         """Write uinput key press event."""
+        ui = self.ui
 
-        if event.value > max_ * 0.1:
+        if event.value > max_ * 0.1 and ui:
             print(categorize(event))
-            self.ui.write(ecodes.EV_KEY, ecodes.ecodes[bind0], 1)
-            self.ui.syn()
+            ui.write(ecodes.EV_KEY, ecodes.ecodes[bind0], 1)
+            ui.syn()
 
-        elif event.value < min_ * 0.1:
+        elif event.value < min_ * 0.1 and ui:
             print(categorize(event))
-            self.ui.write(ecodes.EV_KEY, ecodes.ecodes[bind1], 1)
-            self.ui.syn()
+            ui.write(ecodes.EV_KEY, ecodes.ecodes[bind1], 1)
+            ui.syn()
 
-        elif min_ * 0.1 <= event.value <= max_ * 0.1:
-            self.ui.write(ecodes.EV_KEY, ecodes.ecodes[bind0], 0)
-            self.ui.write(ecodes.EV_KEY, ecodes.ecodes[bind1], 0)
-            self.ui.syn()
+        elif min_ * 0.1 <= event.value <= max_ * 0.1 and ui:
+            ui.write(ecodes.EV_KEY, ecodes.ecodes[bind0], 0)
+            ui.write(ecodes.EV_KEY, ecodes.ecodes[bind1], 0)
+            ui.syn()
 
     def _ev_rel_write(self, event, min_, max_, abs_bind):
         """Write the X and Y axis movement event"""
+        ui = self.ui
 
         if event.value > max_ * 0.1:
             print(categorize(event))
 
-            if event.code == ecodes.ABS_X:
-                self.ui.write(ecodes.EV_REL, ecodes.ecodes[abs_bind], -1)
-                self.ui.syn()
+            if event.code == ecodes.ABS_X and ui:
+                ui.write(ecodes.EV_REL, ecodes.ecodes[abs_bind], -1)
+                ui.syn()
 
-            elif event.code == ecodes.ABS_Y:
-                self.ui.write(ecodes.EV_REL, ecodes.ecodes[abs_bind], -1)
-                self.ui.syn()
+            elif event.code == ecodes.ABS_Y and ui:
+                ui.write(ecodes.EV_REL, ecodes.ecodes[abs_bind], -1)
+                ui.syn()
 
         elif event.value < min_ * 0.1:
             print(categorize(event))
 
-            if event.code == ecodes.ABS_X:
-                self.ui.write(ecodes.EV_REL, ecodes.ecodes[abs_bind], 1)
-                self.ui.syn()
+            if event.code == ecodes.ABS_X and ui:
+                ui.write(ecodes.EV_REL, ecodes.ecodes[abs_bind], 1)
+                ui.syn()
 
-            elif event.code == ecodes.ABS_Y:
-                self.ui.write(ecodes.EV_REL, ecodes.ecodes[abs_bind], 1)
-                self.ui.syn()
+            elif event.code == ecodes.ABS_Y and ui:
+                ui.write(ecodes.EV_REL, ecodes.ecodes[abs_bind], 1)
+                ui.syn()
 
     def _translate_xy(self, event, min_, max_, st):
         """Sorting movement events along the X and Y axes."""
-
-        vx = vy = px = py = sx = sy = 0
+        vx = vy = sx = sy = 0
 
         if event.value > max_ * 0.05:
 
             if event.code == ecodes.ABS_RX:
                 vx = event.value
                 sx = self.rx[0] if self.rx else 0
-                px = self.rx[-1] if self.rx else 0
-                if len(self.rx) > 1:
-                    px = self.rx[-2]
 
             elif  event.code == ecodes.ABS_RY:
                 vy = event.value
                 sy = self.ry[0] if self.ry else 0
-                py = self.ry[-1] if self.ry else 0
-                if len(self.ry) > 1:
-                    py = self.ry[-2]
 
         elif event.value < min_ * 0.05:
 
             if event.code == ecodes.ABS_RX:
                 vx = event.value
                 sx = self.lx[0] if self.lx else 0
-                px = self.lx[-1] if self.lx else 0
-                if len(self.lx) > 1:
-                    px = self.lx[-2]
 
             elif event.code == ecodes.ABS_RY:
                 vy = event.value
                 sy = self.ly[0] if self.ly else 0
-                py = self.ly[-1] if self.ly else 0
-                if len(self.ly) > 1:
-                    py = self.ly[-2]
 
         if event.value == max_ and event.value != 0:
             t_rx = Thread(target=self.x_hold_max, args=(1, max_,))
@@ -502,11 +504,11 @@ class DeviceRedirection:
             t_ly = Thread(target=self.y_hold_max, args=(-1, min_,))
             t_ly.start()
         else:
-            self._move_xy(vx, vy, px, py, sx, sy, st)
+            self._move_xy(vx, vy, sx, sy, st)
 
-    def _move_xy(self, vx, vy, px, py, sx, sy, st):
+    def _move_xy(self, vx, vy, sx, sy, st):
         """Сalculating the speed of movement along the x and y axes."""
-
+        ui = self.ui
         w = self.width / 2
         dsx = (vx/w - sx/w)
         etx = time.time_ns()
@@ -517,139 +519,311 @@ class DeviceRedirection:
         dty = ety - st
         val_y = int((dsy/dty) * 1000)
 
-        if val_x != 0:
-            self.ui.write(ecodes.EV_REL, ecodes.REL_X, val_x)
+        if val_x != 0 and ui:
+            ui.write(ecodes.EV_REL, ecodes.REL_X, val_x)
 
-        if val_y != 0:
-            self.ui.write(ecodes.EV_REL, ecodes.REL_Y, val_y)
+        if val_y != 0 and ui:
+            ui.write(ecodes.EV_REL, ecodes.REL_Y, val_y)
 
-        self.ui.syn()
+        if ui:
+            ui.syn()
 
     def x_hold_max(self, value, _max):
         """Write motion at maximum X-axis deviation."""
+        ui = self.ui
 
         if self.rx:
             while self.rx[-1] == _max:
                 time.sleep(0.0006)
-                self.ui.write(ecodes.EV_REL, ecodes.REL_X, value)
+                if ui:
+                    ui.write(ecodes.EV_REL, ecodes.REL_X, value)
 
         if self.lx:
             while self.lx[-1] == _max:
                 time.sleep(0.0006)
-                self.ui.write(ecodes.EV_REL, ecodes.REL_X, value)
+                if ui:
+                    ui.write(ecodes.EV_REL, ecodes.REL_X, value)
 
     def y_hold_max(self, value, _max):
         """Write motion at maximum Y-axis deviation."""
+        ui = self.ui
 
         if self.ry:
             while self.ry[-1] == _max:
                 time.sleep(0.0006)
-                self.ui.write(ecodes.EV_REL, ecodes.REL_Y, value)
+                if ui:
+                    ui.write(ecodes.EV_REL, ecodes.REL_Y, value)
 
         if self.ly:
             while self.ly[-1] == _max:
                 time.sleep(0.0006)
-                self.ui.write(ecodes.EV_REL, ecodes.REL_Y, value)
+                if ui:
+                    ui.write(ecodes.EV_REL, ecodes.REL_Y, value)
 
 
 class SwKeyController:
     """Shortcut controller and device input event handler."""
 
     def __init__(self, _dict={}):
-
-        self.is_active = True
-        self.type = KEYPAD
-        self.devices = get_device_list(self.type)
+        self.workers = list()
+        self.quit_event = ThreadEvent()
+        self.devices = get_device_list(KEYPAD)
         self.dict = _dict
         self.dev = {dev.fd: dev for dev in self.devices}
 
     def run(self):
         """"Running event loop."""
+        for device in self.devices:
+            t = Thread(target=self.handle_device_event, args=(device,))
+            self.workers.append(t)
+            t.start()
 
-        try:
-            asyncio.run(self.controller())
-        except (Exception,) as e:
-            print(e)
-            sys.exit(0)
+        for t in self.workers:
+            try:
+                t.join()
+            except (Exception, KeyboardInterrupt):
+                self.quit_event.set()
+                for device in self.devices:
+                    print(f"{tc.YELLOW2}{device.name}{tc.END} event handle is closed.")
+                t.join()
 
     def quit(self):
         """close all reading devices."""
+        self.quit_event.set()
+        for device in self.devices:
+            print(f"{tc.YELLOW2}{device.name}{tc.END} event handle is closed.")
+        for t in self.workers:
+            t.join()
 
-        self.is_active = False
-
-    async def controller(self):
-        """"Running input device event handler."""
-
-        args = (self.handle_device_event(device) for device in self.devices)
-        await asyncio.gather(*args)
-        return
-
-    async def handle_device_event(self, device):
-        """"Handling input events from the device."""
-
+    def handle_device_event(self, device: InputDevice):
         evc = 0
-        while self.is_active:
-            r, w, x = select(self.dev, [], [])
-            for fd in r:
-                for event in self.dev[fd].read():
-                    if event.type == ecodes.EV_KEY:
-                        key_name = ecodes.bytype[ecodes.EV_KEY][event.code]
+        while not self.quit_event.is_set():
+            try:
+                _, _, _ = select([device], [], [])
+            except (Exception,) as e:
+                print(f'{tc.RED}SwKeyController: {e}{tc.END}')
+                break
 
-                        if key_name and event.value == 1:
-                            evc += 1
-                            if evc < 4:
-                                self.dict[evc] = key_name
+            for event in device.read():
+                if event.type == ecodes.EV_KEY:
+                    key_name = ecodes.bytype[ecodes.EV_KEY][event.code]
 
-                        if key_name and event.value == 0:
-                            evc = 0
-                            self.dict.clear()
+                    if key_name and event.value == 1:
+                        evc += 1
+                        if evc < 4:
+                            self.dict[evc] = key_name
 
-                    if event.type == ecodes.EV_ABS:
-                        abs_dict = {a[0]: a[1] for a in self.dev[fd].capabilities()[3]}
-                        abs_name = ecodes.bytype[ecodes.EV_ABS][event.code]
-                        min_ = abs_dict[event.code].min
-                        max_ = abs_dict[event.code].max
-
-                        if min_ * 0.25 <= event.value <= max_ * 0.25:
-                            evc = 0
-                            self.dict.clear()
-                        else:
-                            evc += 1
-                            if evc < 4:
-                                self.dict[evc] = abs_name
-                    if evc > 3:
+                    if key_name and event.value == 0:
                         evc = 0
-        device.close()
-        print(f'stop reading {device}')
+                        self.dict.clear()
+
+                if event.type == ecodes.EV_ABS:
+                    abs_dict = {a[0]: a[1] for a in device.capabilities()[3]}
+                    abs_name = ecodes.bytype[ecodes.EV_ABS][event.code]
+                    min_ = abs_dict[event.code].min
+                    max_ = abs_dict[event.code].max
+
+                    if min_ * 0.25 <= event.value <= max_ * 0.25:
+                        evc = 0
+                        self.dict.clear()
+                    else:
+                        evc += 1
+                        if evc < 4:
+                            self.dict[evc] = abs_name
+                if evc > 3:
+                    evc = 0
+        try:
+            device.close()
+        except (Exception, OSError) as e:
+            print(f'{tc.RED}SwKeyController: {e}{tc.END}')
+        else:
+            print(f'{tc.YELLOW2}Stop reading {device}{tc.END}')
+
+
+class SwVirtualKeyboard(Gtk.Stack):
+    """Virtual Keyboard Widget."""
+
+    def __init__(self, input_widget=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.input_widget = input_widget
+        self.ui = UInput()
+        self.activate()
+
+    def activate(self):
+        """Building widget."""
+        self.box_shift = Gtk.Box(
+                                css_name='sw_box',
+                                spacing=4,
+                                width_request=768,
+                                height_request=240,
+                                orientation=Gtk.Orientation.VERTICAL,
+        )
+        self.box_keys = Gtk.Box(
+                                css_name='sw_box',
+                                spacing=4,
+                                width_request=768,
+                                height_request=240,
+                                orientation=Gtk.Orientation.VERTICAL
+        )
+        self.box_keys.add_css_class('padding_16')
+        self.box_keys.add_css_class('background_color')
+
+        self.box_shift.add_css_class('padding_16')
+        self.box_shift.add_css_class('background_color')
+
+        self.set_key_layer(self.box_keys, kbd_keys)
+        self.set_key_layer(self.box_shift, kbd_shift)
+
+        self.add_child(self.box_keys)
+        self.add_child(self.box_shift)
+
+    def set_input_widget(self, input_widget):
+        """Set keyboard layer."""
+        self.input_widget = input_widget
+
+    def set_key_layer(self, vbox, layer):
+        """Set keyboard layer."""
+        for row in range(len(kbd_codes)):
+            hbox = Gtk.FlowBox(
+                            css_name='sw_box',
+                            name=f'row_{row}',
+                            column_spacing=4,
+                            max_children_per_line=len(kbd_codes[row]),
+                            hexpand=True,
+                            vexpand=True,
+            )
+            vbox.append(hbox)
+
+            for num, key in enumerate(kbd_codes[row]):
+                key_label = Gtk.Label(
+                                    css_name='sw_label',
+                                    label=layer[row][num],
+                                    name=str(num),
+                                    hexpand=True,
+                                    vexpand=True,
+                )
+                key_btn = Gtk.FlowBoxChild(
+                                    css_name='sw_button',
+                                    name=f'KEY_{key}',
+                                    child=key_label,
+                )
+                key_btn.add_css_class('padding_6')
+
+                if vbox == self.box_shift and key in ['LEFTSHIFT', 'RIGHTSHIFT']:
+                    key_btn.add_css_class('accent_color')
+
+                if key == '':
+                    key_btn = Gtk.FlowBoxChild(
+                                        css_name='sw_box',
+                                        sensitive=False,
+                                        focusable=False,
+                                        margin_end=20
+                    )
+                if key == ' ':
+                    key_btn = Gtk.FlowBoxChild(
+                                        css_name='sw_box',
+                                        sensitive=False,
+                                        focusable=False,
+                                        margin_end=40,
+                    )
+
+                click_handler = Gtk.GestureClick()
+                click_handler.connect('pressed', self.on_btn_pressed, key_btn)
+                click_handler.connect('released', self.on_btn_released, key_btn)
+
+                key_handler = Gtk.EventControllerKey()
+                key_handler.connect('key_pressed', self.on_key_pressed, key_btn)
+                # key_handler.connect('key_released', self.on_key_released, key_btn)
+
+                key_btn.add_controller(click_handler)
+                key_btn.add_controller(key_handler)
+
+                index = kbd_len[row][num]
+                width = 40*index
+                key_btn.set_size_request(width, 24)
+
+                hbox.append(key_btn)
+
+    def on_key_pressed(self, _, keyval, _keycode, _state, widget):
+        """"""
+        focus_flow = None
+        cur = 0
+
+        if keyval == Gdk.KEY_Up:
+            cur = int(widget.get_index())
+            focus_flow = widget.get_parent().get_prev_sibling()
+
+        if keyval == Gdk.KEY_Down:
+            cur = int(widget.get_index())
+            focus_flow = widget.get_parent().get_next_sibling()
+
+        if focus_flow and isinstance(focus_flow, Gtk.FlowBox):
+            max_ = int(focus_flow.get_max_children_per_line())
+            if cur > max_-1:
+                cur = max_ -1
+            child = focus_flow.get_child_at_index(cur)
+            if child:
+                child.grab_focus()
+                self.ui.write(ecodes.EV_KEY, ecodes.ecodes['KEY_SPACE'], 1)
+                self.ui.write(ecodes.EV_KEY, ecodes.ecodes['KEY_SPACE'], 0)
+                self.ui.syn()
+
+    # def on_key_released(self, handler, keyval, keycode, state, widget):
+    #     """"""
+
+    def on_btn_pressed(self, _, _n_press, _x, _y, btn):
+        """"""
+        key_name = btn.get_name()
+
+        if self.input_widget:
+            self.input_widget.grab_focus()
+            self.input_widget.set_position(-1)
+
+        if self.get_visible_child() == self.box_shift:
+            self.ui.write(ecodes.EV_KEY, ecodes.ecodes['KEY_LEFTSHIFT'], 1)
+
+        if self.get_visible_child() == self.box_keys:
+            self.ui.write(ecodes.EV_KEY, ecodes.ecodes['KEY_LEFTSHIFT'], 0)
+            self.ui.write(ecodes.EV_KEY, ecodes.ecodes['KEY_RIGHTSHIFT'], 0)
+
+        self.ui.write(ecodes.EV_KEY, ecodes.ecodes[key_name], 1)
+        self.ui.syn()
+
+    def on_btn_released(self, handler, n_press, x, y, btn):
+        """"""
+        key_name = btn.get_name()
+        if key_name == 'KEY_LEFTSHIFT' or key_name == 'KEY_RIGHTSHIFT':
+            if self.get_visible_child() == self.box_keys:
+                self.set_visible_child(self.box_shift)
+            else:
+                self.set_visible_child(self.box_keys)
+
+        self.ui.write(ecodes.EV_KEY, ecodes.ecodes['KEY_LEFTSHIFT'], 0)
+        self.ui.write(ecodes.EV_KEY, ecodes.ecodes['KEY_RIGHTSHIFT'], 0)
+        self.ui.write(ecodes.EV_KEY, ecodes.ecodes[key_name], 0)
+        self.ui.syn()
+        return handler, n_press, x, y
 
 
 class SwDeviceRedirectionSettings(Gtk.Widget):
     """Device redirection settings widget."""
 
-    def __init__(self, _app=None, bind_dict=None, data=None, *args, **kwargs):
+    def __init__(self, _app, bind_dict, data, data_dict, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.app = _app
         self.is_active = True
         self.bind_dict = bind_dict if bind_dict else dict()
         self.data = data
         self.widget_list = list()
+        self.key_event_dict = data_dict
         self.dev_type = KEYPAD
-        self.devices = get_device_list(self.dev_type)
         self.controllers = get_device_list(GAMEPAD)
-        self.dev = {dev.fd: dev for dev in self.devices}
         self.selected_device = None
+        self.device_process = None
         self.activate()
-        self.run_device()
-
-    def run_device(self):
-        """Running device event handler."""
-
-        t = Thread(target=asyncio.run, args=(self.listen_devices(),))
-        t.start()
 
     def activate(self):
         """Building settings menu."""
-
         self.gc_settings = Gtk.Box(
             css_name='sw_flowbox', orientation=Gtk.Orientation.VERTICAL
         )
@@ -659,7 +833,7 @@ class SwDeviceRedirectionSettings(Gtk.Widget):
         )
         self.gc_pref_group_subtitle = Gtk.Label(
             css_name='sw_label_desc',
-            label= str_gc_subtitle,
+            label=str_gc_subtitle,
             xalign=0.0, wrap=True, natural_wrap_mode=True
         )
         self.gc_pref_group_box = Gtk.Box(
@@ -734,7 +908,7 @@ class SwDeviceRedirectionSettings(Gtk.Widget):
         self.cancel.connect('clicked', self.close)
 
         self.title_widget = Gtk.Label(
-            css_name='sw_label_title', label=vl_dict['gc_settings']
+            css_name='sw_label_title', label=str_gc_title
         )
         self.headerbar = Gtk.HeaderBar(
             css_name='sw_header_top', show_title_buttons=False
@@ -755,39 +929,39 @@ class SwDeviceRedirectionSettings(Gtk.Widget):
         )
         self.parent.remove_css_class('background')
         self.parent.add_css_class('sw_background')
-        self.parent.set_default_size(1248, 688)
+        self.parent.set_default_size(1280, 720)
+        self.parent.set_size_request(1280, 720)
         self.parent.set_resizable(True)
         self.parent.set_child(self.gc_settings)
         self.parent.connect('close-request', self.close)
         self.parent.present()
 
-    def close(self, _btn):
+    def close(self, _):
         """Close controller settings window."""
-
         if self.data:
             self.data['controller_active'] = True
+
         self.is_active = False
         self.parent.close()
 
-    def write_controller_settings(self, _btn):
+        if self.device_process:
+            self.device_process.terminate()
+
+    def write_controller_settings(self, _):
         """Write controller settings to json data."""
-
         write_json_data(sw_input_json, self.bind_dict)
-        print(f'{sw_input_json} saved...done')
-
+        print(f'{tc.GREEN}{sw_input_json} saved...done{tc.END}')
         self.is_active = False
         self.parent.close()
 
     def gc_item_activate(self, gc_view, position):
         """Activate item by user."""
-
         key_name = gc_view.get_model().get_item(position).get_string()
         key_widget = next(self.get_key_name_widget(key_name))
         self.gc_item_bind_key(key_name, key_widget)
 
     def get_key_name_widget(self, key_name):
         """Get widget by key name."""
-
         if '_LEFT' in key_name:
             suffix = '_LEFT'
 
@@ -802,13 +976,13 @@ class SwDeviceRedirectionSettings(Gtk.Widget):
         else:
             suffix = ''
 
-        for w in self.widget_list:
-            w_name = str(w.get_name()) + suffix
+        for widget in self.widget_list:
+            w_name = str(widget.get_name()) + suffix
             if w_name == key_name:
-                yield w
+                yield widget
 
     def gc_item_bind_key(self, key_name, key_widget):
-
+        """Bind key to widget"""
         if key_widget and key_widget.get_visible_child_name() == 'box':
             key_widget.set_visible_child_name('label')
 
@@ -820,28 +994,27 @@ class SwDeviceRedirectionSettings(Gtk.Widget):
 
     def update_item(self, key_name, key_widget):
         """Update item of binding list."""
-
         box = key_widget.get_first_child()
         label = box.get_last_child()
         key = (
             key_name.replace('_LEFT', '').replace('_RIGHT', '')
             .replace('_UP', '').replace('_DOWN', '')
         )
-        if self.bind_dict.get(key):
+        bind_dict_name = self.bind_dict.get(key)
+        if bind_dict_name:
             if '_RIGHT' in key_name or '_DOWN' in key_name:
-                name = self.bind_dict.get(key)[0]
+                name = bind_dict_name[0]
             elif '_LEFT' in key_name or '_UP' in key_name:
-                name = self.bind_dict.get(key)[1]
+                name = bind_dict_name[1]
             else:
-                name = self.bind_dict.get(key)[0]
+                name = bind_dict_name[0]
 
             label.set_label(name)
 
         key_widget.set_visible_child_name('box')
 
-    def gc_factory_setup(self, factory, item_list):
+    def gc_factory_setup(self, _, item_list):
         """Controller item factory setup."""
-
         image_key_name = Gtk.Image(css_name='sw_action_row', margin_start=4)
         image_key_name.set_pixel_size(32)
         image_key_name.set_sensitive(False)
@@ -876,9 +1049,8 @@ class SwDeviceRedirectionSettings(Gtk.Widget):
 
         item_list.set_child(stack)
 
-    def gc_factory_bind(self, factory, item_list):
+    def gc_factory_bind(self, _, item_list):
         """Controller item factory bind,"""
-
         item = item_list.get_item()
         name = (
             item.get_string().replace('_LEFT', '').replace('_RIGHT', '')
@@ -938,7 +1110,6 @@ class SwDeviceRedirectionSettings(Gtk.Widget):
 
     def update_gc_view(self):
         """Update controller settings view."""
-
         self.widget_list.clear()
         self.gc_list_store.remove_all()
 
@@ -952,13 +1123,12 @@ class SwDeviceRedirectionSettings(Gtk.Widget):
             if self.gc_dropdown.get_selected_item().get_string() == dev.name:
                 key_dict, abs_dict = get_key_dict(dev.name, self.dev_type)
 
-                for k, v in key_dict.items():
+                for k, _ in key_dict.items():
                     if not 'BTN_TRIGGER_HAPPY' in k:
                         string = Gtk.StringObject.new(str(k))
                         self.gc_list_store.append(string)
 
-                for k, v in abs_dict.items():
-
+                for k, _ in abs_dict.items():
                     if k in double_x:
                         string_rt = Gtk.StringObject.new(str(k) + '_RIGHT')
                         string_lt = Gtk.StringObject.new(str(k) + '_LEFT')
@@ -974,18 +1144,12 @@ class SwDeviceRedirectionSettings(Gtk.Widget):
                         string = Gtk.StringObject.new(str(k))
                         self.gc_list_store.append(string)
 
-    def gc_dropdown_activate(self, gc_dropdown, gparam):
+    def gc_dropdown_activate(self, gc_dropdown, _):
         """Building settings list of selected controller."""
-
         self.selected_device = gc_dropdown.get_selected_item().get_string()
         self.update_gc_view()
 
-    async def listen_devices(self):
-        asyncio.gather(*(self.listen_event(d) for d in self.devices))
-
-    async def listen_event(self, device):
-        """Listen input events from the device."""
-
+    def listen_event(self, device: InputDevice, key_event_dict):
         while self.widget_list == []:
             if not self.is_active:
                 break
@@ -993,61 +1157,87 @@ class SwDeviceRedirectionSettings(Gtk.Widget):
         else:
             while self.is_active:
                 try:
-                    codes = [ecodes.ecodes[x.get_name()] for x in self.widget_list]
-                except:
+                    codes = [ecodes.ecodes[str(x.get_name())] for x in self.widget_list]
+                except (Exception,):
                     codes = []
+                try:
+                    _, _, _ = select([device], [], [])
+                except (Exception,) as e:
+                    print(f'{tc.RED}SwKeyController: {e}{tc.END}')
+                    return None
 
-                r, w, x = select(self.dev, [], [])
-                for fd in r:
-                    for event in self.dev[fd].read():
-                        if self.dev[fd].name == self.selected_device:
-                            for w, c in zip(self.widget_list, codes):
-                                if int(event.code) == int(c):
-                                    key_name = None
-                                    if event.type == ecodes.EV_KEY:
-                                        key_name = ecodes.bytype[ecodes.EV_KEY][event.code]
-                                        if isinstance(key_name, list) or isinstance(key_name, tuple):
-                                            key_name = key_name[0]
+                for event in device.read():
+                    for widget, code in zip(self.widget_list, codes):
+                        if int(event.code) == int(code):
+                            key_name = None
+                            if event.type == ecodes.EV_KEY:
+                                key_name = ecodes.bytype[ecodes.EV_KEY][event.code]
+                                if isinstance(key_name, list) or isinstance(key_name, tuple):
+                                    key_name = key_name[0]
 
-                                    abs_name = None
-                                    if event.type == ecodes.EV_ABS:
-                                        abs_name = ecodes.bytype[ecodes.EV_ABS][event.code]
-                                        if isinstance(abs_name, list) or isinstance(abs_name, tuple):
-                                            abs_name = abs_name[0]
+                            abs_name = None
+                            if event.type == ecodes.EV_ABS:
+                                abs_name = ecodes.bytype[ecodes.EV_ABS][event.code]
+                                if isinstance(abs_name, list) or isinstance(abs_name, tuple):
+                                    abs_name = abs_name[0]
 
-                                    if w.get_name() == key_name:
-                                        if event.value == 0:
-                                            if w.has_css_class('bind'):
-                                                w.remove_css_class('bind')
-                                        else:
-                                            if not w.has_css_class('bind'):
-                                                print(categorize(event))
-                                                w.add_css_class('bind')
-                                        break
+                            if widget.get_name() == key_name:
+                                if event.value == 0:
+                                    key_event_dict[key_name] = False
+                                else:
+                                    print(categorize(event))
+                                    key_event_dict[key_name] = True
+                                break
 
-                                    if w.get_name() == abs_name:
-                                        abs_dict = {a[0]: a[1] for a in self.dev[fd].capabilities()[3]}
-                                        min_ = abs_dict[event.code].min
-                                        max_ = abs_dict[event.code].max
+                            if widget.get_name() == abs_name:
+                                abs_dict = {a[0]: a[1] for a in device.capabilities()[3]}
+                                min_ = abs_dict[event.code].min
+                                max_ = abs_dict[event.code].max
 
-                                        if min_ * 0.1 <= event.value <= max_ * 0.1:
-                                            if w.has_css_class('bind'):
-                                                w.remove_css_class('bind')
-                                        else:
-                                            if not w.has_css_class('bind'):
-                                                print(categorize(event))
-                                                w.add_css_class('bind')
-                                        break
+                                if min_ * 0.1 <= event.value <= max_ * 0.1:
+                                    key_event_dict[abs_name] = False
+                                else:
+                                    print(categorize(event))
+                                    key_event_dict[abs_name] = True
+                                    break
+
+                    if not self.parent.get_visible():
+                        print(f'{tc.YELLOW2}Stop listening {device}, exit...{tc.END}')
+                        return None
 
                 if not self.parent.get_visible():
-                    print(f'stop listening to the {device}, exit...')
+                    print(f'{tc.YELLOW2}Stop listening {device}, exit...{tc.END}')
                     break
+
+    def check_widget_event(self):
+        """Checking the widget highlight event on key press."""
+
+        for widget in self.widget_list:
+            for key_name, state in self.key_event_dict.items():
+                if str(widget.get_name()) == key_name:
+                    if not state and widget.has_css_class('bind'):
+                        widget.remove_css_class('bind')
+                    if state and not widget.has_css_class('bind'):
+                        widget.add_css_class('bind')
+        return True
+
+    def run(self):
+        """Running device event handler."""
+        for device in self.controllers:
+            if device.name == self.selected_device:
+                self.device_process = mp.Process(
+                    target=self.listen_event,
+                    args=(device, self.key_event_dict)
+                )
+                self.device_process.start()
+                GLib.timeout_add(100, self.check_widget_event)
+                break
 
 
 class SwDeviceRedirectionApp(Gtk.Application):
     """Device redirection settings menu."""
 
-    def __init__(self, bind_dict=None, *args, **kwargs):
+    def __init__(self, bind_dict=None, data=None, *args, **kwargs):
         super().__init__(*args, **kwargs, application_id="ru.launcher.StartWine",
                         flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
         )
@@ -1056,8 +1246,9 @@ class SwDeviceRedirectionApp(Gtk.Application):
         self.display = Gdk.Display().get_default()
         self.sw_css_dark = sw_css_dark
         self.css_provider = Gtk.CssProvider()
-        self.window = None
+        self.window = Gtk.Window()
         self.bind_dict = bind_dict if bind_dict else dict()
+        self.data = data
         self.css_provider.load_from_file(Gio.File.new_for_path(bytes(self.sw_css_dark)))
         Gtk.StyleContext.add_provider_for_display(
             self.display, self.css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
@@ -1066,21 +1257,19 @@ class SwDeviceRedirectionApp(Gtk.Application):
 
     def activate(self, app):
         """Building settings menu."""
-
-        self.window = SwDeviceRedirectionSettings(app, self.bind_dict)
+        self.window = SwDeviceRedirectionSettings(app, self.bind_dict, self.data)
+        self.window.run()
 
     def terminate(self):
         """Shut down the application."""
-
         self.window.close(None)
         self.quit()
 
 
 def run_device_event_monitoring(device, key_dict, abs_dict):
     """Start monitoring of device input events."""
-
+    print("\33[93mKey:\n", key_dict, "\n\33[96mAbs:\n", abs_dict, "\33[0m")
     for event in device.async_read_loop():
-
         if event.type == ecodes.EV_KEY:
             print(categorize(event), event.value)
 
@@ -1093,7 +1282,6 @@ def run_device_event_monitoring(device, key_dict, abs_dict):
 
 def run_device_redirection_settings():
     """Running device redirection settings."""
-
     app = SwDeviceRedirectionApp(bind_dict=app_bind_profile)
     try:
         app.run()
@@ -1104,27 +1292,25 @@ def run_device_redirection_settings():
 
 def run_device_redirection(device, data):
     """Running device event redirection."""
-
     while True:
         time.sleep(0.5)
         dev_connected = {
             InputDevice(dev).name: dev for dev in evdev.list_devices()
         }
         if dev_connected.get(device.name):
-            device = InputDevice(dev_connected.get(device.name))
+            device = InputDevice(str(dev_connected.get(device.name)))
             data['device_connected'] = device.name
             redirection = DeviceRedirection(device, data)
-            print(f'{device.name} connected')
+            print(f'{tc.GREEN}{device.name} connected{tc.END}')
             try:
                 redirection.run()
             except (KeyboardInterrupt, OSError):
                 data['device_connected'] = ''
-                print(f'{device.name} disconnected')
+                print(f'{tc.YELLOW2}{device.name} disconnected{tc.END}')
 
 
 def run_zero_device_redirection(event, data):
     """Running redirection for first device in device list."""
-
     gamepad = None
     devices = get_device_list('gamepad')
     for dev in devices:
@@ -1135,7 +1321,7 @@ def run_zero_device_redirection(event, data):
                 break
 
     if not gamepad:
-        print('No connected devices found...')
+        print(f'{tc.VIOLET2}SW_INPUT: {tc.YELLOW2}No connected devices found...{tc.END}')
 
     while not gamepad:
         devices = get_device_list('gamepad')
@@ -1145,7 +1331,10 @@ def run_zero_device_redirection(event, data):
                 if ecodes.EV_FF == x:
                     gamepad = dev
                     break
-        time.sleep(0.5)
+        try:
+            time.sleep(0.5)
+        except (KeyboardInterrupt, OSError):
+            sys.exit(0)
     else:
         data['device_connected'] = gamepad.name
         try:
@@ -1153,15 +1342,17 @@ def run_zero_device_redirection(event, data):
         except (KeyboardInterrupt, OSError):
             sys.exit(0)
 
+    if event:
+        event.set()
+
 
 def run_commandline(run_type, dev_type=None):
     """Running with commandline args."""
-
     bind_dict = dict()
     devices = get_device_list(dev_type)
 
     if devices == []:
-        print('No connected devices found...')
+        print(f'{tc.VIOLET2}SW_INPUT: {tc.YELLOW2}No connected devices found...{tc.END}')
     else:
         for n, d in enumerate(devices):
             print(n, d.name)
@@ -1174,56 +1365,55 @@ def run_commandline(run_type, dev_type=None):
         try:
             dev_num = eval(dev_num)
         except (SyntaxError, NameError):
-            print('Invalid value! Must be a number of device')
+            print(f'{tc.RED}Invalid value! Must be a number of device{tc.END}')
             sys.exit(1)
 
         if isinstance(dev_num, int) and dev_num < len(devices):
             device = devices[dev_num]
             key_dict, abs_dict = get_key_dict(device.name, dev_type)
 
-        if run_type == 'default':
-            data = dict()
-            data['bind_profile'] = default_app_bind_profile
-            data['controller_active'] = True
-            try:
-                run_device_redirection(device, data)
-            except KeyboardInterrupt:
-                sys.exit(0)
-
-        elif run_type == 'custom':
-            for k, v in key_dict.items():
-                try:
-                    bind_device_key(device, k, bind_dict)
-                except KeyboardInterrupt:
-                    sys.exit(0)
-            else:
+            if run_type == 'default':
                 data = dict()
-                data['bind_profile'] = bind_dict
+                data['bind_profile'] = default_app_bind_profile
                 data['controller_active'] = True
                 try:
                     run_device_redirection(device, data)
                 except KeyboardInterrupt:
                     sys.exit(0)
 
-        elif run_type == 'monitoring':
-            try:
-                run_device_event_monitoring(device, key_dict, abs_dict)
-            except KeyboardInterrupt:
-                print('Exit...')
+            elif run_type == 'custom':
+                for k, _ in key_dict.items():
+                    try:
+                        bind_device_key(device, k, bind_dict)
+                    except KeyboardInterrupt:
+                        sys.exit(0)
+                else:
+                    data = dict()
+                    data['bind_profile'] = bind_dict
+                    data['controller_active'] = True
+                    try:
+                        run_device_redirection(device, data)
+                    except KeyboardInterrupt:
+                        sys.exit(0)
+
+            elif run_type == 'monitoring':
+                try:
+                    run_device_event_monitoring(device, key_dict, abs_dict)
+                except KeyboardInterrupt:
+                    print('Exit...')
+                    sys.exit(0)
+
+            elif run_type == 'keys':
+                dev_caps = device.capabilities(verbose=True, absinfo=True)
+                print(dev_caps)
+
+            else:
+                print(f'{tc.RED}Wrong type! Must be "default" or "custom".{tc.END}')
                 sys.exit(0)
-
-        elif run_type == 'keys':
-            dev_caps = device.capabilities(verbose=True, absinfo=True)
-            print(dev_caps)
-
-        else:
-            print('Wrong redirection type, must be "default" or "custom".')
-            sys.exit(0)
 
 
 def helper():
     """___Commandline help info___"""
-
     print('''
     ----------------------------------------------------------------------------
     StartWine Input:
@@ -1243,7 +1433,6 @@ def helper():
 ''')
 
 if __name__ == '__main__':
-
     if len(argv) == 1:
         helper()
 

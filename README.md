@@ -27,11 +27,11 @@ Make the file executable and launch it with a double click
 
 ## Installation with one command:
 ```bash
-bash -c "$(curl -sL RusNor.github.io)"
+curl -sL RusNor.github.io|bash
 ```
 or
 ```bash
-bash -c "$(wget -qO - RusNor.github.io)"
+wget -qO - RusNor.github.io|bash
 ```
 
 The command for Ubuntu if the installation suddenly fails
@@ -52,7 +52,7 @@ If you need quick access to folders or to add your own folder to a bookmark, cli
 
 https://github.com/user-attachments/assets/c19b7e1c-cd5d-46e2-b523-11fc7524f78a
 
-StartWine Screenshots (Doubtful, but okeey)
+StartWine Screenshots
 
 ![sw_image1](/handbook/en/sw_image1.png)
 ![sw_image2](/handbook/en/sw_image2.png)
@@ -62,6 +62,11 @@ StartWine Screenshots (Doubtful, but okeey)
 ![sw_image6](/handbook/en/sw_image6.png)
 ![sw_image7](/handbook/en/sw_image7.png)
 ![sw_image8](/handbook/en/sw_image8.png)
+![sw_image9](/handbook/en/sw_image9.png)
+![sw_image10](/handbook/en/sw_image10.png)
+![sw_image11](/handbook/en/sw_image11.png)
+![sw_image12](/handbook/en/sw_image12.png)
+![sw_image13](/handbook/en/sw_image13.png)
 
 ## Creating shortcuts and running games
 Go to the directory, click 2 times on the .exe file and select “Create shortcut”

@@ -1,25 +1,36 @@
 #!/usr/bin/env python3
+"""
+Copyright (c) 2020 Maslov N.G. Normatov R.R.
+
+This file is part of StartWine-Launcher.
+https://github.com/RusNor/StartWine-Launcher
+
+StartWine-Launcher is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version.
+
+StartWine-Launcher is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+StartWine-Launcher. If not, see http://www.gnu.org/licenses/.
+"""
+
 
 import os
 from os import environ
-import sys
 import time
 from sys import argv, exit
 from pathlib import Path
 import shutil
 from warnings import filterwarnings
 import json
-import urllib.request
-from urllib.request import Request, urlopen
+from urllib.request import urlopen
 from urllib.error import HTTPError, URLError
 from subprocess import run
 import itertools
-from collections import deque
-# from time import sleep
-import io
-import struct
-import pefile
-from PIL import Image
 
 if not os.getenv('GSK_RENDERER') or os.getenv('GSK_RENDERER') == 'vulkan':
     environ['ENABLE_VKBASALT'] = '0'
@@ -30,22 +41,30 @@ gi.require_version('Gdk', '4.0')
 from gi.repository import Gdk, Gio, GLib, Gtk, Gsk, Graphene, Pango
 from sw_data import Msg as msg
 from sw_data import TermColors as tc
+from sw_data import (
+    sw_gog_db, sw_epic_items, sw_steam_db, sw_epic_exe_data_json,
+    sw_gog_exe_data_json, sw_exe_data_json
+)
 
 filterwarnings('ignore')
 
 #############################___PATH_DATA___:
 
 program_name = 'StartWine'
+sw_home = Path.home()
 sw_scripts = Path(__file__).absolute().parent
-sw_path = Path(sw_scripts).parent.parent
-sw_default_path = Path(f'{Path.home()}/.local/share/StartWine')
-sw_menu_json = Path(f'{sw_scripts}/sw_menu.json')
-sw_css_dark = Path(f'{sw_path}/data/img/sw_themes/css/dark/gtk.css')
-sw_css_light = Path(f'{sw_path}/data/img/sw_themes/css/light/gtk.css')
-sw_css_custom = Path(f'{sw_path}/data/img/sw_themes/css/custom/gtk.css')
-sw_logo = Path(f'{sw_path}/data/img/gui_icons/sw_large_light.svg')
-icon_folder = f'{sw_path}/data/img/gui_icons/hicolor/symbolic/apps/folder-symbolic.svg'
-
+sw_path = sw_scripts.parent.parent
+sw_default_path = sw_home.joinpath('.local', 'share', 'StartWine')
+sw_fm_cache = sw_home.joinpath('.cache', 'sw_fm')
+sw_menu_json = sw_fm_cache.joinpath('sw_menu.json')
+sw_css = sw_path.joinpath('data', 'img', 'sw_themes', 'css')
+sw_css_dark = sw_css.joinpath('dark', 'gtk.css')
+sw_css_light = sw_css.joinpath('light', 'gtk.css')
+sw_css_custom = sw_css.joinpath('custom', 'gtk.css')
+sw_logo = sw_path.joinpath('data', 'img', 'gui_icons', 'sw_large_light.svg')
+icon_folder = sw_path.joinpath(
+    'data', 'img', 'gui_icons', 'hicolor', 'symbolic', 'apps', 'folder-symbolic.svg'
+)
 ICON_DIR_ENTRY_FORMAT = (
     'GRPICONDIRENTRY',
     ('B,Width', 'B,Height','B,ColorCount','B,Reserved',
@@ -58,13 +77,11 @@ ICON_DIR_FORMAT = ('GRPICONDIR', ('H,Reserved', 'H,Type','H,Count'))
 gtk_css_provider = Gtk.CssProvider()
 
 if sw_menu_json.exists():
-
     with open(sw_menu_json, 'r', encoding='utf-8') as f:
         dict_ini = json.load(f)
         f.close()
 
     if dict_ini['color_scheme'] == 'dark':
-
         gtk_css_provider.load_from_file(Gio.File.new_for_path(bytes(sw_css_dark)))
         Gtk.StyleContext.add_provider_for_display(
             Gdk.Display.get_default(),
@@ -89,9 +106,10 @@ if sw_menu_json.exists():
 
 class SourceSelectionWindow(Gtk.Application):
     """___Dialog window for selecting source to capture___"""
-    def __init__(self, app=None, mon_dict=None, xid_dict=None, callback=None, *args, **kwargs):
+    def __init__(self, app=None, mon_dict=dict(), xid_dict=dict(), callback=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         GLib.set_prgname(program_name)
+        self.app = app
         self.mon_dict = mon_dict
         self.xid_dict = xid_dict
         self.callback = callback
@@ -160,7 +178,7 @@ class SourceSelectionWindow(Gtk.Application):
                 item = Gtk.Label(name=f'{xid}', label=f'{name}')
                 store.append(item)
 
-    def factory_setup(self, factory, item_list):
+    def factory_setup(self, _, item_list):
         """______"""
 
         label = Gtk.Label(
@@ -170,7 +188,7 @@ class SourceSelectionWindow(Gtk.Application):
         box.append(label)
         item_list.set_child(box)
 
-    def factory_bind(self, factory, item_list):
+    def factory_bind(self, _, item_list):
         """______"""
 
         item = item_list.get_item()
@@ -196,9 +214,8 @@ class SourceSelectionWindow(Gtk.Application):
 
             return self.callback(xid, name, data)
 
-    def terminate(self, window):
+    def terminate(self, _):
         """______"""
-
         if self.callback:
             self.callback(None, None, None)
 
@@ -208,8 +225,8 @@ class SwPathManager(Gtk.Application):
 
     def __init__(self, source_path):
         super().__init__(flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
-        self.source_path = source_path
-        self.local_path = f'{Path.home()}/.local/share/StartWine'
+        self.source_path = Path(source_path)
+        self.local_path = Path.home().joinpath('.local', 'share', 'StartWine')
         self.window = None
         self.label_btn_ok = None
         self.btn_ok = None
@@ -256,7 +273,7 @@ class SwPathManager(Gtk.Application):
                                     margin_end=8,
                                     hexpand=True,
                                     valign=Gtk.Align.CENTER,
-                                    text=str(self.source_path),
+                                    text=f'{self.source_path}',
         )
         self.label_main = Gtk.Label(css_name='sw_label', label=msg.msg_dict['select_sw_path'])
 
@@ -271,7 +288,7 @@ class SwPathManager(Gtk.Application):
         self.image.set_paintable(self.paintable_icon)
 
         self.image_folder = Gtk.Image(css_name='sw_image')
-        self.image_folder.set_from_file(icon_folder)
+        self.image_folder.set_from_file(f"{icon_folder}")
 
         self.btn_main = Gtk.Button(css_name='sw_button')
         self.btn_main.set_halign(Gtk.Align.END)
@@ -299,7 +316,7 @@ class SwPathManager(Gtk.Application):
         self.window.present()
         self.entry_main.select_region(0,0)
 
-    def _select_path(self, _button):
+    def _select_path(self, _):
 
         title = msg.msg_dict['change_directory']
         dialog = SwDialogDirectory(title=title)
@@ -316,58 +333,63 @@ class SwPathManager(Gtk.Application):
         except GLib.GError:
             pass
         else:
-            self.entry_main.set_text(str(result.get_path()))
+            if self.entry_main:
+                self.entry_main.set_text(str(result.get_path()))
 
-    def _accept_response(self, _button):
+    def _accept_response(self, _):
 
-        dest_path = Path(self.entry_main.get_text())
+        if self.entry_main:
+            dest_path = Path(self.entry_main.get_text())
 
-        if not str(dest_path).endswith('StartWine'):
-            if dest_path.exists():
-                dest_path = Path(f'{dest_path}/StartWine')
-            else:
-                self.label_main.add_css_class('warning')
-                self.label_main.set_label(msg.msg_dict['correct_path'])
-                print(f'path {dest_path} not exists')
-                return f'path {dest_path} not exists'
+            if not str(dest_path).endswith('StartWine'):
+                if dest_path.exists():
+                    dest_path = dest_path.joinpath('StartWine')
+                else:
+                    if self.label_main:
+                        self.label_main.add_css_class('warning')
+                        self.label_main.set_label(msg.msg_dict['correct_path'])
+                    print(f'path {dest_path} not exists')
+                    return f'path {dest_path} not exists'
 
-        if dest_path == Path(self.source_path):
-            try_create_swrc(dest_path)
-            print('run StartWine...')
-            self.window.close()
-        else:
-            if dest_path.exists():
-                print('path exists, skip...')
-                if (str(dest_path) != str(self.local_path)
-                        and Path(self.local_path).exists()):
-                    shutil.rmtree(self.local_path)
-
+            if dest_path == self.source_path:
                 try_create_swrc(dest_path)
                 print('run StartWine...')
-                self.window.close()
+                if self.window:
+                    self.window.close()
             else:
-                if str(dest_path).endswith('StartWine'):
-                    print('move StartWine...')
-                    if not Path(dest_path).parent.exists():
-                        Path(dest_path).parent.mkdir(parents=True, exist_ok=True)
-                    try:
-                        shutil.move(self.source_path, dest_path)
-                    except IOError as e:
-                        print(e)
-                    else:
-                        try_create_swrc(dest_path)
-                self.window.close()
+                if dest_path.exists():
+                    print('path exists, skip...')
+                    if dest_path != self.local_path and self.local_path.exists():
+                        shutil.rmtree(self.local_path)
 
+                    try_create_swrc(dest_path)
+                    print('run StartWine...')
+                    if self.window:
+                        self.window.close()
+                else:
+                    if str(dest_path).endswith('StartWine'):
+                        print('move StartWine...')
+                        if not dest_path.parent.exists():
+                            dest_path.parent.mkdir(parents=True, exist_ok=True)
+                        try:
+                            shutil.move(self.source_path, dest_path)
+                        except IOError as e:
+                            print(e)
+                        else:
+                            try_create_swrc(dest_path)
+                    if self.window:
+                        self.window.close()
         return None
 
 
 def try_create_swrc(dest_path):
     """___write new program path to rc config___"""
 
-    if not Path(f'{Path.home()}/.config').exists():
-        Path(f'{Path.home()}/.config').mkdir(parents=True, exist_ok=True)
+    if not Path.home().joinpath('.config').exists():
+        Path.home().joinpath('.config').mkdir(parents=True, exist_ok=True)
 
-    with open(f'{Path.home()}/.config/swrc', 'w', encoding='utf-8') as rc:
+    swrc_path = Path.home().joinpath('.config', 'swrc')
+    with open(swrc_path, 'w', encoding='utf-8') as rc:
         rc.write(f'{dest_path}')
         rc.close()
 
@@ -375,28 +397,39 @@ def try_create_swrc(dest_path):
 def run_menu():
     """___run menu from config path___"""
 
-    if Path(f'{Path.home()}/.config/swrc').exists():
-        with open(f'{Path.home()}/.config/swrc', 'r', encoding='utf-8') as rc:
+    swrc_path = Path.home().joinpath('.config', 'swrc')
+    if swrc_path.exists():
+        with open(swrc_path, 'r', encoding='utf-8') as rc:
             data = rc.read().splitlines()
             dest_path = data[0] if data else None
-            rc.close()
+
         if dest_path:
-            run([f'{dest_path}/data/scripts/sw_menu.py'], check=False)
+            menu_py = Path(dest_path).joinpath('data', 'scripts', 'sw_menu.py')
+            if menu_py.exists():
+                run([f'{menu_py}'], check=False)
+            else:
+                print(f'{menu_py} not exists...')
         else:
-            print(f'{Path.home()}/.config/swrc incorrect...')
+            print(f'{swrc_path} incorrect...')
     else:
-        print(f'{Path.home()}/.config/swrc not found...')
+        print(f'{swrc_path} not found...')
 
 
 class SwCrier(Gtk.Application):
     """Application for providing a set of dialog windows."""
     def __init__(
-                self, app=None, title=None, text_message=None, message_type=None,
-                response=None, file=None, mime_types=None, *args, **kwargs):
-        super().__init__(
-                        flags=Gio.ApplicationFlags.FLAGS_NONE,
-                        *args, **kwargs
-        )
+            self,
+            app=None,
+            title="",
+            text_message=[],
+            message_type="",
+            response=[msg.msg_dict['yes'], msg.msg_dict['no']],
+            file=None,
+            mime_types=None,
+            *args,
+            **kwargs
+        ):
+        super().__init__(flags=Gio.ApplicationFlags.FLAGS_NONE, *args, **kwargs)
         GLib.set_prgname(program_name)
 
         if app is None:
@@ -407,12 +440,26 @@ class SwCrier(Gtk.Application):
         self.title = title
         self.text_message = text_message
         self.message_type = message_type
+
+        if len(self.text_message) > 1:
+            self.title_text = self.text_message[0]
+            self.desc_text = self.text_message[1]
+        elif len(self.text_message) == 1:
+            self.title_text = ""
+            self.desc_text = self.text_message[0]
+        else:
+            self.title_text = ""
+            self.desc_text = ""
+
         self.response = response
+        if response == ["Ok", "Cancel"]:
+            self.response = [msg.msg_dict['yes'], msg.msg_dict['no']]
+
         self.file = file
         self.mime_types = mime_types
         self.connect('activate', self.activate)
 
-    def activate(self, app):
+    def activate(self, _):
         """Activate application."""
 
         if self.message_type in ['INFO', 'ERROR', 'WARNING']:
@@ -437,15 +484,17 @@ class SwCrier(Gtk.Application):
                         css_name='sw_header_top',
                         show_title_buttons=False,
         )
-        label = Gtk.Label(
-                        css_name='sw_label',
-                        margin_top=8,
-                        margin_bottom=8,
-                        margin_start=8,
-                        margin_end=8,
+        title_label = Gtk.Label(
+                        css_name='sw_label_title',
                         wrap=True,
                         natural_wrap_mode=True,
-                        label=self.text_message,
+                        label=self.title_text,
+        )
+        label = Gtk.Label(
+                        css_name='sw_label',
+                        wrap=True,
+                        natural_wrap_mode=True,
+                        label=self.desc_text,
         )
         btn_ok = Gtk.Button(
                         css_name='sw_button_accept',
@@ -461,6 +510,10 @@ class SwCrier(Gtk.Application):
                         css_name='sw_message_box',
                         orientation=Gtk.Orientation.VERTICAL,
                         spacing=8,
+                        margin_top=8,
+                        margin_bottom=8,
+                        margin_start=8,
+                        margin_end=8,
         )
         dialog = Gtk.Window(
                         css_name='sw_window',
@@ -473,6 +526,7 @@ class SwCrier(Gtk.Application):
         )
         dialog.remove_css_class('background')
         dialog.add_css_class('sw_background')
+        box_content.append(title_label)
         box_content.append(label)
         header.pack_end(btn_ok)
         btn_ok.connect('clicked', self.cb_btn, dialog)
@@ -485,22 +539,21 @@ class SwCrier(Gtk.Application):
     def question(self):
         """Building the question dialog window."""
 
-        if self.response is None:
-            self.response = [msg.msg_dict['yes'], msg.msg_dict['no']]
-
         header = Gtk.HeaderBar(
                         css_name='sw_header_top',
                         show_title_buttons=False,
         )
-        label = Gtk.Label(
-                        css_name='sw_label',
-                        margin_top=8,
-                        margin_bottom=8,
-                        margin_start=8,
-                        margin_end=8,
+        title_label = Gtk.Label(
+                        css_name='sw_label_title',
                         wrap=True,
                         natural_wrap_mode=True,
-                        label=self.text_message,
+                        label=self.title_text,
+        )
+        label = Gtk.Label(
+                        css_name='sw_label',
+                        wrap=True,
+                        natural_wrap_mode=True,
+                        label=self.desc_text,
         )
         btn_yes = Gtk.Button(
                         css_name='sw_button_accept',
@@ -528,6 +581,10 @@ class SwCrier(Gtk.Application):
                         css_name='sw_message_box',
                         orientation=Gtk.Orientation.VERTICAL,
                         spacing=8,
+                        margin_top=8,
+                        margin_bottom=8,
+                        margin_start=8,
+                        margin_end=8,
         )
         dialog = Gtk.Window(
                         css_name='sw_window',
@@ -540,6 +597,7 @@ class SwCrier(Gtk.Application):
         )
         dialog.remove_css_class('background')
         dialog.add_css_class('sw_background')
+        box_content.append(title_label)
         box_content.append(label)
         header.pack_end(btn_yes)
         header.pack_start(btn_no)
@@ -548,23 +606,24 @@ class SwCrier(Gtk.Application):
         btn_no.connect('clicked', self.cb_btn_cancel)
 
         ctrl_key = Gtk.EventControllerKey()
-        ctrl_key.connect('key_pressed', self.key_pressed, dialog)
+        ctrl_key.connect('key_pressed', self.key_pressed)
         dialog.add_controller(ctrl_key)
         dialog.set_default_size(540, 120)
         dialog.set_size_request(540, 120)
         dialog.set_resizable(False)
         dialog.present()
 
-    def key_pressed(self, _ctrl_key, keyval, _keycode, _state, _dialog):
+    def key_pressed(self, _, keyval, keycode, state):
         if keyval == Gdk.KEY_Escape:
+            print(keycode, state)
             return self.cb_btn_cancel(None)
 
     def text_editor(self):
         """Building the text editor view."""
 
-        if Path(self.file).is_file():
-            title = str(Path(self.file).stem)
-            text = Path(self.file).read_text(encoding='utf-8')
+        if Path(str(self.file)).is_file():
+            title = str(Path(str(self.file)).stem)
+            text = Path(str(self.file)).read_text(encoding='utf-8')
         else:
             title = str(self.file)
             text = str(self.file)
@@ -641,14 +700,14 @@ class SwCrier(Gtk.Application):
                         user_data=data,
             )
 
-        elif Path(self.file).is_file():
+        elif Path(str(self.file)).is_file():
             dialog.open(
                         parent=window,
                         cancellable=Gio.Cancellable(),
                         callback=self.cb_select_file,
                         user_data=data,
             )
-        elif Path(self.file).is_dir():
+        elif Path(str(self.file)).is_dir():
             dialog.select_folder(
                         parent=window,
                         cancellable=Gio.Cancellable(),
@@ -687,18 +746,18 @@ class SwCrier(Gtk.Application):
             if data:
                 name = time.strftime('%Y%M%d%S')
                 try:
-                    Path(f'{_path}/{name}.txt').write_text(data, encoding='utf-8')
+                    Path(f'{_path}').joinpath(f'{name}.txt').write_text(data, encoding='utf-8')
                 except (OSError, IOError) as e:
                     print(e)
 
-        if _path is None:
+        if not _path:
             _path = '1'
 
         self.quit()
         print(_path)
         return _path
 
-    def cb_btn(self, _btn, dialog):
+    def cb_btn(self, _, dialog):
         """Callback from the accept button."""
 
         dialog.close()
@@ -707,14 +766,14 @@ class SwCrier(Gtk.Application):
         print(p)
         #return p
 
-    def cb_btn_save(self, _btn, dialog, buffer):
+    def cb_btn_save(self, _, dialog, buffer):
         """Callback from the save button."""
 
         startiter, enditer = buffer.get_bounds()
         buffer_text = buffer.get_text(startiter, enditer, False)
 
-        if Path(self.file).is_file():
-            Path(self.file).write_text(buffer_text, encoding='utf-8')
+        if Path(str(self.file)).is_file():
+            Path(str(self.file)).write_text(buffer_text, encoding='utf-8')
             self.quit()
         else:
             self.file_selector(window=dialog, data=buffer_text)
@@ -723,7 +782,7 @@ class SwCrier(Gtk.Application):
         print(p)
         return p
 
-    def cb_btn_cancel(self, _btn):
+    def cb_btn_cancel(self, _):
         """Callback from the cancel button."""
 
         self.quit()
@@ -735,8 +794,16 @@ class SwCrier(Gtk.Application):
 class SwDialogEntry(Gtk.Widget):
     """___Custom dialog widget with entry row___"""
     def __init__(
-            self, app=None, title=None, text_message=None, response=None, func=None,
-            num=None, string_list=None, *args, **kwargs):
+            self, app: Gtk.Application = None,
+            title="",
+            text_message=[],
+            response="",
+            func=None,
+            num=0,
+            string_list=None,
+            *args,
+            **kwargs
+        ):
         super().__init__(*args, **kwargs)
         self.app = app
         self.title = title
@@ -790,12 +857,14 @@ class SwDialogEntry(Gtk.Widget):
         )
         btn_accept.set_size_request(120, 16)
 
-        btn_accept.connect(
-            'clicked', cb_btn_response, self.window, self.dialog, self.func[0]
-        )
-        btn_cancel.connect(
-            'clicked', cb_btn_response, self.window, self.dialog, self.func[1]
-        )
+        if self.func:
+            btn_accept.connect(
+                'clicked', cb_btn_response, self.window, self.dialog, self.func[0]
+            )
+            btn_cancel.connect(
+                'clicked', cb_btn_response, self.window, self.dialog, self.func[1]
+            )
+
         headerbar.pack_start(btn_cancel)
         headerbar.pack_end(btn_accept)
         btn_accept.grab_focus()
@@ -809,9 +878,10 @@ class SwDialogEntry(Gtk.Widget):
                             valign=Gtk.Align.CENTER,
                             text=self.text_message[i]
             )
-            entry.connect(
-                'activate', cb_btn_response, self.window, self.dialog, self.func[0]
-            )
+            if self.func:
+                entry.connect(
+                    'activate', cb_btn_response, self.window, self.dialog, self.func[0]
+                )
             self.box.append(entry)
 
         dropdown_menu = Gtk.DropDown(
@@ -830,40 +900,43 @@ class SwDialogEntry(Gtk.Widget):
             self.box.append(dropdown_menu)
 
         self.ctrl_key = Gtk.EventControllerKey()
-        self.ctrl_key.connect('key_pressed', self.key_pressed, self.dialog)
+        self.ctrl_key.connect('key_pressed', self.key_pressed)
         self.dialog.add_controller(self.ctrl_key)
         self.dialog.set_size_request(540, 120)
         self.dialog.set_resizable(False)
         self.dialog.present()
         return self.dialog
 
-    def key_pressed(self, _ctrl_key_press, keyval, keycode, state, dialog):
+    def key_pressed(self, _, keyval, keycode, state):
         if keyval == Gdk.KEY_Escape:
+            print(keycode, state)
             return self.dialog.close()
 
 
 class SwDialogQuestion(Gtk.Widget):
     """___custom dialog question widget for text message___"""
     def __init__(
-            self, _app=None, title=None, text_message=None, _response=None, func=None,
-            *args, **kwargs):
+            self,
+            app: Gtk.Application = None,
+            title: str | None = "",
+            icon=None,
+            text_message=['', ''],
+            response=[],
+            func=None,
+            *args,
+            **kwargs
+        ):
         super().__init__(*args, **kwargs)
-        self.app = _app
+        self.app = app
         self.title = title
+        self.icon = icon if Path(str(icon)).exists() else None
         self.text_message = text_message
-        self.response = _response
+        self.response = response
         self.func = func
         self.window = self.app.get_windows()[0]
-        self.dialog = None
+        self.dialog: Gtk.Window = None
         self.width = 540
         self.height = 120
-
-        if self.title is None:
-            self.title = ""
-
-        if self.text_message is None:
-            self.text_message = ['', '']
-
         self.dialog_question()
 
     def dialog_question(self):
@@ -871,36 +944,32 @@ class SwDialogQuestion(Gtk.Widget):
 
         title_label = Gtk.Label(
                         css_name='sw_label_title',
-                        margin_top=8,
-                        margin_bottom=8,
-                        margin_start=8,
-                        margin_end=8,
                         wrap=True,
                         natural_wrap_mode=True,
                         label=self.text_message[0],
         )
+        image = Gtk.Image(css_name='sw_image')
+
+        if self.icon:
+            image.set_from_file(f'{self.icon}')
+            image.set_pixel_size(64)
+
         label = Gtk.Label(
                         css_name='sw_label_desc',
-                        margin_top=8,
-                        margin_bottom=8,
-                        margin_start=8,
-                        margin_end=8,
                         wrap=True,
                         natural_wrap_mode=True,
                         label=self.text_message[1],
         )
-        box_image = Gtk.Box(
-                        css_name='sw_box',
-                        orientation=Gtk.Orientation.VERTICAL,
-                        spacing=8,
-                        halign=Gtk.Align.CENTER,
-        )
         box_message = Gtk.Box(
                         css_name='sw_message_box',
                         orientation=Gtk.Orientation.VERTICAL,
+                        margin_top=8,
+                        margin_bottom=8,
+                        margin_start=8,
+                        margin_end=8,
                         spacing=8,
         )
-        box_message.append(box_image)
+        box_message.append(image)
         box_message.append(title_label)
         box_message.append(label)
 
@@ -931,24 +1000,36 @@ class SwDialogQuestion(Gtk.Widget):
                         spacing=8,
                         margin_start=16,
                         margin_end=16,
-                        margin_top=16,
+                        margin_top=0,
                         margin_bottom=16,
         )
         box.append(box_btn)
 
         self.dialog = Gtk.Window(
-                            css_name='sw_window',
-                            application=self.app,
-                            titlebar=headerbar,
-                            title=self.title,
-                            modal=True,
-                            transient_for=self.window,
-                            child=box,
+                                css_name='sw_window',
+                                application=self.app,
+                                titlebar=headerbar,
+                                title=self.title,
+                                modal=True,
+                                transient_for=self.window,
+                                child=box,
         )
         self.dialog.remove_css_class('background')
         self.dialog.add_css_class('sw_background')
 
-        if self.response is None:
+        if self.response and self.func:
+            count = -1
+            for res, func in zip(self.response, self.func):
+                count += 1
+                if res == msg.msg_dict['cancel']:
+                    btn = Gtk.Button(css_name='sw_button_cancel', label=res)
+                else:
+                    btn = Gtk.Button(css_name='sw_button', label=res)
+
+                btn.set_name(str(count))
+                btn.connect('clicked', cb_btn_response, self.window, self.dialog, func)
+                box_btn.append(btn)
+        else:
             self.response = [msg.msg_dict['yes'], msg.msg_dict['no']]
             btn_yes = Gtk.Button(
                                 css_name='sw_button_accept',
@@ -963,37 +1044,29 @@ class SwDialogQuestion(Gtk.Widget):
                                 valign=Gtk.Align.CENTER,
             )
             btn_no.set_size_request(96, 16)
-            btn_yes.connect(
-                'clicked', cb_btn_response, self.window, self.dialog, self.func[0]
-            )
-            btn_no.connect(
-                'clicked', cb_btn_response, self.window, self.dialog, self.func[1]
-            )
+
+            if self.func:
+                btn_yes.connect(
+                    'clicked', cb_btn_response, self.window, self.dialog, self.func[0]
+                )
+                btn_no.connect(
+                    'clicked', cb_btn_response, self.window, self.dialog, self.func[1]
+                )
+
             headerbar.pack_start(btn_no)
             headerbar.pack_end(btn_yes)
             btn_yes.grab_focus()
-        else:
-            count = -1
-            for res, func in zip(self.response, self.func):
-                count += 1
-                if res == msg.msg_dict['cancel']:
-                    btn = Gtk.Button(css_name='sw_button_cancel', label=res)
-                else:
-                    btn = Gtk.Button(css_name='sw_button', label=res)
-
-                btn.set_name(str(count))
-                btn.connect('clicked', cb_btn_response, self.window, self.dialog, func)
-                box_btn.append(btn)
 
         self.ctrl_key = Gtk.EventControllerKey()
-        self.ctrl_key.connect('key_pressed', self.key_pressed, self.dialog)
+        self.ctrl_key.connect('key_pressed', self.key_pressed)
         self.dialog.add_controller(self.ctrl_key)
         self.dialog.set_size_request(self.width, self.height)
         self.dialog.set_resizable(False)
         self.dialog.present()
 
-    def key_pressed(self, _ctrl_key, keyval, _keycode, _state, _dialog):
+    def key_pressed(self, _, keyval, keycode, state):
         if keyval == Gdk.KEY_Escape:
+            print(keycode, state)
             return self.dialog.close()
 
 
@@ -1022,16 +1095,17 @@ def cb_btn_response(self, parent_window, dialog, func):
             args = func
             args.remove(fn)
         else:
+            fn = func
             args = None
 
         dialog.close()
 
         if args is None:
-            return func()
-
-        return fn(*args)
-
-    return dialog.close()
+            fn()
+        else:
+            fn(*args)
+    else:
+        dialog.close()
 
 
 class SwDialogDirectory(Gtk.FileDialog):
@@ -1053,6 +1127,7 @@ class SwDialogDirectory(Gtk.FileDialog):
             'application/x-wine-extension-msp',
             'application/x-msdos-program',
             'application/x-executable',
+            'application/x-pie-executable',
             'application/x-shellscript',
             'application/vnd.appimage'
             'application/x-desktop',
@@ -1060,6 +1135,8 @@ class SwDialogDirectory(Gtk.FileDialog):
             'text/plain',
             'text/x-python',
             'text/x-python3',
+            'text/x-script.python',
+            'text/x-shellscript',
             'text/win-bat',
             'text/x-ms-regedit',
             'text/x-log',
@@ -1209,7 +1286,7 @@ class SwWidget(Gtk.Grid):
                 self.snapshot_child(self.child, self.snapshot)
                 self.child = self.child.get_next_sibling()
 
-    def do_size_allocate(self, width, height, baseline):
+    def do_size_allocate(self, width, height, _):
         """..."""
         self.width = width
         self.height = height
@@ -1264,7 +1341,7 @@ class SwWidget(Gtk.Grid):
         """..."""
         return self.border.to_string()
 
-    def _tick_callback(self, _snapshot, _frame_clock):
+    def _tick_callback(self, _, _frame_clock):
         """..."""
         self.width = self.get_width()
         self.height = self.get_height()
@@ -1362,12 +1439,13 @@ class SwProgressBar(Gtk.Widget):
     def get_define_colors(self):
         """Get current define colors from css provider"""
 
-        css_list = self.css_provider.to_string().splitlines()
         define_colors = {}
-        for x in css_list:
-            if '@define-color sw_' in x:
-                if len([x.split(' ')[2].strip(';')]) > 0:
-                    define_colors[x.split(' ')[1]] = [x.split(' ')[2].strip(';')][0]
+        if self.css_provider:
+            css_list = self.css_provider.to_string().splitlines()
+            for x in css_list:
+                if '@define-color sw_' in x:
+                    if len([x.split(' ')[2].strip(';')]) > 0:
+                        define_colors[x.split(' ')[1]] = [x.split(' ')[2].strip(';')][0]
 
         return define_colors
 
@@ -1401,7 +1479,7 @@ class SwProgressBar(Gtk.Widget):
         self.snapshot = snapshot
         self._bar(snapshot)
 
-    def _text_layout(self, _snapshot):
+    def _text_layout(self, _):
         """Create Pango layout context"""
 
         font = Pango.FontDescription.new()
@@ -1415,7 +1493,7 @@ class SwProgressBar(Gtk.Widget):
 
         return layout, metrics
 
-    def _set_pango_layout(self, snapshot, layout, metrics, x, _y):
+    def _set_pango_layout(self, snapshot, layout, metrics, x, _):
         """Set Pango layout"""
 
         point = Graphene.Point()
@@ -1425,7 +1503,9 @@ class SwProgressBar(Gtk.Widget):
         if self.text is not None:
             len_dgt = len([e for e in self.text if e.isdigit()])
             len_chr = len([e for e in self.text if e.isalpha()])
-            point.x = x/2 - (len_chr * chr_w + len_dgt * dgt_w) / 2
+            len_spc = len([e for e in self.text if e.isspace()])
+            len_text = (len_chr * chr_w) + (len_dgt * dgt_w) + (len_spc * chr_w * 2)
+            point.x = (x / 2) - (len_text / 2)
             point.y = 0
             layout.set_text(self.text)
             snapshot.save()
@@ -1531,16 +1611,18 @@ class SwProgressBar(Gtk.Widget):
         if self.counter is not None:
             count = self.counter
             for i in range(0, count):
-                self.snapshot.append_fill(
-                    self.path_list[i], Gsk.FillRule.WINDING, self.p_fg)
+                if self.snapshot:
+                    self.snapshot.append_fill(
+                        self.path_list[i], Gsk.FillRule.WINDING, self.p_fg)
 
         if self.fraction is not None:
             count = round(int(self.fraction * self.max_count))
             for i in range(0, count):
-                self.snapshot.append_fill(
-                    self.path_list[i], Gsk.FillRule.WINDING, self.p_fg)
+                if self.snapshot:
+                    self.snapshot.append_fill(
+                        self.path_list[i], Gsk.FillRule.WINDING, self.p_fg)
 
-    def do_size_allocate(self, width, height, _baseline):
+    def do_size_allocate(self, width, height, _):
         """..."""
 
         self.width = width
@@ -1723,93 +1805,12 @@ class SwProgressBar(Gtk.Widget):
         self.queue_draw()
         return True
 
-    def _tick_callback(self, _snapshot, _frame_clock):
+    def _tick_callback(self, _, _frame_clock):
         """..."""
         next_color = next(self.iter_color)
         self.blur = float(next_color / 5)
         self.queue_draw()
         return True
-
-
-def download(_url, _filename):
-    """___download content from url___"""
-
-    request_headers = {
-        'User-Agent': (
-            'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, '
-            'like Gecko) Chrome/30.0.1599.101 Safari/537.36'
-        ),
-        'Accept-Language': 'fr-FR,fr;q=0.8,en-US;q=0.6,en;q=0.4',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Connection': 'keep-alive',
-        'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
-    }
-    try:
-        _response = urlopen(Request(_url, headers=request_headers))
-    except (URLError, HTTPError) as e_1:
-        print(e_1)
-        try:
-            urllib.request.urlretrieve(_url, _filename)
-        except (URLError, HTTPError) as e_2:
-            print(e_2)
-            exit(1)
-        else:
-            exit(0)
-    else:
-        with _response as res, open(_filename, 'wb') as out:
-            shutil.copyfileobj(res, out)
-            res.close()
-            exit(0)
-
-def get_total_size(_url, _filename):
-
-    totalsize = None
-    try:
-        totalsize = int(urlopen(_url).info().get(name='Content-Length'))
-    except (Exception,):
-        totalsize = None
-
-    if totalsize is None:
-        try:
-            with urlopen(_url) as u:
-                totalsize = u.length
-        except (URLError, HTTPError):
-            totalsize = None
-
-    sys.stdout.write(f'Total size: {totalsize}\t{Path(_filename).name}\n')
-    return totalsize
-
-def download_progress(data, queue):
-
-    bar_len = 50
-    while True:
-        for x in data:
-            filename = x[0]
-            totalsize = x[2]
-            if Path(filename).exists():
-                current = os.stat(filename).st_size
-                if totalsize is None:
-                    percent = 1.0
-                    progress = '~' * bar_len
-                    string = f'\r{tc.GREEN}[ {progress} ] {tc.YELLOW}[unknown]% {tc.VIOLET}{Path(filename).name}{tc.END}'
-                else:
-                    pac = "\u15E7"
-                    percent = current / totalsize
-                    block = int(round(bar_len * percent))
-                    progress = '\u2501' * block + f'{pac}' + ('\u2022' * (bar_len - block))
-                    string = f'\r{tc.GREEN}[ {progress} ] {tc.YELLOW}{round(percent*100)}% {tc.VIOLET}{Path(filename).name}{tc.END}'
-
-                queue.append([string, percent])
-        else:
-            for i in range(len(queue)):
-                sys.stdout.write('\x1b[1A\x1b[2K')
-            else:
-                for i in range(len(queue)):
-                    sys.stdout.write(queue[i][0] + '\n')
-
-            if sum([q[1] for q in queue]) == len(data):
-                print('Done')
-                return False
 
 
 class SwDownloadBar(Gtk.Application):
@@ -1836,7 +1837,6 @@ class SwDownloadBar(Gtk.Application):
         self.program_name = 'StartWine'
         self.window = None
         self.progressbar = None
-        # self.connect('activate', self.activate)
         GLib.timeout_add(1000, self.update)
 
     def do_activate(self):
@@ -1887,7 +1887,9 @@ class SwDownloadBar(Gtk.Application):
 
         if self.totalsize is None:
             print('Impossible to determine total size. URL not found...')
-            self.window.close()
+            if self.window:
+                self.window.close()
+
             self.exit = self.quit()
             exit(1)
 
@@ -1896,50 +1898,17 @@ class SwDownloadBar(Gtk.Application):
             self.percent = current / self.totalsize
 
             if self.exit is None:
-                self.progressbar.set_fraction(self.percent)
+                if self.progressbar:
+                    self.progressbar.set_fraction(self.percent)
 
             if self.percent >= 1:
                 print('Download_completed_successfully.')
-                self.window.close()
+                if self.window:
+                    self.window.close()
+
                 self.exit = self.quit()
 
         return True
-
-
-def extract_tar(_filename, _path):
-    """___extract tar archive___"""
-
-    if Path(_filename).exists():
-        taro = tarfile.open(_filename)
-
-        for member_info in taro.getmembers():
-            taro.extract(member_info, path=_path)
-            print('Extracting: ' + member_info.name)
-
-        taro.close()
-        print('Extraction_completed_successfully.')
-        exit(0)
-    else:
-        print(f'{_filename} not exists...')
-        exit(1)
-
-
-def extract_zip(_filename, _path):
-    """___extract zip archive___"""
-
-    if Path(_filename).exists():
-        zipo = zipfile.ZipFile(_filename)
-
-        for member_info in zipo.namelist():
-            print('Extracting: ' + member_info)
-            zipo.extract(member_info, path=_path)
-
-        zipo.close()
-        print('Extraction_completed_successfully.')
-        exit(0)
-    else:
-        print(f'{_filename} not exists...')
-        exit(1)
 
 
 class SwExtractBar(Gtk.Application):
@@ -1961,8 +1930,6 @@ class SwExtractBar(Gtk.Application):
         self.label = None
         self.name = None
         self.grid = None
-
-        # self.connect('activate', self.activate)
         GLib.timeout_add(100, self.update)
 
     def do_activate(self):
@@ -2012,177 +1979,60 @@ class SwExtractBar(Gtk.Application):
         """___update self progress bar___"""
 
         if self.exit is not None:
-            self.window.close()
+            if self.window:
+                self.window.close()
             self.quit()
             return False
 
-        self.progressbar.pulse()
-        return True
+        if self.progressbar:
+            self.progressbar.pulse()
 
+        return True
 
     def extract_tar(self, _filename, _path):
         """___extract tar archive___"""
 
-        if Path(_filename).exists():
-            taro = tarfile.open(_filename)
-
-            for member_info in taro.getmembers():
-                taro.extract(member_info, path=_path)
-                print('Extracting: ' + member_info.name)
-
-            taro.close()
-            print('Extraction_completed_successfully.')
-            self.exit = 0
+        if Path(_filename).exists() and Path(_path).exists() and Path(_path).is_dir():
+            try:
+                taro = tarfile.open(_filename)
+            except (IOError, OSError, PermissionError) as e:
+                print(f'{tc.RED}Extraction error: {e}{tc.END}')
+                self.exit = 1
+                exit(1)
+            else:
+                for member_info in taro.getmembers():
+                    taro.extract(member_info, path=_path)
+                    print('Extracting: ' + member_info.name)
+                taro.close()
+                print('Extraction_completed_successfully.')
+                self.exit = 0
         else:
-            print(f'{_filename} not exists...')
+            print(_path)
+            print(f'{tc.RED}Extraction error: target is not a directory or not exists...{tc.END}')
             self.exit = 1
             exit(1)
 
     def extract_zip(self, _filename, _path):
         """___extract zip archive___"""
 
-        if Path(_filename).exists():
-            zipo = zipfile.ZipFile(_filename)
-
-            for member_info in zipo.namelist():
-                print('Extracting: ' + member_info)
-                zipo.extract(member_info, path=_path)
-
-            zipo.close()
-            print('Extraction_completed_successfully.')
-            self.exit = 0
+        if Path(_filename).exists() and Path(_path).exists() and Path(_path).is_dir():
+            try:
+                zipo = zipfile.ZipFile(_filename)
+            except (IOError, OSError, PermissionError) as e:
+                print(f'{tc.RED}Extraction error: {e}{tc.END}')
+                self.exit = 1
+                exit(1)
+            else:
+                for member_info in zipo.namelist():
+                    zipo.extract(member_info, path=_path)
+                    print('Extracting: ' + member_info)
+                zipo.close()
+                print('Extraction_completed_successfully.')
+                self.exit = 0
         else:
-            print(f'{_filename} not exists...')
+            print(f'{tc.RED}Extraction error: target is not a directory or not exists...{tc.END}')
             self.exit = 1
             exit(1)
-
-
-class SwExtractIcon:
-    """Loads an executable from the given filename or data (raw bytes)."""
-
-    def __init__(self, _filename=None, data=None):
-
-        self._pefile = pefile.PE(name=_filename, data=data, fast_load=True)
-        self._pefile.parse_data_directories(
-                        pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_RESOURCE'])
-
-        if not hasattr(self._pefile, 'DIRECTORY_ENTRY_RESOURCE'):
-            self.rt_group_icon = None
-            self.rt_icon = None
-            print(f'{tc.RED}SW_EXTRACT_ICON: File has no icon{tc.END}')
-        else:
-            res = {r.id: r for r in reversed(self._pefile.DIRECTORY_ENTRY_RESOURCE.entries)}
-            self.rt_group_icon = res.get(pefile.RESOURCE_TYPE['RT_GROUP_ICON'])
-            self.rt_icon = res.get(pefile.RESOURCE_TYPE['RT_ICON'])
-
-    def list_group_icons(self):
-        """Returns all group icon entries as a list of (name, offset) tuples."""
-
-        return [(e.struct.Name, e.struct.OffsetToData)
-                for e in self.rt_group_icon.directory.entries]
-
-    def _get_group_icon_entries(self, _num=0):
-        """Returns the group icon entries for the specified group icon in the executable."""
-
-        group_icon = self.rt_group_icon.directory.entries[_num]
-        if group_icon.struct.DataIsDirectory:
-            group_icon = group_icon.directory.entries[0]
-
-        rva = group_icon.data.struct.OffsetToData
-        size = group_icon.data.struct.Size
-        data = self._pefile.get_data(rva, size)
-        file_offset = self._pefile.get_offset_from_rva(rva)
-
-        grp_icon_dir = self._pefile.__unpack_data__(ICON_DIR_FORMAT, data, file_offset)
-
-        if grp_icon_dir.Reserved:
-            raise RuntimeError(
-                'Invalid group icon definition (got Reserved=%s instead of 0)' % hex(grp_icon_dir.Reserved))
-
-        grp_icons = []
-        icon_offset = grp_icon_dir.sizeof()
-        for idx in range(grp_icon_dir.Count):
-            grp_icon = self._pefile.__unpack_data__(
-                ICON_DIR_ENTRY_FORMAT, data[icon_offset:], file_offset+icon_offset
-            )
-            icon_offset += grp_icon.sizeof()
-            grp_icons.append(grp_icon)
-
-        return grp_icons
-
-    def _get_icon_data(self, icon_ids):
-        """Return a list of raw icon images corresponding to the icon IDs given."""
-
-        icons = []
-        entry_list = {e.id: e for e in self.rt_icon.directory.entries}
-        for idx in icon_ids:
-            entry_lst = entry_list[idx]
-            icon_entry = entry_lst.directory.entries[0]
-            rva = icon_entry.data.struct.OffsetToData
-            size = icon_entry.data.struct.Size
-            data = self._pefile.get_data(rva, size)
-            icons.append(data)
-
-        return icons
-
-    def _write_ico(self, fd, _num=0):
-        """Writes ICO data to a file descriptor."""
-
-        if not self.rt_group_icon or not self.rt_icon:
-            print(f'{tc.RED}SW_EXTRACT_ICON: File has no group icon resources{tc.END}')
-            return
-        else:
-            group_icons = self._get_group_icon_entries(_num=_num)
-            icon_images = self._get_icon_data([g.ID for g in group_icons])
-            icons = list(zip(group_icons, icon_images))
-            assert len(group_icons) == len(icon_images)
-            fd.write(b'\x00\x00')
-            fd.write(struct.pack('<H', 1))
-            fd.write(struct.pack('<H', len(icons)))
-
-            data_offset = 6 + (len(icons) * 16)
-            for i in icons:
-                group_icon, icon_data = i
-                fd.write(group_icon.__pack__()[:12])
-                fd.write(struct.pack('<I', data_offset))
-                data_offset += len(icon_data)
-
-            for i in icons:
-                group_icon, icon_data = i
-                fd.write(icon_data)
-
-    def extract_icon(self, fname, _num=0):
-        """Writes ICO data of the requested group icon ID to fname."""
-
-        with open(fname, 'wb') as fb:
-            self._write_ico(fb, _num=_num)
-
-    def get_icon(self, _num=0):
-        """Returns ICO data as a BytesIO() instance, containing the requested group icon ID."""
-
-        bio = io.BytesIO()
-        self._write_ico(bio, _num=_num)
-        return bio
-
-    def save_to_png(self, fname):
-        """Save ICO to PNG format."""
-
-        if Path(fname).exists():
-            parent_ico_path = Path(fname).parent
-            ico_name = Path(fname).stem
-
-            try:
-                img = Image.open(Path(fname), mode='r')
-            except (Exception,) as e:
-                img = None
-                shutil.copy2(fname, f'{parent_ico_path}/{ico_name}.png', follow_symlinks=False)
-                print(e)
-                print('Can not open ICO file...try copy...')
-            else:
-                img.save(f'{parent_ico_path}/{ico_name}.png', format='PNG', sizes=[(256, 256)])
-                print('Save ICO file to PNG format')
-        else:
-            print('ICO file not exists...')
 
 
 class SwHudSize:
@@ -2194,8 +2044,9 @@ class SwHudSize:
     def get_hud_size(self):
         """Get font size for mangohud config."""
 
-        if os.getenv('MANGOHUD_FONT_SIZE_RATION') is not None:
-            mh_ratio = int(os.getenv('MANGOHUD_FONT_SIZE_RATION'))
+        mh_font_ratio = os.getenv('MANGOHUD_FONT_SIZE_RATION')
+        if mh_font_ratio:
+            mh_ratio = int(mh_font_ratio)
         else:
             mh_ratio = 55
 
@@ -2212,6 +2063,79 @@ class SwHudSize:
         print(self.hud_size)
 
 
+def read_json_data(data):
+    """___return dictionary from json file___"""
+    r_data = {}
+    try:
+        with open(data, mode='r', encoding='utf-8') as f:
+            json_data = json.load(f)
+            r_data = json_data
+            f.close()
+    except (OSError, IOError, json.JSONDecodeError) as e:
+        print(f'{tc.RED}Read json error: {e}{tc.END}')
+
+    return r_data
+
+
+def get_app_list():
+    """___get shortcut app list from json data___"""
+    if sw_exe_data_json.exists():
+        data = read_json_data(sw_exe_data_json)
+        for _, app_data in data.items():
+            app_id = app_data.get('id')
+            title = app_data.get('name')
+            path = app_data.get('path')
+            if path and path != "None":
+                print(f'{tc.YELLOW2}{app_id} {tc.GREEN}{title} {tc.BLUE}{path}{tc.END}')
+            else:
+                print(f'{tc.YELLOW2}{app_id} {tc.GREEN}{title}{tc.END}')
+    else:
+        print(f'{tc.YELLOW2}To get the app list you need install it.{tc.END}')
+
+
+def get_steam_list():
+    """___get installed steam app list from json data___"""
+    if sw_steam_db.exists():
+        data = read_json_data(sw_steam_db)
+        for app_id, app_data in data.items():
+            title = app_data.get('name')
+            print(f'{tc.YELLOW2}{app_id} {tc.GREEN}{title}{tc.END}')
+    else:
+        print(f'{tc.YELLOW2}To get the app list you need to log in{tc.END}')
+
+
+def get_gog_list():
+    """___get gog games library list from json data___"""
+    if sw_gog_db.exists():
+        data = read_json_data(sw_gog_db)
+        _gog_exe_data = read_json_data(sw_gog_exe_data_json)
+        for app_id, app_data in data.items():
+            title = app_data.get('title')
+            path = _gog_exe_data.get(app_id, {}).get('path')
+            if path:
+                print(f'{tc.YELLOW2}{app_id} {tc.GREEN}{title} {tc.BLUE}{path}{tc.END}')
+            else:
+                print(f'{tc.YELLOW2}{app_id} {tc.GREEN}{title}{tc.END}')
+    else:
+        print(f'{tc.YELLOW2}To get the app list you need to log in{tc.END}')
+
+
+def get_epic_list():
+    """___get epic games library list from json data___"""
+    if sw_epic_items.exists():
+        data = read_json_data(sw_epic_items)
+        _epic_exe_data = read_json_data(sw_epic_exe_data_json)
+        for app_id, app_data in data.items():
+            title = app_data.get('title')
+            path = _epic_exe_data.get(app_id, {}).get('path')
+            if path:
+                print(f'{tc.YELLOW2}{app_id} {tc.GREEN}{title} {tc.BLUE}{path}{tc.END}')
+            else:
+                print(f'{tc.YELLOW2}{app_id} {tc.GREEN}{title}{tc.END}')
+    else:
+        print(f'{tc.YELLOW2}To get the app list you need to log in{tc.END}')
+
+
 def on_helper():
     """___Commandline help info___"""
 
@@ -2225,18 +2149,21 @@ def on_helper():
 
     ----------------------------------------------------------------------------
     Options:
-    -h or '--help'                                       Show help and exit
-    -i     'text message'                                Info dialog window
-    -e     'text message'                                Error dialog window
-    -w     'text message'                                Warning dialog window
-    -q     'text message' 'button_name1 'button_name2'   Question dialog window
-    -f     'path'                                        File chooser dialog window
-    -d     'url' 'output_file'                           Download progress bar window
-    --edit 'text or path to text file'                   Show text or open file in text editor
-    --tar  'input_file, output_file'                     Tar archive extraction progress bar window
-    --zip  'input_file, output_file'                     Zip archive extraction progress bar window
-    --ico  'input_file, output_file'                     Ico extraction from DLL or EXE file
-    --hud                                                Print MangoHud font size
+    -h or '--help'                             Show help and exit
+    -i     'text message'                      Info dialog window
+    -e     'text message'                      Error dialog window
+    -w     'text message'                      Warning dialog window
+    -q     'text message' 'button1 'button2'   Question dialog window
+    -f     'path'                              File chooser dialog window
+    -d     'url' 'output_file'                 Download progress bar window
+    --edit 'text or path to text file'         Show text or open file in text editor
+    --tar  'input_file, output_file'           Tar archive extraction progress bar
+    --zip  'input_file, output_file'           Zip archive extraction progress bar
+    --hud                                      Print MangoHud font size
+    --app-list                                 Get application list
+    --steam-list                               Get installed Steam app list
+    --gog-list                                 Get GOG Games library list
+    --epic-list                                Get Epic Games library list
 ''')
 
 
@@ -2247,38 +2174,46 @@ if __name__ == '__main__':
         if len(argv) == 2:
             if str(argv[1]) == str('-h') or str(argv[1]) == str('--help'):
                 on_helper()
-
             elif str(argv[1]) == str('--hud'):
                 import os
                 SwHudSize()
+            elif str(argv[1]) == str('--app-list'):
+                get_app_list()
+            elif str(argv[1]) == str('--steam-list'):
+                get_steam_list()
+            elif str(argv[1]) == str('--gog-list'):
+                get_gog_list()
+            elif str(argv[1]) == str('--epic-list'):
+                get_epic_list()
             else:
                 on_helper()
 
         elif len(argv) == 3:
 
             if argv[1] == '-i' or argv[1] == '--info':
-                app = SwCrier(text_message=argv[2], message_type='INFO')
+                app = SwCrier(text_message=[argv[2]], message_type='INFO')
                 try:
                     app.run()
                 except KeyboardInterrupt:
                     app.quit()
 
             elif argv[1] == '-e' or argv[1] == '--error':
-                app = SwCrier(text_message=argv[2], message_type='ERROR')
+                app = SwCrier(text_message=[argv[2]], message_type='ERROR')
                 try:
                     app.run()
                 except KeyboardInterrupt:
                     app.quit()
 
             elif argv[1] == '-w' or argv[1] == '--warning':
-                app = SwCrier(text_message=argv[2], message_type='WARNING')
+                app = SwCrier(text_message=[argv[2]], message_type='WARNING')
                 try:
                     app.run()
                 except KeyboardInterrupt:
                     app.quit()
 
             elif argv[1] == '-q' or argv[1] == '--question':
-                app = SwCrier(text_message=argv[2], message_type='QUESTION', response=None)
+                app = SwCrier(
+                    text_message=[argv[2]], message_type='QUESTION', response=None)
                 try:
                     app.run()
                 except KeyboardInterrupt:
@@ -2310,68 +2245,50 @@ if __name__ == '__main__':
 
         elif len(argv) == 4:
 
-            if (str(argv[1]) == str('-d') or str(argv[1]) == str('--download')
-                    or str(argv[1]) == str('--silent-download')):
+            if str(argv[1]) == str('-d') or str(argv[1]) == str('--download'):
                 import os
                 import multiprocessing as mp
                 from threading import Thread
+                from sw_pacurl import download
 
                 url = str(argv[2])
                 filename = str(argv[3])
                 process = mp.Process(target=download, args=(url, filename))
                 process.start()
-                if str(argv[1]) == str('--silent-download'):
-                    totalsize = get_total_size(url, filename)
-                    data = [[filename, url, totalsize]]
-                    queue = deque([], len(data))
-                    Thread(target=download_progress, args=(data, queue)).start()
-                else:
-                    app = SwDownloadBar(url, filename)
-                    try:
-                        app.run()
-                    except KeyboardInterrupt:
-                        app.quit()
 
-            elif str(argv[1]) == str('--tar') or str(argv[1]) == str('--silent-tar'):
+                app = SwDownloadBar(url, filename)
+                try:
+                    app.run()
+                except KeyboardInterrupt:
+                    app.quit()
+
+            elif str(argv[1]) == str('--tar'):
                 import tarfile
                 from threading import Thread
 
                 filename = str(argv[2])
                 path = str(argv[3])
-                if str(argv[1]) == str('--silent-tar'):
-                    Thread(target=extract_tar, args=[filename, path]).start()
-                else:
-                    app = SwExtractBar(filename, path)
-                    Thread(target=app.extract_tar, args=[filename, path]).start()
-                    try:
-                        app.run()
-                    except KeyboardInterrupt:
-                        app.quit()
 
-            elif str(argv[1]) == str('--zip') or str(argv[1]) == str('--silent-zip'):
+                app = SwExtractBar(filename, path)
+                Thread(target=app.extract_tar, args=[filename, path]).start()
+                try:
+                    app.run()
+                except KeyboardInterrupt:
+                    app.quit()
+
+            elif str(argv[1]) == str('--zip'):
                 import zipfile
                 from threading import Thread
 
                 filename = str(argv[2])
                 path = str(argv[3])
-                if str(argv[1]) == str('--silent-zip'):
-                    Thread(target=extract_zip, args=[filename, path]).start()
-                else:
-                    app = SwExtractBar(filename, path)
-                    Thread(target=app.extract_zip, args=[filename, path]).start()
-                    try:
-                        app.run()
-                    except KeyboardInterrupt:
-                        app.quit()
 
-            elif str(argv[1]) == str('--ico'):
-
-                input_file = str(argv[2])
-                output_file = str(argv[3])
-                num = 0
-                app = SwExtractIcon(input_file)
-                app.extract_icon(output_file, _num=num)
-                app.save_to_png(output_file)
+                app = SwExtractBar(filename, path)
+                Thread(target=app.extract_zip, args=[filename, path]).start()
+                try:
+                    app.run()
+                except KeyboardInterrupt:
+                    app.quit()
             else:
                 on_helper()
 
@@ -2379,7 +2296,8 @@ if __name__ == '__main__':
 
             if str(argv[1]) == str('-q') or str(argv[1]) == str('--question'):
                 response = [argv[3], argv[4]]
-                app = SwCrier(text_message=argv[2], message_type='QUESTION', response=response)
+                app = SwCrier(
+                    text_message=[argv[2]], message_type='QUESTION', response=response)
                 try:
                     app.run()
                 except KeyboardInterrupt:

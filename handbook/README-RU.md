@@ -25,11 +25,11 @@ Discord > [Click](https://discord.gg/jjY3auVdfm)
 
 ## Установка одной командой:
 ```
-bash -c "$(curl -sL RusNor.github.io)"
+curl -sL RusNor.github.io|bash
 ```
 или
 ```
-bash -c "$(wget -qO - RusNor.github.io)"
+wget -qO - RusNor.github.io|bash
 ```
 
 Команды для Ubuntu если вдруг установка не проходит
@@ -51,7 +51,7 @@ https://github.com/user-attachments/assets/0fd2f05a-c7e4-4c16-90ee-5cd53da0f7e3
 
 https://github.com/user-attachments/assets/6037ec38-a5ad-40b4-ad6d-81662f83911e
 
-Скриншоты StartWine (Сомнительно, но окееей)
+Скриншоты StartWine
 
 ![sw_image1](/handbook/ru/sw_image1.png)
 ![sw_image2](/handbook/ru/sw_image2.png)
@@ -61,6 +61,11 @@ https://github.com/user-attachments/assets/6037ec38-a5ad-40b4-ad6d-81662f83911e
 ![sw_image6](/handbook/ru/sw_image6.png)
 ![sw_image7](/handbook/ru/sw_image7.png)
 ![sw_image8](/handbook/ru/sw_image8.png)
+![sw_image9](/handbook/ru/sw_image9.png)
+![sw_image10](/handbook/ru/sw_image10.png)
+![sw_image11](/handbook/ru/sw_image11.png)
+![sw_image12](/handbook/ru/sw_image12.png)
+![sw_image13](/handbook/ru/sw_image13.png)
 
 ## Cоздание ярлыков и запуск игр
 Заходим в каталог, щёлкаем 2 раза на .exe файл и выбираем "Создать ярлык"

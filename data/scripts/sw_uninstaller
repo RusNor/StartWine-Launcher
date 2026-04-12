@@ -2,34 +2,21 @@
 
 . "$(dirname $(readlink -f "$0"))/sw_runlib"
 
-"${SW_RUN_RUNIMAGE}" --run &
-
-crier=$("${CRIER}" -q "$(eval_gettext "Do you want to remove StartWine-Launcher?")")
+crier=$("${CRIER}" -q "$(eval_gettext "Do you want to remove StartWine-Launcher?")") # Вы хотите удалить StartWine-Launcher?
 
 if [ "$(echo "$crier" | tail -1)" == "0" ]; then
 
-    winedevice_pids="$(pgrep 'winedevice')"
-    wine_pids="$(ls -l /proc/*/exe 2>/dev/null | grep -E 'wine(64)?-preloader|wineserver' | awk -F/ '{print $3}')"
-    sw_pids="$(pgrep 'dwarfs|bwrap')"
+    "${START_WINE_PATH}/data/scripts/sw_start" --shutdown
 
-    for wine_pid in $winedevice_pids $wine_pids $sw_pids ; do
-        if [ -n "${wine_pid}" ]; then
-            kill -n 9 "${wine_pid}"
-        fi
-    done
-
-    try_remove "${HOME}/.cache/sw_fm"
+#    try_remove "${HOME}/.cache/sw_fm"
     try_remove "${HOME}/.config/swrc"
     try_remove "${HOME}/.local/bin/sw"
-    try_remove "${HOME}/.local/bin/sw_uninstaller"
     try_remove "${HOME}/.local/share/applications/ru.launcher.StartWine.desktop"
     try_remove "${HOME}/.local/share/applications/StartWineShell.desktop"
-    try_remove "${START_WINE_PATH}"
 
-    if [ ! -d "${START_WINE_PATH}" ]; then
+    if try_remove "${START_WINE_PATH}"; then
         [ -n "$(command -v "notify-send")" ] && \
-            notify-send -a "StartWine" "$(eval_gettext "Deletion StartWine-Launcher completed successfully")"
+            notify-send -a "StartWine" "$(eval_gettext "Deletion StartWine-Launcher completed successfully")" # Удаление StartWine-Launcher успешно завершено.
     fi
 
-    exit 0
 fi

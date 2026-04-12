@@ -1,0 +1,41 @@
+[package]
+name = "sw_start"
+version = "0.4.2"
+edition = "2024"
+
+[dependencies]
+clap = { version = ">=4.5.50", features = ["derive"] }
+colored = { version = ">=2.1.0" }
+epoxy = ">=0.1.0"
+libloading = ">=0.8.1"
+gl = ">=0.14.0"
+gtk4 = { version = ">=0.9.0", package="gtk4", features = ["v4_14", "v4_16"] }
+serde_json = { version = ">=1.0.140" }
+walkdir = { version = ">=2.4.0" }
+ksni = { version = ">=0.2.2" }
+image = { version = ">=0.25.8" }
+nsvg = { version = ">=0.5.1" }
+gettext-rs = { version = ">=0.7.2" }
+sysinfo = { version = ">=0.33.1" }
+which = { version = ">=7.0.3" }
+tokio = { version = ">=1.47.1" }
+anyhow = { version = ">=1.0.100" }
+byteorder = { version = ">=1.5.0" }
+editpe = { version = ">=0.2.1" }
+zerocopy = { version = ">=0.8.27" }
+serde = { version = ">=1.0.219", features = ["derive"] }
+file-format = { version = ">=0.28.0", features = ["reader"] }
+audiotags = { version = ">=0.5.0" }
+
+[profile.release]
+lto = true
+panic = "abort"
+opt-level = "z"
+strip = "symbols"
+debug  = false
+codegen-units = 1
+
+[profile.dev]
+incremental = true
+panic = "abort"
+opt-level = 0

@@ -1,9 +1,24 @@
-#!/usr/bin/env python3
+"""
+Copyright (c) 2020 Maslov N.G. Normatov R.R.
+
+This file is part of StartWine-Launcher.
+https://github.com/RusNor/StartWine-Launcher
+
+StartWine-Launcher is free software: you can redistribute it and/or modify it 
+under the terms of the GNU General Public License as published by the Free 
+Software Foundation, either version 3 of the License, or (at your option) any 
+later version.
+
+StartWine-Launcher is distributed in the hope that it will be useful, but 
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
+FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with 
+StartWine-Launcher. If not, see http://www.gnu.org/licenses/.
+"""
 
 ####___Core modules___.
 from os import getenv
-from sys import argv
-from pathlib import Path
 from array import array
 import time as clock
 
@@ -12,19 +27,12 @@ gi.require_version('Gtk', '4.0')
 from gi.repository import Gtk, GLib
 
 from OpenGL.GL.shaders import compileShader
-#from OpenGL.GLES2 import *
-#from OpenGL.GLES2.OES import *
-#from OpenGL.GLES2.shaders import compileShader
 from OpenGL.GL import *
 
 from sw_shaders import Shaders
 from sw_data import TermColors as tc
 
 start_time = clock.time()
-sw_scripts = Path(__file__).absolute().parent
-sw_path = Path(sw_scripts).parent.parent
-sw_img = Path(f'{sw_path}/data/img')
-sw_themes = f"{sw_img}/sw_themes"
 fragments_list = [s.value for s in list(Shaders)]
 
 vertex_src = '''
@@ -83,7 +91,7 @@ out vec2 fragCoord;
 void main()
 {
     gl_Position = vec4(position, 1.0);
-    fragCoord = 1 - texture;
+    fragCoord = texture;
 }
 '''
 
@@ -96,7 +104,8 @@ out vec4 fragColor;
 
 void main()
 {
-    fragColor = texture(sTexture, fragCoord);
+    vec2 flipped = vec2(fragCoord.x, 1.0 - fragCoord.y);
+    fragColor = texture(sTexture, flipped);
 }
 '''
 
@@ -110,10 +119,10 @@ vertex = [
 ]
 
 img_vertices = [
-    -1.0, -1.0,  0.5,  1.0, 0.0, 0.0,  0.0, 0.0,
-    1.0, -1.0,  0.5,  0.0, 1.0, 0.0,  1.0, 0.0,
-    1.0,  1.0,  0.5,  0.0, 0.0, 1.0,  1.0, 1.0,
-    -1.0,  1.0,  0.5,  1.0, 1.0, 1.0,  0.0, 1.0,
+    -1.0, -1.0, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0,
+    1.0, -1.0, 0.5, 0.0, 1.0, 0.0, 1.0, 0.0,
+    1.0, 1.0, 0.5, 0.0, 0.0, 1.0, 1.0, 1.0,
+    -1.0, 1.0, 0.5, 1.0, 1.0, 1.0, 0.0, 1.0,
 ]
 
 img_indices = [
@@ -155,7 +164,8 @@ class SwRenderArea(Gtk.GLArea):
 
         if getenv('SW_OPENGL') == '1':
             if getenv('FRAGMENT_NUM') is not None:
-                f_num = int(getenv('FRAGMENT_NUM'))
+                str_num = str(getenv('FRAGMENT_NUM'))
+                f_num = int(str_num)
                 self.fragment_src = (
                                     fragment_prefix
                                     + fragments_list[f_num]
@@ -204,7 +214,8 @@ class SwRenderArea(Gtk.GLArea):
         if getenv('SW_OPENGL') == '1':
             if getenv('FRAGMENT_NUM') is not None:
                 timer = clock.time() - start_time
-                f_num = int(getenv('FRAGMENT_NUM'))
+                str_num = str(getenv('FRAGMENT_NUM'))
+                f_num = int(str_num)
                 if round(timer) >= 3:
                     self.fragment_src = (
                                         fragment_prefix
@@ -218,7 +229,7 @@ class SwRenderArea(Gtk.GLArea):
 
         return True
 
-    def on_realize(self, _gl_area):
+    def on_realize(self, _):
         """Opengl context implementation state."""
 
         context = self.get_context()
@@ -232,29 +243,28 @@ class SwRenderArea(Gtk.GLArea):
             tc.SELECTED + tc.RED2
             + "\n--------------< OPENGL_CONTEXT >--------------\n"
             + tc.END, "\n",
-            tc.VIOLET2 + "CONTEXT_REALIZED: ", tc.GREEN, str(type(context)), "\n",
-            tc.VIOLET2 + "OPENGL_API:       ", tc.GREEN, api, "\n",
-            tc.VIOLET2 + "AUTO_RENDER:      ", tc.GREEN, auto_render, "\n",
-            tc.VIOLET2 + "DEPTH_BUFFER:     ", tc.GREEN, depth_buffer, "\n",
-            tc.VIOLET2 + "STENSIL_BUFFER:   ", tc.GREEN, stensil_buffer, "\n",
-            tc.VIOLET2 + "CONTEXT_ERROR:    ", tc.GREEN, error, "\n",
+            f"{tc.VIOLET2}CONTEXT_REALIZED: ", tc.GREEN, str(type(context)), "\n",
+            f"{tc.VIOLET2}OPENGL_API:       ", tc.GREEN, api, "\n",
+            f"{tc.VIOLET2}AUTO_RENDER:      ", tc.GREEN, auto_render, "\n",
+            f"{tc.VIOLET2}DEPTH_BUFFER:     ", tc.GREEN, depth_buffer, "\n",
+            f"{tc.VIOLET2}STENSIL_BUFFER:   ", tc.GREEN, stensil_buffer, "\n",
+            f"{tc.VIOLET2}CONTEXT_ERROR:    ", tc.GREEN, error, "\n",
             tc.END
         )
 
-    def on_resize(self, _gl_area, _width, _height):
+    def on_resize(self, _, width, height):
         """Opengl area resizing signal handler."""
-
-        width = self.get_width()
-        height = self.get_height()
+        # width = self.get_width()
+        # height = self.get_height()
         self.gl_resolution = [width, height, 1.0]
-
         if getenv('SW_OPENGL') == '1':
             glViewport(0,0, width, height)
 
-    def on_render(self, _gl_area, _context):
+    def on_render(self, _, context):
         """Rendering handler of opengl area."""
 
         if self.get_error() is not None:
+            print("Error:", context, self.get_error())
             return False
 
         elif self.fragment_src is None:
@@ -324,7 +334,7 @@ class SwRenderArea(Gtk.GLArea):
         texture = glGenTextures(1)
         glBindTexture(GL_TEXTURE_2D, texture)
 
-        # Set the texture wrapping parameters.
+#        # Set the texture wrapping parameters.
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
 
@@ -338,6 +348,7 @@ class SwRenderArea(Gtk.GLArea):
             GL_TEXTURE_2D, 0, GL_RGB, self.image.get_width(),
             self.image.get_height(), 0, GL_RGB, GL_UNSIGNED_BYTE, data
         )
+
         # Use Shader Program.
         glUseProgram(shader)
         glClearColor(0.02, 0.02, 0.02, 0.02)
@@ -475,13 +486,13 @@ class SwRenderArea(Gtk.GLArea):
         glDeleteVertexArrays(1, vao)
         glDeleteProgram(shader)
 
-    def on_ctrl_gl_motion(self, _ctrl_gl_motion, x, y):
+    def on_ctrl_gl_motion(self, _, x, y):
         """Mouse position signal handler."""
 
         self.x_mouse = x
         self.y_mouse = y
 
-    def on_frame_clock(self, _gl_area, frame_clock):
+    def on_frame_clock(self, _, frame_clock):
         """Update frames and redraw widget."""
 
         frame_time = frame_clock.get_frame_time()

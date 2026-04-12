@@ -1,25 +1,45 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
+"""
+Copyright (c) 2020 Maslov N.G. Normatov R.R.
 
+This file is part of StartWine-Launcher.
+https://github.com/RusNor/StartWine-Launcher
+
+StartWine-Launcher is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version.
+
+StartWine-Launcher is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+StartWine-Launcher. If not, see http://www.gnu.org/licenses/.
+"""
+
+# from types import CoroutineType
+# import sys
+# import random
+# from threading import Thread, Event
 from time import time, sleep
 from os import environ, walk, chdir
 from grp import getgrgid as get_gid
 from pwd import getpwuid as get_uid
-# import sys
-# import random
 from sys import argv
 from pathlib import Path
-from subprocess import Popen, run, PIPE
+from subprocess import Popen, run
 import multiprocessing as mp
-# from threading import Thread, Event
 import asyncio
 from functools import partial
 import itertools
 import fcntl
 import psutil
+from typing import ClassVar, Iterable
 
-from textual.app import App, ComposeResult, RenderableType
-from textual.types import IgnoreReturnCallbackType
-from textual.command import Hit, Hits, Provider, CommandPalette
+from textual.app import App, ComposeResult
+from textual.types import NoSelection
+from textual.command import Hit, Hits, Provider, DiscoveryHit
 from textual.suggester import SuggestFromList
 from textual.renderables.gradient import LinearGradient
 from textual.screen import Screen, ModalScreen
@@ -28,19 +48,34 @@ from textual.binding import Binding
 from textual.events import Key
 from textual.reactive import var
 from textual.containers import Container, Horizontal, Vertical, VerticalScroll, Grid
-from typing import Iterable
-from textual.widgets import *
+from textual.widgets import (
+    ListView, OptionList, SelectionList, DataTable, Button, Label, Input, Select,
+    DirectoryTree, TabbedContent, Header, TabPane, Footer, Static, Pretty,
+    ListItem, LoadingIndicator
+)
+from textual.widgets._tree import TOGGLE_STYLE
+# Tree, TreeNode
 from textual.widgets.selection_list import Selection
-from textual.widgets.option_list import Option, Separator
+from textual.widgets.option_list import Option
 
 from rich.syntax import Syntax
 from rich.traceback import Traceback
+from rich.style import Style
+from rich.text import Text
+from rich.console import RenderableType
 
 from sw_data import *
 from sw_data import Msg as msg
 from sw_data import TermColors as tc
 from sw_func import *
-from sw_input import run_zero_device_redirection
+try:
+    from sw_input import run_zero_device_redirection
+    input_active = True
+except (Exception, ImportError) as e:
+    print(e)
+    input_active = False
+    run_zero_device_redirection = None
+
 
 set_backend_environ()
 
@@ -53,34 +88,21 @@ except ModuleNotFoundError:
     custom_theme = None
 else:
     custom_theme = Theme(
-        name="custom",
-        primary="darkcyan",
-        secondary="darkcyan",
+        name="darkside",
+        primary="#aa4500",
+        secondary="#009999",
         boost="#40999920",
-        foreground="ansi_bright_black",
+        foreground="#808080",
         background="#121418",
-        success="ansi_bright_cyan",
-        accent="ansi_bright_cyan",
-        warning="orangered",
-        error="orangered",
+        success="#009999",
+        accent="#009999",
+        warning="#aa4500",
+        error="#aa4500",
         surface="#181A21",
-        panel="#0E0F12",
+        panel="#0e0f12",
         dark=True,
     )
-    gruvbox_theme = Theme(
-        name="gruvbox",
-        primary="#85A598",
-        secondary="#A89A85",
-        warning="#fabd2f",
-        error="#fb4934",
-        success="#b8bb26",
-        accent="#fabd2f",
-        foreground="#fbf1c7",
-        background="#282828",
-        surface="#3c3836",
-        panel="#504945",
-        dark=False,
-    )
+
 
 DARK_COLORS = """
 $foreground: ansi_bright_black;
@@ -124,9 +146,18 @@ BORDERS:
 $text_color: $text 70%;
 $text_accent: $text;
 
+/*
+$text-primary: $text_color;
+$text-secondary: $text_color 70%;
+$text-accent: $accent;
+$text-warning: $warning;
+$text-error: $error;
+$text-success: $success;
+*/
+
 $block-cursor-foreground: $text;
 $block-cursor-background: $primary;
-$block-cursor-text-style: bold;
+/*$block-cursor-text-style: bold;*/
 $block-cursor-blurred-foreground: $text;
 $block-cursor-blurred-background: $primary 70%;
 /*$block-cursor-blurred-text-style: none;*/
@@ -148,13 +179,6 @@ $footer-item-background: transparent;
 $border: round $foreground;
 $border_accent: round $accent;
 $border_error: round $error;
-
-$text-primary: $text_color;
-$text-secondary: $text_color 70%;
-$text-accent: $accent;
-$text-warning: $warning;
-$text-error: $error;
-$text-success: $success;
 
 $primary-background: $primary 50%;
 $secondary-background: $secondary 50%;
@@ -236,12 +260,14 @@ $accent-darken-1: $success 75%;
 $accent-darken-2: $success 50%;
 $accent-darken-3: $success 25%;
 
+/*
 $primary-muted: $primary 70%;
 $secondary-muted: $secondary 70%;
 $accent-muted: $accent 70%;
 $warning-muted: $warning 70%;
 $error-muted: $error 70%;
 $success-muted: $success 70%;
+*/
 
 Widget {
     color: $text_color;
@@ -273,7 +299,7 @@ CommandPalette {
 }
 CommandPalette OptionList > .option-list--option-highlighted,
 CommandPalette OptionList > .option-list--option-hover {
-    background: $accent;
+    background: $accent-muted;
 }
 CommandPalette > .command-palette--help-text {
     text-style: dim not bold;
@@ -525,6 +551,20 @@ ListView:focus > ListItem.--highlight {
     background: $background;
     border: $border;
 }
+#left_tree_view > .directory-tree--folder {
+    text-style: bold;
+}
+#left_tree_view > .directory-tree--extension {
+    text-style: italic;
+}
+#left_tree_view > .directory-tree--hidden {
+    color: $text 50%;
+}
+#left_tree_view > .directory-tree--exec {
+    color: $text-accent;
+    background: $accent-muted;
+    text-style: bold;
+}
 #commandline {
     dock: bottom;
 }
@@ -558,10 +598,18 @@ HorizontalScroll {
     height: auto;
     align: center middle;
 }
-#settings_grid,
-#launchers_grid {
+#settings_grid {
     grid-size: 1;
     grid-rows: 5;
+    grid-columns: 1fr;
+    grid-gutter: 0;
+    width: 100%;
+    height: auto;
+    align: center middle;
+}
+#launchers_grid {
+    grid-size: 1;
+    grid-rows: 10;
     grid-columns: 1fr;
     grid-gutter: 0;
     width: 100%;
@@ -693,7 +741,7 @@ def _t(key: str) -> str:
     else:
         return k
 
-def update_exe_data(item, data=None):
+def update_exe_data(item):
     """Update executable items data."""
     check_exe_data(sw_exe_data_json, sw_shortcuts, sw_app_icons)
     global exe_data
@@ -715,7 +763,7 @@ def try_get_exe_logo(event=None):
 
 def on_cs_wine(app_name, app_path, func_wine):
     """Create shortcut and update exe data."""
-    exe_data.set_(app_name, 'path', app_path)
+    exe_data.set_(app_path, 'path', app_path)
     if not check_exe_logo(app_name):
         mp_event = mp.Event()
         p = mp.Process(target=get_exe_metadata, args=(app_name, app_path, mp_event))
@@ -724,49 +772,16 @@ def on_cs_wine(app_name, app_path, func_wine):
         process_workers.append(p)
         p.start()
 
-    t = Thread(target=cs_wine, args=(func_wine, app_name, app_path))
-    t.start()
-
-
-def on_message_cs(self):
-    """Run create shortcut function."""
-
-    def on_thread_wine():
-        echo_wine(func_wine, name_ver, wine_ver)
-        on_cs_wine(app_name, app_path, wine)
-
-    app_path = get_app_path()
-    app_name = get_out()
-    winever_data, latest_wine_dict, wine_download_dict = get_wine_dicts()
-    wine = latest_wine_dict['wine_proton_ge']
-
-    if wine is None:
-        message = msg.msg_dict['wine_not_found']
-        self.app.push_screen(DialogInfo(message))
-
-    elif Path(f'{sw_wine}/{wine}/bin/wine').exists():
-        on_cs_wine(app_name, app_path, wine)
-    else:
-        wine, exist = check_wine()
-        if not exist:
-#            wine_ver = wine.replace('-amd64', '').replace('-x86_64', '')
-#            wine_ver = ''.join([e for e in wine_ver if not e.isalpha()]).strip('-')
-#            name_ver = 'GE_VER'
-#            func_wine = 'WINE_3'
-#            text_message = [f"{wine} {msg.msg_dict['wine_not_exists']}", '']
-#            func = [on_thread_wine, None]
-#            self.app.push_screen(DialogQuestion(text_message))
-            message = msg.msg_dict['wine_not_found']
-            self.app.push_screen(DialogInfo(message))
-        else:
-            on_cs_wine(app_name, app_path, wine)
+    cs_wine(func_wine, app_name, app_path)
+    #t = Thread(target=cs_wine, args=(func_wine, app_name, app_path))
+    #t.start()
 
 
 def on_app_conf_default():
     """Reset application configuration to default."""
     app_name = get_out()
-    app_conf = Path(f"{sw_app_config}/" + str(app_name))
-    launcher_conf = Path(f"{sw_app_config}/.default/" + str(app_name))
+    app_conf = sw_app_config.joinpath(app_name)
+    launcher_conf = sw_app_config.joinpath('.default', app_name)
 
     if not launcher_conf.exists():
         try:
@@ -780,15 +795,15 @@ def on_app_conf_default():
             pass
 
 
-def check_app_conf():
+def check_app_conf() -> bool:
     """Checking application configuration."""
     app_name = get_out()
-    app_conf = Path(f"{sw_app_config}/{app_name}")
+    app_conf = sw_app_config.joinpath(app_name)
     app_dict = app_info(app_conf)
     for x in (lp_title + switch_labels):
         try:
             app_dict[f'export SW_USE_{x}']
-        except KeyError as e:
+        except KeyError:
             return False
     return True
 
@@ -804,27 +819,32 @@ def on_stop():
     for proc in winedevices:
         psutil.Process(proc).kill()
 
-    Popen(f"{sw_scripts}/sw_start --kill", shell=True)
+    Popen(f"{sw_start} --kill", shell=True)
 
 
 def get_wineloader_list(wineloader_list):
     """Get wine loader list."""
-    for r, d, f in walk(sw_wine):
+    for r, _, f in walk(sw_wine):
         for w in f:
-            if w == 'wine':
-                wineloader_list.append(f'{r}/{w}')
+            if w == 'wine' and '/bin/wine' in f'{r}/{w}':
+                p = Path(r).joinpath(w)
+                wineloader_list.append(f'{p}')
                 break
     else:
         for w in wine_list:
-            wine_dir = latest_wine_dict[w]
-            try:
-                wineloader_list.remove(f'{sw_wine}/{wine_dir}/files/bin/wine')
-            except (Exception,):
-                pass
-            try:
-                wineloader_list.remove(f'{sw_wine}/{wine_dir}/bin/wine')
-            except (Exception,):
-                pass
+            wine_dir = latest_wine_dict.get(w)
+            if wine_dir:
+                f_wine = sw_wine.joinpath(f'{wine_dir}', 'files', 'bin', 'wine')
+                try:
+                    wineloader_list.remove(f'{f_wine}')
+                except (Exception,):
+                    pass
+
+                b_wine = sw_wine.joinpath(f'{wine_dir}', 'bin', 'wine')
+                try:
+                    wineloader_list.remove(f'{b_wine}')
+                except (Exception,):
+                    pass
 
 
 def get_wineloader_dict(wineloader_list, wineloader_dict):
@@ -844,7 +864,7 @@ def get_wineloader_dict(wineloader_list, wineloader_dict):
 def change_wine_activate(wine_name):
     """Write changed wine to app configuration."""
     app_name = get_out()
-    app_conf = Path(f"{sw_app_config}/{app_name}")
+    app_conf = sw_app_config.joinpath(app_name)
     app_conf_dict = app_conf_info(app_conf, ['SW_USE_WINE'])
 
     try:
@@ -863,7 +883,7 @@ def change_wine_activate(wine_name):
 def change_pfx_activate(pfx_name):
     """Write changed prefix to app configuration."""
     app_name = get_out()
-    app_conf = Path(f"{sw_app_config}/{app_name}")
+    app_conf = sw_app_config.joinpath(app_name)
     app_conf_dict = app_conf_info(app_conf, ['SW_USE_PFX'])
 
     if pfx_name == prefix_labels[0]:
@@ -879,26 +899,26 @@ def change_pfx_activate(pfx_name):
     )
 
 
-def get_dir_size(size, data: Path|str) -> float:
+def get_directory_size(size, data: Path|str) -> float:
     """Get size of files in the current directory"""
-    for root, dirs, files in Path(data).walk():
+    for root, _, files in Path(data).walk():
         for f in files:
             try:
                 size += Path(root).joinpath(f).stat().st_size
-            except (Exception,) as e:
+            except (Exception,):
                 pass
     return size
 
 
 def get_format_dir_size(path: Path) -> str:
     """Get format size of files in the current directory"""
-    str_size = None
-    size = get_dir_size(0, path)
+    size = get_directory_size(0, path)
     return get_format_size(Path(path).name, size)
 
 
 def get_format_size(name, size) -> str:
     """Get format size of."""
+    str_size = ""
     if len(str(round(size, 2))) <= 6:
         str_size = f'{str(round(size/1024, 2))} Kib / {str(round(size/1000, 2))} Kb'
 
@@ -911,7 +931,7 @@ def get_format_size(name, size) -> str:
     return ': '.join([name, str_size])
 
 
-def non_block_read(output):
+def non_block_read(output) -> str:
     out = ''
     fd = output.fileno()
     fl = fcntl.fcntl(fd, fcntl.F_GETFL)
@@ -927,9 +947,9 @@ class ActionList(ListView):
     """List view widget."""
 
     BINDINGS = [
-        Binding("r,enter", "select", msg.ctx_dict['cursor_down'], show=False),
-        Binding("k,up", "cursor_up", msg.ctx_dict['cursor_up'], show=False),
-        Binding("j,down", "cursor_down", msg.ctx_dict['cursor_down'], show=False),
+        Binding("r,enter", "select", str(msg.ctx_dict['cursor_down']), show=False),
+        Binding("k,up", "cursor_up", str(msg.ctx_dict['cursor_up']), show=False),
+        Binding("j,down", "cursor_down", str(msg.ctx_dict['cursor_down']), show=False),
     ]
 
     def __init__(self, *args, **kwargs) -> None:
@@ -940,9 +960,9 @@ class OpsList(OptionList):
     """List view widget."""
 
     BINDINGS = [
-        Binding("r,enter", "select", msg.ctx_dict['cursor_down'], show=False),
-        Binding("k,up", "cursor_up", msg.ctx_dict['cursor_up'], show=False),
-        Binding("j,down", "cursor_down", msg.ctx_dict['cursor_down'], show=False),
+        Binding("r,enter", "select", str(msg.ctx_dict['cursor_down']), show=False),
+        Binding("k,up", "cursor_up", str(msg.ctx_dict['cursor_up']), show=False),
+        Binding("j,down", "cursor_down", str(msg.ctx_dict['cursor_down']), show=False),
     ]
 
     def __init__(self, *args, **kwargs) -> None:
@@ -953,8 +973,8 @@ class SelectList(SelectionList[str]):
     """List view widget."""
 
     BINDINGS = [
-        Binding("k,up", "cursor_up", msg.ctx_dict['cursor_up'], show=False),
-        Binding("j,down", "cursor_down", msg.ctx_dict['cursor_down'], show=False),
+        Binding("k,up", "cursor_up", str(msg.ctx_dict['cursor_up']), show=False),
+        Binding("j,down", "cursor_down", str(msg.ctx_dict['cursor_down']), show=False),
     ]
 
     def __init__(self, *args, **kwargs) -> None:
@@ -965,9 +985,9 @@ class DtTable(DataTable):
     """List view widget."""
 
     BINDINGS = [
-        Binding("r,enter", "select_cursor", msg.msg_dict['select'], show=False),
-        Binding("k,up", "cursor_up", msg.ctx_dict['cursor_up'], show=False),
-        Binding("j,down", "cursor_down", msg.ctx_dict['cursor_down'], show=False),
+        Binding("r,enter", "select_cursor", str(msg.msg_dict['select']), show=False),
+        Binding("k,up", "cursor_up", str(msg.ctx_dict['cursor_up']), show=False),
+        Binding("j,down", "cursor_down", str(msg.ctx_dict['cursor_down']), show=False),
     ]
 
     def __init__(self, *args, **kwargs) -> None:
@@ -977,7 +997,7 @@ class DtTable(DataTable):
 class TextView(Screen):
     """Text view widget."""
 
-    BINDINGS = [("escape", "app.pop_screen()", msg.tt_dict['back_main'])]
+    BINDINGS = [("escape", "app.pop_screen()", str(msg.tt_dict['back_main']))]
 
     def __init__(self, text: str|None = None, path: str|Path|None = None) -> None:
         super().__init__()
@@ -1039,7 +1059,7 @@ class DialogQuestion(ModalScreen[str]):
     """Modal screen with message."""
 
     BINDINGS = [
-        ('escape,q', 'app.pop_screen', msg.tt_dict['back_main']),
+        ('escape,q', 'app.pop_screen', str(msg.tt_dict['back_main'])),
         ('h,l,left,right', 'switch_focus', ''),
     ]
 
@@ -1063,6 +1083,7 @@ class DialogQuestion(ModalScreen[str]):
         """Emitted when the button is clicked"""
         self.dismiss(event.button.id)
 
+
 class DialogOptions(ModalScreen[dict]):
     """Modal screen with option list."""
 
@@ -1082,7 +1103,7 @@ class DialogOptions(ModalScreen[dict]):
         label = self.query_one("#question")
         label.styles.height = 1
 
-        for option in self.data:
+        for _ in self.data:
             sum_size += 2
 
         box = self.query_one('#dialog_action')
@@ -1096,7 +1117,7 @@ class DialogOptions(ModalScreen[dict]):
     def options(self):
         for k, v in self.data.items():
             yield Option(str(v),str(k))
-            yield Separator()
+            yield None
 
     def compose(self) -> ComposeResult:
         """Compose user interface."""
@@ -1158,7 +1179,7 @@ class DialogEntry(ModalScreen[dict]):
         ('escape,q', 'app.pop_screen', msg.tt_dict['back_main']),
     ]
 
-    def __init__(self, message: str, data: list) -> None:
+    def __init__(self, message: str, data: str) -> None:
         self.message = message
         self.data = data
         super().__init__()
@@ -1188,7 +1209,7 @@ class DialogEntry(ModalScreen[dict]):
         data["value"] = str(self.entry.value)
         self.dismiss(data)
 
-    def on_input_submitted(self, event: Input.Submitted) -> None:
+    def on_input_submitted(self, _: Input.Submitted) -> None:
         """Emitted when the input is submitted."""
         data = dict()
         data["key"] = str('ok')
@@ -1213,7 +1234,7 @@ class DialogInfo(ModalScreen[bool]):
             id='dialog',
         )
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
+    def on_button_pressed(self, _: Button.Pressed) -> None:
         """Emitted when the button is clicked"""
         self.dismiss(False)
 
@@ -1303,7 +1324,7 @@ class InputBox(Widget):
         Binding('escape', 'toggle_focus', 'Toggle focus', show=False),
     ]
 
-    def __init__(self, title: str, desc: str, placeholder: str, value: str, type: str,
+    def __init__(self, title: str, desc: str, placeholder: str, value: str, type,
             max_length=3, data=None, link=None, width=None, height=None, idx=None) -> None:
         self.title = title
         self.desc = desc
@@ -1346,7 +1367,7 @@ class InputBox(Widget):
                 )
 
     def action_toggle_focus(self):
-        self.parent.parent.focus()
+        self.screen.focus_next()
 
 
 class SelectBox(Widget):
@@ -1356,7 +1377,7 @@ class SelectBox(Widget):
         Binding('escape', 'toggle_focus', 'Toggle focus', show=False),
     ]
 
-    def __init__(self, title: str, desc: str, select: list, value: str,
+    def __init__(self, title: str, desc: str, select: list, value: str | NoSelection,
             data=None, link=None, width=None, height=None, idn=None) -> None:
         self.title = title
         self.desc = desc
@@ -1395,7 +1416,6 @@ class SelectBox(Widget):
             if self.data:
                 yield Button(
                     label=self.data['label'], name=self.data['name'],
-                    #id=self.data['id']
                 )
 
     def set_width(self, width):
@@ -1403,7 +1423,7 @@ class SelectBox(Widget):
             select.styles.width = width
 
     def action_toggle_focus(self):
-        self.parent.parent.focus()
+        self.screen.focus_next()
 
 
 class LabelBox(Widget):
@@ -1425,6 +1445,7 @@ class LabelBox(Widget):
             with Vertical(id='box'):
                 yield Label(self.label, classes='title_accent')
                 yield Static(self.desc)
+
 
 class Progress(Screen):
     """Splash screen with progress indicator."""
@@ -1461,7 +1482,7 @@ class Splash(Container):
     def on_mount(self) -> None:
         """Set widget properties."""
         for v in self.query(Vertical):
-            v.styles.align = ['center', 'middle']
+            v.styles.align = ('center', 'middle')
             v.styles.height = 6
             v.styles.background = 'transparent'
         self.auto_refresh = 1 / 30
@@ -1496,12 +1517,15 @@ class LaunchersView(Screen):
         yield Header()
         with VerticalScroll():
             with Grid(id='launchers_grid'):
-                for launcher, desc in launchers_descriptions.items():
+                for launcher, data in launchers_descriptions.items():
+                    desc = '\n'.join(
+                        [f'{msg.msg_dict.get(k)}: {v}' for k, v in data.items()]
+                    )
                     title = launcher.replace('_', ' ')
                     label = msg.msg_dict['install']
                     yield ButtonBox(
                         title=str(title), desc=str(desc), label=label,
-                        data=str(launcher), idn='install'
+                        data=str(launcher), idn='install', box_height=10
                     )
         yield Footer()
 
@@ -1510,13 +1534,14 @@ class LaunchersView(Screen):
         event.set()
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Emitted when the button is clicked."""
         if event.button.id == 'install':
             with self.app.suspend():
                 mp_event = mp.Event()
                 data = {'func': update_exe_data, 'args': (event.button.name,)}
                 Thread(target=process_event_wait, args=(mp_event, data)).start()
-                worker = self.app.run_worker(self.run_install(event.button.name, mp_event), thread=True)
+                worker = self.app.run_worker(
+                    self.run_install(event.button.name, mp_event), thread=True
+                )
                 await worker.wait()
 
 
@@ -1606,12 +1631,13 @@ class WineBuildsView(Screen):
             t = Thread(target=asyncio.run, args=(self.func(w, q),))
             t.start()
         else:
+            wine_func = name_ver = wine_ver = None
             for select in self.query(Select):
                 if select.name == event.button.name:
                     wine_ver = str(select.value).replace('-amd64', '').replace('-x86_64', '')
                     wine_ver = ''.join([e for e in wine_ver if not e.isalpha()]).strip('-')
-                    wine_func = wine_func_dict[event.button.name]
-                    name_ver = wine_ver_dict[event.button.name]
+                    wine_func = wine_func_dict[str(event.button.name)]
+                    name_ver = wine_ver_dict[str(event.button.name)]
                     break
 
             with self.app.suspend():
@@ -1642,7 +1668,7 @@ class AboutView(Screen):
 class LaunchSettings(VerticalScroll):
     """Launch settings view page."""
 
-    def __init__(self, app_name=None, app_conf=None, app_dict=None) -> None:
+    def __init__(self, app_name=None, app_conf=sw_app_config.joinpath("StartWine"), app_dict={}) -> None:
         super().__init__()
         self.app_name = app_name
         self.app_conf = app_conf
@@ -1662,7 +1688,6 @@ class LaunchSettings(VerticalScroll):
     def compose(self) -> ComposeResult:
         """Compose user interface."""
         input_count = -1
-        select_count = -1
         self.btn_reset = ButtonBox(
             title=settings_dict['launch_settings'], desc=str_lp_subtitle,
             label=' ' + settings_dict['set_app_default'], data='reset',
@@ -1673,11 +1698,17 @@ class LaunchSettings(VerticalScroll):
         yield self.btn_reset
         with self.list_view:
             for title, desc in zip(lp_title, lp_desc):
-                value = self.app_dict[f'export SW_USE_{title}'][1:-1]
+                value = self.app_dict.get(f'export SW_USE_{title}')
+                value = value[1:-1] if value else ""
                 if title in lp_entry_list:
                     input_count += 1
                     yield ListItem(
-                        InputBox(str(title), str(desc), str_example[input_count], value, 'text'),
+                        InputBox(
+                            str(title),
+                            str(desc),
+                            str_example[input_count],
+                            value, 'text'
+                        ),
                         name=str(title)
                     )
                 elif title in lp_combo_list:
@@ -1743,7 +1774,7 @@ class LaunchSettings(VerticalScroll):
                 self.check_reset
             )
 
-    def check_reset(self, answer: str) -> None:
+    def check_reset(self, answer) -> None:
         """Callback result with data."""
         if answer == 'ok':
             on_app_conf_default()
@@ -1753,7 +1784,7 @@ class LaunchSettings(VerticalScroll):
 class LaunchOptions(Container):
     """Launch settings view page."""
 
-    def __init__(self, app_name=None, app_conf=None, app_dict=None) -> None:
+    def __init__(self, app_name=None, app_conf=sw_app_config.joinpath("StartWine"), app_dict={}) -> None:
         super().__init__()
         self.app_name = app_name
         self.app_conf = app_conf
@@ -1776,7 +1807,7 @@ class LaunchOptions(Container):
         selection_list = []
         for title, desc in zip(switch_labels, switch_descriptions):
             s = Selection(f'{title}'.ljust(30) + f'{desc}', str(title), False)
-            if self.app_dict[f'export SW_USE_{title}'] == '1':
+            if self.app_dict.get(f'export SW_USE_{title}') == '1':
                 s = Selection(f'{title}'.ljust(30) + f'{desc}', str(title), True)
             selection_list.append(s)
 
@@ -1812,7 +1843,7 @@ class LaunchOptions(Container):
                 self.check_reset
             )
 
-    def check_reset(self, answer: str) -> None:
+    def check_reset(self, answer) -> None:
         """Callback result with data."""
         if answer == 'ok':
             on_app_conf_default()
@@ -1822,7 +1853,7 @@ class LaunchOptions(Container):
 class VkBasaltSettings(Container):
     """vkBasalt settings view page."""
 
-    def __init__(self, app_name=None, app_conf=None, app_dict=None) -> None:
+    def __init__(self, app_name=None, app_conf=sw_app_config.joinpath("StartWine")) -> None:
         super().__init__()
         self.app_name = app_name
         self.app_conf = app_conf
@@ -1839,7 +1870,7 @@ class VkBasaltSettings(Container):
 
         self.input_effect = InputBox(
             title=settings_dict['vkbasalt_settings'], desc=str_vk_subtitle,
-            placeholder=str_vk_intensity, max_length=2, type="number", 
+            placeholder=str_vk_intensity, max_length=2, type="number",
             value=str(float(self.app_dict[export_vkbasalt_cas][1:-1])*100),
             idx='effect_value',
         )
@@ -1883,7 +1914,7 @@ class VkBasaltSettings(Container):
 class MangoHudSettings(Container):
     """MangoHud settings view page."""
 
-    def __init__(self, app_name=None, app_conf=None, app_dict=None) -> None:
+    def __init__(self, app_name=None, app_conf=sw_app_config.joinpath("StartWine")) -> None:
         self.app_name = app_name
         self.app_conf = app_conf
         self.app_dict = app_info(self.app_conf)
@@ -1941,7 +1972,7 @@ class Tools(Container):
         Binding("j,down", "focus_down", ''),
     ]
 
-    def __init__(self, app_name=None, app_conf=None, app_dict=None) -> None:
+    def __init__(self, app_name=None, app_conf=sw_app_config.joinpath("StartWine"), app_dict={}) -> None:
         self.app_name = app_name
         self.app_conf = app_conf
         self.app_dict = app_dict
@@ -1984,7 +2015,6 @@ class Tools(Container):
         echo_func_name(func)
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Emitted when the button is clicked."""
         if event.button.id == 'wine_settings':
             event.button.set_loading(True)
             worker = self.app.run_worker(self.run_event('WINECFG'), thread=True)
@@ -2023,7 +2053,7 @@ class Tools(Container):
             self.app.push_screen(DialogQuestion(text_message), self.check_message)
 
         elif event.button.id == 'pfx_remove':
-            exe_data.set_(get_out(), 'path', None)
+            exe_data.set_(get_app_path(), 'path', None)
             event.button.set_loading(True)
             worker = self.app.run_worker(self.run_event('REMOVE_PFX'), thread=True)
             await worker.wait()
@@ -2059,7 +2089,7 @@ class Tools(Container):
             await worker.wait()
             event.button.set_loading(False)
 
-    def check_message(self, answer: str) -> None:
+    def check_message(self, answer) -> None:
         """Callback result with data."""
         if answer == 'ok':
             on_clear_shader_cache()
@@ -2074,7 +2104,7 @@ class WinetricksView(Screen):
         Binding("left", "prev_tab", "Previous tab", show=True, key_display='', priority=True),
     ]
 
-    def __init__(self, app_conf=None, app_dict=None) -> None:
+    def __init__(self, app_conf=sw_app_config.joinpath("StartWine"), app_dict={}) -> None:
         super().__init__()
         self.app_conf = app_conf
         self.app_dict = app_dict
@@ -2146,7 +2176,6 @@ class WinetricksView(Screen):
         echo_install_dll(dll_list)
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Emitted when the button is clicked"""
         if event.button.id == 'install':
             dll_list = list(
                 self.dll_selection.selected + self.fnt_selection.selected
@@ -2190,12 +2219,12 @@ class SettingsView(Screen):
     """Launch settings view page."""
 
     BINDINGS = [
-        Binding("escape", "close", msg.tt_dict['back_main'], show=True),
+        Binding("escape", "close", str(msg.tt_dict['back_main']), show=True),
         Binding("right", "next_tab", "Next tab", show=True, key_display='', priority=True),
         Binding("left", "prev_tab", "Previous tab", show=True, key_display='', priority=True),
-        Binding("t", "stop", msg.tt_dict['stop'], show=True),
-        Binding("r", "run('run')", msg.msg_dict['run'], show=True),
-        Binding("w", "wine", msg.msg_dict['cw'], show=True),
+        Binding("t", "stop", str(msg.tt_dict['stop']), show=True),
+        Binding("r", "run('run')", str(msg.msg_dict['run']), show=True),
+        Binding("w", "wine", str(msg.msg_dict['cw']), show=True),
         Binding("p", "prefix", str_prefix.replace(':', ''), show=True),
         Binding("s", "show_tab('winetricks')", "Winetricks", show=True),
     ]
@@ -2204,7 +2233,7 @@ class SettingsView(Screen):
         super().__init__()
         self.app_name = get_out()
         self.app_path = get_app_path().strip('"')
-        self.app_conf = Path(f"{sw_app_config}/{self.app_name}")
+        self.app_conf = sw_app_config.joinpath(self.app_name)
         self.app_dict = app_info(self.app_conf)
         self.wineloader_list = list()
         self.wineloader_dict = dict()
@@ -2240,16 +2269,20 @@ class SettingsView(Screen):
         self.btn_start =  Button(' ' + msg.msg_dict['run'], id='run')
         self.btn_wine = Button('󰕰 ' + self.wine, id='wine')
         self.btn_pfx = Button(' ' + self.prefix, id='prefix')
-        self.tab_launch_settings = TabPane(msg.msg_dict['launch_settings'], id="launch_settings")
-        self.launch_settings = LaunchSettings(self.app_name, self.app_conf, self.app_dict)
+        self.tab_launch_settings = TabPane(
+            msg.msg_dict['launch_settings'], id="launch_settings"
+        )
+        self.launch_settings = LaunchSettings(
+            self.app_name, self.app_conf, self.app_dict
+        )
         self.tab_launch_options = TabPane(str_title_startup, id="launch_options")
         self.launch_options = LaunchOptions(self.app_name, self.app_conf, self.app_dict)
         self.tab_tools = TabPane(msg.tt_dict['tools'], id="tools")
         self.tools = Tools(self.app_name, self.app_conf, self.app_dict)
         self.tab_mangohud = TabPane('MangoHud', id="mangohud_settings")
-        self.mangohud_settings = MangoHudSettings(self.app_name, self.app_conf, self.app_dict)
+        self.mangohud_settings = MangoHudSettings(self.app_name, self.app_conf)
         self.tab_vkbasalt = TabPane('vkBasalt', id="vkbasalt_settings")
-        self.vkbasalt_settings = VkBasaltSettings(self.app_name, self.app_conf, self.app_dict)
+        self.vkbasalt_settings = VkBasaltSettings(self.app_name, self.app_conf)
 
         yield Header()
         with VerticalScroll():
@@ -2293,7 +2326,7 @@ class SettingsView(Screen):
             self.write_changed_value()
             self.app.sub_title = f'Run {Path(self.app_path).name}'
             self.app.push_screen(Progress(self.app_path))
-            self.app.on_start()
+            app.on_start()
         else:
             self.app.push_screen(DialogInfo(msg.msg_dict['lnk_error']))
 
@@ -2353,18 +2386,19 @@ class SettingsView(Screen):
         if tab == "winetricks":
             self.app.push_screen(WinetricksView())
 
-    def check_wine(self, data: dict) -> None:
+    def check_wine(self, data) -> None:
         """Callback result with data."""
         wine_label = data["key"]
         self.btn_wine.label = '󰕰 ' + str(wine_label)
         change_wine_activate(wine_label)
 
-    def check_prefix(self, data: dict) -> None:
+    def check_prefix(self, data) -> None:
         """Callback result with data."""
         self.btn_pfx.label = ' ' + str(data['value'])
         change_pfx_activate(data['key'])
 
     def write_changed_value(self):
+        """Write changed value to app settings."""
         self.launch_settings.write_changed_value()
         self.launch_options.write_changed_value()
         self.mangohud_settings.write_changed_value()
@@ -2378,16 +2412,23 @@ class SettingsView(Screen):
 
 class DirTree(DirectoryTree):
     """Directory tree view."""
+    COMPONENT_CLASSES: ClassVar[set[str]] = {
+        "directory-tree--extension",
+        "directory-tree--file",
+        "directory-tree--folder",
+        "directory-tree--hidden",
+        "directory-tree--exec",
+    }
     BINDINGS = [
-        Binding("k,up", "cursor_up", msg.ctx_dict['cursor_up'], show=False),
-        Binding("j,down", "cursor_down", msg.ctx_dict['cursor_down'], show=False),
-        Binding("l,right", "toggle_node", msg.ctx_dict['toggle_node'], show=False),
-        Binding("h,left", "go_back", msg.tt_dict['back_up'], show=False),
-        Binding("gg,home", "scroll_home", msg.tt_dict['scroll_up'], show=False),
+        Binding("k,up", "cursor_up", str(msg.ctx_dict['cursor_up']), show=False),
+        Binding("j,down", "cursor_down", str(msg.ctx_dict['cursor_down']), show=False),
+        Binding("l,right", "toggle_node", str(msg.ctx_dict['toggle_node']), show=False),
+        Binding("h,left", "go_back", str(msg.tt_dict['back_up']), show=False),
+        Binding("gg,home", "scroll_home", str(msg.tt_dict['scroll_up']), show=False),
         Binding("G,end", "scroll_end", 'Scroll down', show=False),
-        Binding("space", "toggle_node", msg.ctx_dict['toggle_node'], show=False),
-        Binding("enter", "select_cursor", msg.msg_dict['select'], show=False),
-        Binding(".", "toggle_hidden", msg.ctx_dict['show_hidden_files'][0], show=False),
+        Binding("space", "toggle_node", str(msg.ctx_dict['toggle_node']), show=False),
+        Binding("enter", "select_cursor", str(msg.msg_dict['select']), show=False),
+        Binding(".", "toggle_hidden", str(msg.ctx_dict['show_hidden_files'][0]), show=False),
     ]
     pattern = None
     if sw_cfg.get('hidden_files') == 'True':
@@ -2398,8 +2439,58 @@ class DirTree(DirectoryTree):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
+    def render_label(self, node, base_style: Style, style: Style) -> Text:
+        """Render a label for the given node.
+        Args:
+            node: A tree node.
+            base_style: The base style of the widget.
+            style: The additional style for the label.
+
+        Returns:
+            A Rich Text object containing the label.
+        """
+        node_label = node._label.copy()
+        node_label.stylize(style)
+
+        if not self.is_mounted:
+            return node_label
+
+        if node._allow_expand:
+            prefix = ("📂 " if node.is_expanded else "📁 ", base_style + TOGGLE_STYLE)
+            node_label.stylize_before(
+                self.get_component_rich_style("directory-tree--folder", partial=True)
+            )
+        else:
+            prefix = (
+                "📄 ",
+                base_style,
+            )
+            node_label.stylize_before(
+                self.get_component_rich_style("directory-tree--file", partial=True),
+            )
+            node_label.highlight_regex(
+                r"\..+$",
+                self.get_component_rich_style(
+                    "directory-tree--extension", partial=True
+                ),
+            )
+
+        if node_label.plain.startswith("."):
+            node_label.stylize_before(
+                self.get_component_rich_style("directory-tree--hidden")
+            )
+
+        if node_label.plain.lower().endswith(".exe"):
+            node_label.stylize_before(
+                self.get_component_rich_style("directory-tree--exec")
+            )
+
+        text = Text.assemble(prefix, node_label)
+        return text
+
     def filter_paths(self, paths: Iterable[Path]) -> Iterable[Path]:
         """Filter hidden files."""
+
         if self.pattern:
             paths = [path for path in paths if str(self.pattern) in path.name]
 
@@ -2413,14 +2504,17 @@ class DirTree(DirectoryTree):
         """file sorting function in the list"""
 
         sorted_list = list()
-        sorting_files = self.app.cfg.get('sorting_files') if self.app.cfg.get('sorting_files') else 'name'
-        sorting_reverse = self.app.cfg.get('sorting_reverse') if self.app.cfg.get('sorting_reverse') else 'False'
-
+        sorting_files = (
+            app.cfg.get('sorting_files') if app.cfg.get('sorting_files') else 'name'
+        )
+        sorting_reverse = (
+            app.cfg.get('sorting_reverse') if app.cfg.get('sorting_reverse') else 'False'
+        )
         if sorting_files == 'type':
             sorted_list_by_type = sorted(
                 [x for x in x_list],
                 key=lambda x: str(x.stat().st_mode),
-                reverse=eval(sorting_reverse)
+                reverse=eval(str(sorting_reverse))
             )
             sorted_list = sorted_list_by_type
 
@@ -2428,7 +2522,7 @@ class DirTree(DirectoryTree):
             sorted_list_by_size = sorted(
                 [x for x in x_list],
                 key=lambda x: str(round(x.stat().st_size/1024/1024, 4)),
-                reverse=eval(sorting_reverse)
+                reverse=eval(str(sorting_reverse))
             )
             sorted_list = sorted_list_by_size
 
@@ -2436,7 +2530,7 @@ class DirTree(DirectoryTree):
             sorted_list_by_date = sorted(
                 [x for x in x_list],
                 key=lambda x: str(x.stat().st_atime),
-                reverse=eval(sorting_reverse)
+                reverse=eval(str(sorting_reverse))
             )
             sorted_list = sorted_list_by_date
 
@@ -2444,10 +2538,9 @@ class DirTree(DirectoryTree):
             sorted_list_by_name = sorted(
                 [x for x in x_list],
                 key=lambda x: str(x.name),
-                reverse=eval(sorting_reverse)
+                reverse=eval(str(sorting_reverse))
             )
             sorted_list = sorted_list_by_name
-
         else:
             pass
 
@@ -2475,16 +2568,16 @@ class Commandline(Input):
 
     def action_toggle_focus(self):
         self.clear()
-        self.app.simulate_key('tab')
+        #self.app.simulate_key('tab')
 
     def action_cut_text(self):
-        self.app.clipboard = self.value
+        self.app.copy_to_clipboard(str(self.value))
         Clipper().copy(str(self.value))
         self.clear()
         self.notify(msg.msg_dict['copied_to_clipboard'])
 
     def action_copy_text(self):
-        self.app.clipboard = self.value
+        self.app.copy_to_clipboard(str(self.value))
         Clipper().copy(str(self.value))
         self.notify(msg.msg_dict['copied_to_clipboard'])
 
@@ -2519,21 +2612,21 @@ class MainScreen(Screen):
     """Main screen view page."""
 
     HOTKEYS = [
-        Binding(':,;', '', msg.ctx_dict['command_line']),
-        Binding('$', 'shell', msg.ctx_dict['shell']),
-        Binding('backslash,ctrl+f', '', msg.tt_dict['search']),
-        Binding('enter,r', '', msg.msg_dict['select']),
-        Binding('space', '', msg.ctx_dict['toggle']),
-        Binding('tab', '', msg.ctx_dict['toggle_focus']),
-        Binding('escape', '', msg.tt_dict['back_main']),
-        Binding('up,k', '', msg.ctx_dict['cursor_up']),
-        Binding('down,j', '', msg.ctx_dict['cursor_down']),
-        Binding('right,l', '', msg.ctx_dict['toggle_node']),
-        Binding('left,h', '', msg.tt_dict['back_up']),
-        Binding('home,gg', '', msg.ctx_dict['scroll_up']),
-        Binding('end, G', '', msg.ctx_dict['scroll_down']),
-        Binding('pageup', '', msg.ctx_dict['page_up']),
-        Binding('pagedn', '', msg.ctx_dict['page_down']),
+        Binding(':,;', '', str(msg.ctx_dict['command_line'])),
+        Binding('$', 'shell', str(msg.ctx_dict['shell'])),
+        Binding('backslash,ctrl+f', '', str(msg.tt_dict['search'])),
+        Binding('enter,r', '', str(msg.msg_dict['select'])),
+        Binding('space', '', str(msg.ctx_dict['toggle'])),
+        Binding('tab', '', str(msg.ctx_dict['toggle_focus'])),
+        Binding('escape', '', str(msg.tt_dict['back_main'])),
+        Binding('up,k', '', str(msg.ctx_dict['cursor_up'])),
+        Binding('down,j', '', str(msg.ctx_dict['cursor_down'])),
+        Binding('right,l', '', str(msg.ctx_dict['toggle_node'])),
+        Binding('left,h', '', str(msg.tt_dict['back_up'])),
+        Binding('home,gg', '', str(msg.ctx_dict['scroll_up'])),
+        Binding('end, G', '', str(msg.ctx_dict['scroll_down'])),
+        Binding('pageup', '', str(msg.ctx_dict['page_up'])),
+        Binding('pagedn', '', str(msg.ctx_dict['page_down'])),
         Binding('gr', '', 'cd /'),
         Binding('ge', '', 'cd /etc'),
         Binding('gh', '', 'cd /home'),
@@ -2550,64 +2643,64 @@ class MainScreen(Screen):
         Binding('gw', '', f'cd {sw_wine}'),
         Binding('gt', '', f'cd {sw_tmp}'),
         Binding('gd', '', f'cd {sw_fm_cache}'),
-        Binding('/', '', msg.msg_dict['partitions']),
-        Binding('.,ctrl+h', '', msg.ctx_dict['show_hidden_files'][0]),
-        Binding('z', '', msg.ctx_dict['filter_files']),
-        Binding('f2,a,ctrl+r', '', msg.ctx_dict['rename'][0]),
-        Binding('f3,i', '', msg.ctx_dict['view']),
-        Binding('f4,E,ctrl+e', '', msg.ctx_dict['open']),
-        Binding('f5,yy,ctrl+d', '', msg.ctx_dict['copy'][0]),
-        Binding('f6,dd,ctrl+x', '', msg.ctx_dict['cut'][0]),
-        Binding('pp,ctrl+v', '', msg.ctx_dict['paste'][0]),
-        Binding('insert', '', msg.ctx_dict['create']),
-        Binding('shift+l', '', msg.ctx_dict['link'][0]),
-        Binding('f7,ctrl+n', '', msg.ctx_dict['create_dir'][0]),
-        Binding('f8,delete', '', msg.ctx_dict['remove']),
-        Binding('f9,M', '', msg.tt_dict['view_menu']),
-        Binding('f10,q,ctrl+c', '', msg.msg_dict['shutdown']),
-        Binding('ma,f1,?', '', msg.msg_dict['about']),
-        Binding('mk,ctrl+k', '', msg.ctx_dict['show_hotkeys'][0]),
-        Binding('mw,ctrl+w', '', msg.msg_dict['install_wine']),
-        Binding('ml,ctrl+l', '', msg.msg_dict['launchers']),
+        Binding('/', '', str(msg.msg_dict['partitions'])),
+        Binding('.,ctrl+h', '', str(msg.ctx_dict['show_hidden_files'][0])),
+        Binding('z', '', str(msg.ctx_dict['filter_files'])),
+        Binding('f2,a,ctrl+r', '', str(msg.ctx_dict['rename'][0])),
+        Binding('f3,i', '', str(msg.ctx_dict['view'])),
+        Binding('f4,E,ctrl+e', '', str(msg.ctx_dict['open'])),
+        Binding('f5,yy,ctrl+d', '', str(msg.ctx_dict['copy'][0])),
+        Binding('f6,dd,ctrl+x', '', str(msg.ctx_dict['cut'][0])),
+        Binding('pp,ctrl+v', '', str(msg.ctx_dict['paste'][0])),
+        Binding('insert', '', str(msg.ctx_dict['create'])),
+        Binding('shift+l', '', str(msg.ctx_dict['link'][0])),
+        Binding('f7,ctrl+n', '', str(msg.ctx_dict['create_dir'][0])),
+        Binding('f8,delete', '', str(msg.ctx_dict['remove'])),
+        Binding('f9,M', '', str(msg.tt_dict['view_menu'])),
+        Binding('f10,q,ctrl+c', '', str(msg.msg_dict['shutdown'])),
+        Binding('ma,f1,?', '', str(msg.msg_dict['about'])),
+        Binding('mk,ctrl+k', '', str(msg.ctx_dict['show_hotkeys'][0])),
+        Binding('mw,ctrl+w', '', str(msg.msg_dict['install_wine'])),
+        Binding('ml,ctrl+l', '', str(msg.msg_dict['launchers'])),
     ]
 
     BINDINGS = [
-        Binding(':,;', 'command_line', msg.ctx_dict['command_line'], show=False),
-        Binding('/', 'toggle_partitions', msg.msg_dict['partitions'], show=True),
-        Binding('$', 'shell', msg.ctx_dict['shell'], show=False),
+        Binding(':,;', 'command_line', str(msg.ctx_dict['command_line']), show=False),
+        Binding('/', 'toggle_partitions', str(msg.msg_dict['partitions']), show=True),
+        Binding('$', 'shell', str(msg.ctx_dict['shell']), show=False),
         Binding('gs,ctrl+s', 'open_shortcuts', msg.msg_dict['shortcuts'], show=False),
         Binding('ml,ctrl+l', 'toggle_launchers', msg.msg_dict['launchers'], show=False),
         Binding('mw,ctrl+w', 'toggle_winebuilds', msg.msg_dict['install_wine'], show=False),
-        Binding('r', 'run_file', msg.ctx_dict['open_with'], show=False),
-        Binding('pp,ctrl+v', 'paste_file', msg.ctx_dict['paste'][0], show=False),
-        Binding('f1,?', 'toggle_about', msg.msg_dict['about'], show=True, key_display='F1'),
-        Binding('f2,a,ctrl+r', 'rename_file', msg.ctx_dict['rename'][0], show=True, key_display='F2'),
-        Binding('f3,i', 'set_text', msg.ctx_dict['view'], show=True, key_display='F3'),
-        Binding('f4,E,ctrl+e', 'open_editor', msg.ctx_dict['open'], show=True, key_display='F4'),
-        Binding('f5,yy,ctrl+d', 'copy_file', msg.ctx_dict['copy'][0], show=True, key_display='F5'),
-        Binding('f6,dd,ctrl+x', 'cut_file', msg.ctx_dict['cut'][0], show=True, key_display='F6'),
-        Binding('insert', 'create_file', msg.ctx_dict['create'], show=False),
-        Binding('shift+l', 'create_link', msg.ctx_dict['link'][0], show=False),
-        Binding('f7,ctrl+n', 'create_directory', msg.ctx_dict['create_dir'][0], show=True, key_display='F7'),
-        Binding('f8,delete', 'delete_file', msg.ctx_dict['remove'], show=True, key_display='F8'),
-        Binding('f9', 'toggle_menu', msg.tt_dict['view_menu'], show=True, key_display='F9'),
-        Binding('M', 'toggle_bookmarks', msg.tt_dict['bookmarks'], show=False),
-        Binding('f10,q,ctrl+c', 'quit', msg.msg_dict['shutdown'], show=True, key_display='F10'),
-        Binding('ctrl+k', 'show_hotkeys', msg.ctx_dict['show_hotkeys'][0], show=False),
-        Binding('k,up', 'cursor_up', msg.ctx_dict['cursor_up'], show=False),
-        Binding('j,down', 'cursor_down', msg.ctx_dict['cursor_down'], show=False),
-        Binding('l,right', 'toggle_node', msg.ctx_dict['toggle_node'], show=False),
-        Binding('h,left', 'go_back', msg.tt_dict['back_up'], show=False),
-        Binding('gg,home', 'scroll_home', msg.tt_dict['scroll_up'], show=False),
-        Binding('G,end', 'scroll_end', msg.ctx_dict['scroll_down'], show=False),
-        Binding('pageup', 'page_up', msg.ctx_dict['page_up'], show=False),
-        Binding('pagedn', 'page_down', msg.ctx_dict['page_down'], show=False),
-        Binding('.,ctrl+h', 'toggle_hidden', msg.ctx_dict['show_hidden_files'][0], show=False),
-        Binding('z', "filter", msg.ctx_dict['filter_files'], show=False),
-        Binding('escape', 'hide_panel', msg.tt_dict['back_main'], show=False),
-        #TODO Binding("", "add_bookmark", msg.ctx_dict['add_bookmark'], show=True),
-        #TODO Binding("", "compress_file", msg.ctx_dict['compress'], show=True),
-        #TODO Binding("", "properties", msg.ctx_dict['properties'][0], show=True),
+        Binding('r', 'run_file', str(msg.ctx_dict['open_with']), show=False),
+        Binding('pp,ctrl+v', 'paste_file', str(msg.ctx_dict['paste'][0]), show=False),
+        Binding('f1,?', 'toggle_about', str(msg.msg_dict['about']), show=True, key_display='F1'),
+        Binding('f2,a,ctrl+r', 'rename_file', str(msg.ctx_dict['rename'][0]), show=True, key_display='F2'),
+        Binding('f3,i', 'set_text', str(msg.ctx_dict['view']), show=True, key_display='F3'),
+        Binding('f4,E,ctrl+e', 'open_editor', str(msg.ctx_dict['open']), show=True, key_display='F4'),
+        Binding('f5,yy,ctrl+d', 'copy_file', str(msg.ctx_dict['copy'][0]), show=True, key_display='F5'),
+        Binding('f6,dd,ctrl+x', 'cut_file', str(msg.ctx_dict['cut'][0]), show=True, key_display='F6'),
+        Binding('insert', 'create_file', str(msg.ctx_dict['create']), show=False),
+        Binding('shift+l', 'create_link', str(msg.ctx_dict['link'][0]), show=False),
+        Binding('f7,ctrl+n', 'create_directory', str(msg.ctx_dict['create_dir'][0]), show=True, key_display='F7'),
+        Binding('f8,delete', 'delete_file', str(msg.ctx_dict['remove']), show=True, key_display='F8'),
+        Binding('f9', 'toggle_menu', str(msg.tt_dict['view_menu']), show=True, key_display='F9'),
+        Binding('M', 'toggle_bookmarks', str(msg.tt_dict['bookmarks']), show=False),
+        Binding('f10,q,ctrl+c', 'shutdown', str(msg.msg_dict['shutdown']), show=True, key_display='F10'),
+        Binding('ctrl+k', 'show_hotkeys', str(msg.ctx_dict['show_hotkeys'][0]), show=False),
+        Binding('k,up', 'cursor_up', str(msg.ctx_dict['cursor_up']), show=False),
+        Binding('j,down', 'cursor_down', str(msg.ctx_dict['cursor_down']), show=False),
+        Binding('l,right', 'toggle_node', str(msg.ctx_dict['toggle_node']), show=False),
+        Binding('h,left', 'go_back', str(msg.tt_dict['back_up']), show=False),
+        Binding('gg,home', 'scroll_home', str(msg.tt_dict['scroll_up']), show=False),
+        Binding('G,end', 'scroll_end', str(msg.ctx_dict['scroll_down']), show=False),
+        Binding('pageup', 'page_up', str(msg.ctx_dict['page_up']), show=False),
+        Binding('pagedn', 'page_down', str(msg.ctx_dict['page_down']), show=False),
+        Binding('.,ctrl+h', 'toggle_hidden', str(msg.ctx_dict['show_hidden_files'][0]), show=False),
+        Binding('z', "filter", str(msg.ctx_dict['filter_files']), show=False),
+        Binding('escape', 'hide_panel', str(msg.tt_dict['back_main']), show=False),
+        #TODO Binding("", "add_bookmark", str(msg.ctx_dict['add_bookmark']), show=True),
+        #TODO Binding("", "compress_file", str(msg.ctx_dict['compress']), show=True),
+        #TODO Binding("", "properties", str(msg.ctx_dict['properties'][0]), show=True),
     ]
     if sw_cfg.get('control_panel') == 'show':
         show_sidebar = var(True)
@@ -2618,10 +2711,10 @@ class MainScreen(Screen):
     show_output = var(False)
 
     def __init__(self) -> None:
-        super().__init__(name='main_screen')
-        self.left_files = None
+        super().__init__(id='main_screen', name='main_screen')
+        # self.left_files = None
         self.current_file = None
-        self.current_node = None
+        # self.current_node = None
         self.clipboard_type = None
         self.cmd_list = [
             'sw://app', 'sw://store', 'sw://wine', 'sw://touch', 'sw://mkdir',
@@ -2683,21 +2776,20 @@ class MainScreen(Screen):
                     mountpoint = x.mountpoint
                     if '.Xauthority' not in mountpoint:
                         fs_size = psutil.disk_usage(mountpoint).total
-                        fs_used = psutil.disk_usage(mountpoint).used
                         fs_free = psutil.disk_usage(mountpoint).free
                         fmt_size = GLib.format_size(int(fs_size))
                         fmt_free = GLib.format_size(int(fs_free))
-                        fmt_used = GLib.format_size(int(fs_used))
+
                         self.table.add_row(
                             mountpoint, fmt_free, fmt_size, x.fstype, x.device,
                             x.opts, key=mountpoint
                         )
 
-        for n, x in enumerate(self.app.path_list):
+        for n, x in enumerate(app.path_list):
             node = self.left_files.get_node_at_line(n)
-            if node and str(node.data.path) == str(self.app.path):
+            if node and node.data and str(node.data.path) == str(app.path):
                 self.left_files.select_node(node)
-                chdir(self.app.root_path)
+                chdir(app.root_path)
 
     def compose(self) -> ComposeResult:
         """Compose user interface."""
@@ -2707,9 +2799,9 @@ class MainScreen(Screen):
         self.suggester = SuggestInput(suggestions=self.history, case_sensitive=False)
         self.commandline = Commandline(
             placeholder=' ', id='commandline',
-            suggester=self.suggester, tooltip=tooltip, #select_on_focus = False
+            suggester=self.suggester, tooltip=tooltip, select_on_focus = False
         )
-        self.left_files = DirTree(path=self.app.root_path, id='left_tree_view')
+        self.left_files = DirTree(path=app.root_path, id='left_tree_view')
         self.table = DtTable(id='partition_view')
         self.sidebar = TabbedContent(id='sidebar')
 
@@ -2728,28 +2820,32 @@ class MainScreen(Screen):
     def bookmarks(self):
         for b, u in termmarks_dict.items():
             label = u[1] if u[1] else str(Path(b).name)
-            yield Option(u[0] + label, id=b)
-            yield Separator()
+            yield Option(str(u[0]) + label, id=b)
+            yield None
 
     def on_input_changed(self, event) -> None:
         """Emitted when input value changed."""
         if event.input.id == 'commandline':
             if event.input.value in self.cmd_list:
-                if event.input.value.startswith('sw://filter'):
-                    pass
-                elif event.input.value.startswith('sw://print'):
+                if event.input.value.startswith(f'sw://filter'):
                     pass
                 else:
-                    self.app.simulate_key('enter')
+                    #self.app.simulate_key('enter')
+                    self.action_execute_cmd(event.input.value)
+                    self.commandline.clear()
+                    self.left_files.focus()
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         """Emitted when enter pressed."""
-        if str(event.value).startswith('sw://'):
+        if str(event.value).startswith(f'sw://'):
             self.action_execute_cmd(event.value)
-            self.commandline.action_toggle_focus()
+            self.commandline.clear()
         else:
             with self.app.suspend():
-                run(f'clear && hostexec {event.value}', shell=True)
+                try:
+                    run(f'clear && hostexec {event.value}', shell=True)
+                except (Exception,):
+                    run(f'clear && {event.value}', shell=True)
                 input(f"{msg.tt_dict['back_main']}: ")
 
     def on_option_list_option_selected(self, event):
@@ -2778,7 +2874,7 @@ class MainScreen(Screen):
             self.app.switch_mode('about')
 
         elif event['key'] == 'shutdown':
-            self.app.push_screen(DialogQuit(), self.app.check_quit)
+            app.action_shutdown()
 
     def on_directory_tree_file_selected(
             self, event: DirectoryTree.FileSelected) -> None:
@@ -2790,14 +2886,14 @@ class MainScreen(Screen):
         """Emitted when directory tree node selected."""
         self.current_node = event.node
         self.current_file = str(event.node.data.path)
-        self.left_files.path = (event.node.data.path)
+        self.left_files.path = str(event.node.data.path)
         chdir(self.left_files.path)
 
     def file_info(self):
         """Get the status of a file or a file descriptor."""
-        name = Path(self.current_file).name
+        name = Path(str(self.current_file)).name
         try:
-            file_info = Path(self.current_file).stat()
+            file_info = Path(str(self.current_file)).stat()
         except (OSError, IOError, PermissionError):
             file_info = None
 
@@ -2864,134 +2960,143 @@ class MainScreen(Screen):
         if event.key == 'y':
             self.commandline.focus()
             self.commandline.value = 'sw://y'
+            self.commandline.action_end()
 
         if event.key == 'd':
             self.commandline.focus()
             self.commandline.value = 'sw://d'
+            self.commandline.action_end()
 
         if event.key == 'p':
             self.commandline.focus()
             self.commandline.value = 'sw://p'
+            self.commandline.action_end()
 
         if event.key == 'g':
             self.commandline.focus()
             self.commandline.value = 'sw://g'
+            self.commandline.action_end()
 
         if event.key == 'm':
             self.commandline.focus()
             self.commandline.value = 'sw://m'
+            self.commandline.action_end()
 
         if event.key == 'z':
             self.commandline.focus()
             self.commandline.value = 'sw://filter '
+            self.commandline.action_end()
 
     def action_execute_cmd(self, cmd):
         """Execute shell command."""
         execute = cmd.removeprefix('sw://')
 
-        if 'sw://app' == cmd or 'sw://gs' == cmd:
+        if f'sw://app' == cmd or f'sw://gs' == cmd:
             self.action_open_shortcuts()
 
-        elif 'sw://part' == cmd:
+        elif f'sw://part' == cmd:
             self.action_toggle_partitions()
 
-        elif 'sw://root' == cmd or 'sw://gr' == cmd:
+        elif f'sw://root' == cmd or f'sw://gr' == cmd:
             self.action_open_location('/')
 
-        elif 'sw://etc' == cmd or 'sw://ge' == cmd:
+        elif f'sw://etc' == cmd or f'sw://ge' == cmd:
             self.action_open_location('/etc')
 
-        elif 'sw://mnt' == cmd or 'sw://gm' == cmd:
+        elif f'sw://mnt' == cmd or f'sw://gm' == cmd:
             self.action_open_location('/mnt')
 
-        elif 'sw://opt' == cmd or 'sw://go' == cmd:
+        elif f'sw://opt' == cmd or f'sw://go' == cmd:
             self.action_open_location('/opt')
 
-        elif 'sw://var' == cmd or 'sw://gv' == cmd:
+        elif f'sw://var' == cmd or f'sw://gv' == cmd:
             self.action_open_location('/var')
 
-        elif 'sw://usr' == cmd or 'sw://gu' == cmd:
+        elif f'sw://usr' == cmd or f'sw://gu' == cmd:
             self.action_open_location('/usr')
 
-        elif 'sw://home' == cmd or 'sw://gh' == cmd:
+        elif f'sw://home' == cmd or f'sw://gh' == cmd:
             self.action_open_location(Path.home())
 
-        elif 'sw://local' == cmd or 'sw://gl' == cmd:
+        elif f'sw://local' == cmd or f'sw://gl' == cmd:
             self.action_open_location(Path.home().joinpath('.local/share'))
 
-        elif 'sw://tmp' == cmd or 'sw://gt' == cmd:
+        elif f'sw://tmp' == cmd or f'sw://gt' == cmd:
             self.action_open_location(sw_tmp)
 
-        elif 'sw://cache' == cmd or 'sw://gd' == cmd:
+        elif f'sw://cache' == cmd or f'sw://gd' == cmd:
             self.action_open_location(sw_fm_cache)
 
-        elif 'sw://config' == cmd or 'sw://gc' == cmd:
+        elif f'sw://config' == cmd or f'sw://gc' == cmd:
             self.action_open_location(sw_app_config)
 
-        elif 'sw://pfx' == cmd or 'sw://gp' == cmd:
+        elif f'sw://pfx' == cmd or f'sw://gp' == cmd:
             self.action_open_location(sw_pfx)
 
-        elif 'sw://backup' == cmd or 'sw://gb' == cmd:
+        elif f'sw://backup' == cmd or f'sw://gb' == cmd:
             self.action_open_location(sw_pfx_backup)
 
-        elif 'sw://gw' == cmd:
+        elif f'sw://games' == cmd or f'sw://ga' == cmd:
+            self.action_open_location(sw_games)
+
+        elif f'sw://gw' == cmd:
             self.action_open_location(sw_wine)
 
-        elif 'sw://touch' == cmd or 'sw://cw' == cmd:
+        elif f'sw://touch' == cmd or f'sw://cw' == cmd:
             self.action_create_file()
 
-        elif 'sw://mkdir' == cmd:
+        elif f'sw://mkdir' == cmd:
             self.action_create_directory()
 
-        elif 'sw://delete' == cmd:
+        elif f'sw://delete' == cmd:
             self.action_delete_file()
 
-        elif 'sw://dd' == cmd:
+        elif f'sw://dd' == cmd:
             self.action_cut_file()
 
-        elif 'sw://yy' == cmd:
+        elif f'sw://yy' == cmd:
             self.action_copy_file()
 
-        elif 'sw://pp' == cmd:
+        elif f'sw://pp' == cmd:
             self.action_paste_file()
 
-        elif 'sw://gg' == cmd:
+        elif f'sw://gg' == cmd:
             self.left_files.action_scroll_home()
 
-        elif 'sw://filter' in cmd:
+        elif f'sw://filter' in cmd:
             self.left_files.pattern = cmd.removeprefix('sw://filter').replace(' ', '')
             self.left_files.reload()
 
-        elif 'sw://edit' == cmd:
+        elif f'sw://edit' == cmd:
             self.left_files.focus()
             self.action_open_editor()
 
-        elif 'sw://inspect' == cmd:
+        elif f'sw://inspect' == cmd:
             self.action_set_text()
 
-        elif 'sw://open' in cmd:
+        elif f'sw://open' in cmd:
             path = cmd.split(' ')[-1] if len(cmd.split(' ')) > 1 else None
             if path:
                 self.action_open_location(path)
 
-        elif 'sw://about' == cmd or 'sw://ma' == cmd:
+        elif f'sw://about' == cmd or f'sw://ma' == cmd:
             self.left_files.focus()
             self.app.switch_mode('about')
 
-        elif 'sw://hotkeys' == cmd or 'sw://mh' == cmd:
+        elif f'sw://hotkeys' == cmd or f'sw://mh' == cmd:
             self.left_files.focus()
             self.action_show_hotkeys()
 
-        elif 'sw://store' == cmd or 'sw://ml' == cmd:
+        elif f'sw://store' == cmd or f'sw://ml' == cmd:
             self.left_files.focus()
             self.action_toggle_launchers()
 
-        elif 'sw://wine' == cmd or 'sw://mw' == cmd:
+        elif f'sw://wine' == cmd or f'sw://mw' == cmd:
             self.left_files.focus()
             self.action_toggle_winebuilds()
 
-        elif 'sw://shutdown' == cmd:
-            self.app.action_quit()
+        elif f'sw://shutdown' == cmd:
+            app.action_shutdown()
 
         else:
             with self.app.suspend():
@@ -3007,7 +3112,7 @@ class MainScreen(Screen):
 
             if mime_type in exe_mime_dict.keys():
                 environ['SW_EXEC'] = f'"{path}"'
-                data = exe_data.get_(str(Path(path).stem))
+                data = exe_data.get_(str(path))
 
                 if data and data.get('path') and data.get('path') != 'None':
                     buttons = {
@@ -3031,7 +3136,8 @@ class MainScreen(Screen):
                 )
 
             elif Path(path).suffix == '.swd':
-                data = exe_data.get_(str(Path(path).stem))
+                exe_path = get_swd_path(path)
+                data = exe_data.get_(str(exe_path))
                 app_path = data.get('path') if data else None
 
                 if app_path and Path(app_path).exists():
@@ -3045,14 +3151,18 @@ class MainScreen(Screen):
                         'quit': msg.msg_dict['cancel'],
                     }
                     self.app.push_screen(
-                        DialogOptions(str(Path(app_path).name), buttons, align='center'),
+                        DialogOptions(
+                            str(Path(app_path).name), buttons, align='center'
+                        ),
                         self.check_answer
                     )
                 else:
                     self.app.push_screen(DialogInfo(msg.msg_dict['lnk_error']))
 
             elif Path(path).suffix == '.desktop':
-                arg = [x for x in Path(str(path)).read_text().splitlines() if 'Exec=' in x]
+                arg = [
+                    x for x in Path(str(path)).read_text().splitlines() if 'Exec=' in x
+                ]
                 exe = str(arg[0].split('=')[1]) if arg else None
                 environ['SW_EXEC'] = f'"{path}"'
                 environ['SW_COMMANDLINE'] = f'{exe}'
@@ -3079,7 +3189,7 @@ class MainScreen(Screen):
             else:
                 Popen(f'sw_open --file "{path}"', shell=True)
 
-    def check_answer(self, answer: str) -> None:
+    def check_answer(self, answer) -> None:
         """User response callback."""
         path = get_app_path()
         name = Path(path.strip('"')).name
@@ -3088,11 +3198,14 @@ class MainScreen(Screen):
             write_app_conf(Path(f'{path}'))
             self.app.sub_title = f'{name}'
             self.app.push_screen(Progress(str(name)))
-            self.app.on_start()
+            app.on_start()
 
         elif answer['key'] == 'run_desktop':
             with self.app.suspend():
-                run(f'hostexec {getenv("SW_COMMANDLINE")}', shell=True)
+                try:
+                    run(f'hostexec {getenv("SW_COMMANDLINE")}', shell=True)
+                except (Exception,):
+                    run(f'{getenv("SW_COMMANDLINE")}', shell=True)
                 input(f"{msg.tt_dict['back_main']}: ")
 
         elif answer['key'] == 'open':
@@ -3108,7 +3221,7 @@ class MainScreen(Screen):
 
         elif answer['key'] == 'wine':
             self.app.sub_title = f'{name}'
-            on_message_cs(self)
+            app.request_create_shortcut()
 
         elif answer['key'] == 'settings':
             write_app_conf(Path(f'{path}'))
@@ -3120,11 +3233,11 @@ class MainScreen(Screen):
                     msg.msg_dict['app_conf_incorrect'] + f' {name}.',
                     msg.msg_dict['app_conf_reset']
                 ]
-                self.app.on_error(self.error_message, self.app.check_reset)
+                app.on_error(self.error_message, app.check_reset)
 
         elif answer['key'] == 'remove':
             self.app.sub_title = f'{name}'
-            exe_data.set_(get_out(), 'path', None)
+            exe_data.set_(get_app_path(), 'path', None)
 
             with self.app.suspend():
                 on_pfx_remove()
@@ -3142,7 +3255,10 @@ class MainScreen(Screen):
     def action_shell(self) -> None:
         """call function in command line."""
         with self.app.suspend():
-            run('hostexec $SHELL', shell=True)
+            try:
+                run('hostexec $SHELL', shell=True)
+            except (Exception,):
+                run('$SHELL', shell=True)
 
     def action_go_back(self) -> None:
         """Return to the parent directory."""
@@ -3157,44 +3273,11 @@ class MainScreen(Screen):
 
     def action_set_text(self) -> None:
         """Open selected file in a TextView."""
-        path = self.current_node.data.path if self.current_file else None
-        if path and Path(path).is_file():
-            self.app.push_screen(TextView(path=path))
-            self.app.sub_title = str(path)
-
-    def action_stdout_print(self) -> None:
-        """Print stdout in a TextView."""
-        self.show_output = True
-        self.view = TextView()
-        self.app.push_screen(self.view)
-        cmd = str(self.commandline.value).replace('sw://print', '')
-        self.stdout_pipe(cmd)
-
-    def stdout_pipe(self, cmd):
-        """"""
-        proc = Popen(
-            f'hostexec {cmd}', shell=True, stdout=PIPE, start_new_session=True
-        )
-        t = Thread(target=self.stdout_read, args=(proc, 'code'))
-        t.start()
-
-    def stdout_read(self, proc, widget, timeout=None):
-        """"""
-        text = ''
-        while proc.poll() is None:
-            if timeout:
-                sleep(timeout)
-            else:
-                sleep(0.05)
-
-            text = text + str(non_block_read(proc.stdout))
-
-            for static in self.view.query(f'#{widget}'):
-                static.update(text)
-                static.parent.scroll_end()
-        else:
-            for static in self.view.query(f'#{widget}'):
-                static.update(text + 'Done')
+        if self.current_node:
+            path = self.current_node.data.path if self.current_file else None
+            if path and Path(path).is_file():
+                self.app.push_screen(TextView(path=path))
+                self.app.sub_title = str(path)
 
     def action_open_location(self, path=None):
         """Open the file location in a directory tree."""
@@ -3223,10 +3306,13 @@ class MainScreen(Screen):
         path = path if path else self.current_file
         if path and Path(path).is_file():
             with self.app.suspend():
-                if self.app.EDITOR == 'micro':
-                    run([f'{self.app.EDITOR}', f'{path}'])
+                if app.EDITOR == 'micro':
+                    run([f'{app.EDITOR}', f'{path}'])
                 else:
-                    run(['hostexec', f'{self.app.EDITOR}', f'{path}'])
+                    try:
+                        run(['hostexec', f'{app.EDITOR}', f'{path}'])
+                    except (Exception,):
+                        run([f'{app.EDITOR}', f'{path}'])
 
     def action_open_with(self, path=None):
         """Open the file using the launch program."""
@@ -3271,14 +3357,6 @@ class MainScreen(Screen):
                 msg.ctx_dict['show_hotkeys'][0], _dict, height='80%', align='center'
             )
         )
-
-    def action_toggle_output(self) -> None:
-        """Called in response to key binding."""
-        self.show_output = not self.show_output
-        if self.show_output:
-            self.stdout.focus()
-        else:
-            self.left_files.focus()
 
     def action_toggle_partitions(self) -> None:
         """Called in response to key binding."""
@@ -3325,13 +3403,14 @@ class MainScreen(Screen):
         if path:
             parent = Path(path) if Path(path).is_dir() else Path(path).parent
             count = int()
-            message = msg.ctx_dict['create']
+            message = str(msg.ctx_dict['create'])
             new_file = parent.joinpath(f'sample{count}.txt')
             while new_file.exists():
                 count += 1
                 new_file = Path(parent).joinpath(f'sample{count}.txt')
             else:
-                self.app.push_screen(DialogEntry(message, new_file), self.check_create_file)
+                self.app.push_screen(
+                    DialogEntry(message, str(new_file)), self.check_create_file)
 
     def check_create_file(self, answer) -> None:
         """Emitted when responding to create sybolic link request."""
@@ -3360,7 +3439,8 @@ class MainScreen(Screen):
                 count += 1
                 new_dir = Path(parent).joinpath(f'{msg.msg_dict["new_dir"]} {count}')
             else:
-                self.app.push_screen(DialogEntry(message, new_dir), self.check_create_dir)
+                self.app.push_screen(
+                    DialogEntry(message, str(new_dir)), self.check_create_dir)
 
     def check_create_dir(self, answer) -> None:
         """Emitted when responding to create sybolic link request."""
@@ -3383,7 +3463,7 @@ class MainScreen(Screen):
         if path:
             parent = Path(path) if Path(path).is_dir() else Path(path).parent
             count = int()
-            message = msg.ctx_dict['link'][0]
+            # message = msg.ctx_dict['link'][0]
             name = Path(path).name
             link = parent.joinpath(f'{msg.msg_dict["file_link"]} {count} {name}')
             while link.exists():
@@ -3429,7 +3509,7 @@ class MainScreen(Screen):
     def action_cut_file(self) -> None:
         """Cut the current file or directory."""
         self.clipboard_type = 'cut'
-        self.app.clipboard = self.current_file
+        self.app.copy_to_clipboard(str(self.current_file))
         Clipper().copy(str(self.current_file))
         self.notify(msg.msg_dict['copied_to_clipboard'])
 
@@ -3462,7 +3542,7 @@ class MainScreen(Screen):
     def action_copy_file(self) -> None:
         """Copy the current file or directory."""
         self.clipboard_type = 'copy'
-        self.app.clipboard = self.current_file
+        self.app.copy_to_clipboard(str(self.current_file))
         Clipper().copy(str(self.current_file))
         self.notify(msg.msg_dict['copied_to_clipboard'])
 
@@ -3487,11 +3567,12 @@ class MainScreen(Screen):
                     self.notify(f'File: {source} is not a file or directory')
 
             elif Path(source) == target and Path(source) != Path(parent):
-                target = Path(f'{parent}/{str_copy}_{source_name}')
+                target = Path(f'{parent}').joinpath(f'{str_copy}_{source_name}')
                 count = int()
                 while target.exists():
                     count += 1
-                    target = Path(f'{parent}/{str_copy}{count}_{source_name}')
+                    target = Path(
+                        f'{parent}').joinpath(f'{str_copy}{count}_{source_name}')
                 shutil.copy2(source, target, follow_symlinks=False)
             else:
                 self.notify(msg.msg_dict['equal_paths'])
@@ -3511,11 +3592,13 @@ class MainScreen(Screen):
         path = self.current_file if self.current_file else None
         if path:
             if Path(path).suffix == '.swd':
-                data = exe_data.get_(str(Path(path).stem))
+                exe_path = get_swd_path(path)
+                data = exe_data.get_(str(exe_path))
                 app_path = data.get('path') if data else None
                 if app_path and Path(app_path).exists():
-                    environ['SW_EXEC'] = f'"{path}"'
-                    message = ' '.join([msg.msg_dict['remove_pfx'], str(Path(path).stem)])
+                    environ['SW_EXEC'] = f'"{app_path}"'
+                    message = ' '.join(
+                        [msg.msg_dict['remove_pfx'], str(Path(path).stem)])
                 else:
                     message = ' '.join([msg.msg_dict['permanently_delete'], str(path)])
             else:
@@ -3528,9 +3611,10 @@ class MainScreen(Screen):
             path = self.current_file if self.current_file else None
             if path:
                 if Path(path).suffix == '.swd':
-                    exe_data.set_(get_out(), 'path', None)
-                    thread = Thread(target=on_pfx_remove)
-                    thread.start()
+                    exe_data.set_(get_app_path(), 'path', None)
+                    with self.app.suspend():
+                        on_pfx_remove()
+                    self.left_files.reload()
                 else:
                     self.on_remove_file(path)
 
@@ -3556,36 +3640,36 @@ class MainScreen(Screen):
 class SysCommands(Provider):
     """A command provider."""
 
-    @property
-    def _system_commands(self) -> tuple[tuple[str, IgnoreReturnCallbackType, str], ...]:
+    # @property
+    def get_themes(self) -> tuple:
         """The system commands to reveal to the command palette."""
-        return (
-            (
-                "Quit the application",
-                self.app.action_quit,
-                "Quit the application as soon as possible",
-            ),
+        themes = tuple(
+            (f'{theme.capitalize()}.theme', app.action_theme, 'Theme')
+                for theme, _ in app.available_themes.items()
         )
+        return themes
 
-    async def discover(self) -> Hits:
-        """Handle a request for the discovery commands for this provider."""
-        for name, runnable, help_text in self._system_commands:
-            yield DiscoveryHit(
-                name,
-                runnable,
-                help=help_text,
-            )
+    async def startup(self) -> None:
+        worker = self.app.run_worker(self.get_themes, thread=True)
+        self.data = await worker.wait()
+
+    # async def discover(self) -> Hits:
+    #     for name, runnable, help_text in self._system_commands:
+    #         yield DiscoveryHit(
+    #             name,
+    #             runnable,
+    #             help=help_text,
+    #         )
 
     async def search(self, query: str) -> Hits:
-        """Search for shortcut files."""
         matcher = self.matcher(query)
         assert isinstance(self.app, SwTerminalShell)
-        for name, runnable, help_text in self._system_commands:
+        for name, runnable, help_text in self.data:
             if (match := matcher.match(name)) > 0:
                 yield Hit(
                     match,
                     matcher.highlight(name),
-                    runnable,
+                    partial(runnable, name),
                     help=help_text,
                 )
 
@@ -3593,31 +3677,30 @@ class SysCommands(Provider):
 class RunCommands(Provider):
     """A command provider."""
 
-    def read_data(self) -> list[Path]:
+    def read_data(self) -> list:
         """Get a list of Shortcuts."""
         data = list()
         for x in sw_shortcuts.iterdir():
-            data.append(exe_data.get_(x.stem))
+            exe_path = get_swd_path(x)
+            data.append(exe_data.get_(exe_path))
         return data
 
-    async def startup(self) -> None:  
-        """Called once when the command palette is opened, prior to searching."""
+    async def startup(self) -> None:
         worker = self.app.run_worker(self.read_data, thread=True)
         self.data = await worker.wait()
 
     async def search(self, query: str) -> Hits:
-        """Search for shortcut files."""
         matcher = self.matcher(query)
         assert isinstance(self.app, SwTerminalShell)
         for data in self.data:
-            command = f"{str(data.get('name'))}"
+            command = f"Run {str(data.get('name'))}"
             score = matcher.match(command)
             if score > 0:
                 yield Hit(
                     score,
                     matcher.highlight(command),
                     partial(self.app.open, data.get('path')),
-                    help="Run app in Vulkan or OpenGL mode",
+                    #help="Run app in Vulkan or OpenGL mode",
                 )
 
 
@@ -3643,13 +3726,13 @@ class SwTerminalShell(App[str]):
     BINDINGS = [
         Binding("B", "app.push_screen('bsod')", "BSOD", show=False),
         Binding('!', 'splash', '', show=False),
-        Binding('#', 'toggle_theme', 'Toggle theme', show=False),
+        Binding('#', 'arc_theme', 'Toggle theme', show=False),
         Binding('shift+f2', 'screenshot', 'Screenshot', show=False, priority=True),
         Binding('shift+f3', 'screenrecord', 'Screen recording', show=False, priority=True),
         Binding('backslash,ctrl+f', 'command_palette', 'Command palette', show=False),
-        Binding('q', 'quit', msg.msg_dict['shutdown'], show=False),
-        Binding('ctrl+c', 'quit', msg.msg_dict['shutdown'], show=False),
-        Binding('f10', 'quit', msg.msg_dict['shutdown'], show=True, key_display='F10'),
+        Binding('q', 'shutdown', str(msg.msg_dict['shutdown']), show=False),
+        Binding('ctrl+c', 'shutdown', str(msg.msg_dict['shutdown']), show=False),
+        Binding('f10', 'shutdown', str(msg.msg_dict['shutdown']), show=True, key_display='F10'),
     ]
     MODES = {
         "bsod": BSOD,
@@ -3658,6 +3741,7 @@ class SwTerminalShell(App[str]):
     }
     watch_css = True
     dark = False if sw_cfg.get('color_scheme') == 'light' else True
+
     if custom_theme:
         CSS = CSS_THEME
     else:
@@ -3666,16 +3750,21 @@ class SwTerminalShell(App[str]):
         else:
             CSS = LIGHT_COLORS + CSS_THEME
 
-    def __init__(self, root_path=None, path=None, *args, **kwargs):
+    def __init__(self, root_path: str|Path = str(), path=str(), *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.cfg = sw_cfg
         self.path = path
-
+        self.theme_name = (
+            sw_cfg.get('shell_theme') if sw_cfg.get('shell_theme') else 'darkside'
+        )
         if self.path:
             self.root_path = root_path
             self.path_list = [p for p in Path(self.path).parent.iterdir()]
         else:
-            self.root_path = self.cfg.get('current_dir') if self.cfg.get('current_dir') else root_path
+            self.root_path: str|Path = (
+                str(self.cfg.get('current_dir'))
+                    if self.cfg.get('current_dir') else root_path
+            )
             self.path_list = [p for p in Path(self.root_path).parent.iterdir()]
 
         if self.cfg.get('hidden_files') == 'False':
@@ -3685,8 +3774,7 @@ class SwTerminalShell(App[str]):
         """Set widget properties."""
         if custom_theme:
             self.register_theme(custom_theme)
-            self.register_theme(gruvbox_theme)
-            self.theme = 'custom'
+            self.theme = str(self.theme_name)
 
         self.switch_mode("main_screen")
 
@@ -3707,7 +3795,7 @@ class SwTerminalShell(App[str]):
             self.check_answer
         )
 
-    def check_answer(self, answer: str) -> None:
+    def check_answer(self, answer) -> None:
         """User response callback."""
         if answer['key'] == 'run':
             write_app_conf(Path(f'"{self.sw_exec}"'))
@@ -3716,7 +3804,8 @@ class SwTerminalShell(App[str]):
             self.on_start()
 
         elif answer['key'] == 'open':
-            self.screen.left_files.path = str(Path(self.sw_exec).parent)
+            main_screen = self.screen_stack[0]
+            main_screen.left_files.path = str(Path(self.sw_exec).parent)
 
         elif answer['key'] == 'settings':
             write_app_conf(Path(f'"{self.sw_exec}"'))
@@ -3729,15 +3818,16 @@ class SwTerminalShell(App[str]):
                     msg.msg_dict['app_conf_incorrect'] + f'{Path(self.sw_exec).name} ',
                     msg.msg_dict['app_conf_reset']
                 ]
-                self.app.on_error(self.error_message, self.app.check_reset)
+                self.on_error(self.error_message, self.check_reset)
 
         elif answer['key'] == 'remove':
-            exe_data.set_(get_out(), 'path', None)
+            exe_data.set_(get_app_path(), 'path', None)
 
             with self.app.suspend():
                 on_pfx_remove()
 
-            self.screen.left_files.reload()
+            main_screen = self.screen_stack[0]
+            main_screen.left_files.reload()
 
         elif answer['key'] == 'cancel':
             self.app.sub_title = 'Cancel'
@@ -3756,18 +3846,131 @@ class SwTerminalShell(App[str]):
 
     def on_start(self):
         """Running application in vulkan or opengl mode."""
+
         app_path = get_app_path()
-        app_name = get_out()
-        app_suffix = get_suffix()
+        swd_data = exe_data.get_(str(app_path))
+
+        if swd_data and swd_data.get('id', {}):
+            app_id = swd_data.get('id')
+            app_id = app_id if app_id else ""
+            exe_args = []
+            epic_item_data = epic_exe_data.get(app_id, {})
+            gog_item_data = gog_exe_data.get(app_id, {})
+
+            if epic_item_data:
+                get_epic_exe_args(app_id, exe_args)
+                self._on_start()
+
+            elif gog_item_data:
+                exe_args = gog_item_data.get('args', {})
+                if exe_args and exe_args != "None":
+                    set_environ('SW_EXEC_ARGS', f'{exe_args}')
+                    self._on_start()
+                else:
+                    self._on_start()
+            else:
+                self._on_start()
+        else:
+            self._on_start()
+
+    def _on_start(self):
+        """Running application in vulkan or opengl mode."""
+
         wine, exist = check_wine()
         if not exist:
-            #TODO request_wine(wine)
-            self.app.pop_screen()
-            self.app.push_screen(DialogInfo(msg.msg_dict['wine_not_found']))
+            self.request_wine(wine)
         else:
-            q = []
-            vulkan_info(q)
-            self.run_(q)
+            self.run_app()
+
+    def get_wine_run(self, func_name: str, answer):
+        """___download wine and run app___"""
+        if answer == 'ok':
+            with self.app.suspend():
+                app_name = get_out()
+                app_conf = sw_app_config.joinpath(app_name)
+                app_conf_dict = app_conf_info(app_conf, switch_labels)
+
+                if app_conf_dict.get('CONTROLLER'):
+                    controller = str(app_conf_dict.get('CONTROLLER')).split('=')[1]
+                    if controller == '0':
+                        rc_dict['controller_active'] = False
+                    else:
+                        rc_dict['bind_profile'] = app_bind_profile
+                echo_func_name(func_name)
+            on_stop()
+            self.app.pop_screen()
+
+    def request_wine(self, wine):
+        """___wine download request___"""
+
+        wine_ver = wine.replace('-amd64', '').replace('-x86_64', '')
+        wine_ver = ''.join([e for e in wine_ver if not e.isalpha()]).strip('-')
+        name_ver = None
+        func_wine = wine_download_dict.get(wine)
+
+        if func_wine == 'WINE_1':
+            name_ver = 'STAG_VER'
+
+        if func_wine == 'WINE_2':
+            name_ver = 'SP_VER'
+
+        if func_wine == 'WINE_3':
+            name_ver = 'GE_VER'
+
+        if func_wine == 'WINE_4':
+            name_ver = 'STAG_VER'
+
+        if name_ver:
+            func_name = f'{name_ver}="{wine_ver}" WINE_OK=1 {func_wine} && RUN_VULKAN'
+            text_message = f"{wine} {msg.msg_dict['wine_not_exists']}"
+            self.app.push_screen(
+                screen=DialogQuestion(text_message),
+                callback=partial(self.get_wine_run, func_name)
+            )
+        else:
+            message = msg.msg_dict['wine_not_found']
+            self.app.push_screen(DialogInfo(message))
+
+    def request_create_shortcut(self):
+        """Run create shortcut function."""
+        app_path = get_app_path()
+        app_name = get_out()
+        _, latest_wine_dict, _ = get_wine_dicts()
+        wine = latest_wine_dict.get('wine_proton_ge')
+
+        if not wine:
+            message = msg.msg_dict['wine_not_found']
+            self.app.push_screen(DialogInfo(message))
+
+        elif sw_wine.joinpath(f'{wine}', 'bin', 'wine').exists():
+            with self.app.suspend():
+                on_cs_wine(app_name, app_path, wine)
+            self.notify(str(msg.msg_dict.get('shortcut_completed')))
+        else:
+            wine, exist = check_wine()
+            if not exist:
+                wine_ver = wine.replace('-amd64', '').replace('-x86_64', '')
+                wine_ver = ''.join([e for e in wine_ver if not e.isalpha()]).strip('-')
+                name_ver = 'GE_VER'
+                func_wine = 'WINE_3'
+                text_message = f"{wine} {msg.msg_dict['wine_not_exists']}"
+                self.app.push_screen(
+                    DialogQuestion(text_message),
+                    partial(self.get_wine_create_shortcut, func_wine, name_ver, wine_ver, wine)
+                )
+            else:
+                with self.app.suspend():
+                    on_cs_wine(app_name, app_path, wine)
+                self.notify(str(msg.msg_dict.get('shortcut_completed')))
+
+    def get_wine_create_shortcut(self, func_wine, name_ver, wine_ver, wine, answer):
+        """Download wine and create shortcut."""
+        if answer == 'ok':
+            app_path = get_app_path()
+            app_name = get_out()
+            with self.app.suspend():
+                echo_wine(func_wine, name_ver, wine_ver)
+                on_cs_wine(app_name, app_path, wine)
 
     def wait_exe_proc(self, app_suffix):
         """Waiting for the executing process to pop screen"""
@@ -3778,56 +3981,35 @@ class SwTerminalShell(App[str]):
         else:
             self.app.pop_screen()
 
-    def run_(self, q):
+    def run_app(self):
         """Running the executable."""
-        if len(q) > 0:
-            try:
-                vulkan_dri = q[0]
-            except Exception:
-                vulkan_dri = None
-            else:
-                if vulkan_dri == '' or vulkan_dri == 'llvmpipe':
-                    vulkan_dri = None
-            try:
-                vulkan_dri2 = q[1]
-            except Exception:
-                vulkan_dri2 = None
-            else:
-                if vulkan_dri2 == '' or vulkan_dri2 == 'llvmpipe':
-                    vulkan_dri2 = None
-        else:
-            vulkan_dri = None
-            vulkan_dri2 = None
 
-        app_path = get_app_path()
         app_name = get_out()
         app_suffix = get_suffix()
-
-        app_conf = Path(f"{sw_app_config}/" + str(app_name))
+        app_conf = sw_app_config.joinpath(f'{app_name}')
         app_conf_dict = app_conf_info(app_conf, switch_labels)
-        debug = app_conf_dict['WINEDBG_DISABLE'].split('=')[1]
+        debug_disable = app_conf_dict.get('WINEDBG_DISABLE', '=1').split('=')[1]
+        opengl = app_conf_dict.get('OPENGL', '=0').split('=')[1]
+        controller = app_conf_dict.get('CONTROLLER', '=0').split('=')[1]
 
-        if app_conf_dict.get('CONTROLLER'):
-            controller = app_conf_dict.get('CONTROLLER').split('=')[1]
-            if controller == '0':
-                rc_dict['controller_active'] = False
-            else:
-                rc_dict['bind_profile'] = app_bind_profile
+        if controller == '0':
+            rc_dict['controller_active'] = False
+        else:
+            rc_dict['bind_profile'] = app_bind_profile
 
-        if vulkan_dri is None and vulkan_dri2 is None:
-            if debug is None or debug == '1':
+        if opengl == '1':
+            if debug_disable == '1':
                 thread_start = Thread(target=run_opengl)
                 thread_start.start()
             else:
                 thread_start = Thread(target=debug_opengl)
                 thread_start.start()
         else:
-            if debug is None or debug == '1':
+            if debug_disable == '1':
                 thread_start = Thread(target=run_vulkan)
                 thread_start.start()
             else:
                 thread_start = Thread(target=debug_vulkan)
-                thread_start.start()
 
         t_info = Thread(target=self.wait_exe_proc, args=(app_suffix,))
         t_info.start()
@@ -3836,83 +4018,69 @@ class SwTerminalShell(App[str]):
         """"""
         self.app.push_screen(Progress(str_oops))
 
-    def action_toggle_theme(self) -> None:
+    def action_theme(self, theme: str) -> None:
         """Toggle and refresh css theme."""
-        self.dark = not self.dark
+        self.theme = f'{theme}'.lower().replace('.theme', '')
         self.refresh_css()
 
-    def action_screenshot(self, filename: str | None = None, path: str | None = None) -> None:
+    def action_screenshot(
+            self, filename: str | None = None, path: str | None = None) -> None:
         """Save an SVG file containing the current contents of the screen."""
         if not path:
             filename = f'sw_screenshot_{int(time())}.svg'
-            path = Path.home()
+            path = str(Path.home())
         else:
             filename = f'sw_screenshot_{int(time())}.svg'
 
         self.save_screenshot(filename, path)
 
     def action_screenrecord(self) -> None:
+        """capture the screen or window for record."""
         run_screencast()
 
-    def action_command_palette(self) -> None:
-        """Show the Textual command palette."""
-        if self.use_command_palette and not CommandPalette.is_open(self):
-            self.push_screen(CommandPalette(), callback=self.call_next)
-
-    def action_quit(self) -> None:
+    def action_shutdown(self) -> None:
         """Called in response to key binding."""
         self.app.push_screen(DialogQuit(), self.check_quit)
 
-    def check_quit(self, answer: bool) -> None:
+    def check_quit(self, answer) -> None:
         """Exit the application callback."""
         if answer:
-            screen_list = [s for s in self.screen_stack if s.name == 'main_screen']
+            main_screen = self.screen_stack[0]
+            if main_screen.current_file:
+                path = main_screen.current_file
+                parent = Path(path) if Path(path).is_dir() else Path(path).parent
+                self.cfg['current_dir'] = str(parent)
+            else:
+                self.cfg['current_dir'] = str(main_screen.left_files.path)
 
-            if screen_list:
-                main_screen = screen_list[0]
+            if not main_screen.show_sidebar:
+                self.cfg['control_panel'] = 'hide'
+            else:
+                self.cfg['control_panel'] = 'show'
 
-                if main_screen.current_file:
-                    path = main_screen.current_file
-                    parent = Path(path) if Path(path).is_dir() else Path(path).parent
-                    self.cfg['current_dir'] = str(parent)
-                else:
-                    self.cfg['current_dir'] = str(main_screen.left_files.path)
+            if main_screen.left_files.show_hidden_files:
+                self.cfg['hidden_files'] = 'True'
+            else:
+                self.cfg['hidden_files'] = 'False'
 
-                if not main_screen.show_sidebar:
-                    self.cfg['control_panel'] = 'hide'
-                else:
-                    self.cfg['control_panel'] = 'show'
+            self.cfg['shell_theme'] = f'{self.theme}'
 
-                if main_screen.left_files.show_hidden_files:
-                    self.cfg['hidden_files'] = 'True'
-                else:
-                    self.cfg['hidden_files'] = 'False'
-
-                if self.dark:
-                    self.cfg['color_scheme'] = 'dark'
-                else:
-                    self.cfg['color_scheme'] = 'light'
-
-                write_json_data(sw_exe_data_json, exe_data)
-                write_menu_conf(self.cfg)
+            write_json_data(sw_exe_data_json, exe_data)
+            write_menu_conf(self.cfg)
 
             self.app.exit('Shutdown')
 
 
 if __name__ == '__main__':
-    path = None
-    root_path = None
+    path = str()
+    root_path: str|Path = str()
 
-    if len(argv) < 2:
-        root_path = Path.cwd()
-    elif Path(str(argv[1])).exists():
+    if len(argv) >= 2 and Path(str(argv[1])).exists():
         if Path(str(argv[1])).is_dir():
             root_path = str(argv[1])
         else:
             path = str(argv[1])
             root_path = str(Path(str(argv[1])).parent)
-    else:
-        root_path = Path.cwd()
 
     mp_event = mp.Event()
     mgr = mp.Manager()
@@ -3921,14 +4089,16 @@ if __name__ == '__main__':
     rc_dict = mgr.dict()
     rc_dict['controller_active'] = True
     rc_dict['bind_profile'] = default_gui_bind_profile
-    rc_proc =  mp.Process(
-        target=run_zero_device_redirection, args=(mp_event, rc_dict)
-    )
-    process_workers.append(rc_proc)
-    rc_proc.start()
+
+    if input_active:
+        rc_proc =  mp.Process(
+            target=run_zero_device_redirection, args=(mp_event, rc_dict)
+        )
+        process_workers.append(rc_proc)
+        rc_proc.start()
+
     app = SwTerminalShell(root_path=root_path, path=path)
     app.run()
+
     for p in process_workers:
         p.terminate()
-
-
