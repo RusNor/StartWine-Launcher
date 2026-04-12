@@ -44,10 +44,6 @@ sudo tee -a /etc/sysctl.d/98-apparmor-unuserns.conf <<<kernel.apparmor_restrict_
 ```
 ## GUI
 
-Video demonstration of StartWine interface
-
-If you need quick access to folders or to add your own folder to a bookmark, click on the corresponding icon as shown in the video demonstration.
-
 StartWine Screenshots
 
 ![sw_image1](/handbook/en/sw_image1.png)
