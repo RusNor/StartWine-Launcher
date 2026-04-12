@@ -43,10 +43,6 @@ sudo tee -a /etc/sysctl.d/98-apparmor-unuserns.conf <<<kernel.apparmor_restrict_
 
 ## Интерфейс
 
-Видео демонстрация интерфейса StartWine
-
-Если вам надо быстрый доступ к папкам или добавить в закладку свою папку, то нажмите на соответсвующий значок как показано в видео
-
 Скриншоты StartWine
 
 ![sw_image1](/handbook/ru/sw_image1.png)
