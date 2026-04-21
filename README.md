@@ -15,17 +15,14 @@
 7. [License](#license)
 
 ## Setup
-To start using the program, download StartWine itself from the GitHub page under sw_releases or from the discord server
+To start using the program, download SmartWine itself from the GitHub page in the releases section. Make the file executable, move it to the terminal and press Enter.
 
 GitHub > [Click](https://github.com/RusNor/StartWine-Launcher/releases)
 
 AUR > [I use Arch :p](https://aur.archlinux.org/packages/startwine)
 
-Discord > [Click](https://discord.gg/jjY3auVdfm)
-
-Make the file executable and launch it with a double click
-
 ## Installation with one command:
+Copy one of the commands, paste it into the terminal and press Enter.
 ```bash
 bash -c "$(curl -sL RusNor.github.io)"
 ```
