@@ -17,6 +17,7 @@
 Сделайте файл исполняемым перенесите его в терминал и нажмите Enter
 
 GitHub > [Click](https://github.com/RusNor/StartWine-Launcher/releases)
+
 AUR > [I use Arch :p](https://aur.archlinux.org/packages/startwine)
 
 ## Установка одной командой:
