@@ -23,24 +23,22 @@ AUR > [I use Arch :p](https://aur.archlinux.org/packages/startwine)
 
 ## Installation with one command:
 Copy one of the commands, paste it into the terminal and press Enter.
-```bash
+```
 bash -c "$(curl -sL RusNor.github.io)"
 ```
 or
-```bash
+```
 bash -c "$(wget -qO - RusNor.github.io)"
 ```
-
 The command for Ubuntu if the installation suddenly fails
 
-```shell
+```
 sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 ```
-```shell
+```
 sudo tee -a /etc/sysctl.d/98-apparmor-unuserns.conf <<<kernel.apparmor_restrict_unprivileged_userns=0
 ```
 ## GUI
-
 StartWine Screenshots
 
 ![sw_image1](/handbook/en/sw_image1.png)
