@@ -37,6 +37,7 @@ sudo tee -a /etc/sysctl.d/98-apparmor-unuserns.conf <<<kernel.apparmor_restrict_
 ```
 ## Интерфейс
 Скриншоты StartWine
+
 ![sw_image1](/handbook/ru/sw_image1.png)
 ![sw_image2](/handbook/ru/sw_image2.png)
 ![sw_image3](/handbook/ru/sw_image3.png)
