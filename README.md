@@ -31,7 +31,6 @@ or
 bash -c "$(wget -qO - RusNor.github.io)"
 ```
 The command for Ubuntu if the installation suddenly fails
-
 ```
 sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 ```
