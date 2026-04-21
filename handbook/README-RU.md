@@ -17,9 +17,7 @@
 Сделайте файл исполняемым перенесите его в терминал и нажмите Enter
 
 GitHub > [Click](https://github.com/RusNor/StartWine-Launcher/releases)
-
 AUR > [I use Arch :p](https://aur.archlinux.org/packages/startwine)
-
 
 ## Установка одной командой:
 Скопируйте одну из команд вставти в терминал и нажмите Enter
@@ -31,18 +29,14 @@ bash -c "$(curl -sL RusNor.github.io)"
 bash -c "$(wget -qO - RusNor.github.io)"
 ```
 Команды для Ubuntu если вдруг установка не проходит
-
 ```shell
 sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 ```
 ```shell
 sudo tee -a /etc/sysctl.d/98-apparmor-unuserns.conf <<<kernel.apparmor_restrict_unprivileged_userns=0
 ```
-
 ## Интерфейс
-
 Скриншоты StartWine
-
 ![sw_image1](/handbook/ru/sw_image1.png)
 ![sw_image2](/handbook/ru/sw_image2.png)
 ![sw_image3](/handbook/ru/sw_image3.png)
