@@ -22,7 +22,7 @@ AUR > [I use Arch :p](https://aur.archlinux.org/packages/startwine)
 
 
 ## Установка одной командой:
-Скопируйте одну из команд и вставти в терминал и нажмите Enter
+Скопируйте одну из команд вставти в терминал и нажмите Enter
 ```
 bash -c "$(curl -sL RusNor.github.io)"
 ```
