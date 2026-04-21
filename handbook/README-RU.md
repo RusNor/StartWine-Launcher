@@ -13,17 +13,16 @@
 7. [Лицензия](#лицензия)
 
 ## Установка
-Чтобы начать пользоваться программой, загрузите сам SrartWine со страницы GitHub в разделе sw_releases или с сервера discord
+Чтобы начать пользоваться программой, загрузите сам SrartWine со страницы GitHub в разделе releases
+Сделайте файл исполняемым перенесите его в терминал и нажмите Enter
 
 GitHub > [Click](https://github.com/RusNor/StartWine-Launcher/releases)
 
 AUR > [I use Arch :p](https://aur.archlinux.org/packages/startwine)
 
-Discord > [Click](https://discord.gg/jjY3auVdfm)
-
-Сделайте файл исполняемым и запустите двойным кликом
 
 ## Установка одной командой:
+Скопируйте одну из команд и вставти в терминал и нажмите Enter
 ```
 bash -c "$(curl -sL RusNor.github.io)"
 ```
