@@ -36,10 +36,13 @@ sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 ```
 sudo tee -a /etc/sysctl.d/98-apparmor-unuserns.conf <<<kernel.apparmor_restrict_unprivileged_userns=0
 ```
+
+```
 git clone https://github.com/RusNor/StartWine-Launcher.git
 cd StartWine-Launcher
 ./build help
-
+```
+```
 -----------------------------------------------------
 USAGE:
     [./build] [COMMAND] [PATH]
@@ -60,7 +63,7 @@ COMMANDS:
     clean-all             Remove all build and downloaded files.
     help                  Print help.
     -----------------------------------------------------
-
+```
 ## GUI
 StartWine Screenshots
 
