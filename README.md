@@ -36,6 +36,31 @@ sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 ```
 sudo tee -a /etc/sysctl.d/98-apparmor-unuserns.conf <<<kernel.apparmor_restrict_unprivileged_userns=0
 ```
+git clone https://github.com/RusNor/StartWine-Launcher.git
+cd StartWine-Launcher
+./build help
+
+-----------------------------------------------------
+USAGE:
+    [./build] [COMMAND] [PATH]
+-----------------------------------------------------
+DEFAULT PATH: /home/$USER
+-----------------------------------------------------
+COMMANDS:
+    all                   Build all ( release source and runtime ).
+    release               Build the release and download the latest runtime.
+    naked                 Build the release without runtime. ( not recommended )
+    rust                  Build only the rust source.
+    python                Build only the python source.
+    runtime               Build only the runtime.
+    download-base         Download the minimal base runtime.
+    download-runtime      Download the latest release runtime.
+    clean                 Remove build files.
+    clean-download        Remove downloaded files.
+    clean-all             Remove all build and downloaded files.
+    help                  Print help.
+    -----------------------------------------------------
+
 ## GUI
 StartWine Screenshots
 
