@@ -7,7 +7,7 @@
 
 ## Review
 1. [Setup](#setup)
-2. [Build(#build)]
+2. [Build](#build)
 3. [GUI](#gui)
 4. [Creating shortcuts and running games](#creating-shortcuts-and-running-games)
 5. [What is used in StartWine?](#what-is-used-in-startwine)
