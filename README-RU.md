@@ -13,7 +13,7 @@
 7. [Лицензия](#лицензия)
 
 ## Установка
-Чтобы начать пользоваться программой, загрузите сам SrartWine со страницы GitHub в разделе releases
+Чтобы начать пользоваться программой, загрузите сам StartWine со страницы GitHub в разделе releases
 Сделайте файл исполняемым перенесите его в терминал и нажмите Enter
 
 GitHub > [Click](https://github.com/RusNor/StartWine-Launcher/releases)
@@ -29,10 +29,10 @@ bash -c "$(curl -sL RusNor.github.io)"
 bash -c "$(wget -qO - RusNor.github.io)"
 ```
 Команды для Ubuntu если вдруг установка не проходит
-```shell
+```
 sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 ```
-```shell
+```
 sudo tee -a /etc/sysctl.d/98-apparmor-unuserns.conf <<<kernel.apparmor_restrict_unprivileged_userns=0
 ```
 ## Интерфейс
