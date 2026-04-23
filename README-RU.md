@@ -5,12 +5,13 @@
 
 ## Навигация
 1. [Установка](#установка)
-2. [Интерфейс](#интерфейс)
-3. [Создание ярлыков и запуск игр](#cоздание-ярлыков-и-запуск-игр)
-4. [Что используется в StartWine?](#что-используется-в-startwine)
-5. [Благодарность!](#благодарность)
-6. [Полезные ссылки](#полезные-ссылки)
-7. [Лицензия](#лицензия)
+2. [Build](#сборка)
+3. [Интерфейс](#интерфейс)
+4. [Создание ярлыков и запуск игр](#cоздание-ярлыков-и-запуск-игр)
+5. [Что используется в StartWine?](#что-используется-в-startwine)
+6. [Благодарность!](#благодарность)
+7. [Полезные ссылки](#полезные-ссылки)
+8. [Лицензия](#лицензия)
 
 ## Установка
 Чтобы начать пользоваться программой, загрузите сам StartWine со страницы GitHub в разделе releases
@@ -34,6 +35,35 @@ sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 ```
 ```
 sudo tee -a /etc/sysctl.d/98-apparmor-unuserns.conf <<<kernel.apparmor_restrict_unprivileged_userns=0
+```
+
+## сборка
+```
+git clone https://github.com/RusNor/StartWine-Launcher.git
+cd StartWine-Launcher
+./build help
+```
+```
+-----------------------------------------------------
+USAGE:
+    [./build] [COMMAND] [PATH]
+-----------------------------------------------------
+DEFAULT PATH: /home/$USER
+-----------------------------------------------------
+COMMANDS:
+    all                   Build all ( release source and runtime ).
+    release               Build the release and download the latest runtime.
+    naked                 Build the release without runtime. ( not recommended )
+    rust                  Build only the rust source.
+    python                Build only the python source.
+    runtime               Build only the runtime.
+    download-base         Download the minimal base runtime.
+    download-runtime      Download the latest release runtime.
+    clean                 Remove build files.
+    clean-download        Remove downloaded files.
+    clean-all             Remove all build and downloaded files.
+    help                  Print help.
+    -----------------------------------------------------
 ```
 ## Интерфейс
 Скриншоты StartWine
