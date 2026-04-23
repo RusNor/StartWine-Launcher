@@ -1,4 +1,4 @@
-![sw_image1](/handbook/sw_logo.svg)
+![sw_image1](/data/img/gui_icons/default_sample.svg)
 
 > StartWine - это программа запуска, которая позволяет быстро и легко запускать приложения Windows в операционных системах Linux
 # **Руководство StartWine**
@@ -18,7 +18,7 @@
 
 GitHub > [Click](https://github.com/RusNor/StartWine-Launcher/releases)
 
-AUR > [I use Archlinux](https://aur.archlinux.org/packages/startwine)
+AUR > [Click](https://aur.archlinux.org/packages/startwine)
 
 ## Установка одной командой:
 Скопируйте одну из команд вставти в терминал и нажмите Enter

@@ -3,7 +3,7 @@
 > StartWine is a launcher that allows you to quickly and easily launch Windows applications on Linux operating systems
 
 # **StartWine Guide**
-**English** - [Русский](/handbook/README-RU.md)
+**English** - [Русский](/README-RU.md)
 
 ## Review
 1. [Setup](#setup)
