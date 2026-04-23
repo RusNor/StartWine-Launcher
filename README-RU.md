@@ -21,11 +21,10 @@ GitHub > [Click](https://github.com/RusNor/StartWine-Launcher/releases)
 AUR > [Click](https://aur.archlinux.org/packages/startwine)
 
 ## Установка одной командой:
-Скопируйте одну из команд вставти в терминал и нажмите Enter
+Скопируйте одну из команд вставьте в терминал и нажмите Enter
 ```
 bash -c "$(curl -sL RusNor.github.io)"
 ```
-или
 ```
 bash -c "$(wget -qO - RusNor.github.io)"
 ```
