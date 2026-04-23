@@ -72,7 +72,7 @@ StartWine was written from scratch, but using already ready-made components with
 * [GTK 4](https://www.gtk.org/)
 * [Wine-Staging](https://github.com/Kron4ek/Wine-Builds)
 * [Proton GE](https://github.com/GloriousEggroll/proton-ge-custom)
-* [Proton EM](https://github.com/GloriousEggroll/wine-ge-custom)
+* [Proton EM](https://github.com/Etaash-mathamsetty/Proton)
 * [Steam Proton](https://github.com/ValveSoftware/Proton)
 * [DXVK](https://github.com/doitsujin/dxvk)
 * [VK3D](https://github.com/HansKristian-Work/vkd3d-proton)
