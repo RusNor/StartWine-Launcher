@@ -1,4 +1,4 @@
-![sw_image1](/data/img/gui_icons/default_sample.svg)
+![sw_image1](/data/img/gui_icons/default_sample.svg) ![sw_image1](/data/img/gui_icons/spaceman.jpg)
 
 > StartWine is a launcher that allows you to quickly and easily launch Windows applications on Linux operating systems
 
