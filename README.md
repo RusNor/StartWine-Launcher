@@ -7,12 +7,13 @@
 
 ## Review
 1. [Setup](#setup)
-2. [GUI](#gui)
-3. [Creating shortcuts and running games](#creating-shortcuts-and-running-games)
-4. [What is used in StartWine?](#what-is-used-in-startwine)
-5. [Thank you!](#thank-you)
-6. [Useful links](#useful-links)
-7. [License](#license)
+2. [Build(#build)]
+3. [GUI](#gui)
+4. [Creating shortcuts and running games](#creating-shortcuts-and-running-games)
+5. [What is used in StartWine?](#what-is-used-in-startwine)
+6. [Thank you!](#thank-you)
+7. [Useful links](#useful-links)
+8. [License](#license)
 
 ## Setup
 To start using the program, download StartWine itself from the GitHub page in the releases section. Make the file executable, move it to the terminal and press Enter.
@@ -37,6 +38,7 @@ sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 sudo tee -a /etc/sysctl.d/98-apparmor-unuserns.conf <<<kernel.apparmor_restrict_unprivileged_userns=0
 ```
 
+## Build
 ```
 git clone https://github.com/RusNor/StartWine-Launcher.git
 cd StartWine-Launcher
