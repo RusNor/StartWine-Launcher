@@ -15,7 +15,7 @@
 7. [License](#license)
 
 ## Setup
-To start using the program, download SmartWine itself from the GitHub page in the releases section. Make the file executable, move it to the terminal and press Enter.
+To start using the program, download StartWine itself from the GitHub page in the releases section. Make the file executable, move it to the terminal and press Enter.
 
 GitHub > [Click](https://github.com/RusNor/StartWine-Launcher/releases)
 
