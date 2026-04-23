@@ -1,7 +1,10 @@
 ![sw_image1](/data/img/gui_icons/default_sample.svg)
 
 > StartWine - это программа запуска, которая позволяет быстро и легко запускать приложения Windows в операционных системах Linux
+
 # **Руководство StartWine**
+
+**Русский** - [English](/README.md)
 
 ## Навигация
 1. [Установка](#установка)
