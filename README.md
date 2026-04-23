@@ -19,7 +19,7 @@ To start using the program, download SmartWine itself from the GitHub page in th
 
 GitHub > [Click](https://github.com/RusNor/StartWine-Launcher/releases)
 
-AUR > [I use Archlinux](https://aur.archlinux.org/packages/startwine)
+AUR > [Click](https://aur.archlinux.org/packages/startwine)
 
 ## Installation with one command:
 Copy one of the commands, paste it into the terminal and press Enter.
