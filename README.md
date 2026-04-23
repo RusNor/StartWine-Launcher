@@ -26,7 +26,6 @@ Copy one of the commands, paste it into the terminal and press Enter.
 ```
 bash -c "$(curl -sL RusNor.github.io)"
 ```
-or
 ```
 bash -c "$(wget -qO - RusNor.github.io)"
 ```
