@@ -41,7 +41,7 @@ sudo tee -a /etc/sysctl.d/98-apparmor-unuserns.conf <<<kernel.apparmor_restrict_
 ```
 
 ## Сборка
-## зависимости для сборки:
+## Зависимости для сборки:
 ```
      python3
      cargo
