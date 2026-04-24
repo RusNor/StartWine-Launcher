@@ -41,6 +41,24 @@ sudo tee -a /etc/sysctl.d/98-apparmor-unuserns.conf <<<kernel.apparmor_restrict_
 ```
 
 ## Сборка
+
+## StartWine build dependencies:
+```
+     python3
+     cargo
+     rustup
+     gettext
+     cairo
+     glib
+     gio
+     gobject
+     gdk-pixbuf
+     gdk4
+     pango
+     graphene
+     gsk4
+     gtk4
+```
 ```
 git clone https://github.com/RusNor/StartWine-Launcher.git
 cd StartWine-Launcher
