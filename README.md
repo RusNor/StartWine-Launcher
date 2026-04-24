@@ -40,8 +40,7 @@ sudo tee -a /etc/sysctl.d/98-apparmor-unuserns.conf <<<kernel.apparmor_restrict_
 ```
 
 ## Build
-
-## StartWine build dependencies:
+## Build dependencies:
 ```
      python3
      cargo
