@@ -43,8 +43,8 @@ sudo tee -a /etc/sysctl.d/98-apparmor-unuserns.conf <<<kernel.apparmor_restrict_
 
 ## StartWine build dependencies:
 ```
-     python3 >= 3.13
-     cargo >= 1.88
+     python3
+     cargo
      rustup
      gettext
      cairo
