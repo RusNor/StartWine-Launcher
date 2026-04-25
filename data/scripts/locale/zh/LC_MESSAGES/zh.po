@@ -2810,6 +2810,22 @@ msgstr "安装完成但某些文件大小不匹配。"
 msgid "Show installed"
 msgstr "未安装"
 
+#: sw_data.py:5261
+msgid "Set as horizontal app image"
+msgstr "设置为横向应用图像"
+
+#: sw_data.py:5262
+msgid "Set as vertical app image"
+msgstr "设置为竖屏应用图片"
+
+#: sw_data.py:5263
+msgid "Set as startup menu image"
+msgstr "设置为启动菜单图像"
+
+#: sw_data.py:5264
+msgid "Specify location"
+msgstr "指定位置"
+
 #: sw_data.py:5269
 msgid "Go to the home directory"
 msgstr "进入主目录"

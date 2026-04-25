@@ -19,7 +19,7 @@ if [ "${SW_MAKE_PFX_ON_GE}" == 1 ]; then
     WINE_3
     USE_WINE_BUILD="GE-Proton${GE_VER}"
 else
-    STAG_VER="11.1"
+    STAG_VER="11.6"
     WINE_OK=1
     WINE_4
     USE_WINE_BUILD="wine-${STAG_VER}-staging-tkg-amd64"

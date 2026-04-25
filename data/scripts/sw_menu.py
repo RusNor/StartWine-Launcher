@@ -545,7 +545,7 @@ class AppConfReplace:
                 dst = dst_conf.read_text()
                 dst_conf.write_text(dst.replace(d, s))
 
-    def key_pressed(self, _, keyval, _keycode, _state, _widget):
+    def key_pressed(self, _, keyval, _keycode, _state):
         """___key event handler___"""
         if keyval == Gdk.KEY_Escape:
             return self.win.close()
@@ -647,7 +647,7 @@ class AppConfReplace:
             child=apps_grid,
             transient_for=self.app.get_active_window(),
         )
-        self.ctrl_key.connect("key_pressed", self.key_pressed, self.win)
+        self.ctrl_key.connect("key_pressed", self.key_pressed)
         self.win.remove_css_class("background")
         self.win.add_css_class("sw_background")
         self.win.set_default_size(1248, 688)
@@ -833,7 +833,7 @@ class HotkeySettings:
         self.win.set_transient_for(self.root)
         self.win.set_modal(True)
         self.win.set_child(hotkey_box)
-        self.ctrl_key.connect("key_pressed", self.key_pressed, self.win)
+        self.ctrl_key.connect("key_pressed", self.key_pressed)
         self.win.add_controller(self.ctrl_key)
         self.win.present()
 
@@ -841,7 +841,7 @@ class HotkeySettings:
         """___close hotkeys settings window___"""
         self.win.close()
 
-    def key_pressed(self, _, keyval, _keycode, state, _widget):
+    def key_pressed(self, _, keyval, _keycode, state):
         """___key event handler___"""
         all_mask = (
             Gdk.ModifierType.CONTROL_MASK
@@ -1124,12 +1124,14 @@ def sw_activate(swgs):
     def gdbus_method_call(
         _,
         sender,
-        _object_path,
-        _interface_name,
+        object_path,
+        interface_name,
         method_name,
         params,
         invocation,
     ):
+        print(object_path, interface_name)
+
         if method_name == "Message":
             parm = params.unpack()[0]
 
@@ -2540,7 +2542,6 @@ def sw_activate(swgs):
         webview_settings.set_enable_caret_browsing(False)
         webview_settings.set_enable_spatial_navigation(True)
         webview_settings.set_enable_media_capabilities(True)
-        # webview_settings.set_enable_dns_prefetching(True)
         webview_settings.set_enable_encrypted_media(False)
         webview_settings.set_enable_webgl(False)
 
@@ -2686,28 +2687,34 @@ def sw_activate(swgs):
         webview = notebook_web.get_nth_page(num_pages - 1).get_child().get_child()
         webview.load_uri(url)
 
-    def cb_web_resource_load_started(_, _resource, _request):
+    def cb_web_resource_load_started(_, resource, request):
         """___signal emitted when a new resource is going to be loaded___"""
-        # print('Request uri:', _request.get_uri())
+        if request.get_uri():
+            resource.connect("failed", cb_web_resource_failed)
+
+    def cb_web_resource_failed(_, gerror):
+        """___emitted when an error occurs during the resource load.___"""
+        if gerror:
+            print(gerror.message)
 
     def cb_web_permission_request(_, request):
         """___signal is emitted when WebKit is requesting the client to decide
         about a permission request___"""
         request.allow()
 
-    def cb_web_create(_, _navigation_action):
+    def cb_web_create(_, navigation_action):
         """___emitted when the creation of a new WebKitWebView is requested___"""
+        print("Action:", navigation_action)
         if swgs.hit_test_uri is not None:
             return add_webview(swgs.hit_test_uri)
 
-    def cb_webview_context_menu(_, _context_menu, hit_test_result):
+    def cb_webview_context_menu(_, context_menu, hit_test_result):
         """___emitted when a context menu is about to be displayed___"""
         swgs.hit_test_uri = hit_test_result.get_link_uri()
-        print(tc.YELLOW, hit_test_result.get_link_uri(), tc.END)
+        print(tc.YELLOW, context_menu.get_event(), hit_test_result.get_link_uri(), tc.END)
 
-    def cb_entry_web_icon_press(self, icon_pos):
+    def cb_entry_web_icon_press(self, _):
         """___emitted when entry icon pressed___"""
-        print(icon_pos)
         web_search(self)
 
     def cb_entry_web_activate(self):
@@ -2759,7 +2766,7 @@ def sw_activate(swgs):
                     bar = UpdateContentWindow(
                         app=swgs,
                         icon=IconPath.icon_gog_logo,
-                        cover=IconPath.icon_gog_heroes,
+                        cover=IconPath.icon_gog_art,
                         close_button=True,
                     )
                     bar.pulse()
@@ -2782,7 +2789,7 @@ def sw_activate(swgs):
                 bar = UpdateContentWindow(
                     app=swgs,
                     icon=IconPath.icon_epic_logo,
-                    cover=IconPath.icon_epic_heroes,
+                    cover=IconPath.icon_epic_art,
                     close_button=True,
                 )
                 bar.pulse()
@@ -2831,13 +2838,22 @@ def sw_activate(swgs):
         """___logout from epic games store account___"""
 
         if sw_epic_auth.exists():
-            sw_epic_auth.unlink()
+            try:
+                sw_epic_auth.unlink()
+            except (OSError, IOError, PermissionError) as e:
+                print(f"{tc.RED}{e}{tc.END}")
 
         if sw_epic_items.exists():
-            sw_epic_items.unlink()
+            try:
+                sw_epic_items.unlink()
+            except (OSError, IOError, PermissionError) as e:
+                print(f"{tc.RED}{e}{tc.END}")
 
         if sw_fm_cache_database.joinpath("cookies.txt").exists():
-            sw_fm_cache_database.joinpath("cookies.txt").unlink()
+            try:
+                sw_fm_cache_database.joinpath("cookies.txt").unlink()
+            except (OSError, IOError, PermissionError) as e:
+                print(f"{tc.RED}{e}{tc.END}")
 
         scrolled_epic_data.set_child(None)
         return on_epic_auth()
@@ -2869,7 +2885,7 @@ def sw_activate(swgs):
         bar = UpdateContentWindow(
             app=swgs,
             icon=IconPath.icon_epic_logo,
-            cover=IconPath.icon_epic_heroes,
+            cover=IconPath.icon_epic_art,
             close_button=True,
         )
         bar.pulse()
@@ -2928,10 +2944,16 @@ def sw_activate(swgs):
         """___logout from gog games account___"""
 
         if sw_gog_auth.exists():
-            sw_gog_auth.unlink()
+            try:
+                sw_gog_auth.unlink()
+            except (OSError, IOError, PermissionError) as e:
+                print(f"{tc.RED}{e}{tc.END}")
 
         if sw_gog_db.exists():
-            sw_gog_db.unlink()
+            try:
+                sw_gog_db.unlink()
+            except (OSError, IOError, PermissionError) as e:
+                print(f"{tc.RED}{e}{tc.END}")
 
         scrolled_gog_data.set_child(None)
         return on_gog_auth()
@@ -2963,7 +2985,7 @@ def sw_activate(swgs):
         bar = UpdateContentWindow(
             app=swgs,
             icon=IconPath.icon_gog_logo,
-            cover=IconPath.icon_gog_heroes,
+            cover=IconPath.icon_gog_art,
             close_button=True,
         )
         bar.pulse()
@@ -3002,125 +3024,107 @@ def sw_activate(swgs):
                 download.set_destination(f"{dest}")
 
             download.set_allow_overwrite(True)
-            # download.connect('decide-destination', cb_download_decide_destination)
+            download.connect('decide-destination', cb_download_decide_destination)
             download.connect("created-destination", cb_download_create_destination)
             download.connect("received-data", cb_download_received_data)
             download.connect("failed", cb_download_failed)
             download.connect("finished", cb_download_finished)
 
+    def cb_specify_data_location(cache):
+        """____"""
+        title = 'Change Directory'
+        dialog = SwDialogDirectory(title)
+        dialog.select_folder(
+            parent=swgs.root_window,
+            cancellable=Gio.Cancellable(),
+            callback=cb_decide_destination,
+            user_data=cache,
+        )
+
     def cb_download_finished(self):
         """___signal emitted when download finished___"""
 
-        current_image_path = Path(str(getenv(f"{get_out()}")))
-        cache = self.get_destination()
-
+        cache = str(self.get_destination())
         if Path(cache).exists():
             gfile = Gio.File.new_for_path(cache)
             ginfo = gfile.query_info("*", Gio.FileQueryInfoFlags.NONE)
             gtype = ginfo.get_content_type()
 
-            if gtype in image_mime_types:
-                app_path = get_app_path()
-                app_name = str(get_out()).replace("_", " ")
-                hash_name = get_hash_name(app_path)
-                app_id = Path(cache).stem
-                edited_name = edit_cur_name(app_name)
-                name = current_image_path.stem
+            if gtype in image_mime_types and str(get_out()) != str("StartWine"):
+                icon = f"{cache.removesuffix(".webp")}.jpg"
+                if not convert_image_to_jpeg(cache, icon):
+                    icon = cache
 
-                if "/hero/" in self.get_web_view().get_uri():
-                    name = name.replace("_horizontal_", "_heroes_").replace(
-                        "_vertical_", "_heroes_"
-                    )
-                    destination = str(sw_app_heroes_icons.joinpath(f"{name}.jpg"))
-                    try:
-                        convert_image(cache, destination, 1920, 620, True)
-                    except (Exception,):
-                        shutil.move(cache, destination)
-                        exe_data.set_(str(app_path), "heroes", f"{name}.jpg")
-                    else:
-                        exe_data.set_(str(app_path), "heroes", f"{name}.jpg")
-
-                elif getenv("ICON_POSITION") == "vertical":
-                    name = name.replace("_horizontal_", "_vertical_")
-                    if not sw_app_vicons.joinpath(f"{name}.jpg").exists():
-                        name = f"{hash_name}_vertical_{edited_name}_{app_id}.jpg"
-                        # exe_data.set_(str(app_path), "id", f"{app_id}")
-
-                    destination = str(sw_app_vicons.joinpath(f"{name}.jpg"))
-                    try:
-                        convert_image(cache, destination, 400, 600, True)
-                    except (Exception,):
-                        shutil.move(cache, destination)
-                        exe_data.set_(str(app_path), "vertical", f"{name}.jpg")
-                    else:
-                        exe_data.set_(str(app_path), "vertical", f"{name}.jpg")
-
-                elif getenv("ICON_POSITION") == "horizontal":
-                    name = name.replace("_vertical_", "_horizontal_")
-                    if not sw_app_hicons.joinpath(f"{name}.jpg").exists():
-                        name = f"{hash_name}_horizontal_{edited_name}_{app_id}.jpg"
-                        # exe_data.set_(app_path, "id", f"{app_id}")
-
-                    destination = str(sw_app_hicons.joinpath(f"{name}.jpg"))
-                    try:
-                        convert_image(cache, destination, 640, 360, True)
-                    except (Exception,):
-                        shutil.move(cache, destination)
-                        exe_data.set_(str(app_path), "horizontal", f"{name}.jpg")
-                    else:
-                        exe_data.set_(str(app_path), "horizontal", f"{name}.jpg")
-                else:
-                    message = msg.msg_dict["download_failed"]
-                    return overlay_info(main_overlay, None, message, None, None, 5)
-
-            message = f"Download to {self.get_destination()} completed"
-            return overlay_info(main_overlay, None, message, None, None, 5)
+                response = [
+                    msg.msg_dict["horizontal_image"],
+                    msg.msg_dict["vertical_image"],
+                    msg.msg_dict["startup_image"],
+                    msg.msg_dict["specify_location"],
+                    msg.msg_dict["cancel"],
+                ]
+                title = msg.msg_dict["choose"]
+                func = [
+                    {cache_to_horizontal_image: (cache,)},
+                    {cache_to_vertical_image: (cache,)},
+                    {cache_to_startup_image: (cache,)},
+                    {cb_specify_data_location: (icon,)},
+                    None
+                ]
+                SwDialogQuestion(
+                    swgs,
+                    title,
+                    icon,
+                    [Path(icon).name, ""],
+                    response,
+                    func,
+                )
+                message = f"Download to {self.get_destination()} completed"
+                return overlay_info(main_overlay, None, message, None, None, 5)
+            else:
+                cb_specify_data_location(cache)
+                message = f"Download to {self.get_destination()} completed"
+                return overlay_info(main_overlay, None, message, None, None, 5)
         else:
             message = f"Downloaded file not exists, try again..."
             return overlay_info(main_overlay, None, message, None, None, 5)
 
-    def cb_download_failed(_, error):
+    def cb_download_failed(_, gerror):
         """___signal is emitted when an error occurs during the download operation___"""
-        if error:
-            return overlay_info(main_overlay, None, error, None, None, 5)
+        if gerror:
+            print(gerror.message)
+            # return overlay_info(main_overlay, None, error, None, None, 5)
 
     def cb_download_create_destination(_, destination):
         """___Notify that destination file has been created successfully at destination___"""
-        print(
-            f"{tc.VIOLET}DOWNLAOD_DESTINATION: {tc.GREEN}{destination}{tc.END}"
-        )
+        print(f"{tc.VIOLET}DOWNLAOD_DESTINATION: {tc.GREEN}{destination}{tc.END}")
 
-    def cb_download_received_data(self, _data_length):
+    def cb_download_received_data(self, data_length):
         """___ signal is emitted after response is received,
         every time new data has been written to the destination___"""
+
         fraction = self.get_estimated_progress()
-        print(f"download {fraction}")
+        print(f"{tc.VIOLET}DOWNLOAD_PROGRESS:", tc.GREEN, data_length, fraction, tc.END)
 
-    # def cb_decide_destination(self, res, webkit_download):
-    #     """___response callback to the selected destination___
-    #     try:
-    #         result = self.select_folder_finish(res)
-    #     except GLib.GError as e:
-    #         SwCrier(text_message=[str(e.message)], message_type='ERROR').run()
-    #     else:
-    #         url_name = str(entry_web.get_text()).split('/')[-1]
-    #         path = str(result.get_path()) + '/' + url_name
-    #         webkit_download.set_destination(path)
-    #         print(f'{tc.VIOLET}SET_DOWNLAOD_DESTINATION: {tc.GREEN}{path}{tc.END}')
-    #     """
+    def cb_decide_destination(self, res, data=[]):
+        """___response callback to the selected destination___"""
+        try:
+            result = self.select_folder_finish(res)
+        except GLib.GError as e:
+            print(e.message)
+        else:
+            dest_path = str(result)
+            if data:
+                name = Path(data).name
+                dest_path = Path(result).joinpath(name)
+                shutil.move(data, dest_path)
+            print(f'{tc.VIOLET}DESTINATION: {tc.GREEN}{dest_path}{tc.END}')
 
-    # def cb_download_decide_destination(self, suggested_filename):
-    #     """___a response has been received to decide a destination for the download___
+    def cb_download_decide_destination(self, suggested_filename):
+        """___has been received to decide a destination for the download___"""
 
-    #     title = 'Change Directory'
-    #     dialog = SwDialogDirectory(title)
-    #     dialog.select_folder(
-    #                 parent=swgs.root_window,
-    #                 cancellable=Gio.Cancellable(),
-    #                 callback=cb_decide_destination,
-    #                 user_data=self,
-    #     )
-    #     """
+        dest = str(sw_fm_cache_downloads.joinpath(suggested_filename))
+        self.set_destination(dest)
+        print(f"{tc.GREEN}Set download to {dest}{tc.END}")
 
     def cb_webview_decide_policy(_, decision, decision_type):
         """___requesting the client to decide a policy decision___"""
@@ -3180,8 +3184,6 @@ def sw_activate(swgs):
 
             right_grid_factory.connect("setup", cb_factory_setup, right_grid_view)
             right_grid_factory.connect("bind", cb_factory_bind, right_grid_view)
-            right_grid_factory.connect("teardown", cb_grid_factory_teardown)
-            right_grid_factory.connect("unbind", cb_grid_factory_unbind)
 
             ctrl_lclick_view_ = Gtk.GestureClick()
             ctrl_lclick_view_.connect("pressed", cb_ctrl_lclick_view)
@@ -3209,7 +3211,7 @@ def sw_activate(swgs):
             ctrl_drop_target.connect("drop", cb_ctrl_drop_target)
 
             ctrl_right_view_motion = Gtk.EventControllerMotion()
-            ctrl_right_view_motion.connect("enter", cb_ctrl_right_view_motion)
+            # ctrl_right_view_motion.connect("enter", cb_ctrl_right_view_motion)
 
             ctrl_right_view_focus = Gtk.EventControllerFocus()
             # ctrl_right_view_focus.connect('enter', cb_ctrl_right_view_focus)
@@ -3360,16 +3362,6 @@ def sw_activate(swgs):
 
         update_playlist()
 
-    def check_the_sound():
-        """___check startup sound___"""
-
-        if swgs.cfg.get("sound") == "on":
-            if sw_startup_sounds.exists():
-                media_play(
-                    media_file, str(sw_startup_sounds), media_controls, 0.7, False
-                )
-        return False
-
     def cb_playlist_activate(self, position):
         """___playback media playlist item___"""
 
@@ -3461,16 +3453,6 @@ def sw_activate(swgs):
             scrolled_gvol.set_min_content_height(240)
             terminal_revealer.set_reveal_child(True)
             gvolume_view.grab_focus()
-
-            if getenv("TERMINAL_HANDLE_POSITION"):
-                terminal_position = getenv("TERMINAL_HANDLE_POSITION")
-                if terminal_position:
-                    files_view_grid.set_position(int(terminal_position))
-                else:
-                    files_view_grid.set_position(swgs.height * 0.5)
-            else:
-                files_view_grid.set_position(swgs.height * 0.5)
-
             update_color_scheme()
 
     def update_gvolume():
@@ -3478,8 +3460,13 @@ def sw_activate(swgs):
 
         swgs.list_gvol_store.remove_all()
         gvolume_list = swgs.gvolume_monitor.get_volumes()
+        count = 2
 
-        if gvolume_list is None or gvolume_list == []:
+        if gvolume_list:
+            for gvolume in gvolume_list:
+                swgs.list_gvol_store.append(gvolume)
+                count += 1
+        else:
             partitions = psutil.disk_partitions()
             for x in sorted(partitions):
                 for m in ["/mnt/", "/run/media/", "/home"]:
@@ -3490,9 +3477,25 @@ def sw_activate(swgs):
                                 f"{mountpoint}:{x.device}:{x.fstype}:{x.opts}"
                             )
                             swgs.list_gvol_store.append(string)
+                            count += 1
+        set_terminal_handle_position(count)
+
+    def set_terminal_handle_position(count=0):
+        """___terminal_handle_position___"""
+
+        gvol_height = 64*count
+        view_height = swgs.height - gvol_height if swgs.height else 0
+        handle_pos = getenv("TERMINAL_HANDLE_POSITION")
+
+        if gvol_height != 0:
+            scrolled_gvol.set_size_request(-1, gvol_height)
+
+        if handle_pos and int(handle_pos) < view_height:
+            files_view_grid.set_position(int(handle_pos))
+        elif handle_pos and int(handle_pos) >= view_height:
+            files_view_grid.set_position(view_height)
         else:
-            for gvolume in gvolume_list:
-                swgs.list_gvol_store.append(gvolume)
+            files_view_grid.set_position(swgs.height * 0.5)
 
     def on_message_cs():
         """___run create shortcut function___"""
@@ -4305,8 +4308,13 @@ def sw_activate(swgs):
         """___activate headerbar context header menu___"""
         on_header_context()
 
-    def on_btn_header_menu(action_name, _parameter, _data):
+    def on_btn_header_menu(action_name, action_type, data):
         """___activate header menu button___"""
+
+        if action_type:
+            print(action_type)
+        if data:
+            print(data)
 
         if action_name.get_name() == "preferences":
             return on_global_settings()
@@ -4506,6 +4514,7 @@ def sw_activate(swgs):
         """___update new widgets color scheme___"""
 
         css_path = None
+
         if swgs.colorscheme == "dark":
             css_path = sw_css_dark
         elif swgs.colorscheme == "light":
@@ -4669,9 +4678,9 @@ def sw_activate(swgs):
 
         if getenv("SW_MIME_TYPE") == "steam/x-native":
             steam_app_path = getenv("SW_STEAM_SWD")
-            set_heroes_icon(steam_app_path, swgs.image_title, swgs.label_startapp)
+            set_artwork_image(steam_app_path, swgs.image_title, swgs.label_startapp)
         else:
-            set_heroes_icon(app_path, swgs.image_title, swgs.label_startapp)
+            set_artwork_image(app_path, swgs.image_title, swgs.label_startapp)
 
         swgs.image_title.queue_draw()
         on_launch_settings()
@@ -4896,13 +4905,13 @@ def sw_activate(swgs):
         )
         swgs.btn_folder = Gtk.Button(css_name="sw_button", child=label_folder)
 
-        label_griddb_heroes = Gtk.Label(
+        label_griddb_artwork = Gtk.Label(
             css_name="sw_label",
             xalign=0.0,
             label=msg.ctx_dict["griddb"],
         )
-        swgs.btn_search_heroes = Gtk.Button(
-            css_name="sw_button", child=label_griddb_heroes
+        swgs.btn_search_artwork = Gtk.Button(
+            css_name="sw_button", child=label_griddb_artwork
         )
         label_switch_app_to_desktop = Gtk.Label(
             css_name="sw_label_sub", label=msg.ctx_dict["app_to_desktop"], xalign=0
@@ -5002,7 +5011,7 @@ def sw_activate(swgs):
         swgs.overlay_stats.append(swgs.box_switch_to_desktop)
         swgs.overlay_stats.append(swgs.box_switch_to_menu)
         swgs.overlay_stats.append(swgs.btn_folder)
-        swgs.overlay_stats.append(swgs.btn_search_heroes)
+        swgs.overlay_stats.append(swgs.btn_search_artwork)
 
         swgs.reveal_stats = Gtk.Revealer(
             css_name="sw_revealer",
@@ -5044,9 +5053,8 @@ def sw_activate(swgs):
         swgs.btn_tools.connect("clicked", cb_btn_revealer, swgs.reveal_settings)
         swgs.btn_controller.connect("clicked", cb_btn_controller)
         swgs.btn_folder.connect("clicked", open_app_folder)
-        # source_type = "heroes?term="
         source_type = "search?c=1&q="
-        swgs.btn_search_heroes.connect(
+        swgs.btn_search_artwork.connect(
             "clicked", cb_btn_imagedb, None, source_type
         )
 
@@ -5284,7 +5292,7 @@ def sw_activate(swgs):
             if not Path(image_path).exists() or image_path == str(
                 sw_gui_icons.joinpath(sw_logo_light)
             ):
-                set_heroes_icon(get_app_path(), swgs.image_title, swgs.label_startapp)
+                set_artwork_image(get_app_path(), swgs.image_title, swgs.label_startapp)
 
         if self.get_width() < 1060 and swgs.reveal_settings.get_reveal_child():
             swgs.box_cycle_shortcut.set_visible(False)
@@ -5359,7 +5367,7 @@ def sw_activate(swgs):
                         func = d["func"]
                         args = d["data"]
                         context_popover.popdown()
-                        return func(action_name, action_type, args)
+                        return func(action_name, args)
 
     def cb_context_factory_setup(_, item_list):
         label = Gtk.Label(css_name="sw_label_view", xalign=0)
@@ -5775,15 +5783,17 @@ def sw_activate(swgs):
         context_header_menu.clear()
         context_shutdown.clear()
 
-    def on_cb_empty_copy_path(_action_name, _parameter, data):
+    def on_cb_empty_copy_path(action_name, data):
         """___callback context button copy current path___"""
 
+        print("Action:", action_name)
         x_file = Gio.File.new_for_commandline_arg(bytes(Path(data)))
         on_file_copy([x_file])
 
-    def on_cb_empty_add_bookmark(_action_name, _parameter, data):
+    def on_cb_empty_add_bookmark(action_name, data):
         """___callback context button add current path to bookmark___"""
 
+        print("Action:", action_name)
         return on_add_bookmark(data)
 
     def on_add_bookmark(data):
@@ -5847,9 +5857,10 @@ def sw_activate(swgs):
                 )
                 return overlay_info(main_overlay, None, text_message, None, None, 3)
 
-    def on_cb_add_media(_action_name, _parameter, data):
+    def on_cb_add_media(action_name, data):
         """___callback context button add current file path to playlist___"""
 
+        print("Action:", action_name)
         format_data = []
         for f in data:
             f_info = f.query_info("*", Gio.FileQueryInfoFlags.NONE, None)
@@ -5918,7 +5929,7 @@ def sw_activate(swgs):
                 text_message = str_remove_media
                 return overlay_info(main_overlay, None, text_message, None, None, 3)
 
-    def on_cb_empty_create_file(action_name, _parameter, data):
+    def on_cb_empty_create_file(action_name, data):
         """___callback context button create file___"""
 
         if Path(data) == sw_shortcuts:
@@ -5977,9 +5988,10 @@ def sw_activate(swgs):
                     strerr = msg.msg_dict["does_not_exist"]
                     SwCrier(text_message=[strerr], message_type="ERROR").run()
 
-    def on_cb_empty_create_dir(_action_name, _parameter, parent_path):
+    def on_cb_empty_create_dir(action_name, parent_path):
         """___callback on context button for create directory___"""
 
+        print("Action:", action_name)
         if Path(parent_path) == sw_shortcuts:
             text_message = msg.msg_dict["impossible_create"]
             return overlay_info(main_overlay, None, text_message, None, None, 3)
@@ -6028,20 +6040,23 @@ def sw_activate(swgs):
         if dialog_child is not None:
             entry_name = dialog_child.get_first_child()
 
-    def on_cb_empty_paste(_action_name, _parameter, _data):
+    def on_cb_empty_paste(action_name, _):
         """___activate context menu button paste___"""
 
+        print("Action:", action_name)
         return on_file_paste()
 
-    def on_cb_empty_select_all(_action_name, _parameter, _data):
+    def on_cb_empty_select_all(action_name, _):
         """___callback context button select all___"""
 
+        print("Action:", action_name)
         grid_view = get_list_view()
         grid_view.get_model().select_all()
 
-    def on_cb_empty_properties(_action_name, _parameter, data):
+    def on_cb_empty_properties(action_name, data):
         """___get current directory properties___"""
 
+        print("Action:", action_name)
         on_file_properties()
 
         if data is None:
@@ -6254,9 +6269,6 @@ def sw_activate(swgs):
 
             sleep(0.1)
             progress_main.set_fraction(int(fraction))
-            # progress_main.set_text(
-            #     f"{str_copying} {Path(source).name} {fraction * 100}%"
-            # )
 
         progress_main.set_fraction(0)
         progress_main.set_show_text(False)
@@ -6273,7 +6285,6 @@ def sw_activate(swgs):
         current_size = 0
         stack_progress_main.set_visible_child(progress_main_grid)
         progress_main.set_visible(True)
-        # progress_main.set_show_text(True)
 
         while working_thread.is_alive():
             if Path(source).exists():
@@ -6298,9 +6309,6 @@ def sw_activate(swgs):
                 if start_size > 0:
                     fraction = round(1 - (current_size / start_size), 2)
 
-                # progress_main.set_text(
-                #     f"{str_deletion} {Path(source).name} {fraction * 100}%"
-                # )
                 progress_main.set_fraction(fraction)
 
             sleep(0.1)
@@ -6351,9 +6359,10 @@ def sw_activate(swgs):
             else:
                 on_files(Path(path))
 
-    def on_cb_file_exe(_action_name, _parameter, data):
+    def on_cb_file_exe(action_name, data):
         """___run a x-ms-dos-executable file from the context menu___"""
 
+        print("Action:", action_name)
         if data[0].get_path() is not None:
             environ["SW_EXEC"] = f'"{data[0].get_path()}"'
             write_app_conf(Path(data[0].get_path()))
@@ -6363,21 +6372,24 @@ def sw_activate(swgs):
                 main_overlay, None, msg.msg_dict["action_not_supported"], None, None, 3
             )
 
-    def on_cb_file_run(_action_name, _parameter, data):
+    def on_cb_file_run(action_name, data):
         """___run a x-executable file from the context menu___"""
 
+        print("Action:", action_name)
         g_file = data[0]
         return on_file_run(g_file)
 
-    def on_cb_file_open_location(_action_name, _parameter, data):
+    def on_cb_file_open_location(action_name, data):
         """___open a file from the context menu___"""
 
+        print("Action:", action_name)
         g_file = data[0]
         on_file_open_location(g_file)
 
-    def on_cb_file_open_with(_action_name, _parameter, data):
+    def on_cb_file_open_with(action_name, data):
         """___open a file with program from context menu___"""
 
+        print("Action:", action_name)
         g_file = data[0]
         if g_file.get_path() is None:
             uri = g_file.get_uri()
@@ -6406,9 +6418,10 @@ def sw_activate(swgs):
         except Exception as e:
             print(tc.RED, e, tc.END)
 
-    def on_cb_file_open(_action_name, _parameter, data):
+    def on_cb_file_open(action_name, data):
         """___open a file from the context menu___"""
 
+        print("Action:", action_name)
         g_file = data[0]
         if g_file.get_path() is None:
             uri = g_file.get_uri()
@@ -6416,9 +6429,10 @@ def sw_activate(swgs):
         else:
             return on_file_open(g_file)
 
-    def on_cb_dir_open(_action_name, _parameter, data):
+    def on_cb_dir_open(action_name, data):
         """___open a directory from the context menu___"""
 
+        print("Action:", action_name)
         if data[0].get_path() is not None:
             file = Path(data[0].get_path()).name
             parent_file = get_parent_file()
@@ -6429,9 +6443,10 @@ def sw_activate(swgs):
             item_uri = data[0].get_uri()
             update_grid_view_uri(item_uri)
 
-    def on_cb_file_cut(_action_name, _parameter, data):
+    def on_cb_file_cut(action_name, data):
         """___cut the selected file from the curent directory___"""
 
+        print("Action:", action_name)
         if main_stack.get_visible_child() == files_view_grid:
             return on_file_cut(data)
 
@@ -6460,9 +6475,10 @@ def sw_activate(swgs):
         content = clipboard.get_content()
         content.connect("content-changed", on_content_changed, ["is_cut", f_list])
 
-    def on_cb_file_copy(_action_name, _parameter, data):
+    def on_cb_file_copy(action_name, data):
         """___copy the selected file to the clipboard___"""
 
+        print("Action:", action_name)
         if main_stack.get_visible_child() == files_view_grid:
             return on_file_copy(data)
 
@@ -6545,7 +6561,7 @@ def sw_activate(swgs):
     def on_file_paste():
         """___get files for paste from clipboard___"""
 
-        def read_text(self, res, _data):
+        def read_text(self, res):
             """___async reading non-local content from the clipboard___"""
 
             replace_source = list()
@@ -6593,14 +6609,15 @@ def sw_activate(swgs):
         )
 
         if not clipboard.is_local():
-            clipboard.read_text_async(None, read_text, None)
+            clipboard.read_text_async(None, read_text)
         else:
             content = clipboard.get_content()
             content.content_changed()
 
-    def on_cb_file_rename(_action_name, _parameter, data):
+    def on_cb_file_rename(action_name, data):
         """___activate file rename button___"""
 
+        print("Action:", action_name)
         if main_stack.get_visible_child() == files_view_grid:
             if len(data) > 1:
                 return on_files_rename(data)
@@ -6681,9 +6698,10 @@ def sw_activate(swgs):
         if dialog_child is not None:
             entry_rename = dialog_child.get_first_child()
 
-    def on_cb_file_link(_action_name, _parameter, data):
+    def on_cb_file_link(action_name, data):
         """___activate create link button___"""
 
+        print("Action:", action_name)
         if main_stack.get_visible_child() == files_view_grid:
             return on_file_link(data)
 
@@ -6698,9 +6716,10 @@ def sw_activate(swgs):
                 x_file = Gio.File.new_for_path(bytes(link_path))
                 x_file.make_symbolic_link(bytes(Path(x.get_path())))
 
-    def on_cb_file_compress(_action_name, _parameter, data):
+    def on_cb_file_compress(action_name, data):
         """___create a compressed archive from file or files___"""
 
+        print("Action:", action_name)
         if main_stack.get_visible_child() == files_view_grid:
             return on_file_compress(data)
 
@@ -6824,7 +6843,7 @@ def sw_activate(swgs):
             else:
                 fzip.close()
 
-    def on_cb_file_remove(action_name, _parameter, x_path):
+    def on_cb_file_remove(action_name, x_path):
         """___activate context button and remove changed file___"""
 
         if action_name == msg.ctx_dict["trash"][0]:
@@ -6972,9 +6991,10 @@ def sw_activate(swgs):
                         text_message=[str(e.message)], message_type="ERROR"
                     ).run()
 
-    def on_cb_file_properties(_action_name, _parameter, data):
+    def on_cb_file_properties(action_name, data):
         """___activate file properties button___"""
 
+        print("Action:", action_name)
         on_file_properties()
 
         if len(data) > 1:
@@ -6982,7 +7002,7 @@ def sw_activate(swgs):
         else:
             get_file_props(data[0])
 
-    def on_switch_file_exec(self, _state):
+    def on_switch_file_exec(self, _):
         """___switch file execute property___"""
 
         p = Path(swgs.switch_file_execute.get_name())
@@ -7242,7 +7262,11 @@ def sw_activate(swgs):
                 msg.msg_dict["cancel"].capitalize(),
             ]
             message = [msg.msg_dict["choose"], msg.msg_dict["lnk_error"]]
-            func = [{on_select_file: (shortcut_path,)}, run_pfx_remove, None]
+            func = [
+                {on_select_file: (shortcut_path,)},
+                {run_pfx_remove: (shortcut_path,)},
+                None
+            ]
             return SwDialogQuestion(swgs, None, None, message, response, func)
 
         context_data = {
@@ -7450,7 +7474,7 @@ def sw_activate(swgs):
         context_menu.set_parent(widget)
         context_menu.popup()
 
-    def on_cb_app_run(_action_name, _parameter, swd):
+    def on_cb_app_run(_, swd):
         """___run application from context menu___"""
 
         app_exec = get_swd_path(f"{swd}")
@@ -7465,7 +7489,7 @@ def sw_activate(swgs):
                 main_overlay, None, msg.msg_dict["lnk_error"], None, None, 3
             )
 
-    def on_cb_app_open(_action_name, _parameter, swd):
+    def on_cb_app_open(_, swd):
         """___open application directory from context menu___"""
 
         app_exec = get_swd_path(f"{swd}")
@@ -7477,12 +7501,14 @@ def sw_activate(swgs):
                 main_overlay, None, msg.msg_dict["lnk_error"], None, None, 3
             )
 
-    def on_cb_app_settings(_action_name, _parameter, _widget):
+    def on_cb_app_settings(_, data):
         """___open application settings menu from context menu___"""
+        if data:
+            print(data)
 
         on_startapp_page()
 
-    def on_cb_app_rename(_action_name, _parameter, swd):
+    def on_cb_app_rename(_, swd):
         """___rename application display name___"""
         get_app_image_path(swd)
 
@@ -7496,8 +7522,8 @@ def sw_activate(swgs):
         if current_image_path is not None:
             vicon_path = (
                 current_image_path.replace("horizontal", "vertical")
-                .replace("/heroes/", "/vertical/")
-                .replace("_heroes_", "_vertical_")
+                .replace("/artwork/", "/vertical/")
+                .replace("_artwork_", "_vertical_")
             )
             if Path(vicon_path).exists():
                 vicon_name = str(Path(vicon_path).stem).split("_")[-2]
@@ -7505,19 +7531,19 @@ def sw_activate(swgs):
 
             hicon_path = (
                 current_image_path.replace("vertical", "horizontal")
-                .replace("/heroes/", "/horizontal/")
-                .replace("_heroes_", "_horizontal_")
+                .replace("/artwork/", "/horizontal/")
+                .replace("_artwork_", "_horizontal_")
             )
             if Path(hicon_path).exists():
                 hicon_name = str(Path(vicon_path).stem).split("_")[-2]
                 src_dict[hicon_path] = hicon_name
 
-            heroes_path = current_image_path.replace("vertical", "heroes").replace(
-                "horizontal", "heroes"
+            artwork_path = current_image_path.replace("vertical", "artwork").replace(
+                "horizontal", "artwork"
             )
-            if Path(heroes_path).exists():
-                heroes_name = str(Path(vicon_path).stem).split("_")[-2]
-                src_dict[heroes_path] = heroes_name
+            if Path(artwork_path).exists():
+                artwork_name = str(Path(vicon_path).stem).split("_")[-2]
+                src_dict[artwork_path] = artwork_name
 
             print(src_dict)
             if len(list(src_dict)) > 0:
@@ -7561,8 +7587,8 @@ def sw_activate(swgs):
                     if "_horizontal_" in target.name:
                         exe_data.set_(str(app_path), "horizontal", target.name)
 
-                    if "_heroes_" in target.name:
-                        exe_data.set_(str(app_path), "heroes", target.name)
+                    if "_artwork_" in target.name:
+                        exe_data.set_(str(app_path), "artwork", target.name)
 
                 Path(src_path).rename(target)
                 print(f"Rename: {tc.YELLOW}{src_path} {tc.GREEN}to {target}{tc.END}")
@@ -7578,12 +7604,12 @@ def sw_activate(swgs):
         if dialog_child is not None:
             entry_rename = dialog_child.get_first_child()
 
-    def on_cb_app_spec_exe_path(_action_name, _parameter, swd):
+    def on_cb_app_spec_exe_path(_, swd):
         """___change application path to executable file___"""
         if Path(swd).exists():
             on_select_file(f"{swd}")
 
-    def on_cb_app_remove(_action_name, _parameter, swd):
+    def on_cb_app_remove(_, swd):
         """___remove application prefix from context menu___"""
         cb_btn_pfx_remove(swd)
 
@@ -7624,7 +7650,7 @@ def sw_activate(swgs):
         if widget:
             widget.popdown()
 
-    def cb_btn_switch_app_to_menu(self, _state, widget):
+    def cb_btn_switch_app_to_menu(self, _, widget):
         """___add application shortcut to system menu___"""
 
         img_path = getenv(f"{get_out()}")
@@ -7642,7 +7668,7 @@ def sw_activate(swgs):
         if widget is not None:
             widget.popdown()
 
-    def cb_btn_switch_app_to_desktop(self, _state, widget):
+    def cb_btn_switch_app_to_desktop(self, _, widget):
         """___add application shortcut to desktop___"""
 
         img_path = getenv(f"{get_out()}")
@@ -7796,12 +7822,12 @@ def sw_activate(swgs):
                 source_type = "search?c=1&q="
 
                 func = [
-                    {on_cb_app_run: (None, None, shortcut_path)},
-                    {on_cb_app_open: (None, None, shortcut_path)},
-                    {on_cb_app_settings: (None, None, shortcut)},
-                    {on_cb_app_rename: (None, None, shortcut_path)},
-                    {on_cb_app_spec_exe_path: (None, None, shortcut_path)},
-                    {on_cb_app_remove: (None, None, shortcut_path)},
+                    {on_cb_app_run: (None, shortcut_path,)},
+                    {on_cb_app_open: (None, shortcut_path,)},
+                    {on_cb_app_settings: (None, shortcut,)},
+                    {on_cb_app_rename: (None, shortcut_path,)},
+                    {on_cb_app_spec_exe_path: (None, shortcut_path,)},
+                    {on_cb_app_remove: (None, shortcut_path,)},
                     {cb_btn_winehq: (None, None)},
                     {cb_btn_protondb: (None, None)},
                     {cb_btn_imagedb: (None, None, source_type)},
@@ -7829,16 +7855,16 @@ def sw_activate(swgs):
                     open_ = on_cb_file_open
 
                 func = [
-                    {open_: (None, None, gio_files)},
-                    {on_cb_file_open_with: (None, None, gio_files)},
-                    {on_cb_file_cut: (None, None, gio_files)},
-                    {on_cb_file_copy: (None, None, gio_files)},
-                    {on_cb_file_rename: (None, None, gio_files)},
-                    {on_cb_file_link: (None, None, gio_files)},
-                    {on_cb_file_compress: (None, None, gio_files)},
-                    {on_cb_file_remove: (msg.ctx_dict["trash"][0], None, gio_files)},
-                    {on_cb_file_remove: (msg.ctx_dict["delete"][0], None, gio_files)},
-                    {on_cb_file_properties: (None, None, gio_files)},
+                    {open_: (None, gio_files)},
+                    {on_cb_file_open_with: (None, gio_files)},
+                    {on_cb_file_cut: (None, gio_files)},
+                    {on_cb_file_copy: (None, gio_files)},
+                    {on_cb_file_rename: (None, gio_files)},
+                    {on_cb_file_link: (None, gio_files)},
+                    {on_cb_file_compress: (None, gio_files)},
+                    {on_cb_file_remove: (msg.ctx_dict["trash"][0], gio_files)},
+                    {on_cb_file_remove: (msg.ctx_dict["delete"][0], gio_files)},
+                    {on_cb_file_properties: (None, gio_files)},
                     None,
                 ]
                 response = [
@@ -7911,10 +7937,7 @@ def sw_activate(swgs):
                 grid_view.get_model().unselect_all()
                 parent_path = get_parent_path()
 
-                if parent_path is not None:
-                    if Path(parent_path) == sw_shortcuts:
-                        pass
-                    else:
+                if parent_path is not None and Path(parent_path) != sw_shortcuts:
                         show_context(x, y, grid_view, parent_path)
 
     # def cb_model_selection_changed(self, _position, _n_items):
@@ -7931,21 +7954,21 @@ def sw_activate(swgs):
     # def cb_ctrl_right_view_focus(_):
     #     """___Emitted whenever the focus enters into the widget or child___"""
 
-    def cb_ctrl_left_view_motion(_, _x, _y):
-        """___Emitted when the pointer has entered the widget___
+    # def cb_ctrl_left_view_motion(_, _x, _y):
+    #     """___Emitted when the pointer has entered the widget___
 
-        grid_view = self.get_widget()
-        grid_view.grab_focus()
-        set_view_parent_path(grid_view)
-        """
+    #     grid_view = self.get_widget()
+    #     grid_view.grab_focus()
+    #     set_view_parent_path(grid_view)
+    #     """
 
-    def cb_ctrl_right_view_motion(_, _x, _y):
-        """___Emitted when the pointer has entered the widget___
+    # def cb_ctrl_right_view_motion(_, _x, _y):
+    #     """___Emitted when the pointer has entered the widget___
 
-        grid_view = self.get_widget()
-        grid_view.grab_focus()
-        set_view_parent_path(grid_view)
-        """
+    #     grid_view = self.get_widget()
+    #     grid_view.grab_focus()
+    #     set_view_parent_path(grid_view)
+    #     """
 
     def cb_ctrl_drag_prepare(self, x, y):
         """___return content for the drag file start___"""
@@ -8401,15 +8424,15 @@ def sw_activate(swgs):
 
         if view.get_name() == "left_column_view":
             swgs.column_view_file.set_title(msg.msg_dict["file_name"])
-            set_horizontal_icon(app_path, image, symlink_image, label)
+            set_horizontal_image(app_path, image, symlink_image, label)
         else:
             if getenv("ICON_POSITION") == "horizontal":
-                set_horizontal_icon(app_path, image, symlink_image, label)
+                set_horizontal_image(app_path, image, symlink_image, label)
 
             elif getenv("ICON_POSITION") == "vertical":
-                set_vertical_icon(app_path, image, symlink_image, label)
+                set_vertical_image(app_path, image, symlink_image, label)
 
-    def set_horizontal_icon(app_path, image, symlink_image, label):
+    def set_horizontal_image(app_path, image, symlink_image, label):
         """___set application horizontal icon, label and tooltip markup___"""
 
         app_name = str(get_out(app_path))
@@ -8457,7 +8480,7 @@ def sw_activate(swgs):
                     icon_path = sw_app_default_icons.joinpath(f"{d_icon}")
                     environ[f"{app_name}"] = f"{icon_path}"
 
-    def set_vertical_icon(app_path, image, symlink_image, label):
+    def set_vertical_image(app_path, image, symlink_image, label):
         """___set application vertical icon, label and tooltip markup___"""
 
         app_name = str(get_out(app_path))
@@ -8505,8 +8528,8 @@ def sw_activate(swgs):
                     icon_path = sw_app_default_icons.joinpath(f"{d_icon}")
                     environ[f"{app_name}"] = f"{icon_path}"
 
-    def set_heroes_icon(app_path, image, label):
-        """___set heroes icon for current application"""
+    def set_artwork_image(app_path, image, label):
+        """___set artwork icon for current application"""
 
         app_name = str(get_out(app_path))
         data = exe_data.get_(str(app_path))
@@ -8514,7 +8537,7 @@ def sw_activate(swgs):
         if data:
             # platform = data.get('platform')
             name = data.get("name")
-            icon = data.get("heroes")
+            icon = data.get("artwork")
             path = data.get("path")
 
             if name:
@@ -8530,7 +8553,7 @@ def sw_activate(swgs):
                 label.set_tooltip_markup(app_name)
 
             if icon:
-                icon_path = sw_app_heroes_icons.joinpath(f"{icon}")
+                icon_path = sw_app_artwork.joinpath(f"{icon}")
                 image.set_filename(f"{icon_path}")
                 image.set_content_fit(Gtk.ContentFit.COVER)
             else:
@@ -8690,14 +8713,6 @@ def sw_activate(swgs):
                 + item.get_path()
                 + tc.END
             )
-
-    def cb_grid_factory_teardown(_, _item_list):
-        """___prepare remove objects from list view___"""
-        pass
-
-    def cb_grid_factory_unbind(_, _item_list):
-        """___remove objects from list view___"""
-        pass
 
     def cb_column_factory_type_setup(_, item_list):
         """___setup items in column size view___"""
@@ -9933,6 +9948,9 @@ def sw_activate(swgs):
 
         exe_data.set_(str(app_path), "path", app_path)
 
+        check_store_image("EPIC_VERTICAL_IMAGE")
+        check_store_image("GOG_VERTICAL_IMAGE")
+
         if not check_exe_logo(str(app_path)):
             swgs.mp_event = mp.Event()
             p = mp.Process(
@@ -9962,7 +9980,7 @@ def sw_activate(swgs):
         label = item_list.get_child()
         label.set_label(item.get_string())
 
-    def cb_change_pfx_activate(self, _gparam):
+    def cb_change_pfx_activate(self, _):
         """___activate changed prefix___"""
 
         str_pfx = self.get_selected_item().get_string()
@@ -10025,7 +10043,7 @@ def sw_activate(swgs):
         func = [run_pfx_remove, None]
         SwDialogQuestion(swgs, msg.msg_dict["remove"], None, text_message, None, func)
 
-    def run_pfx_remove():
+    def run_pfx_remove(swd=None):
         """___remove current prefix___"""
         platform = False
         external = False
@@ -10041,7 +10059,7 @@ def sw_activate(swgs):
 
             trm = Thread(
                 target=remove_app_data,
-                args=(app_name, app_path, external, platform)
+                args=(exe_data, app_name, app_path, external, platform)
             )
             trm.start()
             GLib.timeout_add(100, check_alive, trm, update_exe_data, None, None)
@@ -10057,7 +10075,7 @@ def sw_activate(swgs):
 
             trm = Thread(
                 target=remove_app_data,
-                args=(app_name, app_path, external, platform)
+                args=(exe_data, app_name, app_path, external, platform)
             )
             trm.start()
             GLib.timeout_add(100, check_alive, trm, update_exe_data, None, None)
@@ -10078,12 +10096,12 @@ def sw_activate(swgs):
                 app_name = Path(steam_swd).stem
                 trm = Thread(
                     target=remove_app_data,
-                    args=(app_name, app_path, True, False)
+                    args=(exe_data, app_name, app_path, True, False)
                 )
                 trm.start()
                 GLib.timeout_add(100, check_alive, trm, update_exe_data, None, None)
-        else:
-            sw_shortcuts.joinpath(f"{get_out()}.swd").unlink()
+        elif swd:
+            swd.unlink()
 
     def cb_btn_pfx_reinstall():
         """___reinstall current prefix___"""
@@ -10455,9 +10473,10 @@ def sw_activate(swgs):
         label.set_label(item.get_string())
         label.set_name(item.get_string())
 
-    def cb_dropdown_download_wine(_, _position):
+    def cb_dropdown_download_wine(_, position):
         """___dropdown changed wine version to download___"""
-        return activate_install_wine_settings()
+        if position:
+            return activate_install_wine_settings()
 
     def cb_btn_download_wine(self, dropdown):
         """___download changed wine___"""
@@ -10689,7 +10708,7 @@ def sw_activate(swgs):
             if exe_path and Path(exe_path).exists():
                 t = Thread(
                     target=remove_app_data,
-                    args=(app_name, exe_path, True, False)
+                    args=(exe_data, app_name, exe_path, True, False)
                 )
                 t.start()
                 GLib.timeout_add(100, check_alive, t, update_exe_data, None, None)
@@ -10712,7 +10731,8 @@ def sw_activate(swgs):
             if exe_path and Path(exe_path).exists():
                 check_arg(str(exe_path), exe_args)
                 if Path(exe_path).suffix.lower() == ".exe":
-                    startup_gog_exe(dest_dir, idx)
+                    image = gdata.get("vertical")
+                    startup_gog_exe(dest_dir, idx, image)
                 elif Path(exe_path).suffix.lower() == ".sh":
                     startup_gog_sh(dest_dir, idx)
                 else:
@@ -10792,7 +10812,7 @@ def sw_activate(swgs):
         dest_dir = sw_gog_games.joinpath(f"{name}")
 
         if dest_dir.exists() and platform == "windows":
-            startup_gog_exe(dest_dir, idx, bar=None, install=True)
+            startup_gog_exe(dest_dir, idx, image=None, bar=None, install=True)
 
         elif dest_dir.exists() and platform == "linux":
             startup_gog_sh(dest_dir, idx, bar=None, install=True)
@@ -10830,10 +10850,12 @@ def sw_activate(swgs):
     def on_progress_gog_game(dl_manager, idx, name, total_size, dest_list):
         """___checking the download progress___"""
 
+        mib_size = {"size": 0}
         dest_dir = str(sw_gog_games.joinpath(f"{name}"))
+
         cover = str(sw_gog_icons.joinpath(f"{name}_horizontal_{idx}.jpg"))
         if not Path(cover).exists():
-            cover = IconPath.icon_gog_heroes
+            cover = IconPath.icon_gog_art
 
         bar = UpdateContentWindow(
             app=swgs,
@@ -10848,49 +10870,71 @@ def sw_activate(swgs):
         )
         t = Thread(
             target=on_download_progress,
-            args=(total_size, [dest_dir], [dl_manager], bar),
+            args=(total_size, mib_size, [dl_manager]),
         )
         t.start()
+
+        GLib.timeout_add(
+            1000, set_progress_fraction, total_size, mib_size, [dest_dir], bar
+        )
         GLib.timeout_add(
             500, check_alive, t, extract_gog_game, (idx, dest_list, bar), None
         )
 
-    def on_download_progress(total_size, dest_list, thread_workers, bar):
-        """___file download progress report___"""
+    def set_progress_fraction(total_size, mib_size, dest_list, bar):
+        """___set download progress fraction___"""
 
         total_size = total_size[0] if total_size else 0
         fraction = 0
         dest_size = 0
+        dest_mib = 0
         total_mib = round(total_size / 1048576, 1)
-        for thread, dest in zip(thread_workers, dest_list):
-            while thread.is_alive():
-                if Path(dest).exists():
-                    if Path(dest).is_file():
-                        try:
-                            dest_size = os.stat(dest).st_size
-                        except (Exception,) as e:
-                            print(e)
-                            dest_size = 0
+        for dest in dest_list:
+            if Path(dest).exists():
+                if Path(dest).is_file():
+                    try:
+                        dest_size = os.stat(dest).st_size
+                    except (Exception,) as e:
+                        print(e)
+                        dest_size = 0
 
-                    elif Path(dest).is_dir() and len(list(Path(dest).iterdir())) > 0:
-                        try:
-                            dest_size = get_dir_size(0, dest)[-1]
-                        except (Exception,) as e:
-                            print(e)
-                            dest_size = 0
+                elif Path(dest).is_dir() and len(list(Path(dest).iterdir())) > 0:
+                    try:
+                        dest_size = get_dir_size(0, dest)[-1]
+                    except (Exception,) as e:
+                        print(e)
+                        dest_size = 0
 
-                dest_mib = round(dest_size / 1048576, 1)
+            dest_mib = round(dest_size / 1048576, 1)
+            mib_size["size"] = dest_mib
 
-                if total_size > 0:
-                    sys.stdout.write(f"\rProgress report: {dest_size} of {total_size}")
-                    fraction = round(dest_size / total_size, 2)
-
+            if total_size > 0:
+                fraction = round(dest_size / total_size, 2)
                 bar.set_fraction(fraction)
                 bar.set_text(f"{dest_mib}/{total_mib} Mb {fraction * 100}%")
-                sleep(1.0)
 
-        bar.set_text(f"Extraction...")
-        bar.set_fraction(1)
+        if fraction >= 1:
+            bar.set_text(f"Extraction...")
+            bar.set_fraction(1)
+            return False
+        else:
+            return True
+
+    def on_download_progress(total_size, mib_size, thread_workers):
+        """___file download progress report___"""
+
+        total_size = total_size[0] if total_size else 0
+
+        for thread in thread_workers:
+            while thread.is_alive():
+                dest_mib = mib_size.get("size", 0)
+                total_mib = round(total_size / 1048576, 1)
+                fraction = round(dest_mib / total_mib, 2)
+                sys.stdout.write(
+                    f"\r{tc.GREEN}{dest_mib}/{total_mib} Mb "
+                    + f"{tc.YELLOW}{fraction * 100}%{tc.END}"
+                )
+                sleep(1.0)
 
     def extract_gog_game(idx, dest_list, bar):
         """___extract downloaded files to destination directory___"""
@@ -10922,7 +10966,7 @@ def sw_activate(swgs):
                     check_alive,
                     t,
                     startup_gog_exe,
-                    (dest_dir, idx, bar, True),
+                    (dest_dir, idx, None, bar, True),
                     None,
                 )
         elif is_sh:
@@ -10936,7 +10980,7 @@ def sw_activate(swgs):
             message = msg.msg_dict["installation_error"]
             SwCrier(text_message=[message], message_type="ERROR").run()
 
-    def startup_gog_exe(dest_dir, idx, bar=None, install=False):
+    def startup_gog_exe(dest_dir, idx, image=None, bar=None, install=False):
         """___prepare startup dialog for gog exe___"""
         if bar:
             bar.close()
@@ -10954,10 +10998,16 @@ def sw_activate(swgs):
                 message = msg.msg_dict["installation_completed"]
                 SwCrier(text_message=[message], message_type="INFO").run()
             else:
+                if dest_dir.exists():
+                    shutil.rmtree(dest_dir)
+                    print(f'{tc.YELLOW2}Remove "{dest_dir}" after error...{tc.END}')
+
                 set_installed_data("gog")
                 message = msg.msg_dict["installation_error"]
                 SwCrier(text_message=[message], message_type="ERROR").run()
         else:
+            if image:
+                environ["GOG_VERTICAL_IMAGE"] = image
             startup_question(rotate_page=False)
 
     def startup_gog_sh(dest_dir, idx, bar=None, install=False):
@@ -10979,6 +11029,10 @@ def sw_activate(swgs):
                 message = msg.msg_dict["installation_completed"]
                 SwCrier(text_message=[message], message_type="INFO").run()
             else:
+                if dest_dir.exists():
+                    shutil.rmtree(dest_dir)
+                    print(f'{tc.YELLOW2}Remove "{dest_dir}" after error...{tc.END}')
+
                 message = msg.msg_dict["installation_error"]
                 SwCrier(text_message=[message], message_type="ERROR").run()
         else:
@@ -11047,7 +11101,7 @@ def sw_activate(swgs):
             if exe_path and Path(exe_path).exists():
                 t = Thread(
                     target=remove_app_data,
-                    args=(app_name, exe_path, True, False)
+                    args=(exe_data, app_name, exe_path, True, False)
                 )
                 t.start()
                 GLib.timeout_add(100, check_alive, t, update_exe_data, None, None)
@@ -11072,13 +11126,14 @@ def sw_activate(swgs):
         if sw_fm_cache_epic_manifests.joinpath(f"{idx}.bak.manifest").exists():
             sw_fm_cache_epic_manifests.joinpath(f"{idx}.bak.manifest").unlink()
 
-    def on_start_epic_exe(exe_path, exe_args):
+    def on_start_epic_exe(exe_path, exe_args, vertical_image):
         """___startup dialog for running epic executable___"""
 
         if isinstance(exe_args, list):
             exe_args = " ".join(exe_args)
 
         check_arg(str(exe_path), exe_args)
+        environ["EPIC_VERTICAL_IMAGE"] = vertical_image
         startup_question(rotate_page=False)
 
     def cb_btn_install_epic_game(self, name, item_data):
@@ -11091,7 +11146,8 @@ def sw_activate(swgs):
             exe_args = []
             exe_path = edata.get("path")
             if exe_path and Path(exe_path).exists():
-                on_start_epic_exe(exe_path, exe_args)
+                vertical_image = edata.get("vertical")
+                on_start_epic_exe(exe_path, exe_args, vertical_image)
             else:
                 text_message = [
                     msg.msg_dict["does_not_exist"],
@@ -11162,6 +11218,8 @@ def sw_activate(swgs):
     def on_download_epic_game(idx, name, dest_dir, man_dest, man_bak, url_list):
         """___download epic games product from store data___"""
 
+        mib_size = {"size": 0}
+
         if man_dest and url_list:
             man_dest = man_dest[0]
             man_bak = man_bak[0] if man_bak else None
@@ -11175,16 +11233,16 @@ def sw_activate(swgs):
             size_ok = check_dir_size(dest_dir, total_size)
 
             if not size_ok:
-                cover = sw_epic_icons.joinpath(f"{name}_heroes_{idx}.jpg")
+                cover = sw_epic_icons.joinpath(f"{name}_artwork_{idx}.jpg")
                 if not Path(cover).exists():
-                    cover = IconPath.icon_epic_heroes
+                    cover = IconPath.icon_epic_art
                 else:
                     try:
                         Image.open(cover)
                     except (Exception,) as e:
                         print(tc.RED, e, tc.END)
                         print(f"{tc.RED}Corrupted image! Set to default epic cover...{tc.END}")
-                        cover = IconPath.icon_epic_heroes
+                        cover = IconPath.icon_epic_art
 
                 bar = UpdateContentWindow(
                     app=swgs,
@@ -11198,11 +11256,21 @@ def sw_activate(swgs):
                     close_button=True,
                 )
                 dl_manager.start()
+
                 t = Thread(
                     target=on_download_progress,
-                    args=([total_size], [dest_dir], [dl_manager], bar),
+                    args=([total_size], mib_size, [dl_manager]),
                 )
                 t.start()
+
+                GLib.timeout_add(
+                    1000,
+                    set_progress_fraction,
+                    [total_size],
+                    mib_size,
+                    [dest_dir],
+                    bar
+                )
                 GLib.timeout_add(
                     1000,
                     check_alive,
@@ -11480,8 +11548,6 @@ def sw_activate(swgs):
         self.add_css_class("installing")
         bar = progress_main
         bar.set_name("install_launchers")
-        # bar.set_show_text(True)
-        # bar.set_text(f"{self.get_name()} {progress_dict['installation']}")
         t = Thread(target=run_install_launchers, args=[self.get_name()])
         t.start()
         GLib.timeout_add(100, progress_on_thread, bar, t, None)
@@ -11607,8 +11673,9 @@ def sw_activate(swgs):
     def on_menu_conf_default():
         """___reset menu configuration to default___"""
 
-        set_menu_json_default()
         clear_cache_dir()
+        set_menu_json_default()
+        create_json_data(sw_input_json, default_app_bind_profile)
         check_bookmarks()
         check_playlist()
         check_css_dark()
@@ -11955,7 +12022,7 @@ def sw_activate(swgs):
 
                     c.set_rgba(rgba)
 
-    def on_row_entry_icon_press(self, _position):
+    def on_row_entry_icon_press(self, _):
         """___writing a value from entry widget to the application config
         when user click the edit button___"""
 
@@ -12012,7 +12079,7 @@ def sw_activate(swgs):
         label = item_list.get_child()
         label.set_label(item.get_string())
 
-    def on_row_combo_activate(self, _gparam):
+    def on_row_combo_activate(self, _):
         """___write selected item in application config___"""
 
         app_name = get_out()
@@ -12082,7 +12149,7 @@ def sw_activate(swgs):
                     )
                 )
 
-    def on_row_theme_activate(self, _param):
+    def on_row_theme_activate(self, _):
         """___write selected item in custom css___"""
         color = self.get_selected_item().get_string()
         sample = default_themes[color]
@@ -12165,7 +12232,7 @@ def sw_activate(swgs):
             )
         )
 
-    def cb_btn_switch_ls(self, _state):
+    def cb_btn_switch_ls(self, _):
         """___update switch list when changed switch state___"""
 
         app_name = get_out()
@@ -12216,7 +12283,7 @@ def sw_activate(swgs):
             else:
                 btn_switch_mh.set_active(False)
 
-    def cb_btn_switch_mh(self, _state):
+    def cb_btn_switch_mh(self, _):
         """___write mangohud config when toggle check button___"""
 
         app_name = get_out()
@@ -12287,12 +12354,12 @@ def sw_activate(swgs):
             )
         entry.set_text(self.get_rgba().to_string())
 
-    def on_theme_color_set(self, _gparam, entry):
+    def on_theme_color_set(self, _, entry):
         """___set custom color scheme colors___"""
 
         entry.set_text(self.get_rgba().to_string())
 
-    def on_row_entry_color(self, _position):
+    def on_row_entry_color(self, _):
         """___save custom color from entry string___"""
 
         color_value = self.get_text()
@@ -12481,7 +12548,7 @@ def sw_activate(swgs):
             else:
                 btn_switch_vk.set_active(False)
 
-    def cb_btn_switch_vk(self, _state):
+    def cb_btn_switch_vk(self, _):
         """___switch vkbasalt parameters___"""
 
         app_name = get_out()
@@ -12614,10 +12681,10 @@ def sw_activate(swgs):
             callback=get_folder,
         )
 
-    def cb_entry_def_dir(_, _position):
+    def cb_entry_def_dir(_, position):
         """___set the default directory to open files___"""
-
-        return on_def_dir()
+        if position:
+            return on_def_dir()
 
     def on_def_dir():
         """___set the default directory to open files___"""
@@ -12643,7 +12710,7 @@ def sw_activate(swgs):
         label = item_list.get_child()
         label.set_label(item.get_string())
 
-    def on_lang_activate(self, _gparam):
+    def on_lang_activate(self, _):
         """___set the locale of the selected language___"""
 
         str_lang = self.get_selected_item().get_string()
@@ -12775,7 +12842,7 @@ def sw_activate(swgs):
 
         return sys_icons
 
-    def on_switch_icons(self, _state):
+    def on_switch_icons(self, _):
         """___switch icons theme___"""
 
         icon_theme = getenv("SW_ICON_THEME")
@@ -12798,7 +12865,7 @@ def sw_activate(swgs):
                     gtk_settings.props.gtk_icon_theme_name = "SWSuru++-blue"
                     print(f"{tc.VIOLET}BUILTIN_ICONS: {tc.BLUE}SWSuru++-blue{tc.END}")
 
-    def on_switch_restore_menu(self, _state):
+    def on_switch_restore_menu(self, _):
         """___switch restore menu mode___"""
 
         if self.get_active():
@@ -12807,7 +12874,7 @@ def sw_activate(swgs):
         if not self.get_active():
             swgs.cfg["restore_menu"] = "off"
 
-    def on_switch_auto_stop(self, _state):
+    def on_switch_auto_stop(self, _):
         """___switch auto stop mode___"""
 
         if self.get_active():
@@ -12816,7 +12883,7 @@ def sw_activate(swgs):
         if not self.get_active():
             swgs.cfg["auto_stop"] = "off"
 
-    def on_switch_auto_hide_top_header(self, _state):
+    def on_switch_auto_hide_top_header(self, _):
         """___switch auto hide headers mode___"""
 
         if self.get_active():
@@ -12829,7 +12896,7 @@ def sw_activate(swgs):
             environ["SW_AUTO_HIDE_TOP_HEADER"] = "0"
             top_headerbar_revealer.set_reveal_child(True)
 
-    def on_switch_auto_hide_bottom_header(self, _state):
+    def on_switch_auto_hide_bottom_header(self, _):
         """___switch auto hide headers mode___"""
 
         if self.get_active():
@@ -18186,6 +18253,7 @@ def sw_activate(swgs):
     btn_back_up.connect("clicked", cb_btn_back_up)
 
     top_headerbar_start_box = Gtk.Box(
+        css_name="sw_header_box",
         orientation=Gtk.Orientation.HORIZONTAL,
         valign=Gtk.Align.CENTER,
         halign=Gtk.Align.START,
@@ -18195,6 +18263,7 @@ def sw_activate(swgs):
         spacing=4,
     )
     top_headerbar_end_box = Gtk.Box(
+        css_name="sw_header_box",
         orientation=Gtk.Orientation.HORIZONTAL,
         hexpand=True,
         valign=Gtk.Align.CENTER,
@@ -18206,6 +18275,7 @@ def sw_activate(swgs):
         spacing=4,
     )
     top_headerbar_center_box = Gtk.Box(
+        css_name="sw_header_box",
         orientation=Gtk.Orientation.HORIZONTAL,
         hexpand=True,
         vexpand=True,
@@ -18875,8 +18945,6 @@ def sw_activate(swgs):
 
     grid_factory.connect("setup", cb_factory_setup, left_grid_view)
     grid_factory.connect("bind", cb_factory_bind, left_grid_view)
-    grid_factory.connect("teardown", cb_grid_factory_teardown)
-    grid_factory.connect("unbind", cb_grid_factory_unbind)
 
     ctrl_lclick_view = Gtk.GestureClick()
     ctrl_lclick_view.connect("pressed", cb_ctrl_lclick_view)
@@ -18904,7 +18972,7 @@ def sw_activate(swgs):
     ctrl_drop_target.connect("drop", cb_ctrl_drop_target)
 
     ctrl_left_view_motion = Gtk.EventControllerMotion()
-    ctrl_left_view_motion.connect("enter", cb_ctrl_left_view_motion)
+    # ctrl_left_view_motion.connect("enter", cb_ctrl_left_view_motion)
 
     ctrl_left_view_focus = Gtk.EventControllerFocus()
     # ctrl_left_view_focus.connect('enter', cb_ctrl_left_view_focus)
@@ -19349,9 +19417,6 @@ def sw_activate(swgs):
     GLib.timeout_add(350, check_file_monitor_event)
     GLib.timeout_add(200, check_volume)
     GLib.timeout_add(100, key_event_handler)
-
-#    if getenv("GPU_IN_USE") != "nvidia":
-#        GLib.timeout_add(250, check_the_sound)
 
     set_print_run_time(True)
     check_arg_on_direct_start()

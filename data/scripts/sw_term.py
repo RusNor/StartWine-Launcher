@@ -39,7 +39,7 @@ from typing import ClassVar, Iterable
 
 from textual.app import App, ComposeResult
 from textual.types import NoSelection
-from textual.command import Hit, Hits, Provider, DiscoveryHit
+from textual.command import Hit, Hits, Provider    #, DiscoveryHit
 from textual.suggester import SuggestFromList
 from textual.renderables.gradient import LinearGradient
 from textual.screen import Screen, ModalScreen

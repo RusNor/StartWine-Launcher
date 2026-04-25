@@ -487,15 +487,15 @@ sw_shortcuts_autoinstall () {
     export GUI_NAME_H
     GUI_NAME_V="$(basename -s .jpg "${COPY_ICON_V}" | tr -s '[:punct:]' ' ')"
     export GUI_NAME_V
-    GUI_NAME_HEROES="$(basename -s .jpg "${COPY_ICON_HEROES}" | tr -s '[:punct:]' ' ')"
-    export GUI_NAME_HEROES
+    GUI_NAME_A="$(basename -s .jpg "${COPY_ICON_A}" | tr -s '[:punct:]' ' ')"
+    export GUI_NAME_A
 
     PARSE_NAME="$(echo "${SW_GAME_NAME}" | tr -d '[:punct:]')"
     export PARSE_NAME
 
     try_copy "${COPY_ICON_H}" "${START_WINE_PATH}/data/img/app_icons/horizontal/${PARSE_NAME}_horizontal_${GUI_NAME_H}_x256.jpg"
     try_copy "${COPY_ICON_V}" "${START_WINE_PATH}/data/img/app_icons/vertical/${PARSE_NAME}_vertical_${GUI_NAME_V}_x256.jpg"
-    try_copy "${COPY_ICON_HEROES}" "${START_WINE_PATH}/data/img/app_icons/heroes/${PARSE_NAME}_heroes_${GUI_NAME_HEROES}_x256.jpg"
+    try_copy "${COPY_ICON_A}" "${START_WINE_PATH}/data/img/app_icons/artwork/${PARSE_NAME}_artwork_${GUI_NAME_A}_x256.jpg"
 
     echo "Exec=\"${SW_GAME_EXE}\"" > "${START_WINE_PATH}/Shortcuts/${SW_GAME_NAME}.swd"
 
@@ -595,10 +595,6 @@ try_get_wine_ver () {
            $proton_em != *-[0-9][[:alpha:]]* ]] && \
             proton_em_list+="$proton_em "
     done
-
-#            $proton_em != *-[12][A-Za-z]* ]] && \
-#            $proton_em != *-[0-9][[:alpha:]]* ]] && \
-#            $proton_em != *-[0-9][A-Za-z]* ]] && \
 
     for dxvk in $dxvk_ver ; do
         [[ $dxvk == *"dxvk"* && $dxvk != *"dxvk-native"* ]] && \
@@ -705,14 +701,14 @@ try_update_sw () {
                 try_remove "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso"
 
                 if "$CRIER" -d "${URL_DOWNLOAD}" "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso"; then
-                    print_info "####   Download pfx default completed successfully   ####"
+                    print_info "Download pfx default completed successfully"
                 else
-                    print_error "####   Failed to download pfx default   ####"
+                    print_error "Failed to download pfx default"
                 fi
 
                 export FTP_URL=(
-                    "https://startwine-launcher.ru/StartWine-data/src-startwine/StartWine_v${GIT_VER}.tar.xz"
-                    "https://huggingface.co/StartWine/sw_repo/resolve/main/src-startwine/StartWine_v${GIT_VER}.tar.xz?download=true"
+                    "https://startwine-launcher.ru/StartWine-data/releases/StartWine_v${GIT_VER}.tar.xz"
+                    "https://huggingface.co/StartWine/sw_repo/resolve/main/release/StartWine_v${GIT_VER}.tar.xz?download=true"
                     "https://github.com/RusNor/StartWine-Launcher/releases/download/StartWine_v${GIT_VER}/StartWine_v${GIT_VER}.tar.xz"
                 )
 
@@ -729,6 +725,9 @@ try_update_sw () {
 
                         [ -n "${GIT_VER}" ] && \
                             echo "${GIT_VER}" > "${START_WINE_PATH}/data/scripts/version"
+
+                        [ -f "${HOME}/.cache/sw_fm/exe_data.json" ] && \
+                            try_remove "${HOME}/.cache/sw_fm/exe_data.json"
 
                         "$CRIER" -i "$(eval_gettext 'The update is completed successfully. Restart StartWine for the changes to take effect.')"
                     else
@@ -756,8 +755,9 @@ try_download_pfx_dn_default () {
     if [ ! -f "${START_WINE_PATH}/data/pfx_backup/pfx_dn_default.iso" ]; then
 
         export FTP_URL=(
-           "https://huggingface.co/StartWine/sw_repo/resolve/main/pfx_backup/pfx_dn_default.iso?download=true"
-           "https://github.com/RusNor/pfx_backup/releases/download/pfx_default/pfx_dn_default.iso"
+            "https://startwine-launcher.ru/StartWine-data/pfx_backup/pfx_dn_default.iso"
+            "https://huggingface.co/StartWine/sw_repo/resolve/main/pfx_backup/pfx_dn_default.iso?download=true"
+            "https://github.com/RusNor/pfx_backup/releases/download/pfx_default/pfx_dn_default.iso"
         )
 
         sw_check_url
@@ -931,10 +931,6 @@ if [ "${SW_USE_MANGOHUD}" == 1 ]; then
         export SW_HUD_SIZE
     fi
 
-#    horizontal                     Mangohud в горизонтальном положении.
-#    offset_x offset_y              Смещение положения HUD.
-#    offset_x=15,offset_y=5,horizontal,
-
     export MANGOHUD_CONFIG="fps_color_change,round_corners=10,no_display,cpu_load_change,gpu_load_change,core_load_change,background_alpha=0.2\
     ,font_size=${SW_HUD_SIZE},background_color=020202,fps_limit=${SW_USE_FPS_LIMIT}+0,toggle_fps_limit=Shift_L+F1\
     ,position=top-right,toggle_hud=Shift_R+F12,${SW_USE_MANGOHUD_CONFIG},toggle_hud_position=R_Shift+F11"
@@ -942,12 +938,6 @@ fi
 
 if [ "${SW_USE_VIRTUAL_DESKTOP}" == 1 ]; then
     VDESKTOP="explorer /desktop=StartWine,$(eval xrandr --current | grep "\*" | awk '{print $1;}' | tail -1)"
-fi
-
-if [ "${SW_USE_PIN}" == 1 ]; then
-    export SW_USE_WAYLAND=1
-else
-    unset SW_USE_PIN
 fi
 
 if [ "${SW_USE_WAYLAND}" == 1 ]; then
@@ -1229,13 +1219,13 @@ if [ ! -d "${START_WINE_PATH}/data/tools/vulkan/dxvk-${DXVK_VER}/x64" ]; then
         if "$CRIER" --silent-download "${URL_DOWNLOAD}" "${START_WINE_PATH}/data/tmp/dxvk-${DXVK_VER}.tar.gz"; then
             "$CRIER" --silent-tar "${START_WINE_PATH}/data/tmp/dxvk-${DXVK_VER}.tar.gz" "${START_WINE_PATH}/data/tools/vulkan"
         else
-            print_error "####   Failed to download dxvk   ####"
+            print_error "Failed to download dxvk"
         fi
     else
         if "$CRIER" -d "${URL_DOWNLOAD}" "${START_WINE_PATH}/data/tmp/dxvk-${DXVK_VER}.tar.gz"; then
             "$CRIER" --tar "${START_WINE_PATH}/data/tmp/dxvk-${DXVK_VER}.tar.gz" "${START_WINE_PATH}/data/tools/vulkan"
         else
-            print_error "####   Failed to download dxvk   ####"
+            print_error "Failed to download dxvk"
         fi
     fi
 
@@ -1257,17 +1247,17 @@ if [ ! -d "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-${VKD3D_VER}/x64" ]
 
     if [ "${SW_SILENT_DL}" == "1" ]; then
         if "$CRIER" --silent-download "${URL_DOWNLOAD}" "${START_WINE_PATH}/data/tmp/vkd3d-proton-${VKD3D_VER}.tar.zst"; then
-            unzstd "${START_WINE_PATH}/data/tmp/vkd3d-proton-${VKD3D_VER}.tar.zst" &&
+            unzstd "${START_WINE_PATH}/data/tmp/vkd3d-proton-${VKD3D_VER}.tar.zst" && \
             "$CRIER" --silent-tar "${START_WINE_PATH}/data/tmp/vkd3d-proton-${VKD3D_VER}.tar" "${START_WINE_PATH}/data/tools/vulkan"
         else
-            print_error "####   Failed to download vkd3d-proton   ####"
+            print_error "Failed to download vkd3d-proton"
         fi
     else
         if "$CRIER" -d "${URL_DOWNLOAD}" "${START_WINE_PATH}/data/tmp/vkd3d-proton-${VKD3D_VER}.tar.zst"; then
-            unzstd "${START_WINE_PATH}/data/tmp/vkd3d-proton-${VKD3D_VER}.tar.zst" &&
+            unzstd "${START_WINE_PATH}/data/tmp/vkd3d-proton-${VKD3D_VER}.tar.zst" && \
             "$CRIER" --tar "${START_WINE_PATH}/data/tmp/vkd3d-proton-${VKD3D_VER}.tar" "${START_WINE_PATH}/data/tools/vulkan"
         else
-            print_error "####   Failed to download vkd3d-proton   ####"
+            print_error "Failed to download vkd3d-proton"
         fi
     fi
 
@@ -1295,13 +1285,13 @@ if [ ! -f "${START_WINE_PATH}/data/tools/utils/config/dxvk.conf" ]; then
         if "$CRIER" --silent-download "${URL_DOWNLOAD}" "${START_WINE_PATH}/data/tmp/utils.tar.xz"; then
             "$CRIER" --silent-tar "${START_WINE_PATH}/data/tmp/utils.tar.xz" "${START_WINE_PATH}/data/tools"
         else
-            print_error "####   Failed to download utils   ####"
+            print_error "Failed to download utils"
         fi
     else
         if "$CRIER" -d "${URL_DOWNLOAD}" "${START_WINE_PATH}/data/tmp/utils.tar.xz"; then
             "$CRIER" --tar "${START_WINE_PATH}/data/tmp/utils.tar.xz" "${START_WINE_PATH}/data/tools"
         else
-            print_error "####   Failed to download utils   ####"
+            print_error "Failed to download utils"
         fi
     fi
 
@@ -1323,15 +1313,15 @@ if [ ! -f "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso" ]; then
 
     if [ "${SW_SILENT_DL}" == "1" ]; then
         if "$CRIER" --silent-download "${URL_DOWNLOAD}" "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso"; then
-            print_info "####   Download pfx default completed successfully   ####"
+            print_info "Download pfx default completed successfully"
         else
-            print_error "####   Failed to download pfx default   ####"
+            print_error "Failed to download pfx default"
         fi
     else
         if "$CRIER" -d "${URL_DOWNLOAD}" "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso"; then
-            print_info "####   Download pfx default completed successfully   ####"
+            print_info "Download pfx default completed successfully"
         else
-            print_error "####   Failed to download pfx default   ####"
+            print_error "Failed to download pfx default"
         fi
     fi
 
@@ -1634,7 +1624,7 @@ CREATE_ICON () {
     "$CRIER" --ico "${SW_GAME_EXE}" "${SW_APP_ICONS_DEFAULT}"
 
     [ ! -f "${SW_APP_ICONS_DEFAULT}" ] && \
-        try_copy "${START_WINE_PATH}/data/img/gui_icons/unknown.svg" "${SW_APP_ICONS_DEFAULT}"
+        try_copy "${START_WINE_PATH}/data/img/gui_icons/unknown.png" "${SW_APP_ICONS_DEFAULT}"
 
 }
 
@@ -2051,7 +2041,7 @@ WINE_1 () {
             try_remove "${START_WINE_PATH}/data/wine/wine-${STAG_VER}-staging-amd64/include"
             echo "wine-staging ${STAG_VER}" > "${START_WINE_PATH}/data/wine/wine-${STAG_VER}-staging-amd64/version"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -2102,7 +2092,7 @@ WINE_2 () {
             try_remove "${START_WINE_PATH}/data/tmp/steam-proton-${SP_VER}.tar.xz"
             echo "Steam-${SP_VER}" > "${START_WINE_PATH}/data/wine/steam-proton-${SP_VER}/version"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
     fi
@@ -2151,7 +2141,7 @@ WINE_3 () {
             [ ! -d "${HOME}/.steam/root/compatibilitytools.d/GE-Proton${GE_VER}" ] && \
                 try_link "${START_WINE_PATH}/data/wine/GE-Proton${GE_VER}" "${HOME}/.steam/root/compatibilitytools.d/GE-Proton${GE_VER}"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
     fi
@@ -2192,7 +2182,7 @@ WINE_4 () {
             try_remove "${START_WINE_PATH}/data/wine/wine-${STAG_VER}-staging-tkg-amd64/include"
             echo "wine-staging-tkg ${STAG_VER}" > "${START_WINE_PATH}/data/wine/wine-${STAG_VER}-staging-tkg-amd64/version"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
     fi
@@ -2241,7 +2231,7 @@ WINE_5 () {
             [ ! -d "${HOME}/.steam/root/compatibilitytools.d/proton-EM-${EM_VER}" ] && \
                 try_link "${START_WINE_PATH}/data/wine/proton-EM-${EM_VER}" "${HOME}/.steam/root/compatibilitytools.d/proton-EM-${EM_VER}"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
     fi
@@ -2366,13 +2356,13 @@ INSTALL_BATTLE_NET () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/Battle_Net.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/Battle_Net.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/Battle_Net.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/Battle_Net.jpg"
 
             sw_shortcuts_autoinstall
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -2415,13 +2405,13 @@ INSTALL_EPIC_GAMES () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/Epic_Games.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/Epic_Games.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/Epic_Games.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/Epic_Games.jpg"
 
             sw_shortcuts_autoinstall
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -2462,13 +2452,13 @@ INSTALL_EVE () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/Eve.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/Eve.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/Eve.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/Eve.jpg"
 
             sw_shortcuts_autoinstall
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -2509,13 +2499,13 @@ INSTALL_GAME_CENTER () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/Game_Center.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/Game_Center.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/Game_Center.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/Game_Center.jpg"
 
             sw_shortcuts_autoinstall
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -2533,9 +2523,9 @@ INSTALL_GALAXY () {
         WINE_OK=1
         WINE_3
 
-        #2.0.80.33 beta
-        #2.0.77.22 stable
-        #2.0.74.352 old_stable
+#        2.0.80.33 beta
+#        2.0.77.22 stable
+#        2.0.74.352 old_stable
 
         export GOG_VER=2.0.80.33
 
@@ -2564,13 +2554,13 @@ INSTALL_GALAXY () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/Galaxy.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/Galaxy.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/Galaxy.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/Galaxy.jpg"
 
             sw_shortcuts_autoinstall
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -2609,7 +2599,7 @@ INSTALL_RIOT_GAMES () {
                 try_remove "${START_WINE_PATH}/data/tmp/lutris-GE-Proton${LUTRIS_GE_VER}-x86_64"
                 chmod -R 775 "${START_WINE_PATH}/data/wine/wine-lutris-GE-Proton${LUTRIS_GE_VER}-x86_64"
             else
-                echo "####   Failed to download   ####"
+                print_error "Failed to download"
                 exit 1
             fi
 
@@ -2640,13 +2630,13 @@ INSTALL_RIOT_GAMES () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/Riot_Games.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/Riot_Games.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/Riot_Games.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/Riot_Games.jpg"
 
             sw_shortcuts_autoinstall
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -2692,13 +2682,13 @@ INSTALL_EA () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/EA.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/EA.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/EA.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/EA.jpg"
 
             sw_shortcuts_autoinstall
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -2741,13 +2731,13 @@ INSTALL_ROCKSTAR_GAMES () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/Rockstar_Games.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/Rockstar_Games.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/Rockstar_Games.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/Rockstar_Games.jpg"
 
             sw_shortcuts_autoinstall
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -2792,13 +2782,13 @@ INSTALL_STEAM () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/Steam.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/Steam.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/Steam.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/Steam.jpg"
 
             sw_shortcuts_autoinstall
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -2841,13 +2831,13 @@ INSTALL_UBISOFT_CONNECT () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/Ubisoft_Connect.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/Ubisoft_Connect.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/Ubisoft_Connect.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/Ubisoft_Connect.jpg"
 
             sw_shortcuts_autoinstall
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -2890,13 +2880,13 @@ INSTALL_WARGAMING () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/Wargaming.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/Wargaming.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/Wargaming.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/Wargaming.jpg"
 
             sw_shortcuts_autoinstall
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -2943,13 +2933,13 @@ INSTALL_ZONA () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/Zona.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/Zona.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/Zona.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/Zona.jpg"
 
             sw_shortcuts_autoinstall
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -2997,7 +2987,7 @@ INSTALL_OSU () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/Osu.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/Osu.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/Osu.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/Osu.jpg"
 
             sw_shortcuts_autoinstall
 
@@ -3047,18 +3037,18 @@ INSTALL_OSU () {
 
                         print_info "download osu-handler-wine done"
                     else
-                        echo "####   Failed to download   ####"
+                        print_error "Failed to download"
                         exit 1
                     fi
                 else
-                    echo "####   Failed to download   ####"
+                    print_error "Failed to download"
                     exit 1
                 fi
             fi
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -3101,13 +3091,13 @@ INSTALL_WORLD_OF_SEA_BATTLE () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/World_of_Sea_Battle.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/World_of_Sea_Battle.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/World_of_Sea_Battle.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/World_of_Sea_Battle.jpg"
 
             sw_shortcuts_autoinstall
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -3148,13 +3138,13 @@ INSTALL_CROSSOUT () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/Crossout.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/Crossout.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/Crossout.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/Crossout.jpg"
 
             sw_shortcuts_autoinstall
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -3197,13 +3187,13 @@ INSTALL_CALIBER () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/Caliber.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/Caliber.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/Caliber.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/Caliber.jpg"
 
             sw_shortcuts_autoinstall
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -3246,13 +3236,13 @@ INSTALL_LESTA_GAMES () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/Lesta_Games.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/Lesta_Games.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/Lesta_Games.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/Lesta_Games.jpg"
 
             sw_shortcuts_autoinstall
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -3293,13 +3283,13 @@ INSTALL_STALCRAFT () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/Stalcraft.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/Stalcraft.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/Stalcraft.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/Stalcraft.jpg"
 
             sw_shortcuts_autoinstall
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -3340,13 +3330,13 @@ INSTALL_LINEAGE () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/Lineage.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/Lineage.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/Lineage.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/Lineage.jpg"
 
             sw_shortcuts_autoinstall
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -3391,7 +3381,7 @@ INSTALL_PLARIUM_PLAY () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/Plarium_Play.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/Plarium_Play.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/Plarium_Play.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/Plarium_Play.jpg"
 
             sw_shortcuts_autoinstall
 
@@ -3400,7 +3390,7 @@ INSTALL_PLARIUM_PLAY () {
 
             SW_WINETRICKS
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -3441,13 +3431,13 @@ INSTALL_PATH_OF_EXILE () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/Path_of_Exile.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/Path_of_Exile.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/Path_of_Exile.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/Path_of_Exile.jpg"
 
             sw_shortcuts_autoinstall
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -3490,13 +3480,13 @@ INSTALL_STALKER_ONLINE () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/Stalker_Online.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/Stalker_Online.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/Stalker_Online.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/Stalker_Online.jpg"
 
             sw_shortcuts_autoinstall
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -3537,13 +3527,13 @@ INSTALL_ANOMALY_ZONE () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/Anomaly_Zone.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/Anomaly_Zone.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/Anomaly_Zone.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/Anomaly_Zone.jpg"
 
             sw_shortcuts_autoinstall
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -3586,13 +3576,13 @@ INSTALL_NINTENDO_SWITCH () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/Nintendo_Switch.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/Nintendo_Switch.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/Nintendo_Switch.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/Nintendo_Switch.jpg"
 
             sw_shortcuts_autoinstall
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -3636,13 +3626,13 @@ INSTALL_POPCOTIME () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/Popcotime.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/Popcotime.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/Popcotime.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/Popcotime.jpg"
 
             sw_shortcuts_autoinstall
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -3683,13 +3673,13 @@ INSTALL_GAMEXP () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/GameXP.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/GameXP.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/GameXP.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/GameXP.jpg"
 
             sw_shortcuts_autoinstall
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -3730,13 +3720,13 @@ INSTALL_RPG_CLUB () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/RPG_Club.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/RPG_Club.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/RPG_Club.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/RPG_Club.jpg"
 
             sw_shortcuts_autoinstall
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -3779,13 +3769,13 @@ INSTALL_GENSHIN_IMPACT () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/Genshin_Impact.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/Genshin_Impact.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/Genshin_Impact.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/Genshin_Impact.jpg"
 
             sw_shortcuts_autoinstall
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -3828,13 +3818,13 @@ INSTALL_LOST_LIGHT () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/Lost_Light.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/Lost_Light.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/Lost_Light.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/Lost_Light.jpg"
 
             sw_shortcuts_autoinstall
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 
@@ -3877,13 +3867,13 @@ INSTALL_RETROBAT () {
 
             export COPY_ICON_H="${START_WINE_PATH}/data/img/launcher_icons/horizontal/RetroBat.jpg"
             export COPY_ICON_V="${START_WINE_PATH}/data/img/launcher_icons/vertical/RetroBat.jpg"
-            export COPY_ICON_HEROES="${START_WINE_PATH}/data/img/launcher_icons/heroes/RetroBat.jpg"
+            export COPY_ICON_A="${START_WINE_PATH}/data/img/launcher_icons/artwork/RetroBat.jpg"
 
             sw_shortcuts_autoinstall
 
             "$CRIER" -i "$(eval_gettext "Application installed successfully")"
         else
-            echo "####   Failed to download   ####"
+            print_error "Failed to download"
             exit 1
         fi
 

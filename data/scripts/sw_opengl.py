@@ -26,8 +26,8 @@ import gi
 gi.require_version('Gtk', '4.0')
 from gi.repository import Gtk, GLib
 
-from OpenGL.GL.shaders import compileShader
 from OpenGL.GL import *
+from OpenGL.GL.shaders import compileShader
 
 from sw_shaders import Shaders
 from sw_data import TermColors as tc

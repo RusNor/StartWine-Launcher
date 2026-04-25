@@ -2,13 +2,12 @@
 
 . "$(dirname $(readlink -f "$0"))/sw_runlib"
 
-crier=$("${CRIER}" -q "$(eval_gettext "Do you want to remove StartWine-Launcher?")") # Вы хотите удалить StartWine-Launcher?
+crier=$("${CRIER}" -q "$(eval_gettext "Do you want to remove StartWine-Launcher?")")
 
 if [ "$(echo "$crier" | tail -1)" == "0" ]; then
 
     "${START_WINE_PATH}/data/scripts/sw_start" --shutdown
 
-#    try_remove "${HOME}/.cache/sw_fm"
     try_remove "${HOME}/.config/swrc"
     try_remove "${HOME}/.local/bin/sw"
     try_remove "${HOME}/.local/share/applications/ru.launcher.StartWine.desktop"
@@ -16,7 +15,7 @@ if [ "$(echo "$crier" | tail -1)" == "0" ]; then
 
     if try_remove "${START_WINE_PATH}"; then
         [ -n "$(command -v "notify-send")" ] && \
-            notify-send -a "StartWine" "$(eval_gettext "Deletion StartWine-Launcher completed successfully")" # Удаление StartWine-Launcher успешно завершено.
+            notify-send -a "StartWine" "$(eval_gettext "Deletion StartWine-Launcher completed successfully")"
     fi
 
 fi

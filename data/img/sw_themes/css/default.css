@@ -1577,22 +1577,22 @@ sw_columnview_view.view {
     padding-right: 24px;
     outline: 4px solid transparent;
     outline-offset: 40px;
-    background-color: transparent;
-    background-image: none;
+    background-color: @sw_accent_bg_color;
+    background-image: image(@sw_accent_bg_color);
 }
 
 sw_columnview_view listview {
     color: @sw_invert_bg_color;
-    background-color: transparent;
-    background-image: none;
     padding-bottom: 32px;
     border-radius: 14px;
+    background-color: @sw_accent_bg_color;
+    background-image: image(@sw_accent_bg_color);
 }
 
 sw_columnview_view listview.background {
     color: @sw_invert_bg_color;
-    background-color: transparent;
-    background-image: none;
+    background-color: @sw_accent_bg_color;
+    background-image: image(@sw_accent_bg_color);
 }
 
 sw_columnview_view label,

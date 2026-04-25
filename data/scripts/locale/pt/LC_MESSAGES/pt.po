@@ -3039,6 +3039,22 @@ msgstr ""
 msgid "Show installed"
 msgstr "Mostrar instalado"
 
+#: sw_data.py:5261
+msgid "Set as horizontal app image"
+msgstr "Definir como imagem horizontal do aplicativo"
+
+#: sw_data.py:5262
+msgid "Set as vertical app image"
+msgstr "Definir como imagem vertical do aplicativo"
+
+#: sw_data.py:5263
+msgid "Set as startup menu image"
+msgstr "Definir como imagem do menu Iniciar"
+
+#: sw_data.py:5264
+msgid "Specify location"
+msgstr "Especifique o local"
+
 #: sw_data.py:5269
 msgid "Go to the home directory"
 msgstr "Acesse o diretório inicial."

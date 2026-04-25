@@ -15,8 +15,9 @@ export END='\033[1;00m'
 export SW_GIT_VER="420"
 export RUNTIME_GIT_VER="1.0"
 
-SOURCE_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. >/dev/null 2>&1 && pwd )"
+SOURCE_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)"
 export SOURCE_PATH
+
 export START_WINE_PATH="$SOURCE_PATH"
 
 PREFIX="$2"
@@ -41,7 +42,7 @@ export SW_SCRIPTS="${START_WINE_PATH}/data/scripts"
 export SW_RUNTIME_BASE="${START_WINE_PATH}/data/runtime/sw_runtime_base"
 export SW_RUNTIME="${START_WINE_PATH}/data/runtime/sw_runtime"
 
-export SW_TARGET="${SOURCE_PATH}/data/target"
+export SW_TARGET="${SOURCE_PATH}/target"
 export SW_TARGET_RELEASE="${SW_TARGET}/release/sw_start"
 
 export SW_START_SOURCE="${SW_SCRIPTS_SOURCE}/sw_start"
@@ -354,9 +355,9 @@ clean_cache () {
         rm -rf "${SW_SCRIPTS_SOURCE}/winetricks" && \
             echo -e "${RED}[ Remove ] ${SW_SCRIPTS_SOURCE}/winetricks${END}"
 
-    [ -f "${SOURCE_PATH}/data/Cargo.lock" ] && \
-        rm -rf "${SOURCE_PATH}/data/Cargo.lock" && \
-            echo -e "${RED}[ Remove ] ${SOURCE_PATH}/data/Cargo.lock${END}"
+    [ -f "${SOURCE_PATH}/Cargo.lock" ] && \
+        rm -rf "${SOURCE_PATH}/Cargo.lock" && \
+            echo -e "${RED}[ Remove ] ${SOURCE_PATH}/Cargo.lock${END}"
 
     [ -d "${SW_TARGET}" ] && \
         rm -rf "${SW_TARGET}" && \
@@ -522,6 +523,8 @@ build_rust () {
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
         rustup update
     fi
+
+    rustup update
 
     [ -f "$SW_START_SOURCE" ] && \
         rm -rf "$SW_START_SOURCE"

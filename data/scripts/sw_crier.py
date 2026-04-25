@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License along with
 StartWine-Launcher. If not, see http://www.gnu.org/licenses/.
 """
 
-
 import os
 from os import environ
 import time
@@ -29,7 +28,6 @@ from warnings import filterwarnings
 import json
 from urllib.request import urlopen
 from urllib.error import HTTPError, URLError
-from subprocess import run
 import itertools
 
 if not os.getenv('GSK_RENDERER') or os.getenv('GSK_RENDERER') == 'vulkan':
@@ -65,12 +63,6 @@ sw_logo = sw_path.joinpath('data', 'img', 'gui_icons', 'sw_large_light.svg')
 icon_folder = sw_path.joinpath(
     'data', 'img', 'gui_icons', 'hicolor', 'symbolic', 'apps', 'folder-symbolic.svg'
 )
-ICON_DIR_ENTRY_FORMAT = (
-    'GRPICONDIRENTRY',
-    ('B,Width', 'B,Height','B,ColorCount','B,Reserved',
-     'H,Planes','H,BitCount','I,BytesInRes','H,ID')
-)
-ICON_DIR_FORMAT = ('GRPICONDIR', ('H,Reserved', 'H,Type','H,Count'))
 
 ############################___SET_CSS_STYLE___:
 
@@ -348,37 +340,36 @@ class SwPathManager(Gtk.Application):
                     if self.label_main:
                         self.label_main.add_css_class('warning')
                         self.label_main.set_label(msg.msg_dict['correct_path'])
+
                     print(f'path {dest_path} not exists')
-                    return f'path {dest_path} not exists'
+                    return None
 
-            if dest_path == self.source_path:
+            if str(dest_path) == str(self.source_path):
                 try_create_swrc(dest_path)
-                print('run StartWine...')
-                if self.window:
-                    self.window.close()
-            else:
-                if dest_path.exists():
-                    print('path exists, skip...')
-                    if dest_path != self.local_path and self.local_path.exists():
-                        shutil.rmtree(self.local_path)
+                print(f'run StartWine from {dest_path}')
 
-                    try_create_swrc(dest_path)
-                    print('run StartWine...')
-                    if self.window:
-                        self.window.close()
+            elif dest_path.exists():
+                print('path exists, skip...')
+                if dest_path != self.local_path and self.local_path.exists():
+                    shutil.rmtree(self.local_path)
+
+                try_create_swrc(dest_path)
+                print(f'run StartWine from {dest_path}')
+
+            elif str(dest_path).endswith('StartWine'):
+                print(f'move StartWine to {dest_path}')
+                if not dest_path.parent.exists():
+                    dest_path.parent.mkdir(parents=True, exist_ok=True)
+                try:
+                    shutil.move(self.source_path, dest_path)
+                except (OSError, IOError, PermissionError) as e:
+                    print(e)
                 else:
-                    if str(dest_path).endswith('StartWine'):
-                        print('move StartWine...')
-                        if not dest_path.parent.exists():
-                            dest_path.parent.mkdir(parents=True, exist_ok=True)
-                        try:
-                            shutil.move(self.source_path, dest_path)
-                        except IOError as e:
-                            print(e)
-                        else:
-                            try_create_swrc(dest_path)
-                    if self.window:
-                        self.window.close()
+                    try_create_swrc(dest_path)
+
+            if self.window:
+                self.window.close()
+
         return None
 
 
@@ -392,27 +383,6 @@ def try_create_swrc(dest_path):
     with open(swrc_path, 'w', encoding='utf-8') as rc:
         rc.write(f'{dest_path}')
         rc.close()
-
-
-def run_menu():
-    """___run menu from config path___"""
-
-    swrc_path = Path.home().joinpath('.config', 'swrc')
-    if swrc_path.exists():
-        with open(swrc_path, 'r', encoding='utf-8') as rc:
-            data = rc.read().splitlines()
-            dest_path = data[0] if data else None
-
-        if dest_path:
-            menu_py = Path(dest_path).joinpath('data', 'scripts', 'sw_menu.py')
-            if menu_py.exists():
-                run([f'{menu_py}'], check=False)
-            else:
-                print(f'{menu_py} not exists...')
-        else:
-            print(f'{swrc_path} incorrect...')
-    else:
-        print(f'{swrc_path} not found...')
 
 
 class SwCrier(Gtk.Application):
@@ -2239,7 +2209,6 @@ if __name__ == '__main__':
                     app.run()
                 except KeyboardInterrupt:
                     app.quit()
-                run_menu()
             else:
                 on_helper()
 

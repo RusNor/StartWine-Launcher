@@ -614,11 +614,14 @@ def try_get_appid_json():
             with open(sw_appid_json, "w", encoding="utf-8") as f:
                 f.write(json.dumps(json_data, indent=0))
                 f.close()
-                print(f"{tc.RED}Write app id json data...{tc.END}")
+                print(
+                    f"{tc.VIOLET2}SW_APPID_JSON: "
+                    + f"{tc.GREEN}write appid json data: done{tc.END}"
+                )
 
 
 def convert_image(in_file, out_file, width, height, crop=False, position=None):
-    """___generate thumbnail for image mime type files___"""
+    """___convert and resize image mime type files___"""
     ratio = width / height
     try:
         img = Image.open(in_file)
@@ -663,6 +666,98 @@ def convert_image(in_file, out_file, width, height, crop=False, position=None):
                 else:
                     return True
     return False
+
+
+def convert_image_to_jpeg(in_file, out_file):
+    """___convert image to JPEG format___"""
+    try:
+        img = Image.open(in_file)
+    except (Exception, IOError) as e:
+        print(e)
+    else:
+        try:
+            imc = img.convert("RGB")
+        except (Exception, IOError) as e:
+            print(e)
+        else:
+            imc.save(out_file, "JPEG")
+            return True
+
+    return False
+
+
+def cache_to_horizontal_image(cache):
+    """___convert cached content to horizontal image___"""
+    current_image_path = Path(str(getenv(f"{get_out()}")))
+    app_path = get_app_path()
+    app_name = str(get_out()).replace("_", " ")
+    hash_name = get_hash_name(app_path)
+    app_id = Path(cache).stem
+    edited_name = edit_cur_name(app_name)
+    name = current_image_path.stem
+    name = name.replace("_vertical_", "_horizontal_")
+
+    if not sw_app_hicons.joinpath(f"{name}.jpg").exists():
+        name = f"{hash_name}_horizontal_{edited_name}_{app_id}"
+
+    destination = str(sw_app_hicons.joinpath(f"{name}.jpg"))
+    try:
+        convert_image(cache, destination, 640, 360, True)
+    except (Exception,):
+        shutil.move(cache, destination)
+        exe_data.set_(str(app_path), "horizontal", f"{name}.jpg")
+    else:
+        exe_data.set_(str(app_path), "horizontal", f"{name}.jpg")
+
+
+def cache_to_vertical_image(cache):
+    """___convert cached content to vertical image___"""
+    current_image_path = Path(str(getenv(f"{get_out()}")))
+    app_path = get_app_path()
+    app_name = str(get_out()).replace("_", " ")
+    hash_name = get_hash_name(app_path)
+    app_id = Path(cache).stem
+    edited_name = edit_cur_name(app_name)
+    name = current_image_path.stem
+    name = name.replace("_horizontal_", "_vertical_")
+
+    if not sw_app_vicons.joinpath(f"{name}.jpg").exists():
+        name = f"{hash_name}_vertical_{edited_name}_{app_id}"
+
+    destination = str(sw_app_vicons.joinpath(f"{name}.jpg"))
+    try:
+        convert_image(cache, destination, 400, 600, True)
+    except (Exception,):
+        shutil.move(cache, destination)
+        exe_data.set_(str(app_path), "vertical", f"{name}.jpg")
+    else:
+        exe_data.set_(str(app_path), "vertical", f"{name}.jpg")
+
+
+def cache_to_startup_image(cache):
+    """___convert cached content to startup image___"""
+    current_image_path = Path(str(getenv(f"{get_out()}")))
+    app_path = get_app_path()
+    name = current_image_path.stem
+    name = name.replace("_horizontal_", "_artwork_").replace(
+        "_vertical_", "_artwork_"
+    )
+
+    if sw_app_artwork.joinpath(f"{name}.jpg").exists():
+        try:
+            sw_app_hicons.joinpath(f"{name}.jpg").unlink()
+        except (Exception,) as e:
+            print(e)
+
+    destination = str(sw_app_artwork.joinpath(f"{name}.jpg"))
+
+    try:
+        convert_image(cache, destination, 1920, 620, True)
+    except (Exception,):
+        shutil.move(cache, destination)
+        exe_data.set_(str(app_path), "artwork", f"{name}.jpg")
+    else:
+        exe_data.set_(str(app_path), "artwork", f"{name}.jpg")
 
 
 def download_content(url, dest, headers=None):
@@ -733,9 +828,9 @@ def try_download_logo(app_id, app_path, original_name, orientation):
     width = 256
     height = 256
 
-    if orientation == "heroes":
+    if orientation == "artwork":
         image_type = "library_hero"
-        image_dir = sw_app_heroes_icons
+        image_dir = sw_app_artwork
         width = 1920
         height = 620
 
@@ -1114,20 +1209,20 @@ def check_download_gamesdb(app_id_dict, app_path, orientation):
                     if horizontal.exists():
                         return True
 
-            if orientation == "heroes":
-                url_heroes = data.get("horizontal_artwork", {}).get("url_format")
-                if url_heroes and title:
-                    heroes = sw_app_heroes_icons.joinpath(
-                        f"{hash_name}_heroes_{title}_{idx}.jpg"
+            if orientation == "artwork":
+                url_artwork = data.get("horizontal_artwork", {}).get("url_format")
+                if url_artwork and title:
+                    artwork = sw_app_artwork.joinpath(
+                        f"{hash_name}_artwork_{title}_{idx}.jpg"
                     )
-                    url_heroes = (
-                        url_heroes.replace("{formatter}", "")
+                    url_artwork = (
+                        url_artwork.replace("{formatter}", "")
                         .replace("{ext}", "jpg")
                         .replace(" ", "%20")
                     )
                     download_with_convert(
-                        url_heroes, heroes, 1920, 620, True, (0,0,1920,620))
-                    if heroes.exists():
+                        url_artwork, artwork, 1920, 620, True, (0,0,1920,620))
+                    if artwork.exists():
                         return True
     return False
 
@@ -1155,7 +1250,7 @@ def check_download_igdb_cover(game_data, app_path):
     return False
 
 
-def check_download_igdb_artwork(game_data, app_path):
+def check_download_igdb_horizontal(game_data, app_path):
     """___check and download content from igdb___"""
     if game_data:
         idx = game_data.get("id")
@@ -1185,7 +1280,7 @@ def check_download_igdb_artwork(game_data, app_path):
     return False
 
 
-def check_download_igdb_heroes(game_data, app_path):
+def check_download_igdb_artwork(game_data, app_path):
     """___check and download content from igdb___"""
     if game_data:
         idx = game_data.get("id")
@@ -1194,8 +1289,8 @@ def check_download_igdb_heroes(game_data, app_path):
         artworks = game_data.get("artworks", [])
         hash_name = get_hash_name(app_path)
 
-        heroes = sw_app_heroes_icons.joinpath(
-            f"{hash_name}_heroes_{title}_{idx}.jpg"
+        art = sw_app_artwork.joinpath(
+            f"{hash_name}_artwork_{title}_{idx}.jpg"
         )
         for artwork in artworks:
             art_id = artwork.get("image_id")
@@ -1208,9 +1303,9 @@ def check_download_igdb_heroes(game_data, app_path):
                 or (art_type == 1 and (art_width / art_height) > 1)):
                     print(tc.YELLOW, "Try download:", tc.END, title, url_artwork)
                     download_with_convert(
-                        url_artwork, heroes, 1920, 620, True, (0,0,1920,620))
+                        url_artwork, art, 1920, 620, True, (0,0,1920,620))
 
-                    if heroes.exists():
+                    if art.exists():
                         return True
     return False
 
@@ -1219,8 +1314,8 @@ def compare_name(orig_name, desc_name, dir_name, exe_name, app_path):
     """___compare application metadata info with application id data___"""
 
     has_cover = False
+    has_horizontal = False
     has_artwork = False
-    has_heroes = False
 
     steam_dict = get_steam_appid_dict(
         orig_name, desc_name, dir_name, exe_name, "exact_match")
@@ -1230,13 +1325,13 @@ def compare_name(orig_name, desc_name, dir_name, exe_name, app_path):
         if not has_cover:
             has_cover = check_download_gamesdb(steam_dict, app_path, "vertical")
 
-        has_artwork = check_download_steamdb(steam_dict, app_path, "horizontal")
+        has_horizontal = check_download_steamdb(steam_dict, app_path, "horizontal")
 
-        has_heroes = check_download_steamdb(steam_dict, app_path, "heroes")
-        if not has_heroes:
-            has_heroes = check_download_gamesdb(steam_dict, app_path, "heroes")
+        has_artwork = check_download_steamdb(steam_dict, app_path, "artwork")
+        if not has_artwork:
+            has_artwork = check_download_gamesdb(steam_dict, app_path, "artwork")
 
-    if not has_cover or not has_artwork or not has_heroes:
+    if not has_cover or not has_horizontal or not has_artwork:
         igdb_dict = get_igdb_appid_dict(
             orig_name, desc_name, dir_name, exe_name, "exact_match"
         )
@@ -1246,19 +1341,19 @@ def compare_name(orig_name, desc_name, dir_name, exe_name, app_path):
                     has_cover = True
                     break
 
+        if not has_horizontal:
+            for _, data in igdb_dict.items():
+                if check_download_igdb_horizontal(data, app_path):
+                    has_horizontal = True
+                    break
+
         if not has_artwork:
             for _, data in igdb_dict.items():
                 if check_download_igdb_artwork(data, app_path):
                     has_artwork = True
                     break
 
-        if not has_heroes:
-            for _, data in igdb_dict.items():
-                if check_download_igdb_heroes(data, app_path):
-                    has_heroes = True
-                    break
-
-    if not has_cover or not has_artwork or not has_heroes:
+    if not has_cover or not has_horizontal or not has_artwork:
         igdb_dict_ = get_igdb_appid_dict(
             orig_name, desc_name, dir_name, exe_name, "inaccurate_match"
         )
@@ -1267,34 +1362,15 @@ def compare_name(orig_name, desc_name, dir_name, exe_name, app_path):
                 if check_download_igdb_cover(data, app_path):
                     break
 
+        if not has_horizontal:
+            for _, data in igdb_dict_.items():
+                if check_download_igdb_horizontal(data, app_path):
+                    break
+
         if not has_artwork:
             for _, data in igdb_dict_.items():
                 if check_download_igdb_artwork(data, app_path):
                     break
-
-        if not has_heroes:
-            for _, data in igdb_dict_.items():
-                if check_download_igdb_heroes(data, app_path):
-                    break
-
-    # if not has_cover or not has_artwork or not has_heroes:
-    #     app_id_dict_ = get_steam_appid_dict(
-    #         orig_name, desc_name, dir_name, exe_name, "inaccurate_match")
-
-    #     if not has_cover:
-    #         has_cover = check_download_steamdb(app_id_dict_, app_name, "vertical")
-    #         if not has_cover:
-    #             check_download_gamesdb(app_id_dict_, app_name)
-
-    #     if not has_artwork:
-    #         has_artwork = check_download_steamdb(app_id_dict_, app_name, "horizontal")
-    #         if not has_artwork:
-    #             check_download_gamesdb(app_id_dict_, app_name)
-
-    #     if not has_heroes:
-    #         has_heroes = check_download_steamdb(app_id_dict_, app_name, "heroes")
-    #         if not has_heroes:
-    #             check_download_gamesdb(app_id_dict_, app_name)
 
     # # if not v_result:
     # #     compare_sgdb_horizontal(
@@ -1681,13 +1757,13 @@ def check_external_data(app_name_isalnum, app_id):
 
 def check_sgdb_heroes(app_name_isalnum, app_id, data_name):
     """___check steamgriddb and try to download heroes logo by app id___"""
-    part_of_path = sw_app_heroes_icons.joinpath(f"{app_name_isalnum}_heroes_")
-    if not f"{part_of_path}" in str([x for x in list(sw_app_heroes_icons.iterdir())]):
+    part_of_path = sw_app_artwork.joinpath(f"{app_name_isalnum}_artwork_")
+    if not f"{part_of_path}" in str([x for x in list(sw_app_artwork.iterdir())]):
         size_dict = {3840: 1240, 1920: 620, 1600: 650}
-        url_heroes_icon = []
+        url_artwork_icon = []
         for width, height in size_dict.items():
             url_heroes = f"{SGDB_BASE_URL}/heroes/game/{app_id}?dimentions={width}x{height}"
-            heroes_name = f"{app_name_isalnum}_heroes_{app_id}.json"
+            heroes_name = f"{app_name_isalnum}_artwork_{app_id}.json"
             heroes_cache = sw_fm_cache_database.joinpath(heroes_name)
             try:
                 request_urlopen(url_heroes, heroes_cache, True)
@@ -1704,31 +1780,31 @@ def check_sgdb_heroes(app_name_isalnum, app_id, data_name):
                                     "alternate",
                                     "blurred",
                                 ] and int(value["width"]) == int(width):
-                                    url_heroes_icon.append(value["url"])
+                                    url_artwork_icon.append(value["url"])
                                     break
                         f.close()
         else:
-            if len(url_heroes_icon) > 0:
-                print(url_heroes_icon)
-                jpg_name = f"{app_name_isalnum}_heroes_{data_name}_{app_id}.jpg"
+            if len(url_artwork_icon) > 0:
+                print(url_artwork_icon)
+                jpg_name = f"{app_name_isalnum}_artwork_{data_name}_{app_id}.jpg"
                 jpg_cache = sw_fm_cache_database.joinpath(jpg_name)
                 try:
-                    request_urlopen(url_heroes_icon[0], jpg_cache, False)
+                    request_urlopen(url_artwork_icon[0], jpg_cache, False)
                 except Exception as e:
                     print(e)
                     return False
                 else:
-                    heroes = sw_app_heroes_icons.joinpath(jpg_name)
+                    heroes = sw_app_artwork.joinpath(jpg_name)
                     try:
                         convert_image(jpg_cache, heroes, 3840, 1240)
                     except (Exception,):
                         shutil.copy2(jpg_cache, heroes)
                         print(
-                            f"{tc.GREEN}Copy heroes icon: {app_id} {data_name} {tc.END}"
+                            f"{tc.GREEN}Copy heroes image: {app_id} {data_name} {tc.END}"
                         )
                     else:
                         print(
-                            f"{tc.GREEN}Convert heroes icon: {app_id} {data_name} {tc.END}"
+                            f"{tc.GREEN}Convert heroes image: {app_id} {data_name} {tc.END}"
                         )
                     return heroes
             else:
@@ -1974,11 +2050,54 @@ def get_exe_metadata(app_name, app_path, event=None):
         event.set()
 
 
+def check_store_image(env_name):
+    """___check if image exists for store application___"""
+
+    store_path = None
+    vertical_image = getenv(env_name)
+
+    if vertical_image:
+        horizontal_image = vertical_image.replace("vertical", "horizontal")
+        artwork_image = vertical_image.replace("vertical", "artwork")
+
+        idx_ext = vertical_image.split("_")[-1]
+        dest_name = vertical_image.split("_")[-2]
+
+        vname = f"{dest_name}_vertical_{idx_ext}"
+        hname = f"{dest_name}_horizontal_{idx_ext}"
+        aname = f"{dest_name}_artwork_{idx_ext}"
+
+        if env_name == "EPIC_VERTICAL_IMAGE":
+            store_path = sw_epic_icons
+        elif env_name == "GOG_VERTICAL_IMAGE":
+            store_path = sw_gog_icons
+        else:
+            return
+
+        if (store_path.joinpath(vname).exists()
+                and not sw_app_vicons.joinpath(vertical_image).exists()):
+            source = store_path.joinpath(vname)
+            dest = sw_app_vicons.joinpath(vertical_image)
+            shutil.copy2(source, dest)
+
+        if (store_path.joinpath(hname)
+                and not sw_app_hicons.joinpath(horizontal_image).exists()):
+            source = store_path.joinpath(hname)
+            dest = sw_app_hicons.joinpath(horizontal_image)
+            shutil.copy2(source, dest)
+
+        if (store_path.joinpath(aname)
+                and not sw_app_artwork.joinpath(artwork_image).exists()):
+            source = store_path.joinpath(aname)
+            dest = sw_app_artwork.joinpath(artwork_image)
+            shutil.copy2(source, dest)
+
+
 def check_exe_logo(app_path):
     """___check if image exists for current application___"""
     hicons = False
     vicons = False
-    heroes = False
+    artwork = False
     hash_name = get_hash_name(app_path)
 
     for icon in Path(f"{sw_app_hicons}").iterdir():
@@ -1989,11 +2108,11 @@ def check_exe_logo(app_path):
         if hash_name == str(Path(icon).name).split("_")[0]:
             vicons = True
 
-    for icon in Path(f"{sw_app_heroes_icons}").iterdir():
+    for icon in Path(f"{sw_app_artwork}").iterdir():
         if hash_name == str(Path(icon).name).split("_")[0]:
-            heroes = True
+            artwork = True
 
-    if hicons and vicons and heroes:
+    if hicons and vicons and artwork:
         return True
     else:
         return False
@@ -2594,6 +2713,7 @@ def on_clear_shader_cache():
 
 def remove_app_name(app_name, original_name):
     """___remove application prefix and shortcuts___"""
+
     if sw_shortcuts.joinpath(f"{app_name}.swd").exists():
         sw_shortcuts.joinpath(f"{app_name}.swd").unlink()
 
@@ -2613,8 +2733,9 @@ def remove_app_name(app_name, original_name):
         Path(dir_desktop).joinpath(f"{original_name}.desktop").unlink()
 
 
-def remove_app_data(app_name, app_path, external=False, platform=False):
+def remove_app_data(exe_data, app_name, app_path, external=False, platform=False):
     """___remove application data___"""
+
     data = exe_data.get_(app_path)
     original_name = app_name
 
@@ -2639,11 +2760,11 @@ def remove_app_data(app_name, app_path, external=False, platform=False):
         if art_path.exists():
             art_path.unlink()
 
-        heroes_name = str(data.get("heroes"))
-        heroes_path = sw_app_heroes_icons.joinpath(heroes_name)
+        artwork_name = str(data.get("artwork"))
+        artwork_path = sw_app_artwork.joinpath(artwork_name)
 
-        if heroes_path.exists():
-            heroes_path.unlink()
+        if artwork_path.exists():
+            artwork_path.unlink()
 
         exe_data.del_(app_path)
         write_json_data(sw_exe_data_json, exe_data)
@@ -2651,7 +2772,7 @@ def remove_app_data(app_name, app_path, external=False, platform=False):
     if external:
         write_json_data(sw_gog_exe_data_json, gog_exe_data)
         write_json_data(sw_epic_exe_data_json, epic_exe_data)
-        remove_app_name(app_name, original_name)
+    remove_app_name(app_name, original_name)
 
 
 def remove_selected_swd(x_path):
@@ -2673,7 +2794,7 @@ def remove_selected_swd(x_path):
 
             t = Thread(
                 target=remove_app_data,
-                args=(app_name, app_path, external, platform)
+                args=(exe_data, app_name, app_path, external, platform)
             )
             worker_list.append(t)
             t.start()
@@ -2881,7 +3002,7 @@ def search_steam_content(appcache, steam_db=None):
                     orientation = "vertical"
 
                 if str(icon.name) == "library_hero.jpg":
-                    orientation = "heroes"
+                    orientation = "artwork"
 
                 if orientation:
                     icon_name = (
@@ -2907,7 +3028,7 @@ def download_steam_content(steam_db=None):
         app_path = f'"steam://rungameid/{app_id}"'
         item = get_hash_name(app_path)
 
-        for orientation in ["horizontal", "vertical", "heroes"]:
+        for orientation in ["horizontal", "vertical", "artwork"]:
             img_name = f"{item}_{orientation}_{original_name}_s{app_id}.jpg"
             img_path = sw_app_icons.joinpath(orientation, img_name)
 
@@ -3527,7 +3648,8 @@ def download_gog_game(
 
 def get_gog_game_exe(dest_dir, idx):
     """___get gog game executable path from goggame.info___"""
-    gog_game_info = Path(f"{dest_dir}").joinpath(f"goggame-{idx}.info")
+    # gog_game_info = Path(f"{dest_dir}").joinpath(f"goggame-{idx}.info")
+    gog_game_info = list(Path(f"{dest_dir}").rglob(f"goggame-{idx}.info", case_sensitive=False))
     dest_name = str(Path(dest_dir).name)
     data = dict()
     app_name = None
@@ -3536,10 +3658,12 @@ def get_gog_game_exe(dest_dir, idx):
     cmd_line = None
     args = None
 
-    if gog_game_info.exists():
-        with open(gog_game_info, mode="r", encoding="utf-8") as f:
-            text = f.read()
-            data = json.loads(text)
+    for info in gog_game_info:
+        if info.exists():
+            with open(info, mode="r", encoding="utf-8") as f:
+                text = f.read()
+                data = json.loads(text)
+            break
 
     play_tasks = data.get("playTasks")
     if play_tasks and isinstance(play_tasks, list):
@@ -3614,18 +3738,18 @@ def download_gog_covers(idx, title, data, swd=None):
     url_artwork = data.get("horizontal_artwork", {}).get("url_format")
 
     if url_artwork and title:
-        heroes = sw_gog_icons.joinpath(f"{title}_heroes_{idx}.jpg")
+        artwork = sw_gog_icons.joinpath(f"{title}_artwork_{idx}.jpg")
         if swd:
-            heroes = sw_app_heroes_icons.joinpath(f"{swd}_heroes_{title}_{idx}.jpg")
+            artwork = sw_app_artwork.joinpath(f"{swd}_artwork_{title}_{idx}.jpg")
 
-        if not heroes.exists():
+        if not artwork.exists():
             url_artwork = (
                 url_artwork.replace("{formatter}", "")
                 .replace("{ext}", "jpg")
                 .replace(" ", "%20")
             )
 
-            t = Thread(target=download_content, args=(url_artwork, heroes))
+            t = Thread(target=download_content, args=(url_artwork, artwork))
             t_workers.append(t)
             t.start()
 
@@ -3639,10 +3763,10 @@ def download_epic_covers(app_name, title, data):
     if url and title:
         url = url.replace(" ", "%20")
         horizontal = sw_epic_icons.joinpath(f"{title}_horizontal_{app_name}.jpg")
-        heroes = sw_epic_icons.joinpath(f"{title}_heroes_{app_name}.jpg")
-        if not heroes.exists():
-            download_content(url, heroes)
-            convert_image(heroes, horizontal, 640, 360)
+        artwork = sw_epic_icons.joinpath(f"{title}_artwork_{app_name}.jpg")
+        if not artwork.exists():
+            download_content(url, artwork)
+            convert_image(artwork, horizontal, 640, 360)
 
 
 def get_epic_auth_session():
@@ -4457,7 +4581,7 @@ def get_epic_ownership_token(session, account_id, namespace, catalog):
 
 
 def set_gog_game_data(source, app_name, dest_dir, exe_path, exe_args, idx):
-    """___copy gog game images to app icons dirwctory___"""
+    """___copy gog game images to app icons directory___"""
 
     hash_name = get_hash_name(exe_path)
     dest_name = str(Path(dest_dir).name)
@@ -4504,19 +4628,19 @@ def set_gog_game_data(source, app_name, dest_dir, exe_path, exe_args, idx):
             exe_data.set_(exe_path, "horizontal", hname)
             gog_exe_data[idx]["horizontal"] = f"{hname}"
 
-        if f"_heroes_{idx}" in str(icon.stem):
-            heroes_name = f"{hash_name}_heroes_{dest_name}_{idx}.jpg"
-            heroes = sw_app_heroes_icons.joinpath(heroes_name)
-            Thread(target=shutil.copy2, args=(icon, heroes)).start()
-            exe_data.set_(exe_path, "heroes", heroes_name)
-            gog_exe_data[idx]["heroes"] = f"{heroes_name}"
+        if f"_artwork_{idx}" in str(icon.stem):
+            artwork_name = f"{hash_name}_artwork_{dest_name}_{idx}.jpg"
+            artwork = sw_app_artwork.joinpath(artwork_name)
+            Thread(target=shutil.copy2, args=(icon, artwork)).start()
+            exe_data.set_(exe_path, "artwork", artwork_name)
+            gog_exe_data[idx]["artwork"] = f"{artwork_name}"
 
     write_json_data(sw_gog_exe_data_json, gog_exe_data)
-    write_json_data(sw_exe_data_json, exe_data)
+    # write_json_data(sw_exe_data_json, exe_data)
 
 
 def set_epic_game_data(app_name, dest_dir, exe_path, idx):
-    """___copy gog game images to app icons dirwctory___"""
+    """___copy epic game images to app icons directory___"""
 
     hash_name = get_hash_name(exe_path)
     dest_name = str(Path(dest_dir).name)
@@ -4563,15 +4687,15 @@ def set_epic_game_data(app_name, dest_dir, exe_path, idx):
             exe_data.set_(exe_path, "horizontal", hname)
             epic_exe_data[idx]["horizontal"] = f"{hname}"
 
-        if f"_heroes_{idx}" in str(icon.stem):
-            heroes_name = f"{hash_name}_heroes_{dest_name}_{idx}.jpg"
-            heroes = sw_app_heroes_icons.joinpath(heroes_name)
-            Thread(target=shutil.copy2, args=(icon, heroes)).start()
-            exe_data.set_(exe_path, "heroes", heroes_name)
-            epic_exe_data[idx]["heroes"] = f"{heroes_name}"
+        if f"_artwork_{idx}" in str(icon.stem):
+            artwork_name = f"{hash_name}_artwork_{dest_name}_{idx}.jpg"
+            artwork = sw_app_artwork.joinpath(artwork_name)
+            Thread(target=shutil.copy2, args=(icon, artwork)).start()
+            exe_data.set_(exe_path, "artwork", artwork_name)
+            epic_exe_data[idx]["artwork"] = f"{artwork_name}"
 
     write_json_data(sw_epic_exe_data_json, epic_exe_data)
-    write_json_data(sw_exe_data_json, exe_data)
+    # write_json_data(sw_exe_data_json, exe_data)
 
 
 def get_epic_exe_args(idx, exe_args, result=[]):

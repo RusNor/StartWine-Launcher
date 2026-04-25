@@ -19,7 +19,6 @@ StartWine-Launcher. If not, see http://www.gnu.org/licenses/.
 
 from typing import override, Any
 from os import environ, getenv, walk
-from sys import exit
 from pathlib import Path
 import shutil
 import json
@@ -159,11 +158,11 @@ sw_symbolic_icons = sw_gui_icons.joinpath("hicolor", "symbolic", "apps")
 sw_app_icons = sw_img.joinpath("app_icons")
 sw_app_vicons = sw_app_icons.joinpath("vertical")
 sw_app_hicons = sw_app_icons.joinpath("horizontal")
-sw_app_heroes_icons = sw_app_icons.joinpath("heroes")
+sw_app_artwork = sw_app_icons.joinpath("artwork")
 sw_app_default_icons = sw_app_icons.joinpath("default")
 sw_launcher_icons = sw_img.joinpath("launcher_icons")
 sw_launchers = sw_launcher_icons.joinpath("vertical")
-sw_launchers_heroes = sw_launcher_icons.joinpath("heroes")
+sw_launchers_artwork = sw_launcher_icons.joinpath("artwork")
 sw_launchers_horizontal = sw_launcher_icons.joinpath("horizontal")
 sw_gog_icons = sw_img.joinpath("gog_icons")
 sw_epic_icons = sw_img.joinpath("epic_icons")
@@ -413,7 +412,7 @@ default_ini = {
     "restore_menu": "on",
     "width": 1280,
     "height": 720,
-    "hidden_files": "True",
+    "hidden_files": "False",
     "sorting_files": "name",
     "sorting_reverse": "False",
     "renderer": "opengl",
@@ -422,7 +421,7 @@ default_ini = {
     "on_tray": "True",
     "language": "ru_RU",
     "icons": "builtin",
-    "sound": "on",
+    "sound": "off",
     "auto_stop": "on",
     "auto_hide_top_header": "off",
     "auto_hide_bottom_header": "off",
@@ -980,41 +979,26 @@ def clear_cache_dir():
     """___clear file manager cache directory___"""
     for cache in sw_fm_cache.iterdir():
         if (
-            str(cache) != f"{sw_fm_cache_stats}"
+            str(cache) != str(sw_fm_cache_stats)
             and str(cache) != str(sw_exe_data_json)
             and str(cache) != str(sw_external_json)
-            and str(cache) != str(sw_gog_exe_data_json)
-            and str(cache) != str(sw_epic_exe_data_json)
+            and str(cache) != str(sw_fm_cache_gog)
+            and str(cache) != str(sw_fm_cache_epic)
         ):
             if cache.is_file():
                 try:
                     cache.unlink()
-                except (OSError, IOError) as e:
+                except (OSError, IOError, PermissionError) as e:
                     print(f"{tc.RED}{e}{tc.END}")
             else:
                 try:
                     shutil.rmtree(cache)
-                except (OSError, IOError) as e:
+                except (OSError, IOError, PermissionError) as e:
                     print(f"{tc.RED}{e}{tc.END}")
         else:
             pass
     else:
         print(f"{tc.VIOLET2}SW_FM_CACHE: {tc.GREEN}clear_cache_directory: done{tc.END}")
-
-
-def check_css_dark():
-    """___create css colorscheme samples___"""
-    try:
-        sw_css_dark.parent.mkdir(parents=True, exist_ok=True)
-    except (OSError, IOError) as e:
-        print(f"{tc.VIOLET2}SW_CSS_DARK: {tc.RED}{e}")
-    else:
-        try:
-            _ = sw_css_dark.write_text(default_dark_css)
-        except (OSError, IOError) as e:
-            print(f"{tc.VIOLET2}SW_CSS_DARK: {tc.RED}{e}")
-        else:
-            print(f"{tc.VIOLET2}SW_CSS_DARK: {tc.GREEN}create sw_css_dark: done")
 
 
 def diff_css(current: Path, default: str, css_name: str):
@@ -1040,16 +1024,31 @@ def diff_css(current: Path, default: str, css_name: str):
             )
 
 
+def check_css_dark():
+    """___create css colorscheme samples___"""
+    try:
+        sw_css_dark.parent.mkdir(parents=True, exist_ok=True)
+    except (OSError, IOError, PermissionError) as e:
+        print(f"{tc.VIOLET2}SW_CSS_DARK: {tc.RED}{e}")
+    else:
+        try:
+            _ = sw_css_dark.write_text(default_dark_css)
+        except (OSError, IOError, PermissionError) as e:
+            print(f"{tc.VIOLET2}SW_CSS_DARK: {tc.RED}{e}")
+        else:
+            print(f"{tc.VIOLET2}SW_CSS_DARK: {tc.GREEN}create sw_css_dark: done")
+
+
 def check_css_light():
     """___create css colorscheme samples___"""
     try:
         sw_css_light.parent.mkdir(parents=True, exist_ok=True)
-    except (OSError, IOError) as e:
+    except (OSError, IOError, PermissionError) as e:
         print(f"{tc.VIOLET2}SW_CSS: {tc.RED}{e}")
     else:
         try:
             _ = sw_css_light.write_text(default_light_css)
-        except (OSError, IOError) as e:
+        except (OSError, IOError, PermissionError) as e:
             print(f"{tc.VIOLET2}SW_CSS: {tc.RED}{e}")
         else:
             print(f"{tc.VIOLET2}SW_CSS: {tc.GREEN}create sw_css_light: done")
@@ -1059,12 +1058,12 @@ def check_css_custom():
     """___create css colorscheme samples___"""
     try:
         sw_css_custom.parent.mkdir(parents=True, exist_ok=True)
-    except (OSError, IOError) as e:
+    except (OSError, IOError, PermissionError) as e:
         print(f"{tc.VIOLET2}SW_CSS: {tc.RED}{e}")
     else:
         try:
-            _ = sw_css_custom.write_text(default_custom_css_blue)
-        except (OSError, IOError) as e:
+            _ = sw_css_custom.write_text(default_custom_css_darkside)
+        except (OSError, IOError, PermissionError) as e:
             print(f"{tc.VIOLET2}SW_CSS: {tc.RED}{e}")
         else:
             print(f"{tc.VIOLET2}SW_CSS: {tc.GREEN}create sw_css_custom: done")
@@ -1076,7 +1075,7 @@ def check_bookmarks():
         with open(sw_bookmarks, "w", encoding="utf-8") as f:
             _ = f.write(default_bookmarks)
             f.close()
-    except (OSError, IOError) as e:
+    except (OSError, IOError, PermissionError) as e:
         print(f"{tc.VIOLET2}SW_BOOKMARKS: {tc.RED}{e}{tc.END}")
     else:
         print(f"{tc.VIOLET2}SW_BOOKMARKS: {tc.GREEN}create bookmarks: done{tc.END}")
@@ -1088,7 +1087,7 @@ def check_playlist():
         with open(sw_playlist, "w", encoding="utf-8") as f:
             _ = f.write(default_playlist)
             f.close()
-    except (OSError, IOError) as e:
+    except (OSError, IOError, PermissionError) as e:
         print(f"{tc.VIOLET2}SW_PLAYLIST: {tc.RED}{e}{tc.END}")
     else:
         print(f"{tc.VIOLET2}SW_PLAYLIST: {tc.GREEN}create playlist: done{tc.END}")
@@ -1098,27 +1097,27 @@ def create_app_icons():
     """___create application icons directory___"""
     try:
         sw_app_hicons.mkdir(parents=True, exist_ok=True)
-    except (OSError, IOError) as e:
+    except (OSError, IOError, PermissionError) as e:
         print(f"{tc.RED}{e}{tc.END}")
     try:
         sw_gog_icons.mkdir(parents=True, exist_ok=True)
-    except (OSError, IOError) as e:
+    except (OSError, IOError, PermissionError) as e:
         print(f"{tc.RED}{e}{tc.END}")
     try:
         sw_epic_icons.mkdir(parents=True, exist_ok=True)
-    except (OSError, IOError) as e:
+    except (OSError, IOError, PermissionError) as e:
         print(f"{tc.RED}{e}{tc.END}")
     try:
         sw_app_vicons.mkdir(parents=True, exist_ok=True)
-    except (OSError, IOError) as e:
+    except (OSError, IOError, PermissionError) as e:
         print(f"{tc.RED}{e}{tc.END}")
     try:
-        sw_app_heroes_icons.mkdir(parents=True, exist_ok=True)
-    except (OSError, IOError) as e:
+        sw_app_artwork.mkdir(parents=True, exist_ok=True)
+    except (OSError, IOError, PermissionError) as e:
         print(f"{tc.RED}{e}{tc.END}")
     try:
         sw_app_default_icons.mkdir(parents=True, exist_ok=True)
-    except (OSError, IOError) as e:
+    except (OSError, IOError, PermissionError) as e:
         print(f"{tc.RED}{e}{tc.END}")
 
 
@@ -1127,7 +1126,7 @@ def clear_app_icons():
     for f in sw_app_hicons.iterdir():
         try:
             f.unlink()
-        except (OSError, IOError) as e:
+        except (OSError, IOError, PermissionError) as e:
             print(f"{tc.RED}{e}{tc.END}")
         else:
             print(f"{tc.VIOLET2}SW_ICONS: {tc.GREEN}remove_icon {f.name}: done{tc.END}")
@@ -1135,7 +1134,7 @@ def clear_app_icons():
     for f in sw_app_vicons.iterdir():
         try:
             f.unlink()
-        except (OSError, IOError) as e:
+        except (OSError, IOError, PermissionError) as e:
             print(f"{tc.RED}{e}{tc.END}")
         else:
             print(f"{tc.VIOLET2}SW_ICONS: {tc.GREEN}remove_icon {f.name}: done{tc.END}")
@@ -1146,9 +1145,8 @@ def create_json_data(data: str | Path, dump: dict[str, list[str]]):
     try:
         with open(data, "w", encoding="utf-8") as f:
             json.dump(dump, f, indent=4, sort_keys=True)
-    except (OSError, IOError, json.JSONDecodeError) as e:
+    except (OSError, IOError, PermissionError, json.JSONDecodeError) as e:
         print(f"{tc.RED}Create json error: {e}{tc.END}")
-        exit(1)
     else:
         print(
             f"{tc.VIOLET2}SW_JSON_DATA: "
@@ -1162,7 +1160,7 @@ def read_json_data(data: str | Path):
     try:
         with open(data, mode="r", encoding="utf-8") as f:
             r_data = json.load(f)
-    except (OSError, IOError, json.JSONDecodeError) as e:
+    except (OSError, IOError, PermissionError, json.JSONDecodeError) as e:
         print(f"{tc.RED}Read json error: {e}{tc.END}")
 
     return r_data
@@ -1174,9 +1172,8 @@ def write_json_data(data: str | Path, dump: dict[str, Any]):
         with open(data, "w") as f:
             _ = f.write(json.dumps(dump, indent=4, sort_keys=True))
             f.close()
-    except (OSError, IOError, json.JSONDecodeError) as e:
+    except (OSError, IOError, PermissionError, json.JSONDecodeError) as e:
         print(f"{tc.RED}Write json error: {e}{tc.END}")
-        exit(1)
 
 
 def create_menu_json():
@@ -1184,9 +1181,8 @@ def create_menu_json():
     try:
         with open(sw_menu_json, "w", encoding="utf-8") as f:
             json.dump(default_ini, f, indent=4, sort_keys=True)
-    except (OSError, IOError, json.JSONDecodeError) as e:
+    except (OSError, IOError, PermissionError, json.JSONDecodeError) as e:
         print(f"{tc.RED}Write json error: {e}{tc.END}")
-        exit(1)
     else:
         print(
             f"{tc.VIOLET2}SW_MENU_JSON: "
@@ -1196,26 +1192,30 @@ def create_menu_json():
 
 def set_menu_json_default():
     """___reset menu configuration file to default___"""
+    if sw_menu_json.exists():
+        try:
+            sw_menu_json.unlink()
+        except (OSError, IOError, PermissionError) as e:
+            print(f"{tc.VIOLET2}SW_MENU_JSON: " + f"{tc.RED}{e}{tc.END}")
     try:
-        Path(sw_menu_json).unlink()
-    except (OSError, IOError) as e:
-        print(f"{tc.VIOLET2}SW_MENU_JSON: " + f"{tc.RED}{e}{tc.END}")
-    else:
         with open(sw_menu_json, "w", encoding="utf-8") as f:
             json.dump(default_ini, f, indent=4, sort_keys=True)
-            print(
-                f"{tc.VIOLET2}SW_MENU_JSON: "
-                + f"{tc.GREEN}create sw_menu.json: done{tc.END}"
-            )
+    except (OSError, IOError, PermissionError, json.JSONDecodeError) as e:
+        print(f"{tc.RED}Write json error: {e}{tc.END}")
+    else:
+        print(
+            f"{tc.VIOLET2}SW_MENU_JSON: "
+            + f"{tc.GREEN}Create sw_menu.json: done{tc.END}"
+        )
 
 
 def read_menu_conf():
     """___return dict from menu configuration file___"""
-    json_data: dict[str, str | int] = {}
+    json_data: dict[str, str | int] = default_ini
     try:
         with open(sw_menu_json, "r", encoding="utf-8") as f:
             json_data = json.load(f)
-    except (OSError, IOError, json.JSONDecodeError) as e:
+    except (OSError, IOError, PermissionError, json.JSONDecodeError) as e:
         print(f"{tc.RED}Read {sw_menu_json} error: {e}{tc.END}")
 
     return json_data
@@ -1227,7 +1227,7 @@ def write_menu_conf(data_dict: dict[str, str | int]):
         with open(sw_menu_json, "w") as f:
             _ = f.write(json.dumps(data_dict, indent=4, sort_keys=True))
             f.close()
-    except (OSError, IOError, json.JSONDecodeError) as e:
+    except (OSError, IOError, PermissionError, json.JSONDecodeError) as e:
         print(f"{tc.RED}Write {sw_menu_json} error: {e}{tc.END}")
 
 
@@ -1240,7 +1240,10 @@ def diff_menu_conf():
                 data_dict[k] = default_ini[k]
         write_menu_conf(data_dict)
     else:
-        Path(sw_menu_json).unlink()
+        try:
+            sw_menu_json.unlink()
+        except (OSError, IOError, PermissionError) as e:
+            print(f"{tc.VIOLET2}SW_MENU_JSON: " + f"{tc.RED}{e}{tc.END}")
         create_menu_json()
 
 
@@ -1342,10 +1345,12 @@ def check_exe_data(
                         item = hash_(path)
                         path_dict[exe] = item
                         if exe_dict.get(path):
+                            exe_dict[item]["name"] = str(exe)
                             exe_dict[item]["path"] = str(path)
                             exe_dict[item]["default"] = f"{exe}_{exe}_x256.png"
                         else:
                             exe_dict[item] = {}
+                            exe_dict[item]["name"] = str(exe)
                             exe_dict[item]["path"] = str(path)
                             exe_dict[item]["default"] = f"{exe}_{exe}_x256.png"
 
@@ -1363,17 +1368,47 @@ def check_exe_data(
                     if epic_game and epic_game.get("installed"):
                         path = epic_game.get("path")
                         exe = "".join([e for e in Path(path).stem if e.isalnum()])
+                        exe_dict[item]["name"] = str(name)
+                        exe_dict[item]["id"] = str(id_)
                         exe_dict[item]["path"] = str(path)
                         exe_dict[item]["default"] = f"{exe}_{exe}_x256.png"
                         exe_dict[item]["platform"] = "epic"
+
+                        hash_name = hash_(str(path))
+                        cover = f"{hash_name}_vertical_{name}_{id_}.jpg"
+                        horizontal = f"{hash_name}_horizontal_{name}_{id_}.jpg"
+                        artwork = f"{hash_name}_artwork_{name}_{id_}.jpg"
+
+                        if epic_game.get("heroes"):
+                            del epic_exe_dict[id_]["heroes"]
+                            epic_exe_dict[id_]["artwork"] = artwork
+
+                        exe_dict[item]["vertical"] = cover
+                        exe_dict[item]["horizontal"] = horizontal
+                        exe_dict[item]["artwork"] = artwork
 
                     gog_game = gog_exe_dict.get(id_)
                     if gog_game and gog_game.get("installed"):
                         path = gog_game.get("path")
                         exe = "".join([e for e in Path(path).stem if e.isalnum()])
+                        exe_dict[item]["name"] = str(name)
+                        exe_dict[item]["id"] = str(id_)
                         exe_dict[item]["path"] = str(path)
                         exe_dict[item]["default"] = f"{exe}_{exe}_x256.png"
                         exe_dict[item]["platform"] = "gog"
+
+                        hash_name = hash_(str(path))
+                        cover = f"{hash_name}_vertical_{name}_{id_}.jpg"
+                        horizontal = f"{hash_name}_horizontal_{name}_{id_}.jpg"
+                        artwork = f"{hash_name}_artwork_{name}_{id_}.jpg"
+
+                        if gog_game.get("heroes"):
+                            del gog_exe_dict[id_]["heroes"]
+                            gog_exe_dict[id_]["artwork"] = artwork
+
+                        exe_dict[item]["vertical"] = cover
+                        exe_dict[item]["horizontal"] = horizontal
+                        exe_dict[item]["artwork"] = artwork
 
                     if "_vertical_" in str(icon):
                         cover = str(icon)
@@ -1383,38 +1418,74 @@ def check_exe_data(
                                 cover = f"{hash_name}_vertical_{name}_{id_}.jpg"
                                 shutil.move(f"{r}/{icon}", f"{r}/{cover}")
 
-                        if item in path_dict.values():
-                            exe_dict[item]["name"] = str(name)
-                            exe_dict[item]["id"] = str(id_)
-                            exe_dict[item]["vertical"] = cover
+                                exe_dict[hash_name]["name"] = str(name)
+                                exe_dict[hash_name]["id"] = str(id_)
+                                exe_dict[hash_name]["vertical"] = cover
+
+                        if exe_dict.get(item):
+                            str_data = exe_dict.get(item)
+                            if str_data:
+                                exe_path = str_data.get("path")
+                                if exe_path:
+                                    hash = hash_(exe_path)
+                                    if hash:
+                                        exe_dict[hash]["name"] = str(name)
+                                        exe_dict[hash]["id"] = str(id_)
+                                        exe_dict[hash]["vertical"] = cover
 
                     elif "_horizontal_" in str(icon):
+                        horizontal = str(icon)
+                        if item in path_dict.keys():
+                            hash_name = path_dict.get(item)
+                            if hash_name:
+                                horizontal = f"{hash_name}_horizontal_{name}_{id_}.jpg"
+                                shutil.move(f"{r}/{icon}", f"{r}/{horizontal}")
+
+                                exe_dict[hash_name]["name"] = str(name)
+                                exe_dict[hash_name]["id"] = str(id_)
+                                exe_dict[hash_name]["horizontal"] = horizontal
+
+                        if exe_dict.get(item):
+                            str_data = exe_dict.get(item)
+                            if str_data:
+                                exe_path = str_data.get("path")
+                                if exe_path:
+                                    hash = hash_(exe_path)
+                                    if hash:
+                                        exe_dict[hash]["name"] = str(name)
+                                        exe_dict[hash]["id"] = str(id_)
+                                        exe_dict[item]["horizontal"] = horizontal
+
+                    elif "_artwork_" in str(icon):
                         art = str(icon)
                         if item in path_dict.keys():
                             hash_name = path_dict.get(item)
                             if hash_name:
-                                art = f"{hash_name}_horizontal_{name}_{id_}.jpg"
+                                art = f"{hash_name}_artwork_{name}_{id_}.jpg"
                                 shutil.move(f"{r}/{icon}", f"{r}/{art}")
 
-                        if item in path_dict.values():
-                            exe_dict[item]["name"] = str(name)
-                            exe_dict[item]["id"] = str(id_)
-                            exe_dict[item]["horizontal"] = art
+                                exe_dict[hash_name]["name"] = str(name)
+                                exe_dict[hash_name]["id"] = str(id_)
+                                exe_dict[hash_name]["artwork"] = art
 
-                    elif "_heroes_" in str(icon):
-                        hero = str(icon)
-                        if item in path_dict.keys():
-                            hash_name = path_dict.get(item)
-                            if hash_name:
-                                hero = f"{hash_name}_heroes_{name}_{id_}.jpg"
-                                shutil.move(f"{r}/{icon}", f"{r}/{hero}")
-
-                        if item in path_dict.values():
-                            exe_dict[item]["name"] = str(name)
-                            exe_dict[item]["id"] = str(id_)
-                            exe_dict[item]["heroes"] = hero
+                        if exe_dict.get(item):
+                            str_data = exe_dict.get(item)
+                            if str_data:
+                                exe_path = str_data.get("path")
+                                if exe_path:
+                                    hash = hash_(exe_path)
+                                    if hash:
+                                        exe_dict[hash]["name"] = str(name)
+                                        exe_dict[hash]["id"] = str(id_)
+                                        exe_dict[item]["artwork"] = art
 
     exe_dict = {k: v for k, v in exe_dict.items() if v}
+
+    if sw_epic_exe_data_json.exists():
+        write_json_data(sw_epic_exe_data_json, epic_exe_dict)
+
+    if sw_gog_exe_data_json.exists():
+        write_json_data(sw_gog_exe_data_json, gog_exe_dict)
 
     if Path(json_path).exists():
         write_json_data(json_path, exe_dict)
@@ -1440,7 +1511,7 @@ class ExeData(dict[str, dict[str, str | None]]):
             "default": None,
             "vertical": None,
             "horizontal": None,
-            "heroes": None,
+            "artwork": None,
             "path": None,
             "platform": None,
         }
@@ -1575,21 +1646,50 @@ if not sw_bookmarks.exists():
 if not sw_playlist.exists():
     check_playlist()
 
+if sw_app_icons.joinpath("heroes").exists():
+    shutil.move(sw_app_icons.joinpath("heroes"), sw_app_artwork)
+
+if sw_launcher_icons.joinpath("heroes").exists():
+    shutil.move(sw_launcher_icons.joinpath("heroes"), sw_launchers_artwork)
+
 if (
     not sw_epic_icons.exists()
     or not sw_gog_icons.exists()
     or not sw_app_vicons.exists()
     or not sw_app_hicons.exists()
-    or not sw_app_heroes_icons.exists()
+    or not sw_app_artwork.exists()
     or not sw_app_default_icons.exists()
 ):
     create_app_icons()
 
+app_artworks = sw_app_icons.rglob("*_heroes_*")
+if app_artworks:
+    for art in app_artworks:
+        new_art = Path(str(art).replace("_heroes_", "_artwork_"))
+        shutil.move(art, new_art)
+        print(tc.YELLOW, "Move image:", new_art, tc.END)
+
+epic_artworks = sw_epic_icons.rglob("*_heroes_*")
+if epic_artworks:
+    for art in epic_artworks:
+        new_art = Path(str(art).replace("_heroes_", "_artwork_"))
+        shutil.move(art, new_art)
+        print(tc.YELLOW, "Move image:", new_art, tc.END)
+
+gog_artworks = sw_gog_icons.rglob("*_heroes_*")
+if gog_artworks:
+    for art in gog_artworks:
+        new_art = Path(str(art).replace("_heroes_", "_artwork_"))
+        shutil.move(art, new_art)
+        print(tc.YELLOW, "Move image:", new_art, tc.END)
+
 if sw_scripts.joinpath("sw_menu.json").exists() and not sw_menu_json.exists():
     shutil.move(sw_scripts.joinpath("sw_menu.json"), sw_menu_json)
+    print(tc.YELLOW, "Move settings:", sw_menu_json, tc.END)
 
 if sw_scripts.joinpath("sw_input.json").exists() and not sw_input_json.exists():
     shutil.move(sw_scripts.joinpath("sw_input.json"), sw_input_json)
+    print(tc.YELLOW, "Move settings:", sw_input_json, tc.END)
 
 if not sw_menu_json.exists():
     create_menu_json()
@@ -1954,10 +2054,10 @@ class IconPath:
     icon_checked: str = f"{sw_css_assets.joinpath('check-menuitem@2.png')}"
     icon_sw_svg: str = f"{sw_gui_icons.joinpath('sw_icon.svg')}"
     icon_sw_png: str = f"{sw_gui_icons.joinpath('sw_icon.png')}"
-    icon_gog_heroes: str = f"{sw_launchers_heroes.joinpath('Galaxy.jpg')}"
+    icon_gog_art: str = f"{sw_launchers_artwork.joinpath('Galaxy.jpg')}"
     icon_gog_logo: str = f"{sw_gui_icons.joinpath('gog.png')}"
     icon_epic_logo: str = f"{sw_gui_icons.joinpath('epic.png')}"
-    icon_epic_heroes: str = f"{sw_launchers_heroes.joinpath('Epic_Games.jpg')}"
+    icon_epic_art: str = f"{sw_launchers_artwork.joinpath('Epic_Games.jpg')}"
     icon_wine_staging: str = f"{sw_gui_icons.joinpath('winehq.png')}"
     icon_wine_tkg: str = f"{sw_gui_icons.joinpath('kron.png')}"
     icon_wine_steam_proton: str = f"{sw_gui_icons.joinpath('proton.png')}"
@@ -5335,6 +5435,10 @@ respects their need to own games."
             ),
             ("show_installed", _("Show installed")),
             ("description", _("Description")),
+            ("horizontal_image", _("Set as horizontal app image")),
+            ("vertical_image", _("Set as vertical app image")),
+            ("startup_image", _("Set as startup menu image")),
+            ("specify_location", _("Specify location")),
         ]
     )
 
